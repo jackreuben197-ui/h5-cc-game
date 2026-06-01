@@ -172,7 +172,7 @@ class ToastManager {
     }
 }
 
-@traceClass()
+@traceClass({ level: 'debug' })
 class UIViewManager {
     private constructor() {}
 
@@ -235,13 +235,13 @@ class UIViewManager {
                 const uiNode = cc.instantiate(asset);
                 ui = uiNode.getComponent(uiprefab.UIType as any);
                 if (!ui) {
-                    this.tracelog.error('open', uiprefab.Name, '缺少脚本');
+                    this.tracelog.error('switchScene', uiprefab.Name, '缺少脚本');
                     return;
                 }
             }
-            ui.initialize(param);
             ui.node.active = true;
             ui.node.parent = this._sceneLayer;
+            ui.initialize(param);
             this._scenesPool.set(key, ui);
             // 老场景缓存
             if (this._curretScene) {
@@ -253,7 +253,7 @@ class UIViewManager {
                 }
             }
         } catch (e) {
-            this.tracelog.error('open', 'Get Resource Error', e);
+            this.tracelog.error('switchScene', e);
         }
     }
 
@@ -270,12 +270,13 @@ class UIViewManager {
             }
             let ui = this._dialogsPool.get(key) as UIComponentDialogBase<any>;
             if (!ui) {
+                this.tracelog.debug('no instance create new one', key);
                 const uiprefab = UIPrefabDialog[key];
                 const asset = await AssetManager.getOrLoad<cc.Prefab>(uiprefab.Bundle, uiprefab.Path);
                 const uiNode = cc.instantiate(asset);
                 ui = uiNode.getComponent(UIComponentDialogBase);
                 if (!ui) {
-                    this.tracelog.error('open', uiprefab.Name, '缺少脚本');
+                    this.tracelog.error('openDialog', uiprefab.Name, '缺少脚本');
                     return;
                 }
                 //添加
@@ -294,18 +295,18 @@ class UIViewManager {
                     };
                 }
             }
-            ui.initialize(param);
+            ui.node.active = directShow;
+            ui.node.parent = this._dialogLayer;
             const maskdoe = ui.getComponentInChildren(uniquemaskID);
             if (maskdoe) {
                 maskdoe.node.active = masked;
             }
-            ui.node.active = directShow;
-            ui.node.parent = this._dialogLayer;
+            ui.initialize(param);
             this._displayedDialogs.push(key);
             this._curretDialog = key;
             this._dialogsPool.set(key, ui);
         } catch (e) {
-            this.tracelog.error('open', 'Get Resource Error', e);
+            this.tracelog.error('openDialog', e);
         }
     }
 
@@ -419,7 +420,7 @@ class UIViewManager {
             }
             return results;
         } catch (e) {
-            this.tracelog.error('instantiate', 'Get Resource Error', e);
+            this.tracelog.error('instantiate', e);
             throw e;
         }
     }

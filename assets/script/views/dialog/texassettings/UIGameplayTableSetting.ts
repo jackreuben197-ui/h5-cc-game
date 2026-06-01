@@ -117,13 +117,13 @@ export default class UIGameplayTableSetting extends UIComponentBaseDialog<UIGame
 
     /** 弹窗展示入口 */
     public initialize(param: UIGameplayTableSettingParam): void {
+        this._roomData = roomDataManager.getRoomData(param.roomID, param.matchID);
         this.isFromBringIn = !!param?.isFromBringIn;
         this.bringInAct = param?.bringInAct || null;
         this.roomPermissions = this.ParsePermissions(param?.roomPermissions);
         this.tribeId = this.ResolveTribeId();
         this.lookTimeMarkSet.clear();
         this.ResolveRoomPermissionsAndRefresh();
-        this._roomData = roomDataManager.getRoomData(param.roomID, param.matchID);
     }
 
     /** Unity 对齐：俱乐部/联盟桌走 club permission，其它走全局权限 */

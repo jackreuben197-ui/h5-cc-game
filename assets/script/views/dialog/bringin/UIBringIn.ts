@@ -57,11 +57,6 @@ export type UIBringInParam = {
 export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     private _roomPlayer: RoomPlayerGC[keyof RoomPlayerGC];
     private _provider: BringInProvider = null;
-    //背景
-    @property(cc.Node)
-    private buttonClose: cc.Node = null;
-    @property(cc.Node)
-    private buttonMask: cc.Node = null;
     //标题部分
     @property(cc.Node)
     private titleBarDiamondLine: cc.Node = null;
@@ -160,12 +155,6 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     // ========== 钻石相关 ==========
     @property(cc.Node)
     private diamondArea: cc.Node = null;
-    /** 带入标题 */
-    @property(cc.Label)
-    public chipInfo: cc.Label = null;
-    /** 钻石标题 */
-    @property(cc.Label)
-    private diamondInfo: cc.Label = null;
     // 钻石余额
     @property(cc.Label)
     private diamondAmount: cc.Label = null;
@@ -205,7 +194,8 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     private _autoBringin: boolean = false;
     private _userStore: typeof userStore;
 
-    protected override onLoad(): void {
+    @traceMethod()
+    protected onLoad(): void {
         // 初始化一个节点
         const targetIndex = this.buttonSelectWallet.getSiblingIndex();
         const cnd = cc.instantiate(this.clueItemPrefab);
@@ -712,53 +702,50 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         // UIComponent.Instance.HideUI(UIType.UI_GAMEPLAY_ADD_CHIPS_DIAMOND);
         this.close();
     }
-
-    private _confirmBringIn(): void {
-        GameCache.Instance._texasData._isAutoPopupBringIn = true;
-        if (GameplayUtil.GetTableType() == TableType.CLUB_EXTERNAL && this.mySelectWallet == null) {
-            return;
-        }
-        let bringInAmount = this._bringInAmount;
-        let storeAmount = 0;
-        // 手动存钱需要自己设置藏多少
-        if (this.addChipsData._retainInfo.RetainType == RoomInfo.RetainType.RT_MANUAL) {
-            storeAmount = this._bringInAmount - this.addChipsData._retainInfo.RetainMinRate * this.addChipsData._bigBlind;
-        }
-        // 鱿鱼/蘑菇模式检查
-        if (this.addChipsData._source == BringInChipsType.SQUID || this.addChipsData._source == BringInChipsType.MUSHROOM) {
-            let isShowToast = !GameCache.Instance._isRoomManager;
-            if (isShowToast && GameCache.Instance._friendsTableLimitBringIn) {
-                viewManager.showToastLanguage('UIWaitManagerAuditTip');
-            }
-        }
-        const autoOnTableAmount = this._autoBringin ? this._autoOnTable : 0;
-        let clubID = this.mySelectWallet != null ? this.mySelectWallet.club_id : 0;
-        this.addChipsData._commit(bringInAmount, storeAmount, autoOnTableAmount, clubID);
-        this.removeAddChipsUI();
-    }
+    // private _confirmBringIn(): void {
+    //     GameCache.Instance._texasData._isAutoPopupBringIn = true;
+    //     if (GameplayUtil.GetTableType() == TableType.CLUB_EXTERNAL && this.mySelectWallet == null) {
+    //         return;
+    //     }
+    //     let bringInAmount = this._bringInAmount;
+    //     let storeAmount = 0;
+    //     // 手动存钱需要自己设置藏多少
+    //     if (this.addChipsData._retainInfo.RetainType == RoomInfo.RetainType.RT_MANUAL) {
+    //         storeAmount = this._bringInAmount - this.addChipsData._retainInfo.RetainMinRate * this.addChipsData._bigBlind;
+    //     }
+    //     // 鱿鱼/蘑菇模式检查
+    //     if (this.addChipsData._source == BringInChipsType.SQUID || this.addChipsData._source == BringInChipsType.MUSHROOM) {
+    //         let isShowToast = !GameCache.Instance._isRoomManager;
+    //         if (isShowToast && GameCache.Instance._friendsTableLimitBringIn) {
+    //             viewManager.showToastLanguage('UIWaitManagerAuditTip');
+    //         }
+    //     }
+    //     const autoOnTableAmount = this._autoBringin ? this._autoOnTable : 0;
+    //     let clubID = this.mySelectWallet != null ? this.mySelectWallet.club_id : 0;
+    //     this.addChipsData._commit(bringInAmount, storeAmount, autoOnTableAmount, clubID);
+    //     this.removeAddChipsUI();
+    // }
 
     private onClickCommit(): void {
         // DataStatisticsManager.Instance.Record(DataStatisticsConstant.GAME_BRING_COMMIT_BUTTON);
-        this._confirmBringIn();
+        //this._confirmBringIn();
     }
-
-    private onClickMask(): void {
-        if (this.addChipsData?._source == BringInChipsType.MATCH) {
-            return;
-        }
-        this.removeAddChipsUI();
-    }
-
-    private onClickClose(): void {
-        if (this.addChipsData?._source == BringInChipsType.MATCH) {
-            GameCache.Instance.CurGame.TexasGameUtils.LeaveRoom();
-        }
-        if (GameCache.Instance.game_type == GameType.MAHJONG) {
-            // MahjongGameManager.Instance._dao._mainTableDao.UpdateNeedBringIn();
-        }
-        this.removeAddChipsUI();
-        // DataStatisticsManager.Instance.Record(DataStatisticsConstant.GAME_BRING_CANCEL_BUTTON);
-    }
+    // private onClickMask(): void {
+    //     if (this.addChipsData?._source == BringInChipsType.MATCH) {
+    //         return;
+    //     }
+    //     this.removeAddChipsUI();
+    // }
+    // private onClickClose(): void {
+    //     if (this.addChipsData?._source == BringInChipsType.MATCH) {
+    //         GameCache.Instance.CurGame.TexasGameUtils.LeaveRoom();
+    //     }
+    //     if (GameCache.Instance.game_type == GameType.MAHJONG) {
+    //         // MahjongGameManager.Instance._dao._mainTableDao.UpdateNeedBringIn();
+    //     }
+    //     this.removeAddChipsUI();
+    //     // DataStatisticsManager.Instance.Record(DataStatisticsConstant.GAME_BRING_CANCEL_BUTTON);
+    // }
 
     // 点击选择钱包按钮
     private onClickWalletBtn(): void {
@@ -799,11 +786,8 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         }
         // 如果已经有选中状态，要恢复状态
         this._cloneNode.active = false;
-        this.tracelog.debug('i ma here1');
         this.emptySelectWallet.active = true;
-        this.tracelog.debug('i ma here2');
         this.walletScrollView.node.active = true;
-        this.tracelog.debug('i ma here3');
         let button = this.buttonSelectWallet.getComponent(cc.Button);
         button.interactable = true;
         this.walletScrollView.content.removeAllChildren();
@@ -887,7 +871,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     onDestroy(): void {
         super.onDestroy();
         this.removeHandler();
-        this.mySelectWallet = null;
+        //this.mySelectWallet = null;
     }
 
     private registerHandler(): void {

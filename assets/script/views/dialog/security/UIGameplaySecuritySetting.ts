@@ -7,6 +7,7 @@ import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { VideoModel } from '../../../game/constant/VideoModel';
+import viewManager from '../../UIViewManager';
 
 export type UIGameplaySecuritySettingParam = {
     isFromBringIn?: boolean;
@@ -320,14 +321,20 @@ export default class UIGameplaySecuritySetting extends UIComponentBaseDialog<UIG
 
     /** 取消：关闭并继续带入 */
     private OnClickCancel(): void {
-        console.log('123123');
         this.close();
     }
 
     /** 确认：进入牌桌设置弹窗 */
     private OnClickCommit(): void {
         super.close();
-        //@TODO
+        viewManager.openDialog('TexasTableSetting', {
+            isFromBringIn: this.isFromBringIn,
+            bringInAct: this.bringInAct || undefined,
+            roomPermissions: this.roomPermissions,
+            noAnimation: true,
+            roomID: this._roomData.roomID,
+            matchID: this._roomData.matchID
+        });
         // UIComponent.open(UIDefine.UIGameplayTableSetting, {
         //     isFromBringIn: this.isFromBringIn,
         //     bringInAct: this.bringInAct || undefined,
