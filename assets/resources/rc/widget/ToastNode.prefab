@@ -28,10 +28,13 @@
       },
       {
         "__id__": 10
+      },
+      {
+        "__id__": 11
       }
     ],
     "_prefab": {
-      "__id__": 11
+      "__id__": 12
     },
     "_opacity": 255,
     "_color": {
@@ -43,8 +46,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 1242,
-      "height": 600
+      "width": 1200,
+      "height": 168.2
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -347,8 +350,8 @@
     "alignMode": 1,
     "_target": null,
     "_alignFlags": 42,
-    "_left": 0,
-    "_right": 0,
+    "_left": 21,
+    "_right": 21,
     "_top": 2088,
     "_bottom": 0,
     "_verticalCenter": 0,
@@ -374,6 +377,38 @@
     "label": {
       "__id__": 4
     },
+    "_id": ""
+  },
+  {
+    "__type__": "cc.Layout",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "_layoutSize": {
+      "__type__": "cc.Size",
+      "width": 1200,
+      "height": 168.2
+    },
+    "_resize": 1,
+    "_N$layoutType": 0,
+    "_N$cellSize": {
+      "__type__": "cc.Size",
+      "width": 40,
+      "height": 40
+    },
+    "_N$startAxis": 0,
+    "_N$paddingLeft": 0,
+    "_N$paddingRight": 0,
+    "_N$paddingTop": 0,
+    "_N$paddingBottom": 0,
+    "_N$spacingX": 0,
+    "_N$spacingY": 0,
+    "_N$verticalDirection": 1,
+    "_N$horizontalDirection": 0,
+    "_N$affectedByScale": false,
     "_id": ""
   },
   {

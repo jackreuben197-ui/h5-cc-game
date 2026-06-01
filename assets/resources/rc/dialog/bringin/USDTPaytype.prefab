@@ -713,14 +713,14 @@
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
-      "x": 243.57,
+      "x": 245.25,
       "y": 0.5
     },
     "_trs": {
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        22318.76,
+        22473.32,
         0,
         0,
         0,
@@ -790,7 +790,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -22362.84,
+        -22517.4,
         0,
         0,
         0,
@@ -1011,14 +1011,14 @@
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
-      "x": -2776.01,
+      "x": -2795.33,
       "y": 0.5
     },
     "_trs": {
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -492054.53260000004,
+        -495479.1958,
         0,
         0,
         0,
@@ -1085,7 +1085,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        492164.4804,
+        495589.14359999995,
         0,
         0,
         0,
@@ -1733,7 +1733,7 @@
       "__id__": 1
     },
     "component": "",
-    "_componentId": "c3ab8M03gVM3r7y9HqGLuvE",
+    "_componentId": "c4e24bANP1N2ZElm0vl6b0j",
     "handler": "onSelected",
     "customEventData": ""
   },

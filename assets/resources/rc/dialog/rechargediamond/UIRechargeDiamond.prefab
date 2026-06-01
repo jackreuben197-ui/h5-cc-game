@@ -4510,7 +4510,9 @@
       "__id__": 1
     },
     "_enabled": true,
-    "exchangeRateLabel": null,
+    "exchangeRateLabel": {
+      "__id__": 18
+    },
     "amountLabel": {
       "__id__": 42
     },

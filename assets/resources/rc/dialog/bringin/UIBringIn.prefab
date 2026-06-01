@@ -3385,7 +3385,7 @@
       "ctor": "Float64Array",
       "array": [
         0,
-        -450,
+        -400,
         0,
         0,
         0,
@@ -4117,7 +4117,7 @@
     "_left": 50,
     "_right": 50,
     "_top": 0,
-    "_bottom": 100,
+    "_bottom": 150,
     "_verticalCenter": 0,
     "_horizontalCenter": 0,
     "_isAbsLeft": true,
@@ -14050,8 +14050,11 @@
     "titleBarBalanceLine": {
       "__id__": 6
     },
-    "bringInArea": {
+    "bringInFullArea": {
       "__id__": 24
+    },
+    "bringInArea": {
+      "__id__": 79
     },
     "bringInAreaIntro": {
       "__id__": 28
@@ -14059,8 +14062,44 @@
     "bringInAreaIntroContent": {
       "__id__": 34
     },
+    "balanceNode": {
+      "__id__": 39
+    },
+    "textTotalCoinTitle": {
+      "__id__": 41
+    },
+    "textTotalCoin": {
+      "__id__": 47
+    },
+    "creditNode": {
+      "__id__": 52
+    },
+    "textTotalCreditTitle": {
+      "__id__": 54
+    },
+    "textTotalCredit": {
+      "__id__": 47
+    },
+    "diamondNode": {
+      "__id__": 65
+    },
+    "textTotalDiamondTitle": {
+      "__id__": 67
+    },
+    "textTotalDiamond": {
+      "__id__": 73
+    },
     "amountDescriptionTop": {
       "__id__": 112
+    },
+    "bringInTipButton": {
+      "__id__": 114
+    },
+    "bringTips": {
+      "__id__": 133
+    },
+    "tipsMask": {
+      "__id__": 386
     },
     "amountDescriptionTopTipDot": {
       "__id__": 142
@@ -14071,35 +14110,23 @@
     "amountDescriptionBottom": {
       "__id__": 127
     },
-    "balanceNode": {
-      "__id__": 39
-    },
-    "textTotalCoin": {
-      "__id__": 47
-    },
-    "textTotalCoinTitle": {
-      "__id__": 41
-    },
-    "creditNode": {
-      "__id__": 52
-    },
-    "textTotalCredit": {
-      "__id__": 47
-    },
-    "textTotalCreditTitle": {
-      "__id__": 54
-    },
-    "diamondNode": {
-      "__id__": 65
-    },
-    "textTotalDiamond": {
-      "__id__": 73
-    },
-    "textTotalDiamondTitle": {
-      "__id__": 67
-    },
     "bringInSlider": {
       "__id__": 106
+    },
+    "autoBringinArea": {
+      "__id__": 164
+    },
+    "switchAutoBringin": {
+      "__id__": 180
+    },
+    "autoBringinSliderArea": {
+      "__id__": 196
+    },
+    "autoSlider": {
+      "__id__": 225
+    },
+    "autoSliderAmount": {
+      "__id__": 202
     },
     "walletArea": {
       "__id__": 256
@@ -14119,35 +14146,11 @@
     "buttonCommit2": {
       "__id__": 251
     },
-    "autoBringinArea": {
-      "__id__": 164
-    },
-    "switchAutoBringin": {
-      "__id__": 180
-    },
-    "autoBringinSliderArea": {
-      "__id__": 196
-    },
-    "autoSlider": {
-      "__id__": 225
-    },
-    "autoSliderAmount": {
-      "__id__": 202
-    },
-    "tipsMask": {
-      "__id__": 386
-    },
     "buttonSelectWallet": {
       "__id__": 294
     },
     "arrowDown": {
       "__id__": 289
-    },
-    "bringInTipButton": {
-      "__id__": 114
-    },
-    "bringTips": {
-      "__id__": 133
     },
     "diamondArea": {
       "__id__": 327

@@ -25,6 +25,7 @@ export interface IToastConfig {
     fadeOutDuration?: number;
 }
 
+@traceClass()
 class ToastManager {
     private _toastLayer: cc.Node = null!;
     private _toastPrefab: cc.Prefab;
@@ -99,6 +100,7 @@ class ToastManager {
                     .start();
             } else {
                 let step: number = config.spaceDis + (this._prevToast.node.height + toast.height) / 2;
+                // this.tracelog.debug('showToast. step', step, this._prevToast.node.height);
                 toastNode.posY = this._prevToast.posY - step;
                 toastNode.markFadeOriTime = new Date().getTime();
                 toast.y = toastNode.posY - config.fadeInOffSetDis;
@@ -324,7 +326,7 @@ class UIViewManager {
                 } else {
                     this._curretDialog = null;
                 }
-                this.tracelog.debug('close ui dialog left count:', this._displayedDialogs.length);
+                this.tracelog.debug('closeDialog. dialogs left', this._displayedDialogs.length);
                 break;
             }
         }

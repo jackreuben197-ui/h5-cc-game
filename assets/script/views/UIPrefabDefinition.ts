@@ -52,7 +52,7 @@ export const UIPrefabDialog = {
         UIType: UIRechargeDiamond,
         Name: '扫码充钻石',
         Bundle: BUNDLE_RESOURCES,
-        Path: 'rc/dialog/rechargediamondg/UIRechargeDiamond'
+        Path: 'rc/dialog/rechargediamond/UIRechargeDiamond'
     }
 } as const;
 

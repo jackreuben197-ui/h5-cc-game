@@ -62,41 +62,61 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     private titleBarDiamondLine: cc.Node = null;
     @property(cc.Node)
     private titleBarBalanceLine: cc.Node = null;
-    // 带入区域
+    // 带入区域（第一行）
     @property({ type: cc.Node, tooltip: '带入区域' })
+    private bringInFullArea: cc.Node = null;
+    @property(cc.Node)
     private bringInArea: cc.Node = null;
     @property(cc.Label)
     private bringInAreaIntro: cc.Label = null;
     @property(cc.Label)
     private bringInAreaIntroContent: cc.Label = null;
+    @property(cc.Node)
+    private balanceNode: cc.Node = null;
+    @property(cc.Label)
+    private textTotalCoinTitle: cc.Label = null;
+    @property(cc.Label)
+    private textTotalCoin: cc.Label = null;
+    @property(cc.Node)
+    private creditNode: cc.Node = null;
+    @property(cc.Label)
+    private textTotalCreditTitle: cc.Label = null;
+    @property(cc.Label)
+    private textTotalCredit: cc.Label = null;
+    @property(cc.Node)
+    private diamondNode: cc.Node = null;
+    @property(cc.Label)
+    private textTotalDiamondTitle: cc.Label = null;
+    @property(cc.Label)
+    private textTotalDiamond: cc.Label = null;
+    //================ 带入区域的子节点(描述和金额) =================
     @property(cc.Label)
     public amountDescriptionTop: cc.Label = null;
+    @property(cc.Node)
+    public bringInTipButton: cc.Node = null;
+    @property(cc.Node)
+    public bringTips: cc.Node = null;
+    @property(cc.Node)
+    public tipsMask: cc.Node = null;
     @property(cc.Node)
     private amountDescriptionTopTipDot: cc.Node = null;
     @property(cc.Label)
     private bringInAmount: cc.Label = null;
     @property(cc.Label)
     public amountDescriptionBottom: cc.Label = null;
-    @property(cc.Node)
-    private balanceNode: cc.Node = null;
-    @property(cc.Label)
-    private textTotalCoin: cc.Label = null;
-    @property(cc.Label)
-    private textTotalCoinTitle: cc.Label = null;
-    @property(cc.Node)
-    private creditNode: cc.Node = null;
-    @property(cc.Label)
-    private textTotalCredit: cc.Label = null;
-    @property(cc.Label)
-    private textTotalCreditTitle: cc.Label = null;
-    @property(cc.Node)
-    private diamondNode: cc.Node = null;
-    @property(cc.Label)
-    private textTotalDiamond: cc.Label = null;
-    @property(cc.Label)
-    private textTotalDiamondTitle: cc.Label = null;
     @property({ type: StepSlider, tooltip: '带入滑动条' })
     private bringInSlider: StepSlider = null;
+    // 自动充值部分
+    @property(cc.Node)
+    private autoBringinArea: cc.Node = null;
+    @property(SwitchNode)
+    private switchAutoBringin: SwitchNode = null;
+    @property(cc.Node)
+    private autoBringinSliderArea: cc.Node = null;
+    @property(StepSlider)
+    private autoSlider: StepSlider = null;
+    @property(cc.Label)
+    private autoSliderAmount: cc.Label = null;
     // 钱包区域
     @property(cc.Node)
     private walletArea: cc.Node = null;
@@ -113,23 +133,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     private buttonCommit: cc.Button = null;
     @property(cc.Button)
     private buttonCommit2: cc.Button = null;
-    // 自动充值部分
-    @property(cc.Node)
-    private autoBringinArea: cc.Node = null;
-    @property(SwitchNode)
-    private switchAutoBringin: SwitchNode = null;
-    @property(cc.Node)
-    private autoBringinSliderArea: cc.Node = null;
-    @property(StepSlider)
-    private autoSlider: StepSlider = null;
-    @property(cc.Label)
-    private autoSliderAmount: cc.Label = null;
     private tips: cc.Node = null;
-    /**
-     * 提示遮罩按钮
-     */
-    @property(cc.Node)
-    public tipsMask: cc.Node = null;
     private recordTipsBtn: cc.Node = null;
     /**
      * 带入筹码描述
@@ -142,16 +146,6 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     private buttonSelectWallet: cc.Node = null;
     @property(cc.Node)
     private arrowDown: cc.Node = null;
-    /**
-     * 带入筹码描述按钮
-     */
-    @property(cc.Node)
-    public bringInTipButton: cc.Node = null;
-    /**
-     * 带入筹码具体描述
-     */
-    @property(cc.Node)
-    public bringTips: cc.Node = null;
     // ========== 钻石相关 ==========
     @property(cc.Node)
     private diamondArea: cc.Node = null;
@@ -213,6 +207,9 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         this.textTotalCoinTitle.string = i18nMgr.Get('UIClub_CreateRoom31');
         this.textTotalDiamondTitle.string = i18nMgr.Get('UIClub_CreateRoom31');
         this.textTotalCreditTitle.string = i18nMgr.Get('UIClubCreditLimit2');
+        this.tipsMask.active = false;
+        this.bringTips.active = false;
+        this.regiterTouchEvents();
     }
 
     @traceMethod()
@@ -223,88 +220,34 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
             this._provider = new BringInProviderTexas(this._roomPlayer, this);
         }
         this._provider.process();
+        this.initDiamond();
     }
-    // protected regiterTouchEvents(): void {
-    //     super.regiterTouchEvents();
-    //     this.setButtonClick(this.buttonCommitSrc, this.onClickCommit);
-    //     this.setButtonClick(this.buttonCommit2Src, this.onClickCommit);
-    //     this.setButtonClick(this.buttonClose, this.onClickClose);
-    //     this.setButtonClick(this.buttonMask, this.onClickClose);
-    //     let maskNode = this.getChildNodeOrComponent<cc.Node>('Mask');
-    //     this.setButtonClick(maskNode, this.onClickMask);
-    //     this.setButtonClick(this.buttonSelectWallet, () => {
-    //         this.onClickWalletBtn();
-    //     });
-    //     this.setButtonClick(this.tipsMask, () => {
-    //         this.onClickTipsMask();
-    //     });
-    //     this.setButtonClick(this.chipInfo?.node, () => {
-    //         this.onClickChips(this.chipInfo?.node);
-    //     });
-    //     this.setButtonClick(this.diamondInfo?.node, () => {
-    //         this.onClickDiamond(this.diamondInfo?.node);
-    //     });
-    //     this.setButtonClick(this.recordTipsBtn, () => {
-    //         if (this.tips) this.tips.active = true;
-    //         if (this.tipsMask) this.tipsMask.active = true;
-    //     });
-    //     this.setButtonClick(this.bringInTipButton, () => {
-    //         if (this.tipsMask) this.tipsMask.active = true;
-    //         if (this.bringTips) this.bringTips.active = true;
-    //     });
-    //     this.paynowBtn.node.on('click', () => {
-    //         this.onPayNowOrApplyTraderClicked(this._toApplyTrader, this._payType, this._rechargeData);
-    //     });
-    //     this.switchAutoBringin.onSwitchCallback = isOn => {
-    //         this.autoBringinSliderArea.active = isOn;
-    //         this._autoBringin = isOn;
-    //     };
-    // }
-    // onShow(obj?: any): void {
-    //     this._updateDisplay();
-    // }
-    // private _updateDisplay() {
-    //     // 默认带入页面
-    //     this._changeTab(BringInTabType.Chips);
-    //     // 初始化钻石购买页
-    //     this.initDiamond();
-    //     // // 根据来源设置标题
-    //     // switch (this.addChipsData._source) {
-    //     //     case BringInChipsType.BRING_IN:
-    //     //         if (this.textTitle) this.textTitle.string = i18nMgr.Get('UIClub_RoomSitApplyRecords_title');
-    //     //         break;
-    //     //     case BringInChipsType.SUPPLEMENT:
-    //     //         if (this.textTitle) this.textTitle.string = i18nMgr.Get('UITexas_AddChipsMenu');
-    //     //         break;
-    //     //     case BringInChipsType.AUTO_RECHARGE:
-    //     //         if (this.textTitle) this.textTitle.string = i18nMgr.Get('UICreate_AutoRechage');
-    //     //         break;
-    //     //     case BringInChipsType.MUSHROOM:
-    //     //         if (this.textTitle) this.textTitle.string = i18nMgr.Get('UITexas_AddChipsMenu');
-    //     //         break;
-    //     //     case BringInChipsType.SQUID:
-    //     //         if (this.textTitle) this.textTitle.string = i18nMgr.Get('UITexas_AddChipsMenu');
-    //     //         break;
-    //     //     case BringInChipsType.MATCH:
-    //     //         if (this.textTitle) this.textTitle.string = i18nMgr.Get('UIClub_RoomSitApplyRecords_title');
-    //     //         break;
-    //     //     default:
-    //     //         if (this.textTitle) this.textTitle.string = i18nMgr.Get('UIClub_RoomSitApplyRecords_title');
-    //     //         break;
-    //     // }
-    //     switch (this.addChipsData._type) {
-    //         // 货币
-    //         case 1:
-    //             this._updateDisplayForWallet();
-    //             break;
-    //         case 2:
-    //             this._updateDisplayForDiamond();
-    //             break;
-    //         case 3:
-    //             this._updateDisplayForClubCredit();
-    //             break;
-    //     }
-    // }
+
+    private onClickBringInTip() {
+        if (this.tipsMask) this.tipsMask.active = true;
+        if (this.bringTips) this.bringTips.active = true;
+    }
+
+    protected regiterTouchEvents(): void {
+        this.titleBarDiamondLine.parent.on('click', this.onClickDiamond, this);
+        this.titleBarBalanceLine.parent.on('click', this.onClickBalance, this);
+        this.buttonCommit.node.on('click', this.onClickCommit, this);
+        this.buttonCommit2.node.on('click', this.onClickCommit, this);
+        this.buttonSelectWallet.on('click', this.onClickWalletBtn, this);
+        this.tipsMask.on('click', this.onClickTipsMask, this);
+        // this.setButtonClick(this.recordTipsBtn, () => {
+        //     if (this.tips) this.tips.active = true;
+        //     if (this.tipsMask) this.tipsMask.active = true;
+        // });
+        this.bringInTipButton.on('click', this.onClickBringInTip, this);
+        this.paynowBtn.node.on('click', () => {
+            this.onPayNowOrApplyTraderClicked(this._toApplyTrader, this._payType, this._rechargeData);
+        });
+        this.switchAutoBringin.onSwitchCallback = isOn => {
+            this.autoBringinSliderArea.active = isOn;
+            this._autoBringin = isOn;
+        };
+    }
     // public _showCommitButton(te: number, s: boolean) {
     //     this.buttonCommit.active = false;
     //     this.buttonCommit2.active = false;
@@ -314,27 +257,36 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     //         this.buttonCommit.active = s;
     //     }
     // }
-    public _showBalance(amount: number, te: number) {
+    @traceMethod()
+    public _showBalance(te: number) {
         switch (te) {
             case 1:
                 this.balanceNode.active = true;
                 this.creditNode.active = false;
                 this.diamondNode.active = false;
-                this.textTotalCoin.string = StringHelper.GetLongStringLocale(amount);
+                this.textTotalCoin.string = StringHelper.GetLongStringLocale(0);
                 break;
             case 2:
                 this.balanceNode.active = false;
                 this.creditNode.active = false;
                 this.diamondNode.active = true;
-                this.textTotalDiamond.string = StringHelper.GetLongStringLocale(amount, 1, 0);
+                this.textTotalDiamond.string = StringHelper.GetLongStringLocale(0, 1, 0);
                 break;
             case 3:
                 this.balanceNode.active = false;
                 this.creditNode.active = true;
                 this.diamondNode.active = false;
-                this.textTotalCredit.string = StringHelper.GetLongStringLocale(amount, 1, 0);
+                this.textTotalCredit.string = StringHelper.GetLongStringLocale(0, 1, 0);
                 break;
         }
+    }
+
+    public _showWalletArea(b: boolean) {
+        this.walletArea.active = b;
+    }
+
+    public _showBringInArea(b: boolean) {
+        this.bringInArea.active = b;
     }
     // private _updateDisplayForWallet() {
     //     this.buttonCommit.active = false;
@@ -460,8 +412,8 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         if (this.bringInTipButton) {
             this.bringInTipButton.active = showDepositTip;
             const newPos = UIViewUtil.caculatePostion(this.amountDescriptionTopTipDot, this.bringInTipButton.children[0]);
-            //this.amountDescriptionTopTipDot.setPosition(localPos.x + 100, localPos.y - 53);
-            this.amountDescriptionTopTipDot.setPosition(newPos);
+            this.amountDescriptionTopTipDot.setPosition(newPos.x + 100, newPos.y - 53);
+            // this.amountDescriptionTopTipDot.setPosition(newPos);
         }
     }
 
@@ -666,7 +618,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     /**
      * 点击带入
      */
-    private onClickChips(obj: cc.Node): void {
+    private onClickBalance(obj: cc.Node): void {
         this._changeTab(BringInTabType.Chips);
     }
 
@@ -685,16 +637,8 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         const balanceStatus = titleType == BringInTabType.Chips;
         this.titleBarDiamondLine.active = diamondStatus;
         this.titleBarBalanceLine.active = balanceStatus;
-        this.bringInArea.active = balanceStatus;
+        this.bringInFullArea.active = balanceStatus;
         this.diamondArea.active = diamondStatus;
-        // if (balanceStatus) {
-        //     switch(bringInType) {
-        //     case 1:
-        //         this.autoBringinArea
-        //     case 2:
-        //     case 3:
-        //     }
-        // }
     }
 
     private removeAddChipsUI(): void {
@@ -787,7 +731,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         // 如果已经有选中状态，要恢复状态
         this._cloneNode.active = false;
         this.emptySelectWallet.active = true;
-        this.walletScrollView.node.active = true;
+        this.walletScrollView.node.active = false;
         let button = this.buttonSelectWallet.getComponent(cc.Button);
         button.interactable = true;
         this.walletScrollView.content.removeAllChildren();

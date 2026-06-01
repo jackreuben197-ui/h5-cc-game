@@ -21,6 +21,23 @@ export class BringInProviderTexas extends BringInProvider {
     }
 
     protected beforeBind(): void {
+        this._ui._showBalance(this._data.roomData.basicInfo.bringInType);
+        switch (this._data.roomData.basicInfo.bringInType) {
+            case 1:
+                this._ui._showWalletArea(true);
+                this._ui._showBringInArea(false);
+                break;
+            case 2:
+                this._ui._showWalletArea(false);
+                this._ui._showBringInArea(true);
+                break;
+            case 3:
+                this._ui._showWalletArea(false);
+                this._ui._showBringInArea(true);
+                break;
+            default:
+                break;
+        }
         this._ui._changeTab(BringInTabType.Chips);
     }
 
