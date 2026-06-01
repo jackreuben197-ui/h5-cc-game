@@ -85,6 +85,12 @@ function all(html, re) {
   return out
 }
 
+function insertBefore(html, marker, content) {
+  if (html.includes(content)) return html
+  if (!html.includes(marker)) return html
+  return html.replace(marker, `${content}\n${marker}`)
+}
+
 const polyfills       = one(src, /<script type="module" crossorigin src="\.\/assets\/[^"]*polyfills-[^"]+\.js"><\/script>/)
 const entry           = one(src, /<script type="module" crossorigin src="\.\/assets\/[^"]*index-[^"]+\.js"><\/script>/)
 const preloads        = all(src, /<link rel="modulepreload" crossorigin href="\.\/assets\/[^"]+\.js">/)
@@ -110,203 +116,168 @@ console.log('  entry:    ', entry.match(/index-[^"\/]+\.js/)?.[0])
 console.log('  css:      ', cssLinks.map(s => s.match(/[^"\/]+\.css/)?.[0]).join(', '))
 console.log('  preloads: ', preloads.length, '个')
 
-// ─── 生成 preview HTML ────────────────────────────────
-
-const out = `<!--
-  * Cocos Creator 2.4.8 编辑器预览模板
-  * 由 sync-template.js 从 build-templates/web-mobile/index.html 自动生成
-  * 不要手动编辑！修改请更新 build-templates 后运行: npm run sync:template
--->
-<!DOCTYPE html>
-<html>
-
-<head>
-    <!-- H5 层：Vite polyfills -->
-    ${polyfills}
-
-    <meta charset="utf-8">
-    <title>PokerQueen - Preview</title>
-    <meta name="viewport"
-        content="width=device-width,user-scalable=no,initial-scale=1, minimum-scale=1,maximum-scale=1,viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="format-detection" content="telephone=no">
-    <meta name="renderer" content="webkit">
-    <meta name="force-rendering" content="webkit">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <meta name="msapplication-tap-highlight" content="no">
-    <meta name="full-screen" content="yes">
-    <meta name="x5-fullscreen" content="true">
-    <meta name="360-fullscreen" content="true">
-    <meta name="screen-orientation" content="landscape">
-    <meta name="x5-orientation" content="landscape">
-    <meta name="x5-page-mode" content="app">
-
-    <link rel="icon" href="favicon.ico">
-
-    <!-- CSS：编辑器样式 -->
-    <link rel="stylesheet" href="app/editor/static/preview-templates/style.css">
-
-    <!-- H5 层样式 -->
-    ${cssLinks.join('\n    ')}
-
-    <!-- H5 层：Vite 模块预加载 -->
-    ${preloads.join('\n    ')}
-
-    <!-- H5 层：Vite 主入口 -->
-    ${entry}
-
-    <style>
-        #app {
-            position: fixed;
-            inset: 0;
-            z-index: 10;
-        }
-
-        #drawCanvas {
-            display: none;
-        }
-    </style>
-
-    <!-- CC 编辑器预览：拦截 H5 的 i18n fetch，绕过 Cocos 资源管线 -->
-    <script>
-    (function () {
-        var origFetch = window.fetch;
-        window.fetch = function (input, init) {
-            var url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
-            if (/assets\\/resources\\/config\\/USER_\\w+\\.txt/.test(url)) {
-                var m = url.match(/USER_\\w+\\.txt/);
-                if (m) url = './h5-i18n/' + m[0];
-                input = typeof input === 'string' ? url : new Request(url, input);
-            }
-            return origFetch.call(this, input, init);
-        };
-    })();
-    </script>
-</head>
-
-<body>
-    <!-- ========================================== -->
-    <!-- 编辑器工具栏（boot.js 直接引用这些 DOM 元素） -->
-    <!-- ========================================== -->
-    <div class="toolbar">
-        <div class="item">
-            <select id="opts-device">
-                <option value="0">Default</option>
-            </select>
-        </div>
-        <div class="item">
-            <button id="btn-rotate">Rotate</button>
-        </div>
-        <span class="item" style="font-size: small;">Debug Mode:</span>
-        <div class="item">
-            <select id="opts-debug-mode">
-                <option value="0">None</option>
-                <option value="1">Info</option>
-                <option value="2">Warn</option>
-                <option value="3">Error</option>
-                <option value="4">Info For Web Page</option>
-                <option value="5">Warn For Web Page</option>
-                <option value="6">Error For Web Page</option>
-            </select>
-        </div>
-        <div class="item">
-            <button id="btn-show-fps">Show FPS</button>
-        </div>
-        <div class="item">
-            <span class="item" style="font-size: small;">FPS:</span>
-            <input id="input-set-fps" type="number">
-        </div>
-        <div class="item" style="margin-right: 0px;">
-            <button id="btn-pause">Pause</button>
-        </div>
-        <div class="item">
-            <button id="btn-step" style="display: none;">Step</button>
-        </div>
-        <div class="item">
-            <button id="btn-recompile">Recompile</button>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- Cocos 官方 DOM 结构 -->
-    <!-- content > contentWrap > wrapper#GameDiv -->
-    <!-- boot.js 依赖这些元素，不可删除 -->
-    <!-- ========================================== -->
-    <div class="content" id="content">
-        <div class="contentWrap">
-            <div class="wrapper" id="GameDiv">
-                <canvas id="GameCanvas"></canvas>
-                <div id="splash">
-                    <div class="progress-bar stripes">
-                        <span></span>
-                    </div>
-                </div>
-                <div id="bulletin">
-                    <div class="inner" id="sceneIsEmpty"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="recompiling">
-        <span>Recompiling scripts...</span>
-    </div>
-
-    <!-- 额外 DOM -->
-    <canvas id="drawCanvas"></canvas>
-    <input id="OpenImageFile" type="file" accept=".png, .jpg, .jpeg" style="visibility: hidden">
-
-    <!-- H5 挂载节点 -->
-    <div id="app"></div>
-
-    <!-- ================================================== -->
-    <!-- Cocos 引擎脚本：严格对齐官方 index.jade 加载顺序 -->
-    <!-- ================================================== -->
-    <script src="settings.js" charset="utf-8"></script>
-    <script src="preview-scripts/__quick_compile__.js" charset="utf-8"></script>
-    <script src="app/editor/static/preview-templates/boot.js" charset="utf-8"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script>window.__socket_io__ = window.io;</script>
-    <script src="app/engine/bin/<%=cocos2d%>" charset="utf-8"></script>
-
-    <!-- Telegram 初始化 -->
-    <script>
-        (function () {
-            if (window.Telegram && window.Telegram.WebApp) {
-                var tg = window.Telegram.WebApp;
-                document.body.classList.add('telegram-app');
-                tg.ready();
-                try { tg.expand(); } catch (e) { }
-                setTimeout(function () { try { tg.expand(); } catch (e) { } }, 300);
-            }
-        })();
-    </script>
-
-    <!-- H5 层：旧版浏览器兼容 -->
-    <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1,e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
-    ${legacyPolyfill}
-    ${legacyEntry}
-</body>
-
-</html>
-`
-
-// ─── 写入 preview-templates ──────────────────────────────
-fs.writeFileSync(PREVIEW_HTML, out, 'utf-8')
-console.log('\n✓ preview-templates/index.html 已生成')
-
 // ─── 步骤 4：修补 build-templates index.html 的 #splash ──
 // xcopy 从 H5 dist 覆盖后 #splash 是空的，但 CC 的 main.js 需要 .progress-bar > span 子元素
 const SPLASH_EMPTY = /<div id="splash"><\/div>/
 const SPLASH_CORRECT = '<div id="splash">\n      <div class="progress-bar stripes">\n        <span></span>\n      </div>\n    </div>'
 
-if (SPLASH_EMPTY.test(src)) {
-  // 读取当前文件（可能已被 xcopy 覆盖）
-  let buildHtml = fs.readFileSync(BUILD_HTML, 'utf-8')
+let buildHtml = src
+if (SPLASH_EMPTY.test(buildHtml)) {
   buildHtml = buildHtml.replace(SPLASH_EMPTY, SPLASH_CORRECT)
   fs.writeFileSync(BUILD_HTML, buildHtml, 'utf-8')
   console.log('✓ build-templates/web-mobile/index.html #splash 已修补')
 } else {
   console.log('✓ build-templates/web-mobile/index.html #splash 无需修补')
 }
+
+// ─── 步骤 5：基于 build index 全量生成 preview index，再补充编辑器预览必需代码 ──
+
+const AUTO_GEN_BANNER = `<!--
+  * Cocos Creator 2.4.8 编辑器预览模板
+  * 由 sync-template.js 从 build-templates/web-mobile/index.html 自动生成
+  * 不要手动编辑！修改请更新 build-templates 后运行: npm run sync:template
+-->`
+
+const PREVIEW_STYLE_LINK = '<link rel="stylesheet" href="app/editor/static/preview-templates/style.css">'
+
+const I18N_FETCH_PATCH = `    <!-- CC 编辑器预览：拦截 H5 的 i18n fetch，绕过 Cocos 资源管线 -->
+  <script>
+  (function () {
+    var origFetch = window.fetch;
+    window.fetch = function (input, init) {
+      var url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
+      if (/assets\\/resources\\/config\\/USER_\\w+\\.txt/.test(url)) {
+        var m = url.match(/USER_\\w+\\.txt/);
+        if (m) url = './h5-i18n/' + m[0];
+        input = typeof input === 'string' ? url : new Request(url, input);
+      }
+      return origFetch.call(this, input, init);
+    };
+  })();
+  </script>`
+
+const PREVIEW_TOOLBAR = `
+  <!-- ========================================== -->
+  <!-- 编辑器工具栏（boot.js 直接引用这些 DOM 元素） -->
+  <!-- ========================================== -->
+  <div class="toolbar">
+    <div class="item">
+      <select id="opts-device">
+        <option value="0">Default</option>
+      </select>
+    </div>
+    <div class="item">
+      <button id="btn-rotate">Rotate</button>
+    </div>
+    <span class="item" style="font-size: small;">Debug Mode:</span>
+    <div class="item">
+      <select id="opts-debug-mode">
+        <option value="0">None</option>
+        <option value="1">Info</option>
+        <option value="2">Warn</option>
+        <option value="3">Error</option>
+        <option value="4">Info For Web Page</option>
+        <option value="5">Warn For Web Page</option>
+        <option value="6">Error For Web Page</option>
+      </select>
+    </div>
+    <div class="item">
+      <button id="btn-show-fps">Show FPS</button>
+    </div>
+    <div class="item">
+      <span class="item" style="font-size: small;">FPS:</span>
+      <input id="input-set-fps" type="number">
+    </div>
+    <div class="item" style="margin-right: 0px;">
+      <button id="btn-pause">Pause</button>
+    </div>
+    <div class="item">
+      <button id="btn-step" style="display: none;">Step</button>
+    </div>
+    <div class="item">
+      <button id="btn-recompile">Recompile</button>
+    </div>
+  </div>
+`
+
+const PREVIEW_RECOMPILING = `
+  <div id="recompiling">
+    <span>Recompiling scripts...</span>
+  </div>
+`
+
+const PREVIEW_COCOS_DOM = `
+  <!-- ========================================== -->
+  <!-- Cocos 官方 DOM 结构 -->
+  <!-- content > contentWrap > wrapper#GameDiv -->
+  <!-- boot.js 依赖这些元素，不可删除 -->
+  <!-- ========================================== -->
+  <div class="content" id="content">
+    <div class="contentWrap">
+      <div class="wrapper" id="GameDiv">
+        <canvas id="GameCanvas" oncontextmenu="event.preventDefault()" tabindex="0"></canvas>
+        <div id="splash">
+          <div class="progress-bar stripes">
+            <span></span>
+          </div>
+        </div>
+        <div id="bulletin">
+          <div class="inner" id="sceneIsEmpty"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="drawCanvas"></canvas>
+  <input id="OpenImageFile" type="file" accept=".png,.jpg,.jpeg" style="visibility: hidden" />
+`
+
+const PREVIEW_COCOS_BOOT = `
+  <!-- ================================================== -->
+  <!-- Cocos 引擎脚本：严格对齐官方 index.jade 加载顺序 -->
+  <!-- ================================================== -->
+  <script src="settings.js" charset="utf-8"></script>
+  <script src="preview-scripts/__quick_compile__.js" charset="utf-8"></script>
+  <script src="app/editor/static/preview-templates/boot.js" charset="utf-8"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>window.__socket_io__ = window.io;</script>
+  <script src="app/engine/bin/<%=cocos2d%>" charset="utf-8"></script>
+`
+
+let out = buildHtml
+
+if (!out.includes('<!DOCTYPE html>')) {
+  console.error('生成失败: build-templates/web-mobile/index.html 缺少 <!DOCTYPE html>')
+  process.exit(1)
+}
+
+out = insertBefore(out, '</head>', `    <!-- CSS：编辑器样式 -->\n    ${PREVIEW_STYLE_LINK}`)
+out = insertBefore(out, '</head>', I18N_FETCH_PATCH)
+
+if (!out.includes('id="opts-device"')) {
+  out = out.replace(/<body[^>]*>/i, m => `${m}${PREVIEW_TOOLBAR}`)
+}
+
+// 将 build 的 Cocos 运行 DOM 替换为编辑器预览可用结构，避免重复 id 和空壳容器
+const BUILD_COCOS_DOM_RE = /\s*<!-- Cocos 运行节点（与 build-templates\/web-mobile 对齐） -->[\s\S]*?<input id="OpenImageFile"[^>]*>/
+if (BUILD_COCOS_DOM_RE.test(out)) {
+  out = out.replace(BUILD_COCOS_DOM_RE, `\n${PREVIEW_COCOS_DOM}`)
+}
+
+// 将 build 的 Cocos 启动链路替换为编辑器预览脚本链路
+const BUILD_COCOS_BOOT_RE = /\s*<!-- Cocos 引擎加载（与旧模板一致） -->[\s\S]*?<\/script>\s*\n\s*<!-- Telegram 初始化（异步按需加载，网络不可达时不阻塞页面） -->/
+if (BUILD_COCOS_BOOT_RE.test(out)) {
+  out = out.replace(BUILD_COCOS_BOOT_RE, `\n${PREVIEW_COCOS_BOOT}\n\n    <!-- Telegram 初始化（异步按需加载，网络不可达时不阻塞页面） -->`)
+} else if (!out.includes('preview-scripts/__quick_compile__.js')) {
+  out = insertBefore(out, '</body>', PREVIEW_COCOS_BOOT)
+}
+
+if (!out.includes('id="recompiling"')) {
+  out = insertBefore(out, '</body>', PREVIEW_RECOMPILING)
+}
+
+out = `${AUTO_GEN_BANNER}\n${out}`
+
+// ─── 写入 preview-templates ──────────────────────────────
+fs.writeFileSync(PREVIEW_HTML, out, 'utf-8')
+console.log('\n✓ preview-templates/index.html 已生成')
