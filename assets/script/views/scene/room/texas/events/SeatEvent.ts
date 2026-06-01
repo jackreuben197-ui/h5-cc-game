@@ -126,10 +126,10 @@ export default class SeatEvent {
                         // 没有藏钱直接坐下
                         if (seatData.roomData.basicInfo.retainType == RoomInfo.RetainType.RT_DISABLE) {
                             ProtocolAgency.Send({
-                                Code: Code.MSG_D_SEATED,
-                                RoomID: seatData.roomData.roomID,
-                                MatchID: seatData.roomData.matchID,
-                                Body: seatedData
+                                code: Code.MSG_D_SEATED,
+                                roomID: seatData.roomData.roomID,
+                                matchID: seatData.roomData.matchID,
+                                body: seatedData
                             });
                         }
                         // 如果有藏钱的逻辑(还要保留最小上桌)
@@ -142,10 +142,10 @@ export default class SeatEvent {
                                 seatedData.store = bringToTable - seatData.roomData.basicInfo.retainMinRate * seatData.roomData.basicInfo.sbante.sb * 2;
                             }
                             ProtocolAgency.Send({
-                                Code: Code.MSG_D_SEATED,
-                                RoomID: seatData.roomData.roomID,
-                                MatchID: seatData.roomData.matchID,
-                                Body: seatedData
+                                code: Code.MSG_D_SEATED,
+                                roomID: seatData.roomData.roomID,
+                                matchID: seatData.roomData.matchID,
+                                body: seatedData
                             });
                         }
                         return;
@@ -199,10 +199,10 @@ export default class SeatEvent {
                 // 钱包够,没输光(反桌)
                 if (bringToTable > 0) {
                     ProtocolAgency.Send({
-                        Code: Code.MSG_D_SEATED,
-                        RoomID: seatData.roomData.roomID,
-                        MatchID: seatData.roomData.matchID,
-                        Body: seatedData
+                        code: Code.MSG_D_SEATED,
+                        roomID: seatData.roomData.roomID,
+                        matchID: seatData.roomData.matchID,
+                        body: seatedData
                     });
                     return;
                 }

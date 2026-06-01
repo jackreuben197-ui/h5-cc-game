@@ -3,7 +3,7 @@ import { AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDispla
 import { ChatType } from '../../../game/constant/ChatType';
 import { MushroomMode } from '../../../game/constant/Mushroom';
 import { SquidLeaveMode, SquidMode } from '../../../game/constant/Squid';
-import { ViewPlayerCardsMode } from '../../../game/constant/ViewPlayerCards';
+import { ViewPlayerCardsMode } from '../../../game/constant/ViewPlayerCardsMode';
 import GameplayUtil from '../../../game/util/GameplayUtil';
 import { Def, InsuranceOddsForPotsUserCount, RoomJackpotConfig, SquidCountRateConfig, SubRoomConfig } from '../../../protobuf/holdem/define_pb';
 import TexasGameRoomData from './TexasGameRoomData';
