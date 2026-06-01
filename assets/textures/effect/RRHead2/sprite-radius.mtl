@@ -1,0 +1,44 @@
+{
+  "__type__": "cc.Material",
+  "_name": "sprite-radius",
+  "_objFlags": 0,
+  "_native": "",
+  "_effectAsset": {
+    "__uuid__": "c8c23a8d-514c-42b3-92ec-7b42a58554d2"
+  },
+  "_techniqueIndex": 0,
+  "_techniqueData": {
+    "0": {
+      "props": {
+        "leftTop": {
+          "__type__": "cc.Vec2",
+          "x": 120,
+          "y": 120
+        },
+        "rightTop": {
+          "__type__": "cc.Vec2",
+          "x": 120,
+          "y": 120
+        },
+        "rightBottom": {
+          "__type__": "cc.Vec2",
+          "x": 120,
+          "y": 120
+        },
+        "leftBottom": {
+          "__type__": "cc.Vec2",
+          "x": 120,
+          "y": 120
+        },
+        "size": {
+          "__type__": "cc.Vec2",
+          "x": 400,
+          "y": 400
+        }
+      },
+      "defines": {
+        "USE_TEXTURE": true
+      }
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "ver": "2.3.7",
+  "uuid": "8412f107-59fb-4549-9534-7fe068f61efe",
+  "importer": "texture",
+  "type": "sprite",
+  "wrapMode": "clamp",
+  "filterMode": "bilinear",
+  "premultiplyAlpha": false,
+  "genMipmaps": false,
+  "packable": true,
+  "width": 399,
+  "height": 266,
+  "platformSettings": {},
+  "subMetas": {
+    "OriLogo": {
+      "ver": "1.0.6",
+      "uuid": "1f9b5907-f409-4172-82c0-b410e102c4e0",
+      "importer": "sprite-frame",
+      "rawTextureUuid": "8412f107-59fb-4549-9534-7fe068f61efe",
+      "trimType": "auto",
+      "trimThreshold": 1,
+      "rotated": false,
+      "offsetX": -0.5,
+      "offsetY": 0.5,
+      "trimX": 0,
+      "trimY": 0,
+      "width": 398,
+      "height": 265,
+      "rawWidth": 399,
+      "rawHeight": 266,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "subMetas": {}
+    }
+  }
+}

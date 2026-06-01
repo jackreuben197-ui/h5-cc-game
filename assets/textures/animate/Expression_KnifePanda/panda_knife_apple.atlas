@@ -1,0 +1,83 @@
+
+panda_knife_apple.png
+size: 1024,512
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+K&A_0
+  rotate: false
+  xy: 725, 210
+  size: 69, 12
+  orig: 69, 12
+  offset: 0, 0
+  index: -1
+K&A_1
+  rotate: true
+  xy: 908, 99
+  size: 84, 54
+  orig: 84, 54
+  offset: 0, 0
+  index: -1
+K&A_10
+  rotate: false
+  xy: 125, 33
+  size: 115, 102
+  orig: 115, 102
+  offset: 0, 0
+  index: -1
+K&A_2
+  rotate: false
+  xy: 240, 41
+  size: 82, 94
+  orig: 82, 94
+  offset: 0, 0
+  index: -1
+K&A_3
+  rotate: false
+  xy: 725, 0
+  size: 183, 183
+  orig: 183, 183
+  offset: 0, 0
+  index: -1
+K&A_4
+  rotate: false
+  xy: 989, 222
+  size: 30, 250
+  orig: 30, 250
+  offset: 0, 0
+  index: -1
+K&A_5
+  rotate: true
+  xy: 808, 183
+  size: 289, 181
+  orig: 289, 181
+  offset: 0, 0
+  index: -1
+K&A_6
+  rotate: false
+  xy: 435, 41
+  size: 290, 181
+  orig: 290, 181
+  offset: 0, 0
+  index: -1
+K&A_7
+  rotate: false
+  xy: 435, 222
+  size: 373, 250
+  orig: 373, 250
+  offset: 0, 0
+  index: -1
+K&A_8
+  rotate: false
+  xy: 0, 135
+  size: 435, 337
+  orig: 435, 337
+  offset: 0, 0
+  index: -1
+K&A_9
+  rotate: false
+  xy: 0, 27
+  size: 125, 108
+  orig: 125, 108
+  offset: 0, 0
+  index: -1

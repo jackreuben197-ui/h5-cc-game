@@ -1,0 +1,146 @@
+
+pinkrabbit_smoke.png
+size: 1024,512
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+arm-A_
+  rotate: false
+  xy: 480, 377
+  size: 149, 130
+  orig: 149, 130
+  offset: 0, 0
+  index: -1
+arm-big-A
+  rotate: false
+  xy: 257, 27
+  size: 82, 114
+  orig: 82, 114
+  offset: 0, 0
+  index: -1
+arm-big-B_
+  rotate: true
+  xy: 335, 165
+  size: 87, 113
+  orig: 87, 113
+  offset: 0, 0
+  index: -1
+body_
+  rotate: false
+  xy: 0, 290
+  size: 336, 217
+  orig: 336, 217
+  offset: 0, 0
+  index: -1
+brow-A
+  rotate: false
+  xy: 172, 1
+  size: 32, 27
+  orig: 32, 27
+  offset: 0, 0
+  index: -1
+ear-A_
+  rotate: false
+  xy: 336, 361
+  size: 144, 146
+  orig: 144, 146
+  offset: 0, 0
+  index: -1
+eye socket-A
+  rotate: true
+  xy: 339, 50
+  size: 115, 80
+  orig: 115, 80
+  offset: 0, 0
+  index: -1
+eyeball-A
+  rotate: true
+  xy: 480, 361
+  size: 16, 17
+  orig: 16, 17
+  offset: 0, 0
+  index: -1
+face
+  rotate: false
+  xy: 0, 28
+  size: 257, 262
+  orig: 257, 262
+  offset: 0, 0
+  index: -1
+fire
+  rotate: false
+  xy: 945, 413
+  size: 79, 94
+  orig: 79, 94
+  offset: 0, 0
+  index: -1
+hand
+  rotate: true
+  xy: 336, 252
+  size: 109, 129
+  orig: 109, 129
+  offset: 0, 0
+  index: -1
+lip
+  rotate: false
+  xy: 629, 407
+  size: 172, 100
+  orig: 172, 100
+  offset: 0, 0
+  index: -1
+lower eyelid-A_
+  rotate: false
+  xy: 0, 0
+  size: 88, 28
+  orig: 88, 28
+  offset: 0, 0
+  index: -1
+mouth-C
+  rotate: true
+  xy: 801, 380
+  size: 127, 144
+  orig: 127, 144
+  offset: 0, 0
+  index: -1
+nose
+  rotate: false
+  xy: 778, 383
+  size: 23, 24
+  orig: 23, 24
+  offset: 0, 0
+  index: -1
+oral cavity
+  rotate: true
+  xy: 257, 141
+  size: 149, 78
+  orig: 149, 78
+  offset: 0, 0
+  index: -1
+smoke_ring-small
+  rotate: false
+  xy: 945, 320
+  size: 77, 93
+  orig: 77, 93
+  offset: 0, 0
+  index: -1
+upper eyelid-A
+  rotate: false
+  xy: 88, 1
+  size: 84, 27
+  orig: 84, 27
+  offset: 0, 0
+  index: -1
+upper tooth
+  rotate: false
+  xy: 629, 362
+  size: 149, 45
+  orig: 149, 45
+  offset: 0, 0
+  index: -1
+yan
+  rotate: true
+  xy: 419, 57
+  size: 108, 40
+  orig: 108, 40
+  offset: 0, 0
+  index: -1

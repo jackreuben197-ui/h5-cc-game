@@ -1,0 +1,17 @@
+{
+  "__type__": "cc.Material",
+  "_name": "Round",
+  "_objFlags": 0,
+  "_native": "",
+  "_effectAsset": {
+    "__uuid__": "fb340e24-f7b5-4630-bb10-1051b746e08a"
+  },
+  "_techniqueIndex": 0,
+  "_techniqueData": {
+    "0": {
+      "defines": {
+        "USE_TEXTURE": true
+      }
+    }
+  }
+}

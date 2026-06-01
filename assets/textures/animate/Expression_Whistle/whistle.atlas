@@ -1,0 +1,83 @@
+
+whistle.png
+size: 1024,1024
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+img/arm_l
+  rotate: false
+  xy: 321, 182
+  size: 63, 108
+  orig: 63, 108
+  offset: 0, 0
+  index: -1
+img/body
+  rotate: true
+  xy: 0, 0
+  size: 490, 321
+  orig: 490, 321
+  offset: 0, 0
+  index: -1
+img/eye_smail_l
+  rotate: false
+  xy: 731, 517
+  size: 87, 70
+  orig: 87, 70
+  offset: 0, 0
+  index: -1
+img/face
+  rotate: false
+  xy: 0, 490
+  size: 475, 496
+  orig: 475, 496
+  offset: 0, 0
+  index: -1
+img/hair
+  rotate: false
+  xy: 321, 290
+  size: 115, 200
+  orig: 115, 200
+  offset: 0, 0
+  index: -1
+img/hand_r
+  rotate: false
+  xy: 321, 42
+  size: 60, 67
+  orig: 60, 67
+  offset: 0, 0
+  index: -1
+img/hat_base
+  rotate: true
+  xy: 834, 770
+  size: 216, 134
+  orig: 216, 134
+  offset: 0, 0
+  index: -1
+img/line
+  rotate: false
+  xy: 475, 730
+  size: 359, 256
+  orig: 359, 256
+  offset: 0, 0
+  index: -1
+img/money
+  rotate: false
+  xy: 731, 587
+  size: 95, 143
+  orig: 95, 143
+  offset: 0, 0
+  index: -1
+img/mouth_whistle_up
+  rotate: false
+  xy: 321, 109
+  size: 69, 73
+  orig: 69, 73
+  offset: 0, 0
+  index: -1
+img/round
+  rotate: false
+  xy: 475, 474
+  size: 256, 256
+  orig: 256, 256
+  offset: 0, 0
+  index: -1

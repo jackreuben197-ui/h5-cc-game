@@ -1,0 +1,146 @@
+
+octopoda.png
+size: 2048,1024
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+antenna-A
+  rotate: true
+  xy: 1210, 852
+  size: 170, 602
+  orig: 170, 602
+  offset: 0, 0
+  index: -1
+antenna-B
+  rotate: true
+  xy: 561, 833
+  size: 189, 647
+  orig: 189, 647
+  offset: 0, 0
+  index: -1
+antenna-C
+  rotate: false
+  xy: 2, 20
+  size: 198, 377
+  orig: 198, 377
+  offset: 0, 0
+  index: -1
+antenna-D
+  rotate: true
+  xy: 561, 491
+  size: 150, 369
+  orig: 150, 369
+  offset: 0, 0
+  index: -1
+body
+  rotate: false
+  xy: 2, 399
+  size: 557, 623
+  orig: 557, 623
+  offset: 0, 0
+  index: -1
+chip
+  rotate: false
+  xy: 202, 2
+  size: 150, 132
+  orig: 150, 132
+  offset: 0, 0
+  index: -1
+crown_
+  rotate: false
+  xy: 1814, 869
+  size: 232, 153
+  orig: 232, 153
+  offset: 0, 0
+  index: -1
+eye_ball-A_
+  rotate: true
+  xy: 1168, 758
+  size: 73, 49
+  orig: 73, 49
+  offset: 0, 0
+  index: -1
+eye_socket-A
+  rotate: false
+  xy: 354, 6
+  size: 127, 128
+  orig: 127, 128
+  offset: 0, 0
+  index: -1
+eyebrow-A_
+  rotate: false
+  xy: 1814, 856
+  size: 82, 11
+  orig: 82, 11
+  offset: 0, 0
+  index: -1
+eyelid-A_
+  rotate: false
+  xy: 487, 138
+  size: 163, 69
+  orig: 163, 69
+  offset: 0, 0
+  index: -1
+glasses-A
+  rotate: false
+  xy: 561, 643
+  size: 605, 188
+  orig: 605, 188
+  offset: 0, 0
+  index: -1
+glasses-B
+  rotate: false
+  xy: 733, 259
+  size: 133, 76
+  orig: 133, 76
+  offset: 0, 0
+  index: -1
+hat
+  rotate: false
+  xy: 202, 136
+  size: 283, 261
+  orig: 283, 261
+  offset: 0, 0
+  index: -1
+lip
+  rotate: false
+  xy: 561, 337
+  size: 311, 152
+  orig: 311, 152
+  offset: 0, 0
+  index: -1
+lowereyelid-B
+  rotate: true
+  xy: 874, 357
+  size: 132, 50
+  orig: 132, 50
+  offset: 0, 0
+  index: -1
+money-A
+  rotate: true
+  xy: 487, 209
+  size: 126, 244
+  orig: 126, 244
+  offset: 0, 0
+  index: -1
+mouth_cavity
+  rotate: false
+  xy: 932, 499
+  size: 301, 142
+  orig: 301, 142
+  offset: 0, 0
+  index: -1
+star-A
+  rotate: false
+  xy: 652, 125
+  size: 83, 82
+  orig: 83, 82
+  offset: 0, 0
+  index: -1
+tooth1
+  rotate: false
+  xy: 487, 360
+  size: 52, 37
+  orig: 52, 37
+  offset: 0, 0
+  index: -1

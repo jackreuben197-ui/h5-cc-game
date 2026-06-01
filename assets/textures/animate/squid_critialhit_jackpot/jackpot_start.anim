@@ -1,0 +1,71 @@
+{
+  "__type__": "cc.AnimationClip",
+  "_name": "jackpot_start",
+  "_objFlags": 0,
+  "_native": "",
+  "_duration": 2,
+  "sample": 60,
+  "speed": 1,
+  "wrapMode": 1,
+  "curveData": {
+    "props": {
+      "scale": [
+        {
+          "frame": 0,
+          "value": {
+            "__type__": "cc.Vec2",
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "frame": 1.35,
+          "value": {
+            "__type__": "cc.Vec2",
+            "x": 3,
+            "y": 3
+          }
+        },
+        {
+          "frame": 1.6333333333333333,
+          "value": {
+            "__type__": "cc.Vec2",
+            "x": 3,
+            "y": 3
+          }
+        }
+      ],
+      "position": [
+        {
+          "frame": 0,
+          "value": [
+            0,
+            -1200,
+            0
+          ]
+        }
+      ],
+      "opacity": [
+        {
+          "frame": 1.35,
+          "value": 255
+        },
+        {
+          "frame": 1.6333333333333333,
+          "value": 255
+        },
+        {
+          "frame": 2,
+          "value": 0
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "frame": 0.85,
+      "func": "",
+      "params": []
+    }
+  ]
+}

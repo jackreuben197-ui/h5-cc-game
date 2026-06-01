@@ -1,0 +1,552 @@
+
+blueboy.png
+size: 2048,1024
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+img/char/arm
+  rotate: false
+  xy: 886, 405
+  size: 294, 351
+  orig: 294, 351
+  offset: 0, 0
+  index: -1
+img/char/arm_ok
+  rotate: true
+  xy: 1302, 523
+  size: 359, 121
+  orig: 359, 121
+  offset: 0, 0
+  index: -1
+img/char/body
+  rotate: true
+  xy: 627, 247
+  size: 509, 257
+  orig: 509, 257
+  offset: 0, 0
+  index: -1
+img/char/cigar
+  rotate: false
+  xy: 979, 89
+  size: 234, 80
+  orig: 234, 80
+  offset: 0, 0
+  index: -1
+img/char/crown
+  rotate: false
+  xy: 2, 88
+  size: 269, 157
+  orig: 269, 157
+  offset: 0, 0
+  index: -1
+img/char/eye_smile
+  rotate: false
+  xy: 1250, 81
+  size: 140, 122
+  orig: 140, 122
+  offset: 0, 0
+  index: -1
+img/char/eyebrow
+  rotate: false
+  xy: 503, 978
+  size: 183, 35
+  orig: 183, 35
+  offset: 0, 0
+  index: -1
+img/char/glasses
+  rotate: false
+  xy: 503, 758
+  size: 545, 191
+  orig: 545, 191
+  offset: 0, 0
+  index: -1
+img/char/hair_1
+  rotate: false
+  xy: 886, 171
+  size: 363, 232
+  orig: 363, 232
+  offset: 0, 0
+  index: -1
+img/char/line
+  rotate: false
+  xy: 1250, 205
+  size: 156, 316
+  orig: 156, 316
+  offset: 0, 0
+  index: -1
+img/char/mouth_fire
+  rotate: false
+  xy: 688, 959
+  size: 88, 54
+  orig: 88, 54
+  offset: 0, 0
+  index: -1
+img/char/mouth_in
+  rotate: false
+  xy: 2, 247
+  size: 623, 265
+  orig: 623, 265
+  offset: 0, 0
+  index: -1
+img/char/mouth_open
+  rotate: true
+  xy: 1182, 523
+  size: 490, 118
+  orig: 490, 118
+  offset: 0, 0
+  index: -1
+img/char/mouth_w_1
+  rotate: false
+  xy: 503, 952
+  size: 56, 24
+  orig: 56, 24
+  offset: 0, 0
+  index: -1
+img/char/round
+  rotate: false
+  xy: 2, 514
+  size: 499, 499
+  orig: 499, 499
+  offset: 0, 0
+  index: -1
+img/char/tie
+  rotate: false
+  xy: 273, 108
+  size: 303, 137
+  orig: 303, 137
+  offset: 0, 0
+  index: -1
+img/char/tongue
+  rotate: true
+  xy: 578, 108
+  size: 137, 181
+  orig: 137, 181
+  offset: 0, 0
+  index: -1
+img/effect/effect_cycle_35
+  rotate: false
+  xy: 814, 215
+  size: 43, 30
+  orig: 43, 30
+  offset: 0, 0
+  index: -1
+img/effect/effect_cycle_36
+  rotate: false
+  xy: 1473, 31
+  size: 51, 54
+  orig: 51, 54
+  offset: 0, 0
+  index: -1
+img/effect/effect_cycle_37
+  rotate: false
+  xy: 219, 6
+  size: 43, 80
+  orig: 43, 80
+  offset: 0, 0
+  index: -1
+img/effect/effect_cycle_38
+  rotate: false
+  xy: 1182, 427
+  size: 54, 94
+  orig: 54, 94
+  offset: 0, 0
+  index: -1
+img/effect/effect_cycle_39
+  rotate: false
+  xy: 649, 19
+  size: 85, 87
+  orig: 85, 87
+  offset: 0, 0
+  index: -1
+img/effect/effect_cycle_40
+  rotate: false
+  xy: 112, 10
+  size: 105, 76
+  orig: 105, 76
+  offset: 0, 0
+  index: -1
+img/effect/effect_cycle_41
+  rotate: false
+  xy: 2, 3
+  size: 108, 83
+  orig: 108, 83
+  offset: 0, 0
+  index: -1
+img/effect/effect_cycle_42
+  rotate: false
+  xy: 273, 5
+  size: 106, 101
+  orig: 106, 101
+  offset: 0, 0
+  index: -1
+img/effect/effect_cycle_43
+  rotate: false
+  xy: 469, 2
+  size: 85, 104
+  orig: 85, 104
+  offset: 0, 0
+  index: -1
+img/effect/effect_cycle_44
+  rotate: false
+  xy: 381, 3
+  size: 86, 103
+  orig: 86, 103
+  offset: 0, 0
+  index: -1
+img/effect/effect_cycle_45
+  rotate: false
+  xy: 556, 23
+  size: 91, 83
+  orig: 91, 83
+  offset: 0, 0
+  index: -1
+img/effect/effect_cycle_46
+  rotate: false
+  xy: 736, 26
+  size: 92, 72
+  orig: 92, 72
+  offset: 0, 0
+  index: -1
+img/effect/effect_cycle_47
+  rotate: false
+  xy: 900, 24
+  size: 72, 74
+  orig: 72, 74
+  offset: 0, 0
+  index: -1
+img/effect/effect_cycle_48
+  rotate: false
+  xy: 1302, 939
+  size: 62, 74
+  orig: 62, 74
+  offset: 0, 0
+  index: -1
+img/effect/effect_cycle_49
+  rotate: false
+  xy: 1229, 28
+  size: 64, 51
+  orig: 64, 51
+  offset: 0, 0
+  index: -1
+img/effect/effect_cycle_50
+  rotate: false
+  xy: 1526, 86
+  size: 53, 48
+  orig: 53, 48
+  offset: 0, 0
+  index: -1
+img/effect/effect_cycle_51
+  rotate: false
+  xy: 1561, 209
+  size: 27, 45
+  orig: 27, 45
+  offset: 0, 0
+  index: -1
+img/effect/fire/huo00
+  rotate: false
+  xy: 503, 540
+  size: 108, 216
+  orig: 108, 216
+  offset: 0, 0
+  index: -1
+img/effect/fire/huo01
+  rotate: false
+  xy: 1050, 797
+  size: 108, 216
+  orig: 108, 216
+  offset: 0, 0
+  index: -1
+img/effect/fire/huo02
+  rotate: true
+  xy: 761, 100
+  size: 108, 216
+  orig: 108, 216
+  offset: 0, 0
+  index: -1
+img/effect/fire/huo03
+  rotate: false
+  xy: 1408, 305
+  size: 108, 216
+  orig: 108, 216
+  offset: 0, 0
+  index: -1
+img/effect/fire/huo04
+  rotate: false
+  xy: 1408, 87
+  size: 108, 216
+  orig: 108, 216
+  offset: 0, 0
+  index: -1
+img/effect/fire/huo05
+  rotate: false
+  xy: 1425, 523
+  size: 108, 216
+  orig: 108, 216
+  offset: 0, 0
+  index: -1
+img/effect/fire/huo06
+  rotate: false
+  xy: 1425, 797
+  size: 108, 216
+  orig: 108, 216
+  offset: 0, 0
+  index: -1
+img/effect/fire/huo07
+  rotate: false
+  xy: 1518, 305
+  size: 108, 216
+  orig: 108, 216
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00057__1
+  rotate: false
+  xy: 1557, 765
+  size: 29, 44
+  orig: 29, 44
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00058__1
+  rotate: false
+  xy: 1383, 886
+  size: 36, 45
+  orig: 36, 45
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00059__1
+  rotate: false
+  xy: 1518, 256
+  size: 56, 47
+  orig: 56, 47
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00060__1
+  rotate: false
+  xy: 1535, 563
+  size: 50, 38
+  orig: 50, 38
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00062__1
+  rotate: false
+  xy: 1412, 36
+  size: 59, 49
+  orig: 59, 49
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00063__1
+  rotate: false
+  xy: 886, 695
+  size: 26, 61
+  orig: 26, 61
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00064__1
+  rotate: false
+  xy: 1295, 23
+  size: 55, 56
+  orig: 55, 56
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00065__1
+  rotate: false
+  xy: 886, 378
+  size: 36, 25
+  orig: 36, 25
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00069__1
+  rotate: false
+  xy: 1165, 32
+  size: 62, 55
+  orig: 62, 55
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00069__2
+  rotate: false
+  xy: 1535, 654
+  size: 50, 42
+  orig: 50, 42
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00070__1
+  rotate: false
+  xy: 1535, 867
+  size: 27, 53
+  orig: 27, 53
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00071__1
+  rotate: false
+  xy: 1501, 746
+  size: 54, 49
+  orig: 54, 49
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00071__2
+  rotate: false
+  xy: 1352, 29
+  size: 58, 50
+  orig: 58, 50
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00072__1
+  rotate: false
+  xy: 1302, 884
+  size: 79, 38
+  orig: 79, 38
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00073__1
+  rotate: false
+  xy: 1535, 975
+  size: 50, 38
+  orig: 50, 38
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00074__1
+  rotate: false
+  xy: 1518, 190
+  size: 41, 64
+  orig: 41, 64
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00075__1
+  rotate: false
+  xy: 1535, 811
+  size: 25, 54
+  orig: 25, 54
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00076__2
+  rotate: false
+  xy: 1518, 136
+  size: 49, 52
+  orig: 49, 52
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00079__2
+  rotate: false
+  xy: 761, 218
+  size: 51, 27
+  orig: 51, 27
+  offset: 0, 0
+  index: -1
+img/effect/smoke/PG sticker cool 2_00081__2
+  rotate: false
+  xy: 1535, 922
+  size: 34, 51
+  orig: 34, 51
+  offset: 0, 0
+  index: -1
+img/effect/smoke/smoke_1_44__1
+  rotate: false
+  xy: 1127, 406
+  size: 44, 71
+  orig: 44, 71
+  offset: 0, 0
+  index: -1
+img/effect/smoke/smoke_1_45__1
+  rotate: false
+  xy: 778, 967
+  size: 86, 46
+  orig: 86, 46
+  offset: 0, 0
+  index: -1
+img/effect/smoke/smoke_1_46__1
+  rotate: false
+  xy: 1105, 768
+  size: 43, 27
+  orig: 43, 27
+  offset: 0, 0
+  index: -1
+img/effect/smoke/smoke_1_47__1
+  rotate: false
+  xy: 1366, 933
+  size: 55, 80
+  orig: 55, 80
+  offset: 0, 0
+  index: -1
+img/effect/smoke/smoke_1_48__1
+  rotate: false
+  xy: 1099, 31
+  size: 64, 56
+  orig: 64, 56
+  offset: 0, 0
+  index: -1
+img/effect/smoke/smoke_1_51__1
+  rotate: false
+  xy: 1044, 16
+  size: 53, 71
+  orig: 53, 71
+  offset: 0, 0
+  index: -1
+img/effect/smoke/smoke_1_52__1
+  rotate: false
+  xy: 974, 22
+  size: 68, 65
+  orig: 68, 65
+  offset: 0, 0
+  index: -1
+img/effect/smoke/smoke_1_52__2
+  rotate: false
+  xy: 1050, 762
+  size: 53, 33
+  orig: 53, 33
+  offset: 0, 0
+  index: -1
+img/effect/smoke/smoke_1_53__1
+  rotate: false
+  xy: 1425, 758
+  size: 74, 37
+  orig: 74, 37
+  offset: 0, 0
+  index: -1
+img/effect/smoke/smoke_1_54__1
+  rotate: false
+  xy: 830, 18
+  size: 68, 80
+  orig: 68, 80
+  offset: 0, 0
+  index: -1
+img/effect/smoke/smoke_1_54__2
+  rotate: false
+  xy: 1535, 603
+  size: 39, 49
+  orig: 39, 49
+  offset: 0, 0
+  index: -1
+img/effect/smoke/smoke_1_55__1
+  rotate: false
+  xy: 1215, 96
+  size: 32, 73
+  orig: 32, 73
+  offset: 0, 0
+  index: -1
+img/effect/smoke/smoke_1_58__2
+  rotate: false
+  xy: 1535, 698
+  size: 51, 46
+  orig: 51, 46
+  offset: 0, 0
+  index: -1
+img/effect/smoke/smoke_1_59__2
+  rotate: false
+  xy: 866, 956
+  size: 69, 57
+  orig: 69, 57
+  offset: 0, 0
+  index: -1
+img/effect/smoke/smoke_1_60__2
+  rotate: false
+  xy: 937, 969
+  size: 86, 44
+  orig: 86, 44
+  offset: 0, 0
+  index: -1
+img/effect/smoke/smoke_1_61__2
+  rotate: false
+  xy: 1526, 16
+  size: 36, 68
+  orig: 36, 68
+  offset: 0, 0
+  index: -1

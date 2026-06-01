@@ -1,0 +1,104 @@
+
+stab.png
+size: 1024,1024
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+Body
+  rotate: false
+  xy: 0, 392
+  size: 588, 577
+  orig: 588, 577
+  offset: 0, 0
+  index: -1
+Ear-A
+  rotate: false
+  xy: 588, 320
+  size: 163, 158
+  orig: 163, 158
+  offset: 0, 0
+  index: -1
+Eye_socket-A
+  rotate: false
+  xy: 344, 214
+  size: 199, 178
+  orig: 199, 178
+  offset: 0, 0
+  index: -1
+Eyebrow
+  rotate: false
+  xy: 755, 505
+  size: 256, 58
+  orig: 256, 58
+  offset: 0, 0
+  index: -1
+Finger-A
+  rotate: true
+  xy: 588, 478
+  size: 245, 167
+  orig: 245, 167
+  offset: 0, 0
+  index: -1
+Finger-B
+  rotate: false
+  xy: 0, 0
+  size: 265, 148
+  orig: 265, 148
+  offset: 0, 0
+  index: -1
+Finger-BB
+  rotate: false
+  xy: 588, 723
+  size: 184, 246
+  orig: 184, 246
+  offset: 0, 0
+  index: -1
+Finger-C
+  rotate: true
+  xy: 772, 689
+  size: 132, 223
+  orig: 132, 223
+  offset: 0, 0
+  index: -1
+Finger-CC
+  rotate: false
+  xy: 755, 563
+  size: 216, 126
+  orig: 216, 126
+  offset: 0, 0
+  index: -1
+Hand
+  rotate: false
+  xy: 0, 148
+  size: 344, 244
+  orig: 344, 244
+  offset: 0, 0
+  index: -1
+eyeball-A
+  rotate: false
+  xy: 356, 82
+  size: 139, 132
+  orig: 139, 132
+  offset: 0, 0
+  index: -1
+finger-D
+  rotate: true
+  xy: 265, 7
+  size: 141, 91
+  orig: 141, 91
+  offset: 0, 0
+  index: -1
+mouth
+  rotate: false
+  xy: 772, 821
+  size: 216, 148
+  orig: 216, 148
+  offset: 0, 0
+  index: -1
+star-A
+  rotate: false
+  xy: 356, 0
+  size: 87, 82
+  orig: 87, 82
+  offset: 0, 0
+  index: -1

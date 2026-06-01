@@ -1,0 +1,26 @@
+{
+  "scripts": {
+    "check:ts": "tsc -p tsconfig.json --noEmit",
+    "agora:token": "node scripts/agora-token-server.js",
+    "sync:template": "node scripts/sync-template.js",
+    "merge:i18n": "node scripts/merge-i18n.js",
+    "sync:h5-game": "node scripts/sync-h5-game.js",
+    "sync:proto": "node scripts/sync-proto.js",
+    "release:web-mobile": "node scripts/release-web-mobile.js",
+    "commit:format": "node scripts/fmt-blanklines.js"
+  },
+  "dependencies": {
+    "@types/gapi": "^0.0.43",
+    "google-protobuf": "^3.21.0",
+    "http-server": "^14.1.1",
+    "httpserver": "^0.3.0",
+    "ts-md5": "^1.2.11"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.4",
+    "@typescript-eslint/typescript-estree": "^8.60.0",
+    "agora-token": "^2.0.5",
+    "prettier": "^3.8.3",
+    "typescript": "^6.0.3"
+  }
+}

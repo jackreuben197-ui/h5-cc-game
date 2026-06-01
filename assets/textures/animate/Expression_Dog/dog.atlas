@@ -1,0 +1,396 @@
+
+dog.png
+size: 1024,1024
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+img/body
+  rotate: false
+  xy: 0, 321
+  size: 553, 702
+  orig: 553, 702
+  offset: 0, 0
+  index: -1
+img/eyebrow_sad
+  rotate: false
+  xy: 815, 594
+  size: 197, 66
+  orig: 197, 66
+  offset: 0, 0
+  index: -1
+img/head
+  rotate: false
+  xy: 261, 7
+  size: 554, 314
+  orig: 554, 314
+  offset: 0, 0
+  index: -1
+img/mouth_angry_b_low
+  rotate: true
+  xy: 0, 0
+  size: 321, 261
+  orig: 321, 261
+  offset: 0, 0
+  index: -1
+img/mouth_angry_f_low
+  rotate: false
+  xy: 553, 324
+  size: 344, 270
+  orig: 344, 270
+  offset: 0, 0
+  index: -1
+img/nose_sad
+  rotate: true
+  xy: 815, 243
+  size: 81, 82
+  orig: 81, 82
+  offset: 0, 0
+  index: -1
+img/tail
+  rotate: true
+  xy: 815, 748
+  size: 186, 200
+  orig: 186, 200
+  offset: 0, 0
+  index: -1
+img/tail_fire_red/tail_fire_red_01
+  rotate: false
+  xy: 897, 276
+  size: 125, 230
+  orig: 125, 230
+  offset: 0, 0
+  index: -1
+img/tail_fire_red/tail_fire_red_03
+  rotate: true
+  xy: 659, 602
+  size: 122, 156
+  orig: 122, 156
+  offset: 0, 0
+  index: -1
+img/tail_fire_red/tail_fire_red_09
+  rotate: false
+  xy: 815, 3
+  size: 144, 240
+  orig: 144, 240
+  offset: 0, 0
+  index: -1
+img/tail_fire_yel/tail_fire_yel_3
+  rotate: false
+  xy: 959, 142
+  size: 60, 134
+  orig: 60, 134
+  offset: 0, 0
+  index: -1
+img/tears_r/2PG sticker frustrated_00034
+  rotate: false
+  xy: 815, 934
+  size: 206, 89
+  orig: 206, 89
+  offset: 0, 0
+  index: -1
+img/tears_r/2PG sticker frustrated_00038
+  rotate: false
+  xy: 815, 660
+  size: 199, 88
+  orig: 199, 88
+  offset: 0, 0
+  index: -1
+img/tears_r/2PG sticker frustrated_00042
+  rotate: false
+  xy: 815, 660
+  size: 199, 88
+  orig: 199, 88
+  offset: 0, 0
+  index: -1
+img/tears_r/2PG sticker frustrated_00104
+  rotate: true
+  xy: 959, 32
+  size: 110, 60
+  orig: 110, 60
+  offset: 0, 0
+  index: -1
+img/tears_r/2PG sticker frustrated_00105
+  rotate: false
+  xy: 897, 247
+  size: 40, 29
+  orig: 40, 29
+  offset: 0, 0
+  index: -1
+img/tooth
+  rotate: true
+  xy: 553, 594
+  size: 130, 106
+  orig: 130, 106
+  offset: 0, 0
+  index: -1
+img/tooth_angry_low
+  rotate: false
+  xy: 897, 506
+  size: 127, 88
+  orig: 127, 88
+  offset: 0, 0
+  index: -1
+img/tooth_angry_up
+  rotate: true
+  xy: 553, 724
+  size: 299, 261
+  orig: 299, 261
+  offset: 0, 0
+  index: -1
+
+dog2.png
+size: 1024,1024
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+img/ear
+  rotate: false
+  xy: 834, 675
+  size: 190, 349
+  orig: 190, 349
+  offset: 0, 0
+  index: -1
+img/eye
+  rotate: false
+  xy: 771, 719
+  size: 44, 120
+  orig: 44, 120
+  offset: 0, 0
+  index: -1
+img/eye_angry_01
+  rotate: false
+  xy: 633, 2
+  size: 283, 229
+  orig: 283, 229
+  offset: 0, 0
+  index: -1
+img/eye_angry_02
+  rotate: true
+  xy: 527, 337
+  size: 357, 281
+  orig: 357, 281
+  offset: 0, 0
+  index: -1
+img/mouth_angry_b_up
+  rotate: false
+  xy: 0, 671
+  size: 342, 353
+  orig: 342, 353
+  offset: 0, 0
+  index: -1
+img/mouth_line
+  rotate: false
+  xy: 350, 175
+  size: 264, 31
+  orig: 264, 31
+  offset: 0, 0
+  index: -1
+img/mouth_open_sad
+  rotate: false
+  xy: 776, 231
+  size: 96, 90
+  orig: 96, 90
+  offset: 0, 0
+  index: -1
+img/nose
+  rotate: false
+  xy: 916, 26
+  size: 80, 80
+  orig: 80, 80
+  offset: 0, 0
+  index: -1
+img/tears_l/2PG sticker frustrated_00032
+  rotate: true
+  xy: 696, 694
+  size: 145, 75
+  orig: 145, 75
+  offset: 0, 0
+  index: -1
+img/tears_l/2PG sticker frustrated_00033
+  rotate: false
+  xy: 527, 231
+  size: 249, 106
+  orig: 249, 106
+  offset: 0, 0
+  index: -1
+img/tears_l/2PG sticker frustrated_00034
+  rotate: false
+  xy: 342, 694
+  size: 354, 145
+  orig: 354, 145
+  offset: 0, 0
+  index: -1
+img/tears_l/2PG sticker frustrated_00035
+  rotate: false
+  xy: 180, 0
+  size: 453, 175
+  orig: 453, 175
+  offset: 0, 0
+  index: -1
+img/tears_l/2PG sticker frustrated_00036
+  rotate: false
+  xy: 342, 839
+  size: 492, 185
+  orig: 492, 185
+  offset: 0, 0
+  index: -1
+img/tears_l/2PG sticker frustrated_00044
+  rotate: false
+  xy: 342, 839
+  size: 492, 185
+  orig: 492, 185
+  offset: 0, 0
+  index: -1
+img/tears_l/2PG sticker frustrated_00038
+  rotate: true
+  xy: 180, 175
+  size: 496, 170
+  orig: 496, 170
+  offset: 0, 0
+  index: -1
+img/tears_l/2PG sticker frustrated_00042
+  rotate: true
+  xy: 180, 175
+  size: 496, 170
+  orig: 496, 170
+  offset: 0, 0
+  index: -1
+img/tears_l/2PG sticker frustrated_00040
+  rotate: true
+  xy: 0, 161
+  size: 510, 180
+  orig: 510, 180
+  offset: 0, 0
+  index: -1
+img/tears_l/2PG sticker frustrated_00103
+  rotate: true
+  xy: 350, 206
+  size: 488, 177
+  orig: 488, 177
+  offset: 0, 0
+  index: -1
+img/tears_l/2PG sticker frustrated_00104
+  rotate: true
+  xy: 808, 321
+  size: 354, 128
+  orig: 354, 128
+  offset: 0, 0
+  index: -1
+img/tears_l/2PG sticker frustrated_00105
+  rotate: true
+  xy: 936, 486
+  size: 189, 87
+  orig: 189, 87
+  offset: 0, 0
+  index: -1
+img/tears_r/2PG sticker frustrated_00032
+  rotate: true
+  xy: 936, 342
+  size: 144, 74
+  orig: 144, 74
+  offset: 0, 0
+  index: -1
+img/tears_r/2PG sticker frustrated_00036
+  rotate: false
+  xy: 0, 72
+  size: 171, 89
+  orig: 171, 89
+  offset: 0, 0
+  index: -1
+img/tears_r/2PG sticker frustrated_00044
+  rotate: false
+  xy: 0, 72
+  size: 171, 89
+  orig: 171, 89
+  offset: 0, 0
+  index: -1
+img/tears_r/2PG sticker frustrated_00103
+  rotate: true
+  xy: 916, 106
+  size: 215, 100
+  orig: 215, 100
+  offset: 0, 0
+  index: -1
+
+dog3.png
+size: 1024,512
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+img/eye_close
+  rotate: true
+  xy: 477, 105
+  size: 184, 128
+  orig: 184, 128
+  offset: 0, 0
+  index: -1
+img/eye_sad
+  rotate: false
+  xy: 854, 385
+  size: 137, 118
+  orig: 137, 118
+  offset: 0, 0
+  index: -1
+img/eyebrow
+  rotate: false
+  xy: 275, 289
+  size: 228, 111
+  orig: 228, 111
+  offset: 0, 0
+  index: -1
+img/mouth_in
+  rotate: false
+  xy: 0, 283
+  size: 275, 220
+  orig: 275, 220
+  offset: 0, 0
+  index: -1
+img/mouth_sad
+  rotate: false
+  xy: 291, 98
+  size: 186, 191
+  orig: 186, 191
+  offset: 0, 0
+  index: -1
+img/tail_fire_red/tail_fire_red_05
+  rotate: false
+  xy: 149, 49
+  size: 142, 234
+  orig: 142, 234
+  offset: 0, 0
+  index: -1
+img/tail_fire_red/tail_fire_red_07
+  rotate: false
+  xy: 0, 38
+  size: 149, 245
+  orig: 149, 245
+  offset: 0, 0
+  index: -1
+img/tears_r/2PG sticker frustrated_00033
+  rotate: false
+  xy: 505, 13
+  size: 183, 92
+  orig: 183, 92
+  offset: 0, 0
+  index: -1
+img/tears_r/2PG sticker frustrated_00035
+  rotate: false
+  xy: 291, 0
+  size: 214, 98
+  orig: 214, 98
+  offset: 0, 0
+  index: -1
+img/tears_r/2PG sticker frustrated_00040
+  rotate: false
+  xy: 630, 394
+  size: 224, 109
+  orig: 224, 109
+  offset: 0, 0
+  index: -1
+img/tooth_angry_up-1
+  rotate: false
+  xy: 275, 400
+  size: 355, 103
+  orig: 355, 103
+  offset: 0, 0
+  index: -1

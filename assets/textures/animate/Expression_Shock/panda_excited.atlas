@@ -1,0 +1,104 @@
+
+panda_excited.png
+size: 2048,512
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+Arm-A
+  rotate: false
+  xy: 496, 2
+  size: 272, 135
+  orig: 272, 135
+  offset: 0, 0
+  index: -1
+Big-arm-A
+  rotate: false
+  xy: 1094, 249
+  size: 138, 261
+  orig: 138, 261
+  offset: 0, 0
+  index: -1
+Eyebrow -B
+  rotate: false
+  xy: 1234, 281
+  size: 79, 54
+  orig: 79, 54
+  offset: 0, 0
+  index: -1
+Hand
+  rotate: false
+  xy: 1234, 337
+  size: 201, 173
+  orig: 201, 173
+  offset: 0, 0
+  index: -1
+Hand-2
+  rotate: false
+  xy: 900, 154
+  size: 89, 87
+  orig: 89, 87
+  offset: 0, 0
+  index: -1
+Highlight-A
+  rotate: false
+  xy: 335, 110
+  size: 34, 23
+  orig: 34, 23
+  offset: 0, 0
+  index: -1
+Mouth
+  rotate: false
+  xy: 135, 35
+  size: 198, 98
+  orig: 198, 98
+  offset: 0, 0
+  index: -1
+Nose
+  rotate: false
+  xy: 135, 2
+  size: 42, 31
+  orig: 42, 31
+  offset: 0, 0
+  index: -1
+Poker-B
+  rotate: false
+  xy: 900, 243
+  size: 192, 267
+  orig: 192, 267
+  offset: 0, 0
+  index: -1
+body
+  rotate: false
+  xy: 2, 135
+  size: 492, 375
+  orig: 493, 375
+  offset: 0, 0
+  index: -1
+ear-A
+  rotate: false
+  xy: 2, 2
+  size: 131, 131
+  orig: 131, 131
+  offset: 0, 0
+  index: -1
+eye Ball-A
+  rotate: false
+  xy: 1437, 458
+  size: 55, 52
+  orig: 55, 52
+  offset: 0, 0
+  index: -1
+eye socket-A
+  rotate: true
+  xy: 770, 2
+  size: 135, 77
+  orig: 135, 77
+  offset: 0, 0
+  index: -1
+head
+  rotate: false
+  xy: 496, 139
+  size: 402, 371
+  orig: 402, 371
+  offset: 0, 0
+  index: -1

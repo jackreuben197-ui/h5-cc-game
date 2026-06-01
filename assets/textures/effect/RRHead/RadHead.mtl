@@ -1,0 +1,22 @@
+{
+  "__type__": "cc.Material",
+  "_name": "RadHead",
+  "_objFlags": 0,
+  "_native": "",
+  "_effectAsset": {
+    "__uuid__": "726128fa-d6eb-4da6-92fc-266d58375b15"
+  },
+  "_techniqueIndex": 0,
+  "_techniqueData": {
+    "0": {
+      "defines": {
+        "USE_TEXTURE": true
+      },
+      "props": {
+        "mask_texture": {
+          "__uuid__": "7163306e-4923-4914-8b77-914fb0f7f20d"
+        }
+      }
+    }
+  }
+}

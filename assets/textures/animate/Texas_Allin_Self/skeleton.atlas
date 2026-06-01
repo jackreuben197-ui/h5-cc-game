@@ -1,0 +1,76 @@
+
+skeleton.png
+size: 2048,128
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+yellowallin/yellow_001
+  rotate: false
+  xy: 308, 2
+  size: 14, 4
+  orig: 396, 212
+  offset: 199, 80
+  index: -1
+yellowallin/yellow_002
+  rotate: false
+  xy: 615, 9
+  size: 50, 12
+  orig: 396, 212
+  offset: 180, 80
+  index: -1
+yellowallin/yellow_003
+  rotate: false
+  xy: 1782, 96
+  size: 104, 25
+  orig: 396, 212
+  offset: 152, 79
+  index: -1
+yellowallin/yellow_004
+  rotate: false
+  xy: 1622, 84
+  size: 158, 37
+  orig: 396, 212
+  offset: 124, 79
+  index: -1
+yellowallin/yellow_005
+  rotate: false
+  xy: 1416, 71
+  size: 204, 50
+  orig: 396, 212
+  offset: 101, 77
+  index: -1
+yellowallin/yellow_006
+  rotate: false
+  xy: 1175, 56
+  size: 239, 65
+  orig: 396, 212
+  offset: 86, 73
+  index: -1
+yellowallin/yellow_007
+  rotate: false
+  xy: 907, 41
+  size: 266, 80
+  orig: 396, 212
+  offset: 75, 67
+  index: -1
+yellowallin/yellow_008
+  rotate: false
+  xy: 615, 23
+  size: 290, 98
+  orig: 396, 212
+  offset: 64, 60
+  index: -1
+yellowallin/yellow_009
+  rotate: false
+  xy: 308, 8
+  size: 305, 113
+  orig: 396, 212
+  offset: 57, 53
+  index: -1
+yellowallin/yellow_010
+  rotate: false
+  xy: 2, 2
+  size: 304, 119
+  orig: 304, 119
+  offset: 0, 0
+  index: -1

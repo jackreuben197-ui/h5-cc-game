@@ -1,0 +1,38 @@
+{
+  "ver": "2.3.7",
+  "uuid": "8395c334-7f83-4c57-82c7-15960b5acd3d",
+  "importer": "texture",
+  "type": "sprite",
+  "wrapMode": "clamp",
+  "filterMode": "bilinear",
+  "premultiplyAlpha": false,
+  "genMipmaps": false,
+  "packable": true,
+  "width": 60,
+  "height": 60,
+  "platformSettings": {},
+  "subMetas": {
+    "holdem_icon_msg": {
+      "ver": "1.0.6",
+      "uuid": "07d0c254-1b0f-4353-881f-b94bb7fe9fef",
+      "importer": "sprite-frame",
+      "rawTextureUuid": "8395c334-7f83-4c57-82c7-15960b5acd3d",
+      "trimType": "auto",
+      "trimThreshold": 1,
+      "rotated": false,
+      "offsetX": 0,
+      "offsetY": 0,
+      "trimX": 0,
+      "trimY": 0,
+      "width": 60,
+      "height": 60,
+      "rawWidth": 60,
+      "rawHeight": 60,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "subMetas": {}
+    }
+  }
+}

@@ -1,0 +1,97 @@
+
+panda_laugh.png
+size: 1024,512
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+arm
+  rotate: true
+  xy: 0, 65
+  size: 139, 313
+  orig: 139, 313
+  offset: 0, 0
+  index: -1
+body
+  rotate: false
+  xy: 0, 204
+  size: 452, 288
+  orig: 452, 288
+  offset: 0, 0
+  index: -1
+ear_l
+  rotate: false
+  xy: 444, 65
+  size: 95, 99
+  orig: 95, 99
+  offset: 0, 0
+  index: -1
+ear_r
+  rotate: false
+  xy: 539, 70
+  size: 97, 94
+  orig: 97, 94
+  offset: 0, 0
+  index: -1
+eye_l
+  rotate: false
+  xy: 313, 62
+  size: 131, 142
+  orig: 131, 142
+  offset: 0, 0
+  index: -1
+eye_r
+  rotate: false
+  xy: 828, 166
+  size: 127, 117
+  orig: 127, 117
+  offset: 0, 0
+  index: -1
+eyebrow_r
+  rotate: true
+  xy: 954, 353
+  size: 139, 50
+  orig: 139, 50
+  offset: 0, 0
+  index: -1
+face
+  rotate: false
+  xy: 452, 164
+  size: 376, 328
+  orig: 376, 328
+  offset: 0, 0
+  index: -1
+mouth
+  rotate: false
+  xy: 0, 0
+  size: 152, 65
+  orig: 152, 65
+  offset: 0, 0
+  index: -1
+mouth_low
+  rotate: false
+  xy: 152, 12
+  size: 113, 53
+  orig: 113, 53
+  offset: 0, 0
+  index: -1
+mouth_out
+  rotate: true
+  xy: 828, 283
+  size: 209, 126
+  orig: 209, 126
+  offset: 0, 0
+  index: -1
+nose
+  rotate: false
+  xy: 636, 123
+  size: 117, 41
+  orig: 117, 41
+  offset: 0, 0
+  index: -1
+tooth
+  rotate: true
+  xy: 954, 287
+  size: 66, 26
+  orig: 66, 26
+  offset: 0, 0
+  index: -1

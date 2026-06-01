@@ -1,0 +1,34 @@
+
+youwin.png
+size: 1024,256
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+WIN!
+  rotate: false
+  xy: 2, 2
+  size: 295, 90
+  orig: 297, 92
+  offset: 1, 1
+  index: -1
+YOU
+  rotate: false
+  xy: 333, 131
+  size: 280, 93
+  orig: 282, 95
+  offset: 1, 1
+  index: -1
+shine
+  rotate: false
+  xy: 615, 110
+  size: 114, 114
+  orig: 128, 128
+  offset: 7, 7
+  index: -1
+shineline
+  rotate: false
+  xy: 2, 94
+  size: 329, 130
+  orig: 329, 130
+  offset: 0, 0
+  index: -1

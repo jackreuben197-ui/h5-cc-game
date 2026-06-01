@@ -1,0 +1,160 @@
+
+hl.png
+size: 2048,2048
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+Hl11111_00000
+  rotate: false
+  xy: 2, 2
+  size: 94, 138
+  orig: 94, 138
+  offset: 0, 0
+  index: -1
+QQS__000
+  rotate: false
+  xy: 2, 1552
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+QQS__001
+  rotate: false
+  xy: 2, 1082
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+QQS__002
+  rotate: false
+  xy: 378, 1552
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+QQS__003
+  rotate: false
+  xy: 2, 612
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+QQS__004
+  rotate: false
+  xy: 378, 1082
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+QQS__005
+  rotate: false
+  xy: 754, 1552
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+QQS__006
+  rotate: false
+  xy: 2, 142
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+QQS__007
+  rotate: false
+  xy: 378, 612
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+QQS__008
+  rotate: false
+  xy: 754, 1082
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+QQS__009
+  rotate: false
+  xy: 1130, 1552
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+QQS__010
+  rotate: false
+  xy: 378, 142
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+QQS__011
+  rotate: false
+  xy: 754, 612
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+QQS__012
+  rotate: false
+  xy: 1130, 1082
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+QQS__013
+  rotate: false
+  xy: 1506, 1552
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+QQS__014
+  rotate: false
+  xy: 754, 142
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+QQS__015
+  rotate: false
+  xy: 1130, 612
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+QQS__016
+  rotate: false
+  xy: 1506, 1082
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+QQS__017
+  rotate: false
+  xy: 1130, 142
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+QQS__018
+  rotate: false
+  xy: 1506, 612
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+QQS__019
+  rotate: false
+  xy: 1506, 142
+  size: 374, 468
+  orig: 374, 492
+  offset: 0, 24
+  index: -1
+b
+  rotate: false
+  xy: 1882, 2005
+  size: 16, 15
+  orig: 16, 15
+  offset: 0, 0
+  index: -1
