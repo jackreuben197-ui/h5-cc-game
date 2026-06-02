@@ -13,8 +13,8 @@ export abstract class BringInProvider {
     protected abstract beforeBind(): void;
     protected abstract autoBind(): void;
     protected abstract afterBind(): void;
-    // 被选中以后数据的传送,便于内部数据的更新
-    public abstract clubSelected(clubID: number): void;
+    // 被选中以后数据的传送,便于内部数据的更新(真实ID)
+    public abstract clubSelected(_clubID: number): void;
     // 提交带入金额
     public abstract commit(bringInAmount: number, autoOnTableAmount: number): void;
 }

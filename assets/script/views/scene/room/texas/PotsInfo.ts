@@ -1,3 +1,4 @@
+import { autoBindEvents, bindEvent } from '../../../../core/decorator/DataBind';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPotInfo from '../../../../data/room/texas/TexasGameRoomDataPotInfo';
@@ -62,18 +63,16 @@ export default class PotsInfo extends cc.Component {
     }
 
     private _bindEventsAndRefresh() {
-        this._potInfo.on(TexasGameRoomDataPotInfo.POTLIST_CHANGE, this.onUpdatePotList, this);
-        this._potInfo.on(TexasGameRoomDataPotInfo.ALLPOTS_CHANGE, this.onUpdateAllPots, this);
-        // 初始化(全池)
-        this.onUpdatePotList(this._potInfo.potList);
-        this.onUpdateAllPots(this._potInfo.allPot);
+        autoBindEvents(this, { pot: this._potInfo });
     }
 
+    @bindEvent(TexasGameRoomDataPotInfo.ALLPOTS_CHANGE, 'pot')
     private onUpdateAllPots(allpots: number) {
         this.allPotsLabel.string = `${i18nMgr.Get('adaptation20005')} : ${StringHelper.GetLongString(allpots, 100, 1)}`;
         this.allPotsLabel.node.active = true;
     }
 
+    @bindEvent(TexasGameRoomDataPotInfo.POTLIST_CHANGE, 'pot')
     private onUpdatePotList(pots: SidePot.AsObject[]) {
         if (!pots) return;
         const l = pots.length;

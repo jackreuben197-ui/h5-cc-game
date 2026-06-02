@@ -51,7 +51,7 @@ export default class SeatManager extends cc.Component {
         autoBindEvents(this, { seats: this._seatManager });
     }
 
-    @bindEvent('BUTTON_CHANGE', 'seats')
+    @bindEvent(TexasGameRoomDataSeatsStateManager.BUTTON_CHANGE, 'seats')
     private onUpdateButton(prevSeat: number, currentSeat: number, bat: AnimateDisplayTypeButton) {
         if (bat == AnimateDisplayTypeButton.Static) {
             if (prevSeat > 0) {
@@ -82,7 +82,7 @@ export default class SeatManager extends cc.Component {
     }
 
     // onUpdateSeats 座位数调整, 这个优先度必须提前要创建座位的Node
-    @bindEvent('SEATS_CHANGE', { dataSource: 'seats', initPriority: 10 })
+    @bindEvent(TexasGameRoomDataSeatsStateManager.SEATS_CHANGE, { dataSource: 'seats', initPriority: 10 })
     @traceMethod()
     private onUpdateSeats(count: number) {
         this._seatNodesMap.clear();

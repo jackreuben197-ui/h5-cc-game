@@ -33,6 +33,8 @@ export default class UserStoreUtils {
         }
         // @TODO更新用户信息
         //GC.data.user.info  Update
+        userStore.userID = data.data.user.p_u_id;
+        userStore.userRID = data.data.user.un_id;
         userStore.diamonds = data.data.user.diamonds;
         userStore.avatar = data.data.user.avatar;
         userStore.name = data.data.user.nickname;

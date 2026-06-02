@@ -29,6 +29,16 @@ interface TexasGameRoomDataPlayer extends IObservableBindings<TexasGameRoomDataP
 @bindData()
 @traceClass()
 class TexasGameRoomDataPlayer extends cc.EventTarget {
+    public static readonly ACTION_CHANGE = 'ACTION_CHANGE';
+    public static readonly SEAT_POSITION_CHANGE = 'SEAT_POSITION_CHANGE';
+    public static readonly SHOW_CARDS_CHANGE = 'SHOW_CARDS_CHANGE';
+    public static readonly NICKNAME_CHANGE = 'NICKNAME_CHANGE';
+    public static readonly AVATAR_CHANGE = 'AVATAR_CHANGE';
+    public static readonly CHIPS_CHANGE = 'CHIPS_CHANGE';
+    public static readonly ROUND_BET_CHANGE = 'ROUND_BET_CHANGE';
+    public static readonly PREPARE_OPERATION = 'PREPARE_OPERATION';
+    public static readonly EMPTY_SEAT = 'EMPTY_SEAT';
+    public static readonly WINNER = 'WINNER';
     private _parentRoomData: TexasGameRoomData;
     public get roomData() {
         return this._parentRoomData;
@@ -60,26 +70,26 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     // =========================================================================
     // 响应式核心字段拦截配置区域
     // =========================================================================
-    @observable('ACTION_CHANGE')
+    @observable(TexasGameRoomDataPlayer.ACTION_CHANGE)
     public action: Def.ActionMap[keyof Def.ActionMap] = Def.Action.NONE;
-    @observable('SEAT_POSITION_CHANGE')
+    @observable(TexasGameRoomDataPlayer.SEAT_POSITION_CHANGE)
     public position: SeatPosition = SeatPosition.Default;
-    @observable('SHOW_CARDS_CHANGE')
+    @observable(TexasGameRoomDataPlayer.SHOW_CARDS_CHANGE)
     public cards: number[] = [];
-    @observable('NICKNAME_CHANGE')
+    @observable(TexasGameRoomDataPlayer.NICKNAME_CHANGE)
     public name: string = '';
-    @observable('AVATAR_CHANGE')
+    @observable(TexasGameRoomDataPlayer.AVATAR_CHANGE)
     public avatar: string = '';
-    @observable('CHIPS_CHANGE')
+    @observable(TexasGameRoomDataPlayer.CHIPS_CHANGE)
     public chip: number = 0;
-    @observable('ROUND_BET_CHANGE')
+    @observable(TexasGameRoomDataPlayer.ROUND_BET_CHANGE)
     public roundBet: number = 0;
-    @observable('PREPARE_OPERATION')
+    @observable(TexasGameRoomDataPlayer.PREPARE_OPERATION)
     public operator: Operator = null!;
     // =========================================================================
     // 扑克核心桌面业务方法层实现
     // =========================================================================
-    @pureEvent('EMPTY_SEAT')
+    @pureEvent(TexasGameRoomDataPlayer.EMPTY_SEAT)
     public emptySeat() {
         this.muteEvents();
         this.userID = 0;
@@ -93,7 +103,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
         // this.emit(TexasGameRoomDataPlayer.EMPTY_SEAT);
     }
 
-    @pureEvent('WINNER')
+    @pureEvent(TexasGameRoomDataPlayer.WINNER)
     public claimWin() {}
 
     public handClear() {

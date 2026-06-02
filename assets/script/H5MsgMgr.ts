@@ -25,6 +25,8 @@
  *   H5MsgMgr.Instance.on('xxx', fn);                 // 注册消息监听
  */
 import { traceClass } from './core/decorator/LogTrace';
+import userStore from './data/user/UserStore';
+import UserStoreUtils from './data/user/UserStoreUtils';
 
 /** 握手超时时间（毫秒） */
 const HANDSHAKE_TIMEOUT = 10000;
@@ -487,8 +489,12 @@ class H5MsgMgr {
      */
     startHandshake(): void {
         // H5 主动发来 h5Ready → CC 回复 ccAck
-        this.on('h5Ready', () => {
-            this.tracelog.debug('收到 h5Ready，回复 ccAck');
+        this.on('h5Ready', data => {
+            this.tracelog.debug('收到 h5Ready，回复 ccAck', data);
+            if ((data as any)?.token){
+                userStore.token = (data as any).token;
+                UserStoreUtils.updateUserInfoBasic();
+            }
             this.sendToH5('ccAck', 1);
             this._completeHandshake();
         });

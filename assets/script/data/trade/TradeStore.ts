@@ -2,10 +2,11 @@ import { bindData, IObservableBindings, pureEvent } from '../../core/decorator/D
 import GameplayUtil from '../../game/util/GameplayUtil';
 import { HttpUSDTPriceListProtocol } from '../../net/https/data/usdt/HttpUSDTPriceListProtocol';
 
-interface TradeStore extends IObservableBindings<TradeStore> {}
+export interface TradeStore extends IObservableBindings<TradeStore> {}
 
 @bindData()
-class TradeStore extends cc.EventTarget {
+export class TradeStore extends cc.EventTarget {
+    public static readonly TRADEITEMS_AND_PAYTYPES_CHANGE = 'TRADEITEMS_AND_PAYTYPES_CHANGE';
     private _tradeItems: HttpUSDTPriceListProtocol.GoldInfo[] = [];
     private _payTypes: HttpUSDTPriceListProtocol.PayType[] = [];
 
@@ -18,7 +19,7 @@ class TradeStore extends cc.EventTarget {
         this._sendTradeItemsAndPayTimesChangeEvent(this._tradeItems, this._payTypes);
     }
 
-    @pureEvent('TRADEITEMS_AND_PAYTYPES_CHANGE', {
+    @pureEvent(TradeStore.TRADEITEMS_AND_PAYTYPES_CHANGE, {
         initParams() {
             return [this._tradeItems, this._payTypes];
         }

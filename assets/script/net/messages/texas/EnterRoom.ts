@@ -2,6 +2,7 @@ import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
+import userStore from '../../../data/user/UserStore';
 import {
     AnimateDisplayTypeAction,
     AnimateDisplayTypeButton,
@@ -65,10 +66,16 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             }
             roomData.mine.storeChips = data.myInfo.storeChips;
         }
-        // setTimeout(() => {
-        //     let mine = roomData.seatsStateManager.setMySeat(4, AnimateDisplayTypePosition.ToTarget);
-        //         //mine.storeChips = data.myInfo.storeChips;
-        // }, 3000);
+        setTimeout(() => {
+            roomData.seatsStateManager.setMySeat(4, AnimateDisplayTypePosition.ToTarget);
+                //mine.storeChips = data.myInfo.storeChips;
+            const seat = roomData.seatsStateManager.getSeatPlayer(4);
+            seat.cards = [];
+            //seat.setCards([], AnimateDisplayTypeCards.Static, 0);
+            seat.userID = userStore.userID;
+            seat.name = userStore.name;
+            _plog.info(seat.userID, seat.seatNo);
+        }, 3000);
         data.operatorList.forEach(operator => {
             let seatData = roomData.seatsStateManager.getSeatPlayer(operator.seatId);
             if (seatData.mine) {
@@ -107,7 +114,6 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
                 seatData.operator = op;
             }
         });
-        _plog.error;
         await viewManager.switchScene('TexasRoom', {
             roomID: roomData.roomID,
             matchID: roomData.matchID

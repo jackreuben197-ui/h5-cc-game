@@ -109,6 +109,7 @@ interface BindingInfo {
     defaultArgs: any[]; // 静态初始值后面追加的透传默认参数
     dataSourceTag: string; // 对应绑定的真理源数据源标签（如 'player'）
     initPiority: number; //绑定时候第一次处理的时候的处理优先级
+    initIgnore: boolean; // 第一次首屏对齐时跳过初始回调（.on 事件监听仍然建立）
 }
 
 /**
@@ -348,6 +349,8 @@ export type BindEventConfig =
           dataSource: string;
           /** 第一次初始化运行时候的优先级 */
           initPriority?: number;
+          /** 第一次运行直接忽略 */
+          initIgnore?: boolean;
       };
 
 /**
@@ -363,11 +366,13 @@ export function bindEvent<Args extends any[]>(eventName: string | string[], data
         let obArray = componentInstance[OBSERVER_KEY] as BindingInfo[];
         let realTag = '';
         let priority = 0;
+        let initIgnore = false;
         if (typeof dataSourceTag === 'string') {
             realTag = dataSourceTag;
         } else if (dataSourceTag && typeof dataSourceTag === 'object') {
             realTag = dataSourceTag.dataSource;
             priority = dataSourceTag.initPriority || 0;
+            initIgnore = !!dataSourceTag.initIgnore;
         }
         // 登记入大数组
         obArray.push({
@@ -375,7 +380,8 @@ export function bindEvent<Args extends any[]>(eventName: string | string[], data
             methodName: propertyKey,
             defaultArgs,
             dataSourceTag: realTag, // 底层逻辑依然认纯 string 的 tag
-            initPiority: priority
+            initPiority: priority,
+            initIgnore
         });
     };
 }
@@ -429,6 +435,10 @@ export function autoBindEvents<T extends Record<string, cc.EventTarget | null | 
             // @TIPS 因为底层 cocos 2.4的原因, 最少会传5个参数, 所以不要惊讶多传了好多undefined
             dataSource.on(evtName, callback, component);
             if (!hasSynced) {
+                if (binder.initIgnore) {
+                    hasSynced = true;
+                    continue;
+                }
                 const eventToPropertyMap: Map<string, string | _pureEventInitParamsWrap> = sourceAny[EVENT_MAP_KEY];
                 if (eventToPropertyMap && eventToPropertyMap.has(evtName)) {
                     const realPrivateKey = eventToPropertyMap.get(evtName)!;

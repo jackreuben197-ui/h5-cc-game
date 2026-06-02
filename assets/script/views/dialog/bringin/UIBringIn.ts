@@ -1,20 +1,18 @@
-import { autoBindEvents, bindData, bindEvent } from '../../../core/decorator/DataBind';
+import { autoBindEvents, bindEvent } from '../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../core/decorator/LogTrace';
 import { RoomPlayerGC } from '../../../data/room/RoomDataGenericConstraints';
-import TexasGameRoomDataPlayer from '../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../data/room/texas/TexasGameRoomDataPlayerMine';
-import tradeStore from '../../../data/trade/TradeStore';
+import tradeStore, { TradeStore } from '../../../data/trade/TradeStore';
 import TradeStoreUtils from '../../../data/trade/TradeStoreUtils';
 import userStore, { IWallet } from '../../../data/user/UserStore';
 import UserStoreUtils from '../../../data/user/UserStoreUtils';
 import { BringInChipsType } from '../../../game/constant/BringInChipsType';
 import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
-import { HttpUSDTApplyListProtocol } from '../../../net/https/data/usdt/HttpUSDTApplyListProtocol';
 import { HttpUSDTApplyProtocol } from '../../../net/https/data/usdt/HttpUSDTApplyProtocol';
 import { HttpUSDTPriceListProtocol } from '../../../net/https/data/usdt/HttpUSDTPriceListProtocol';
 import { HttpUSDTRechargeProtocol } from '../../../net/https/data/usdt/HttpUSDTRechargeProtocol';
-import { WebOrderUserUsdtRecharge, WebPropGoldPriceList, WebUserTraderApply, WebUserTraderApplyList, WWW } from '../../../net/https/WebRequest';
+import { WebOrderUserUsdtRecharge, WebUserTraderApply, WWW } from '../../../net/https/WebRequest';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import viewManager from '../../UIViewManager';
 import UIViewUtil from '../../util/UIViewUtil';
@@ -172,7 +170,6 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     private paynowText: cc.Label = null;
     @property(cc.Button)
     private paynowBtn: cc.Button = null;
-    private _isApplyingTrader: boolean = false;
     private _toApplyTrader: boolean = false;
     private _rechargeData: HttpUSDTRechargeProtocol.RequestData = null;
     private _payType: number = 0; //1 //2
@@ -271,6 +268,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
 
     public _showBringInArea(b: boolean) {
         this.bringInArea.active = b;
+        this.switchAutoBringin.onoff(false, true);
     }
 
     public _updateBringAreaIntro(startText: string, endText: string) {
@@ -406,7 +404,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
                 return;
             }
             const btn = this.paynowBtn;
-            this._isApplyingTrader = true;
+            userStore.isApplyingTrader = true;
             btn.node.color = cc.Color.fromHEX(new cc.Color(), '#777777');
             this._rechargeData = null;
             this.paynowText.string = i18nMgr.Get('roomError171_5');
@@ -422,7 +420,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     private _callbackForChooseOne(payData: HttpUSDTRechargeProtocol.RequestData, isSp: boolean, payType: number) {
         const btn = this.paynowBtn;
         // 批发商的，但是你在申请中
-        if (isSp && this._isApplyingTrader) {
+        if (isSp && userStore.isApplyingTrader) {
             btn.node.color = cc.Color.fromHEX(new cc.Color(), '#777777');
             this._rechargeData = null;
             this.paynowText.string = i18nMgr.Get('roomError171_5');
@@ -442,7 +440,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         this.paynowText.string = StringHelper.FormatString(i18nMgr.Get('Wallet_PayNow'), StringHelper.GetLongString(payData.pay_price, 1, 4));
     }
 
-    @bindEvent('TRADEITEMS_AND_PAYTYPES_CHANGE', 'trade')
+    @bindEvent(TradeStore.TRADEITEMS_AND_PAYTYPES_CHANGE, 'trade')
     private onUpdateTradeItemsAndPayTimes(items: HttpUSDTPriceListProtocol.GoldInfo[], paytypes: HttpUSDTPriceListProtocol.PayType[]) {
         this.diamondBoard.removeAllChildren();
         // 先初始化所有购买选项
@@ -518,23 +516,17 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         Promise.all(promises);
     }
 
-    /**
-     * 点击带入
-     */
+    /** 点击带入Tab*/
     private onClickBalance(obj: cc.Node): void {
         this._changeTab(BringInTabType.Chips);
     }
 
-    /**
-     * 点击钻石
-     */
+    /** 点击钻石Tab*/
     private onClickDiamond(obj: cc.Node): void {
         this._changeTab(BringInTabType.Diamond);
     }
 
-    /**
-     * 切换标题
-     */
+    /*** 切换TAB*/
     public _changeTab(titleType: BringInTabType): void {
         const diamondStatus = titleType == BringInTabType.Diamond;
         const balanceStatus = titleType == BringInTabType.Chips;
@@ -581,10 +573,9 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     }
 
     // 设置钱包列表
-    public _setupWalletList(wallets: IWallet[], seletedWalletClubID: number): void {
-        if (seletedWalletClubID > 0) {
-            let temp = wallets.filter(w => w.clubID == seletedWalletClubID);
-            this._updateTotalCoinAndWalletChoosen(false, temp[0]);
+    public _setupWalletList(wallets: IWallet[]): void {
+        if (wallets.length == 1) {
+            this._updateTotalCoinAndWalletChoosen(false, wallets[0]);
             return;
         }
         // 如果已经有选中状态，要恢复状态
@@ -655,6 +646,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     }
 
     // _updateTotalCoinAndWalletChoosen 刷新金币和钱包选择状态
+    @traceMethod()
     private _updateTotalCoinAndWalletChoosen(isEnable: boolean, wallet: IWallet): void {
         if (this.textTotalCoin) this.textTotalCoin.string = StringHelper.GetLongStringLocale(wallet.gold);
         let button = this.buttonSelectWallet.getComponent(cc.Button);
@@ -669,6 +661,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         this.arrowDown.angle = -0;
         // 显示筹码滑块
         this.bringInArea.active = true;
+        this._provider.clubSelected(wallet._clubID);
     }
 
     onDisable(): void {

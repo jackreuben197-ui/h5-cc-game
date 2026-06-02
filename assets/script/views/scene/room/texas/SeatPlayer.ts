@@ -1,7 +1,8 @@
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
-import { traceClass } from '../../../../core/decorator/LogTrace';
+import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import { Operator } from '../../../../data/room/texas/model/Operator';
 import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
+import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import { SeatPosition } from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
 import {
     AnimateDisplayTypeAction,
@@ -45,7 +46,7 @@ const yellowColor = cc.Color.fromHEX(new cc.Color(), '#F9CA9F');
 
 @ccclass
 @menu('CrazyPoker/Room/Texas/SeatPlayer')
-@traceClass()
+@traceClass({level: 'debug'})
 export default class SeatPlayer extends cc.Component {
     @property(cc.Label)
     private nickName: cc.Label = null!;
@@ -114,7 +115,7 @@ export default class SeatPlayer extends cc.Component {
             if (node) this._cardBacks.push(node);
         }
         this._clickEmptySeat = () => {
-            this._directEvents.Sitdown(this._seatPlayer.roomData.mine);
+            this._directEvents.Sitdown(this._seatPlayer.roomData.mine, this._seatPlayer.seatNo);
         };
         this.emptySeat.node.on('click', this._clickEmptySeat, this);
     }
@@ -125,6 +126,7 @@ export default class SeatPlayer extends cc.Component {
     }
 
     public onDisable(): void {
+        console.log('it should not be called');
         unBindEventsAll(this);
     }
 
@@ -153,6 +155,7 @@ export default class SeatPlayer extends cc.Component {
         });
     }
 
+    @traceMethod({level: 'debug'})
     private _enableDisableUser(b: boolean) {
         this.userSeat.active = b;
         this.emptySeat.node.active = !b;
@@ -161,14 +164,18 @@ export default class SeatPlayer extends cc.Component {
             this.roundBetNode.setPosition(0, 180);
             this.bigCardsContainer.setPosition(0, 0);
             this.bigCardsContainer.setScale(0.65, 0.65);
+            this._bigCards.forEach(v => (v.node.parent.active = false));
+            // 背面(显示)
         } else {
             this.roundBetNode.setPosition(135, 345);
             this.bigCardsContainer.setPosition(0, 192);
             this.bigCardsContainer.setScale(1, 1);
+            this._bigCards.forEach(v => (v.node.parent.active = false));
+            // 背面(显示)
         }
     }
 
-    @bindEvent('NICKNAME_CHANGE', 'player')
+    @bindEvent(TexasGameRoomDataPlayer.NICKNAME_CHANGE, 'player')
     private onUpdateNickname(na: string) {
         this._enableDisableUser(true);
         // 自己不显示名字
@@ -182,24 +189,25 @@ export default class SeatPlayer extends cc.Component {
         this.nickName.string = na;
     }
 
-    @bindEvent('AVATAR_CHANGE', 'player')
+    @bindEvent(TexasGameRoomDataPlayer.AVATAR_CHANGE, 'player')
     private onUpdateAvatar(avatar: string) {
         this.avatar.url = avatar;
     }
 
-    @bindEvent('CHIPS_CHANGE', 'player')
+    @bindEvent(TexasGameRoomDataPlayer.CHIPS_CHANGE, 'player')
     private onUpdateChip(chip: number) {
         this.chips.string = StringHelper.GetLongString(chip);
     }
 
-    @bindEvent('EMPTY_SEAT', 'player')
+    @bindEvent(TexasGameRoomDataPlayer.EMPTY_SEAT, 'player')
     private onUpdateEmpty() {
         this.tracelog.debug('empty');
         this._enableDisableUser(false);
     }
 
     // onUpdatePosition 位置变动导致的动画/位置调整
-    @bindEvent('SEAT_POSITION_CHANGE', 'player', AnimateDisplayTypePosition.Static)
+    @bindEvent(TexasGameRoomDataPlayer.SEAT_POSITION_CHANGE, 'player', AnimateDisplayTypePosition.Static)
+    @traceMethod()
     private onUpdatePosition(pos: SeatPosition, pat: AnimateDisplayTypePosition) {
         switch (pos) {
             case SeatPosition.BottomMiddle:
@@ -261,7 +269,7 @@ export default class SeatPlayer extends cc.Component {
         this.node.setPosition(realPos);
     }
 
-    @bindEvent('ROUND_BET_CHANGE', 'player', AnimateDisplayTypeRoundBet.Static)
+    @bindEvent(TexasGameRoomDataPlayer.ROUND_BET_CHANGE, 'player', AnimateDisplayTypeRoundBet.Static)
     private onRoundBetChange(amount: number, aat: AnimateDisplayTypeRoundBet) {
         if (amount > 0) {
             this.roundBetNode.active = true;
@@ -285,7 +293,8 @@ export default class SeatPlayer extends cc.Component {
     }
 
     // AnimateDisplayTypeCards.Deal 时候还会有order
-    @bindEvent('SHOW_CARDS_CHANGE', 'player', AnimateDisplayTypeCards.Static)
+    @bindEvent(TexasGameRoomDataPlayer.SHOW_CARDS_CHANGE, 'player', AnimateDisplayTypeCards.Static)
+    @traceMethod()
     private onUpdateCards(cards: number[], atc: AnimateDisplayTypeCards, order?: number) {
         const l = cards.length;
         // reset
@@ -345,6 +354,9 @@ export default class SeatPlayer extends cc.Component {
             this._cardBacks.forEach(v => (v.active = false));
             // 显示牌先显示背面
             //牌面展示
+            if (this._seatPlayer.mine) {
+                this.tracelog.debug(cards, this._bigCards.length, this._seatPlayer.seatNo);
+            }
             for (let i = 0; i < this._bigCards.length; i++) {
                 //Cards/l2r/New Node/Image_Card(CardView)
                 const node = this._bigCards[i];
@@ -413,8 +425,12 @@ export default class SeatPlayer extends cc.Component {
         }
     }
 
-    @bindEvent('ACTION_CHANGE', 'player', AnimateDisplayTypeAction.Static)
+    @bindEvent(TexasGameRoomDataPlayer.ACTION_CHANGE, 'player', AnimateDisplayTypeAction.Static)
+    @traceMethod({level:'debug'})
     private onUpdateAction(action: Def.ActionMap[keyof Def.ActionMap], aat: AnimateDisplayTypeAction) {
+        if (this._seatPlayer.mine) {
+            this.tracelog.debug(action, aat, this._seatPlayer.seatNo);
+        }
         // 操作结束直接不倒计时
         if (aat == AnimateDisplayTypeAction.Done) {
             this.otherPersonActionCountdown.stop();
@@ -477,7 +493,7 @@ export default class SeatPlayer extends cc.Component {
         }
     }
 
-    @bindEvent('PREPARE_OPERATION', 'player')
+    @bindEvent(TexasGameRoomDataPlayer.PREPARE_OPERATION, 'player')
     private onPrepareAction(oper: Operator) {
         // this.tracelog.debug(oper, this._seatPlayer.seatNo);
         if (!oper) return;
@@ -493,7 +509,7 @@ export default class SeatPlayer extends cc.Component {
     // =========================================================================
     // 网络级非拦截、非代理的原生自定义大招事件触发区域
     // =========================================================================
-    @bindEvent('WINNER', 'player')
+    @bindEvent(TexasGameRoomDataPlayer.WINNER, 'player')
     private onWin() {
         this.animatingChips.active = true;
         const startPos = UIViewUtil.caculatePostion(this.animatingChips, this._potNode);
@@ -514,7 +530,7 @@ export default class SeatPlayer extends cc.Component {
         });
     }
 
-    @bindEvent('HIGHLIGHT_CARDS', 'player')
+    @bindEvent(TexasGameRoomDataPlayerMine.HIGHLIGHT_CARDS, 'player')
     private onHighlightCards(cardsNum: number[]) {
         const mp: Set<number> = new Set();
         cardsNum.forEach(v => mp.add(v));

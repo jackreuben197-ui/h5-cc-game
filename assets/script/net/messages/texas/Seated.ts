@@ -2,16 +2,17 @@ import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import userStore from '../../../data/user/UserStore';
-import { AnimateDisplayTypeAction, AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
+import { AnimateDisplayTypeAction, AnimateDisplayTypeCards, AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import { Def } from '../../../protobuf/holdem/define_pb';
 import { ServerMessageSeated } from '../../../protobuf/holdem/req_th_seated_pb';
 import viewManager from '../../../views/UIViewManager';
 
-const _plog = createLogger('[ServerMessageSeated]', 'debug');
+const _plog = createLogger('ServerMessageSeated', 'debug');
 
 // Seated 1003
 export function Seated(data: ServerMessageSeated.AsObject, roomID: number, matchID: number) {
+    _plog.info('seated', data, roomID, matchID);
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     if (data.status != 0) {
         _plog.debug('坐下失败, status:', data.status, CPErrorCode.ServerErrorDescription(data.status));
@@ -24,17 +25,23 @@ export function Seated(data: ServerMessageSeated.AsObject, roomID: number, match
     roomData.seatsStateManager.setMySeat(data.recvSeatId, AnimateDisplayTypePosition.ToTarget);
     const seatData = roomData.seatsStateManager.getSeatPlayer(data.recvSeatId);
     const mine = roomData.mine;
-    seatData.userID = userStore.userID;
-    seatData.chip = data.chips;
-    seatData.roundBet = 0;
-    seatData.handBet = 0;
-    seatData.roundActioned = false;
-    seatData.setAction(Def.Action.NONE, AnimateDisplayTypeAction.Static);
-    seatData.deposit = data.deposit;
-    mine.storeChips = data.storeChips;
-    mine.totalBringIn = data.totalBringin;
-    mine.deposit = data.deposit;
-    mine.videoMaskId = data.videoMaskId;
+    setTimeout(() => {
+        seatData.setAction(Def.Action.NONE, AnimateDisplayTypeAction.Static);
+        seatData.setCards([], AnimateDisplayTypeCards.Static, 0);
+    }, 1000);
+    // seatData.userID = userStore.userID;
+    // seatData.name = userStore.name;
+    // seatData.avatar = userStore.avatar;
+    // seatData.chip = data.chips;
+    // seatData.roundBet = 0;
+    // seatData.handBet = 0;
+    // seatData.roundActioned = false;
+    
+    // seatData.deposit = data.deposit;
+    // mine.storeChips = data.storeChips;
+    // mine.totalBringIn = data.totalBringin;
+    // mine.deposit = data.deposit;
+    // mine.videoMaskId = data.videoMaskId;
     // this.game.mainPlayer.chips = data.chips;
     // this.game.mainPlayer.leavelChips = data.accountChips;
     // // GameCache.Instance.gold = data.accountChips;

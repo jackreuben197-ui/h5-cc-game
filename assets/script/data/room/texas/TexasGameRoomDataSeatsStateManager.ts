@@ -64,6 +64,8 @@ const SeatsArrange: Record<number, SeatPosition[]> = {
 
 @bindData()
 export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
+    public static readonly BUTTON_CHANGE = 'BUTTON_CHANGE';
+    public static readonly SEATS_CHANGE = 'SEATS_CHANGE';
     private _parentRoomData: TexasGameRoomData;
 
     constructor(p: TexasGameRoomData) {
@@ -84,7 +86,7 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
         this.buttonChangeEvent(prev, this._buttonPosition, bat);
     }
 
-    @pureEvent('BUTTON_CHANGE', {
+    @pureEvent(TexasGameRoomDataSeatsStateManager.BUTTON_CHANGE, {
         initParams() {
             return [0, this._buttonPosition, AnimateDisplayTypeButton.Static];
         }
@@ -117,7 +119,7 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
         this.seatCountChange(this._seatsCount);
     }
 
-    @pureEvent('SEATS_CHANGE', {
+    @pureEvent(TexasGameRoomDataSeatsStateManager.SEATS_CHANGE, {
         initParams() {
             return [this._seatsCount];
         }

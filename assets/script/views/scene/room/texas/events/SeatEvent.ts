@@ -22,7 +22,13 @@ export default class SeatEvent {
     /// 坐下
     /// </summary>
     /// <param name="clientSeatId"></param>
-    public async Sitdown(seatData: TexasGameRoomDataPlayerMine): Promise<void> {
+    public async Sitdown(seatData: TexasGameRoomDataPlayerMine, seatNo: number): Promise<void> {
+        // 已经坐下,点击不处理
+        if (seatData.roomData.mine.seatNo > 0) {
+            this.tracelog.debug('Sitdown 不应该能点');
+            return;
+        }
+        this.tracelog.debug('Sitdown', seatNo);
         // if (this.mainPlayer.seatID != -1) {
         //     console.warn(
         //         LN,
@@ -87,7 +93,7 @@ export default class SeatEvent {
                     roomId: roomID,
                     matchId: matchID
                 },
-                seatId: seatData.seatNo,
+                seatId: seatNo,
                 bringIn: 0,
                 autoOnTable: 0,
                 autoUseWallet: false,
@@ -100,7 +106,17 @@ export default class SeatEvent {
                 depositAdvance: 0,
                 autoOnTableMax: 0
             };
-            userStore.setFullWalletInfo(response.data.wallet);
+            // 自动藏钱要设置几个参数
+            if (seatData.roomData.basicInfo.retainType == RoomInfo.RetainType.RT_AUTO) {
+                seatedData.autoOnTable = seatData.roomData.basicInfo.retainMinRate * seatData.roomData.basicInfo.sbante.sb * 2;
+                seatedData.autoOnTableFix = seatData.roomData.basicInfo.retainMinRate * seatData.roomData.basicInfo.sbante.sb * 2;
+                seatedData.autoOnTableMax = seatData.roomData.basicInfo.retainMaxRate * seatData.roomData.basicInfo.sbante.sb * 2;
+            }
+            this.tracelog.debug(seatedData.autoOnTable, seatData.roomData.basicInfo.retainMinRate * seatData.roomData.basicInfo.sbante.sb * 2);
+            userStore.fillWalletInfo(response.data.wallet);
+            if (response.data.wallet.length == 1) {
+                seatData.currentWalletClubID = response.data.wallet[0].club_id;
+            }
             // 联盟币
             if (seatData.roomData.basicInfo.bringInType == BringInMode.CURRENCY) {
                 // 有带出
@@ -121,21 +137,23 @@ export default class SeatEvent {
                     seatedData.clubId = response.data.last_bring_out.club_id;
                     // 钱包够,没输光(反桌)
                     if (bringToTable > 0) {
-                        // 没有藏钱直接坐下
-                        if (seatData.roomData.basicInfo.retainType == RoomInfo.RetainType.RT_DISABLE) {
+                        // 没有藏钱直接坐下 || 如果自动藏钱而且钱大于自动上桌数字
+                        if (
+                            seatData.roomData.basicInfo.retainType == RoomInfo.RetainType.RT_DISABLE ||
+                            (seatData.roomData.basicInfo.retainType == RoomInfo.RetainType.RT_AUTO && bringToTable >= seatedData.autoOnTable)
+                        ) {
                             ProtocolAgency.Send({
                                 code: Code.MSG_D_SEATED,
                                 roomID: seatData.roomData.roomID,
                                 matchID: seatData.roomData.matchID,
                                 body: seatedData
                             });
+                            return;
                         }
-                        // 如果有藏钱的逻辑(还要保留最小上桌)
-                        if (
-                            seatData.roomData.basicInfo.retainType > 0 &&
-                            bringToTable >= seatData.roomData.basicInfo.retainMinRate * seatData.roomData.basicInfo.sbante.sb * 2
-                        ) {
-                            if (seatData.roomData.basicInfo.retainType == RoomInfo.RetainType.RT_MANUAL) {
+                        // 如果有藏钱的逻辑
+                        if (seatData.roomData.basicInfo.retainType == RoomInfo.RetainType.RT_MANUAL) {
+                            // (还要保留最小上桌
+                            if (bringToTable >= seatData.roomData.basicInfo.retainMinRate * seatData.roomData.basicInfo.sbante.sb * 2) {
                                 //手动逻辑自己管理Store
                                 seatedData.store = bringToTable - seatData.roomData.basicInfo.retainMinRate * seatData.roomData.basicInfo.sbante.sb * 2;
                             }
@@ -145,8 +163,8 @@ export default class SeatEvent {
                                 matchID: seatData.roomData.matchID,
                                 body: seatedData
                             });
+                            return;
                         }
-                        return;
                     }
                     // 其他都需要弹窗口输入
                     viewManager.openDialog('BringIn', {

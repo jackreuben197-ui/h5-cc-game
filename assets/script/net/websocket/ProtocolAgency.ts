@@ -20,7 +20,7 @@ export interface IProtocolRpc {
 }
 
 @ccclass
-@traceClass()
+@traceClass({ level: 'debug' })
 export default class ProtocolAgency extends cc.Component {
     private static _codeNameMap: Record<number, string> | null = null;
     // 序列化的时候，如果找不到类定义用这个
@@ -252,70 +252,7 @@ export default class ProtocolAgency extends cc.Component {
             h5MessageManager.sendToH5('wsSend', 0, new Uint8Array(arrayBuffer));
             return;
         }
-        // 直连模式（后备，H5 未握手时走旧路径）
-        // if (WebSocketClient.CheckOpen()) {
-        //     let protocol_name = ProtocolCode[param.Code];
-        //     if (!protocol_name) {
-        //         this.tracelog.debug('code not in ProtocolCode', protocol_name, JSON.stringify(param));
-        //         return;
-        //     }
-        //     let client = ProtocolMap[param.Code]?.Client;
-        //     if (!client) {
-        //         this.tracelog.debug('protocol unregistered in ProtocolMap', protocol_name, JSON.stringify(param));
-        //         return;
-        //     }
-        //     if (OpCodeHelper.NeedLog(param.Code)) {
-        //         this.tracelog.debug(`>>>>> protocol send : ${protocol_name}`, `RoomID:${param.RoomID},MatchID:${param.MatchID},body:`, param.Body);
-        //     }
-        //     let bodyBA = ProtocolCommon.Instance.Request(param.Code, param.Body);
-        //     let bodyLength: number = bodyBA.byteLength;
-        //     let dataLength: number = packetHead.FixHeadLength + bodyLength;
-        //     let bufferLength: number = packetHead.Length + bodyLength;
-        //     let arrayBuffer: ArrayBuffer = new ArrayBuffer(bufferLength);
-        //     let dataView: DataView = new DataView(arrayBuffer);
-        //     this._writeUint32(dataView, packetHead.FieldOffset.DataLength, dataLength);
-        //     this._writeUint8Array(dataView, packetHead.FieldOffset.CharsFlag, packetHead.CharsFlag);
-        //     this._writeUint16(dataView, packetHead.FieldOffset.Code, param.Code);
-        //     this._writeString(dataView, packetHead.FieldOffset.Token, userStore.token);
-        //     this._writeUint64(dataView, packetHead.FieldOffset.RoomID, param.RoomID);
-        //     this._writeUint64(dataView, packetHead.FieldOffset.MatchID, param.MatchID);
-        //     this._writeUint8(dataView, packetHead.FieldOffset.ProtoVersion, packetHead.ProtoVersion.Protobuf);
-        //     this._writeUint8Array(dataView, packetHead.Length, bodyBA);
-        //     WebSocketClient.WS.send(arrayBuffer);
-        // }
     }
-    /**
-     * 构造完整的二进制协议包（包头 + Protobuf Body），不通过 WS 发送，而是返回 ArrayBuffer。
-     * 用于 H5 桥接场景：CC 层构造好二进制包，交给 H5 层直接 ws.send()。
-     */
-    // static BuildPacket(param: { Code: number; RoomID: number; MatchID: number; Body?: any }): ArrayBuffer | null {
-    //     const protocol_name = ProtocolAgency.getCodeName(param.Code);
-    //     if (!protocol_name) {
-    //         console.warn('[ProtocolAgency] BuildPacket: code not found:', param.Code);
-    //         return null;
-    //     }
-    //     // let client = ProtocolMap[param.Code]?.Client;
-    //     // if (!client) {
-    //     //     console.warn('[ProtocolAgency] BuildPacket: protocol unregistered:', protocol_name);
-    //     //     return null;
-    //     // }
-    //     const bodyBA = this._serializeBody(param.Code, param.Body);
-    //     if (!bodyBA) return null;
-    //     const bodyLength: number = bodyBA.byteLength;
-    //     let dataLength: number = packetHead.FixHeadLength + bodyLength;
-    //     let bufferLength: number = packetHead.Length + bodyLength;
-    //     let arrayBuffer: ArrayBuffer = new ArrayBuffer(bufferLength);
-    //     let dataView: DataView = new DataView(arrayBuffer);
-    //     this._writeUint32(dataView, packetHead.FieldOffset.DataLength, dataLength);
-    //     this._writeUint8Array(dataView, packetHead.FieldOffset.CharsFlag, packetHead.CharsFlag);
-    //     this._writeUint16(dataView, packetHead.FieldOffset.Code, param.Code);
-    //     this._writeString(dataView, packetHead.FieldOffset.Token, userStore.token);
-    //     this._writeUint64(dataView, packetHead.FieldOffset.RoomID, param.RoomID);
-    //     this._writeUint64(dataView, packetHead.FieldOffset.MatchID, param.MatchID);
-    //     this._writeUint8(dataView, packetHead.FieldOffset.ProtoVersion, packetHead.ProtoVersion.Protobuf);
-    //     this._writeUint8Array(dataView, packetHead.Length, bodyBA);
-    //     return arrayBuffer;
-    // }
 
     private static _writeUint8(dataView: DataView, offset: number, num: number) {
         dataView.setUint8(offset, num);
@@ -395,43 +332,13 @@ export default class ProtocolAgency extends cc.Component {
             code != Code.MSG_S_UTIL_ANTI_CHEAT_ROOM_VIDEO &&
             code != Code.MSG_S_NOTIFICATION_ROOM_READY
         ) {
-            this.tracelog.debug('drop code:', code);
+            this.tracelog.debug('drop code:', ProtocolAgency.getCodeName(code));
             return;
         }
         let roomid_offset = packetHead.FieldOffset.RoomID - packetHead.FieldSize.DataLength;
         let matchid_offset = packetHead.FieldOffset.MatchID - packetHead.FieldSize.DataLength;
         let roomid: number = this._readNumber(ua, roomid_offset, packetHead.FieldSize.RoomID);
         let matchid: number = this._readNumber(ua, matchid_offset, packetHead.FieldSize.MatchID);
-        // RoomID or MatchID 和当前不匹配
-        // if (code != ProtocolCode.Protocol_Holdem_Leave && code != ProtocolCode.Protocol_Holdem_EnterRoom) {
-        //     let isRubbish = (roomid != 0 && roomid != GameCache.Instance.room_id) || (matchid != 0 && matchid != GameCache.Instance.match_id);
-        //     if (isRubbish) {
-        //         this.tracelog.info(
-        //             `roomid or matchid is no match cache:{RoomID:${GameCache.Instance.room_id},MatchID:${GameCache.Instance.match_id}},receive:{RoomID:${roomid},MatchID:${matchid}}`
-        //         );
-        //         // H5 桥接模式（CC 不直接连 WebSocket）：仅丢弃，不发 Leave。
-        //         // 原因：H5 的 WebSocket 可能收到多个房间的推送（观战、大厅等），
-        //         // 自动 Leave 会误退当前正在进行的牌桌。
-        //         // if (!WebSocketClient.CheckOpen(true)) {
-        //         //     this.tracelog.debug(                //         `[H5Bridge] 丢弃不匹配房间的消息，不发送 Leave`,
-        //         //     );
-        //         //     return;
-        //         // }
-        //         // 正常模式（CC 直连 WebSocket）：主动 Leave 清理旧房间
-        //         ProtocolAgency.Send<ClientMessageLeave.AsObject>({
-        //             Code: ProtocolCode.Protocol_Holdem_Leave,
-        //             RoomID: roomid,
-        //             MatchID: matchid,
-        //             Body: {
-        //                 room: {
-        //                     roomId: roomid,
-        //                     matchId: matchid
-        //                 }
-        //             }
-        //         });
-        //         return;
-        //     }
-        // }
         let body_ua: Uint8Array = new Uint8Array(data.slice(packetHead.FixHeadLength));
         const ServerCtor = this._getServerCtor(code);
         if (!ServerCtor) {
@@ -464,12 +371,6 @@ export default class ProtocolAgency extends cc.Component {
                 this.gTimeStamp = (body as any).timestamp;
             }
         }
-        // 拆和卓进房间
-        // if (code == ProtocolCode.Protocol_Holdem_NotificationRoomReady) {
-        //     this._mttExchangeRoomReady(body);
-        //     return;
-        // }
-        // GC.notify.post(code, body, roomid, matchid);
         // 新的消息处理，只针对新的模式
         MessageHandler.handle(code, body, roomid, matchid);
         body = null;

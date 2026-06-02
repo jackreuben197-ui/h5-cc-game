@@ -1,9 +1,21 @@
 const fs = require('fs');
 const path = require('path');
 const ts = require('typescript');
+const prettier = require('prettier');
 
 const ROOT = path.join(__dirname, '../assets', 'script');
 const EXCLUDE_DIRS = new Set(['protobuf']);
+
+const PRETTIER_OPTS = {
+    parser: 'typescript',
+    tabWidth: 4,
+    useTabs: false,
+    printWidth: 160,
+    singleQuote: true,
+    trailingComma: 'none',
+    bracketSpacing: true,
+    arrowParens: 'avoid',
+};
 
 function collectTs(dir) {
     let files = [];
@@ -65,32 +77,43 @@ const serviceHost = {
 
 const service = ts.createLanguageService(serviceHost, ts.createDocumentRegistry());
 
-let updated = 0;
-for (const file of files) {
-    try {
-        // Always refresh snapshot from disk so organizeImports sees the latest content
-        const content = fs.readFileSync(file, 'utf8');
-        scriptSnapshots.set(file, content);
-        scriptVersions.set(file, (scriptVersions.get(file) || 0) + 1);
+async function main() {
+    let updated = 0;
+    for (const file of files) {
+        try {
+            const content = fs.readFileSync(file, 'utf8');
+            scriptSnapshots.set(file, content);
+            scriptVersions.set(file, (scriptVersions.get(file) || 0) + 1);
 
-        const changes = service.organizeImports(
-            { type: 'file', fileName: file },
-            {},
-            {}
-        );
-        if (changes.length > 0 && changes[0].textChanges.length > 0) {
-            let result = content;
-            for (let i = changes[0].textChanges.length - 1; i >= 0; i--) {
-                const c = changes[0].textChanges[i];
-                result = result.slice(0, c.span.start) + c.newText + result.slice(c.span.start + c.span.length);
+            const changes = service.organizeImports(
+                { type: 'file', fileName: file },
+                {},
+                {}
+            );
+            const fileChanges = changes.find(c => c.fileName === file);
+            if (fileChanges && fileChanges.textChanges.length > 0) {
+                let result = content;
+                for (let i = fileChanges.textChanges.length - 1; i >= 0; i--) {
+                    const c = fileChanges.textChanges[i];
+                    result = result.slice(0, c.span.start) + c.newText + result.slice(c.span.start + c.span.length);
+                }
+                // Format with Prettier to avoid cycling with fmt-blanklines
+                try {
+                    result = await prettier.format(result, { ...PRETTIER_OPTS, filepath: file });
+                } catch (e) {
+                    // Prettier failed, continue with raw organizeImports result
+                }
+                if (result !== content) {
+                    fs.writeFileSync(file, result, 'utf8');
+                    scriptSnapshots.set(file, result);
+                    updated++;
+                }
             }
-            fs.writeFileSync(file, result, 'utf8');
-            scriptSnapshots.set(file, result);
-            updated++;
+        } catch (e) {
+            console.error(`  Error in ${path.basename(file)}: ${e.message}`);
         }
-    } catch (e) {
-        console.error(`  Error in ${path.basename(file)}: ${e.message}`);
     }
+    console.log(`Done: ${updated} files updated`);
 }
 
-console.log(`Done: ${updated} files updated`);
+main().catch(e => { console.error(e); process.exit(1); });

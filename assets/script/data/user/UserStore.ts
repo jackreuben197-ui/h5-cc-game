@@ -1,52 +1,89 @@
 import { bindData, IObservableBindings, observable } from '../../core/decorator/DataBind';
 import { HttpRoomBringOutProtocol } from '../../net/https/data/room/HttpRoomBringOutProtocol';
 
-interface UserStore extends IObservableBindings<UserStore> {}
+export interface UserStore extends IObservableBindings<UserStore> {}
 
 @bindData()
-class UserStore extends cc.EventTarget {
+export class UserStore extends cc.EventTarget {
+    public static readonly DIAMONDS_CHANGE = 'DIAMONDS_CHANGE';
+    public static readonly NICKNAME_CHANGE = 'NICKNAME_CHANGE';
+    public static readonly AVATAR_CHANGE = 'AVATAR_CHANGE';
+    public static readonly CLUBS_INFO_CHANGE = 'CLUBS_INFO_CHANGE';
+    public static readonly CLUBS_WALLET_CHANGE = 'CLUBS_WALLET_CHANGE';
+    public static readonly CLUBS_CREDIT_CHANGE = 'CLUBS_CREDIT_CHANGE';
+    public static readonly FORBID_CHANGE = 'FORBID_CHANGE';
+    public static readonly TRADER_EXPIRE_TIME_CHANGE = 'TRADER_EXPIRE_TIME_CHANGE';
     // 不变的信息
     // 基础信息
     public userID: number;
     public userRID: number;
     public token: string;
-    @observable('DIAMONDS_CHANGE')
-    public diamonds: number;
-    @observable('NICKNAME_CHANGE')
-    public name: string;
-    @observable('AVATAR_CHANGE')
+    @observable(UserStore.DIAMONDS_CHANGE)
+    public diamonds: number = 0;
+    @observable(UserStore.NICKNAME_CHANGE)
+    public name: string = '';
+    @observable(UserStore.AVATAR_CHANGE)
     public avatar: string;
-    @observable('CLUBS_INFO_CHANGE')
-    public clubsData: ClubData[];
-    @observable('CLUBS_WALLET_CHANGE')
-    public wallets: ClubWallet[];
-    @observable('CLUBS_CREDIT_CHANGE')
-    public credits: ClubCredit[];
-    @observable('FORBID_CHANGE')
-    public forbid: boolean;
+    @observable(UserStore.CLUBS_INFO_CHANGE)
+    public clubsData: ClubData[] = [];
+    @observable(UserStore.CLUBS_WALLET_CHANGE)
+    public wallets: ClubWallet[] = [];
+    @observable(UserStore.CLUBS_CREDIT_CHANGE)
+    public credits: ClubCredit[] = [];
+    @observable(UserStore.FORBID_CHANGE)
+    public forbid: boolean = false;
 
-    public setFullWalletInfo(wallet: HttpRoomBringOutProtocol.Wallet[]) {
-        const clubsData: ClubData[] = [];
-        const walletsData: ClubWallet[] = [];
+    public fillWalletInfo(wallet: HttpRoomBringOutProtocol.Wallet[]) {
+        let clubsData:ClubData[] = [];
+        let walletsData:ClubWallet[] = [];
+        // 简单处理多个钱包就当全量,单个钱包当更新
+        if (wallet.length == 1) {
+            clubsData = [...this.clubsData];
+            walletsData = [...this.wallets];
+        } 
+        let clubDataMap = new Map(this.clubsData.map(item => [item._clubID, item]));
+        let walletMap = new Map(this.wallets.map(item => [item._clubID, item]));
         wallet.forEach(v => {
-            clubsData.push({
-                _clubID: v.club_id,
-                clubID: v.club_random_id,
-                name: v.club_name,
-                logo: v.club_logo,
-                tribeID: v.tribe_random_id
-            });
-            walletsData.push({
-                _clubID: v.club_id,
-                clubID: v.club_random_id,
-                status: v.user_status,
-                tribeStatus: v.wallet_tribe_status,
-                goldType: v.gold_type,
-                goldCurrency: v.gold_currency,
-                id: v.w_u_id,
-                gold: v.gold,
-                goldLock: v.gold_lock
-            });
+            if (clubDataMap.has(v.club_id)) {
+                let item = clubDataMap.get(v.club_id);
+                item._clubID = v.club_id;
+                item.clubID = v.club_random_id;
+                item.name = v.club_name;
+                item.logo = v.club_logo;
+                item.tribeID = v.tribe_random_id;
+            } else {
+                clubsData.push({
+                    _clubID: v.club_id,
+                    clubID: v.club_random_id,
+                    name: v.club_name,
+                    logo: v.club_logo,
+                    tribeID: v.tribe_random_id
+                });
+            }
+            if (walletMap.has(v.club_id)) {
+                let item = walletMap.get(v.club_id);
+                item._clubID = v.club_id;
+                item.clubID = v.club_random_id;
+                item.status = v.user_status;
+                item.tribeStatus = v.wallet_tribe_status;
+                item.goldType = v.gold_type;
+                item.goldCurrency = v.gold_currency;
+                item.id = v.w_u_id;
+                item.gold = v.gold;
+                item.goldLock = v.gold_lock;
+            } else {
+                walletsData.push({
+                    _clubID: v.club_id,
+                    clubID: v.club_random_id,
+                    status: v.user_status,
+                    tribeStatus: v.wallet_tribe_status,
+                    goldType: v.gold_type,
+                    goldCurrency: v.gold_currency,
+                    id: v.w_u_id,
+                    gold: v.gold,
+                    goldLock: v.gold_lock
+                });
+            }
         });
         this.muteEvents();
         this.clubsData = clubsData;
@@ -86,6 +123,7 @@ class UserStore extends cc.EventTarget {
         this.wallets.forEach(v => {
             let cb = this.getClub(v._clubID);
             wallets.push({
+                _clubID: cb._clubID,
                 tribeID: cb.tribeID,
                 clubID: cb.clubID,
                 id: v.id,
@@ -97,7 +135,7 @@ class UserStore extends cc.EventTarget {
         return wallets;
     }
 
-    @observable('TRADER_EXPIRE_TIME_CHANGE')
+    @observable(UserStore.TRADER_EXPIRE_TIME_CHANGE)
     public traderExpireTime: number;
     public get isTrader(): boolean {
         return Date.now() < this.traderExpireTime * 1000;
@@ -140,6 +178,7 @@ export class ClubCredit {
 }
 
 export interface IWallet {
+    _clubID: number;
     tribeID: number;
     clubID: number;
     /** 钱包 ID */

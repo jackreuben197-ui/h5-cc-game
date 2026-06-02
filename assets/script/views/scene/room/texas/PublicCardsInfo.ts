@@ -1,3 +1,4 @@
+import { autoBindEvents, bindEvent } from '../../../../core/decorator/DataBind';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPublicCards from '../../../../data/room/texas/TexasGameRoomDataPublicCards';
@@ -44,16 +45,18 @@ export default class PublicCardsInfo extends cc.Component {
     }
 
     private _bindEventsAndRefresh() {
-        this._publicCardsData.on(TexasGameRoomDataPublicCards.PUBLICCARDS_CHANGE, this.onUpdatePublicCards, this);
-        this._publicCardsData.on(TexasGameRoomDataPublicCards.SECOND_PUBLICCARDS_CHANGE, this.onUpdateSecPublicCards, this);
-        this._publicCardsData.on(TexasGameRoomDataPublicCards.ALL_PUBLICCARDS_RESET, this.onUpdateResetPublicCards, this);
-        this._publicCardsData.on(TexasGameRoomDataPublicCards.PUBLICCARDS_HIGHLIGHT, this.onHighlightPublicCards, this);
-        this._publicCardsData.on(TexasGameRoomDataPublicCards.SECOND_PUBLICCARDS_HIGHLIGHT, this.onHighlightSecondPublicCards, this);
+        autoBindEvents(this, { publicCards: this._publicCardsData });
+        // this._publicCardsData.on(TexasGameRoomDataPublicCards.PUBLICCARDS_CHANGE, this.onUpdatePublicCards, this);
+        // this._publicCardsData.on(TexasGameRoomDataPublicCards.SECOND_PUBLICCARDS_CHANGE, this.onUpdateSecPublicCards, this);
+        // this._publicCardsData.on(TexasGameRoomDataPublicCards.ALL_PUBLICCARDS_RESET, this.onUpdateResetPublicCards, this);
+        // this._publicCardsData.on(TexasGameRoomDataPublicCards.PUBLICCARDS_HIGHLIGHT, this.onHighlightPublicCards, this);
+        // this._publicCardsData.on(TexasGameRoomDataPublicCards.SECOND_PUBLICCARDS_HIGHLIGHT, this.onHighlightSecondPublicCards, this);
         // 初始化
-        this.onUpdatePublicCards([], this._publicCardsData.publicCards, AnimateDisplayTypePublicCards.Static);
-        this.onUpdateSecPublicCards([], this._publicCardsData.secondPublicCards, AnimateDisplayTypePublicCards.Static);
+        // this.onUpdatePublicCards([], this._publicCardsData.publicCards, AnimateDisplayTypePublicCards.Static);
+        // this.onUpdateSecPublicCards([], this._publicCardsData.secondPublicCards, AnimateDisplayTypePublicCards.Static);
     }
 
+    @bindEvent(TexasGameRoomDataPublicCards.ALL_PUBLICCARDS_RESET, { dataSource: 'publicCards', initIgnore: true })
     public onUpdateResetPublicCards() {
         this._publicCards.forEach(v => {
             v.node.active = false;
@@ -65,6 +68,7 @@ export default class PublicCardsInfo extends cc.Component {
         });
     }
 
+    @bindEvent(TexasGameRoomDataPublicCards.PUBLICCARDS_CHANGE, 'publicCards')
     private onUpdatePublicCards(prev: number[], plus: number[], pat: AnimateDisplayTypePublicCards) {
         const prevCardsLen = prev.length;
         this._publicCards.slice(prevCardsLen + plus.length).forEach(v => (v.node.active = false));
@@ -101,6 +105,7 @@ export default class PublicCardsInfo extends cc.Component {
         });
     }
 
+    @bindEvent(TexasGameRoomDataPublicCards.SECOND_PUBLICCARDS_CHANGE, 'publicCards')
     private onUpdateSecPublicCards(prev: number[], plus: number[], pat: AnimateDisplayTypePublicCards) {
         const prevCardsLen = prev.length;
         this._secPublicCards.slice(prevCardsLen + plus.length).forEach(v => (v.node.active = false));
@@ -137,6 +142,7 @@ export default class PublicCardsInfo extends cc.Component {
         });
     }
 
+    @bindEvent(TexasGameRoomDataPublicCards.PUBLICCARDS_HIGHLIGHT, { dataSource: 'publicCards', initIgnore: true })
     private onHighlightPublicCards(cardsNum: number[]) {
         const mp: Set<number> = new Set();
         cardsNum.forEach(v => mp.add(v));
@@ -149,6 +155,7 @@ export default class PublicCardsInfo extends cc.Component {
         });
     }
 
+    @bindEvent(TexasGameRoomDataPublicCards.SECOND_PUBLICCARDS_HIGHLIGHT, { dataSource: 'publicCards', initIgnore: true })
     private onHighlightSecondPublicCards(cardsNum: number[]) {
         const mp: Set<number> = new Set();
         cardsNum.forEach(v => mp.add(v));

@@ -23,6 +23,12 @@ interface TexasGameRoomDataBasic extends IObservableBindings<TexasGameRoomDataBa
 
 @bindData()
 class TexasGameRoomDataBasic extends cc.EventTarget {
+    public static readonly TABLE_BET_INFO_CHANGE = 'TABLE_BET_INFO_CHANGE';
+    public static readonly TABLE_HANDINFO_CHANGE = 'TABLE_HANDINFO_CHANGE';
+    public static readonly BOMBPOT_ENABLED = 'BOMBPOT_ENABLED';
+    public static readonly CRITIAL_HIT_ENABLED = 'CRITIAL_HIT_ENABLED';
+    public static readonly SQUID_ENABLED = 'SQUID_ENABLED';
+    public static readonly MUSHROOM_ENABLED = 'MUSHROOM_ENABLED';
     // 不变的信息
     // 基础信息
     public roomName: string;
@@ -151,7 +157,7 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public jackpotConfig: RoomJackpotConfig.AsObject | null; // Jackpot模版配置
     public jackpotMainPool: number; // 主模板剩余
     // 下注信息会变
-    @observable('TABLE_BET_INFO_CHANGE')
+    @observable(TexasGameRoomDataBasic.TABLE_BET_INFO_CHANGE)
     public sbante: tableBetInfo;
     private _randomAnte: number[]; // anteMin, anteMax, randomStep
     public get randomAnte() {
@@ -175,13 +181,13 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public curMaxRate: number;
     // 入池率限制
     public hcPoolRate: number;
-    @observable('TABLE_HANDINFO_CHANGE')
+    @observable(TexasGameRoomDataBasic.TABLE_HANDINFO_CHANGE)
     public handNum: number;
     public deposit: number;
     // ================== 以下都是动态玩法 可以一直开启，也可能定数开启, 结合SubConfig 和 NextOptionChange(HandInfo决定)========================
     // ============ BombPot ===================
     public hasBombPot: boolean;
-    @observable('BOMBPOT_ENABLED') // 以下都是动态变更
+    @observable(TexasGameRoomDataBasic.BOMBPOT_ENABLED) // 以下都是动态变更
     public bombpotEnabled: boolean; // 当前是否开启
     public bombpottRounds: number; // 跑了多少次手了，开启后
     // ============== 暴击部分 ================
@@ -196,7 +202,7 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
         return 0;
     }
 
-    @observable('CRITIAL_HIT_ENABLED') // 以下都是动态变更
+    @observable(TexasGameRoomDataBasic.CRITIAL_HIT_ENABLED) // 以下都是动态变更
     public criticalHitEnabled: boolean; // 当前是否开启
     public critialHitRounds: number; // 跑了多少手了，开启后
     // ============== 鱿鱼部分 ================
@@ -217,7 +223,7 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public squidExtraCount: number; // 额外的鱿鱼个数（血战）
     public squidCountRateList: SquidCountRateConfig.AsObject[] = []; // // 血战鱿鱼，鱿鱼个数翻倍
     // 鱿鱼玩法以下都开启后计算的配置
-    @observable('SQUID_ENABLED')
+    @observable(TexasGameRoomDataBasic.SQUID_ENABLED)
     public squidEnabled: boolean;
     public squidRounds: number; // 第几轮了
     // ============== 蘑菇玩法 ==================
@@ -227,7 +233,7 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public mushroomMode: MushroomMode; // 0: 未开启蘑菇 1: 正常模式 2: 前注蘑菇模式
     public mushroomBase: number; // 蘑菇基数(1个蘑菇筹码)
     public mushroomStatic: number; // 蘑菇固定(如果是固定上桌限制的筹码要求)
-    @observable('MUSHROOM_ENABLED')
+    @observable(TexasGameRoomDataBasic.MUSHROOM_ENABLED)
     public mushroomEnabled: boolean;
     public get shouldShowBringInSecuritySetting(): boolean {
         if (this._roomData.matchID != 0) return false;

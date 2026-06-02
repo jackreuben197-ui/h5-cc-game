@@ -1,8 +1,8 @@
 import { autoBindEvents, bindData, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
-import { tableBetInfo } from '../../../../data/room/texas/TexasGameRoomDataBasic';
+import TexasGameRoomDataBasic, { tableBetInfo } from '../../../../data/room/texas/TexasGameRoomDataBasic';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
-import userStore, { ClubWallet } from '../../../../data/user/UserStore';
+import userStore, { ClubWallet, UserStore } from '../../../../data/user/UserStore';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
 import { RoomInfo } from '../../../../protobuf/holdem/define_pb';
@@ -58,7 +58,7 @@ export class BringInProviderTexas extends BringInProvider {
         return this._data.roomData.basicInfo.bringInType == 1 && this._data.roomData.basicInfo.retainType == 0;
     }
 
-    @bindEvent('TABLE_BET_INFO_CHANGE', 'roomBasic')
+    @bindEvent(TexasGameRoomDataBasic.TABLE_BET_INFO_CHANGE, 'roomBasic')
     private onTableInfoChange(info: tableBetInfo) {
         this._ui._updateBringAreaIntro(
             i18nMgr.Get('UITexas_smallBigBlind'),
@@ -80,27 +80,26 @@ export class BringInProviderTexas extends BringInProvider {
         this._ui._setupBringInSider(minAmount, maxAmount, step, needDeposit > 0, this._needAutoBringIn, autoMin);
     }
 
-    @bindEvent('CLUBS_WALLET_CHANGE', 'user')
-    @traceMethod()
-    private onWalletsChange(wallets: ClubWallet[]) {
-        if (wallets.length == 0) return;
-        let selectWalletClubID = 0;
-        selectWalletClubID = this._data.currentWalletClubID;
-        if (selectWalletClubID == 0 && wallets.length == 1) {
-            selectWalletClubID = wallets[0].clubID;
-            this._data.currentWalletClubID = selectWalletClubID;
+    @bindEvent(UserStore.CLUBS_WALLET_CHANGE, 'user')
+    private onWalletsChange(w: ClubWallet[]) {
+        if (w.length == 0) return;
+        let wallets = userStore.getWallets();
+        if (this._data.currentWalletClubID > 0) {
+            wallets = wallets.filter( v => v._clubID == this._data.currentWalletClubID);
         }
-        this._ui._setupWalletList(userStore.getWallets(), selectWalletClubID);
+        this.tracelog.debug(wallets, this._data.currentWalletClubID);
+        this._ui._setupWalletList(wallets);
     }
 
     public cleanup(): void {
         unBindEventsAll(this);
     }
 
-    public clubSelected(clubID: number): void {
-        this._data.currentWalletClubID = clubID;
+    public clubSelected(_clubID: number): void {
+        this._data.currentWalletClubID = _clubID;
     }
 
+    @traceMethod()
     public commit(bringInAmount: number, autoOnTableAmount: number): void {
         let storeAmount = 0;
         // 手动存钱需要自己设置藏多少

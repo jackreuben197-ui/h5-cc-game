@@ -5,6 +5,11 @@ import TexasGameRoomData from './TexasGameRoomData';
 
 @bindData()
 export default class TexasGameRoomDataPlayerMine extends cc.EventTarget {
+    public static readonly STORECHIPS_CHANGE = 'STORECHIPS_CHANGE';
+    public static readonly PREPARE_OPERATION_MINE = 'PREPARE_OPERATION_MINE';
+    public static readonly TOTAL_BRINGIN = 'TOTAL_BRINGIN';
+    public static readonly TABLE_USER_DEPOSIT = 'TABLE_USER_DEPOSIT';
+    public static readonly HIGHLIGHT_CARDS = 'HIGHLIGHT_CARDS';
     private _roomData: TexasGameRoomData;
     public get roomData() {
         return this._roomData;
@@ -15,16 +20,16 @@ export default class TexasGameRoomDataPlayerMine extends cc.EventTarget {
         this._roomData = roomData;
     }
 
-    @observable('STORECHIPS_CHANGE')
+    @observable(TexasGameRoomDataPlayerMine.STORECHIPS_CHANGE)
     public storeChips: number = 0;
-    @observable('PREPARE_OPERATION_MINE')
+    @observable(TexasGameRoomDataPlayerMine.PREPARE_OPERATION_MINE)
     public operator: OperatorMine = null;
-    @observable('TOTAL_BRINGIN')
+    @observable(TexasGameRoomDataPlayerMine.TOTAL_BRINGIN)
     public totalBringIn: number = 0;
-    @observable('TABLE_USER_DEPOSIT')
+    @observable(TexasGameRoomDataPlayerMine.TABLE_USER_DEPOSIT)
     public deposit: number = 0;
 
-    @pureEvent('HIGHLIGHT_CARDS')
+    @pureEvent(TexasGameRoomDataPlayerMine.HIGHLIGHT_CARDS)
     public highlightCards(cards: number[]) {}
 
     public get needVideoPermision() {
@@ -33,8 +38,8 @@ export default class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     // 如果有座位,座位号 > 0
     public seatNo: number = 0;
     // 纯本地记录自动带上桌(wallet)
-    public autoOnTable: number = 0;
-    // 当前货币的卡包俱乐部ID;
+    public autoOnTableLocal: number = 0;
+    // 当前货币的卡包俱乐部ID(真实ID,非RID)
     public currentWalletClubID: number = 0;
     // calltime手数
     public callTimeCount: number = 0;
