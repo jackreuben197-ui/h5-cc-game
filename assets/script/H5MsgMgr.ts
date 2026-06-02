@@ -25,7 +25,6 @@
  *   H5MsgMgr.Instance.on('xxx', fn);                 // 注册消息监听
  */
 import { traceClass } from './core/decorator/LogTrace';
-import PacketHead from './net/websocket/PacketHead';
 
 /** 握手超时时间（毫秒） */
 const HANDSHAKE_TIMEOUT = 10000;

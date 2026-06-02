@@ -7,8 +7,8 @@
  * @FilePath: /pokerqueen/assets/script/net/https/HttpRequest.ts
  */
 import { GameConfig } from '../../config/GameConfig';
-import HttpClient from './HttpClient';
 import HotUpdateConfigCache from './HotUpdateConfigCache';
+import HttpClient from './HttpClient';
 // import WebHelper from './WebHelper';
 import WebApiCacheCenter from './WebApiCacheCenter';
 

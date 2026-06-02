@@ -1,23 +1,26 @@
-import { tableBetInfo } from '../../../../data/room/texas/TexasGameRoomDataBasic';
-import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
-import userStore, { ClubWallet } from '../../../../data/user/UserStore';
-import { autoBindEvents, bindData, bindEvent } from '../../../../core/decorator/DataBind';
+import { autoBindEvents, bindData, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
+import { tableBetInfo } from '../../../../data/room/texas/TexasGameRoomDataBasic';
+import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
+import userStore, { ClubWallet } from '../../../../data/user/UserStore';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
+import { RoomInfo } from '../../../../protobuf/holdem/define_pb';
 import UIBringIn, { BringInTabType } from '../UIBringIn';
-import { BringInProvider } from './BringInProvider';
+import { BringInCommitFn, BringInProvider } from './BringInProvider';
 
 @bindData()
 @traceClass({ level: 'debug' })
 export class BringInProviderTexas extends BringInProvider {
     private _ui: UIBringIn;
-    private _data: TexasGameRoomDataPlayer;
+    private _data: TexasGameRoomDataPlayerMine;
+    private _commitFn: BringInCommitFn;
 
-    constructor(d: TexasGameRoomDataPlayer, ui: UIBringIn) {
+    constructor(d: TexasGameRoomDataPlayerMine, commitFn: BringInCommitFn, ui: UIBringIn) {
         super();
         this._data = d;
         this._ui = ui;
+        this._commitFn = commitFn;
     }
 
     protected beforeBind(): void {
@@ -46,8 +49,7 @@ export class BringInProviderTexas extends BringInProvider {
     public override autoBind() {
         autoBindEvents(this, {
             roomBasic: this._data.roomData.basicInfo,
-            user: userStore,
-            userTable: this._data.mine
+            user: userStore
         });
     }
 
@@ -64,10 +66,8 @@ export class BringInProviderTexas extends BringInProvider {
         );
         let needDeposit = this._data.roomData.basicInfo.deposit;
         let totalBringIn = 0;
-        if (this._data.mine != null) {
-            needDeposit = needDeposit - this._data.mine.deposit;
-            totalBringIn = this._data.mine.totalBringIn;
-        }
+        needDeposit = needDeposit - this._data.deposit;
+        totalBringIn = this._data.totalBringIn;
         let step = info.sb * 2;
         let minAmount = this._data.roomData.basicInfo.curMinRate * step;
         let autoMin = minAmount;
@@ -85,13 +85,35 @@ export class BringInProviderTexas extends BringInProvider {
     private onWalletsChange(wallets: ClubWallet[]) {
         if (wallets.length == 0) return;
         let selectWalletClubID = 0;
-        if (this._data.mine) {
-            selectWalletClubID = this._data.mine.currentWalletClubID;
-        } else {
-            if (wallets.length == 1) {
-                selectWalletClubID = wallets[0].clubID;
-            }
+        selectWalletClubID = this._data.currentWalletClubID;
+        if (selectWalletClubID == 0 && wallets.length == 1) {
+            selectWalletClubID = wallets[0].clubID;
+            this._data.currentWalletClubID = selectWalletClubID;
         }
         this._ui._setupWalletList(userStore.getWallets(), selectWalletClubID);
+    }
+
+    public cleanup(): void {
+        unBindEventsAll(this);
+    }
+
+    public clubSelected(clubID: number): void {
+        this._data.currentWalletClubID = clubID;
+    }
+
+    public commit(bringInAmount: number, autoOnTableAmount: number): void {
+        let storeAmount = 0;
+        // 手动存钱需要自己设置藏多少
+        if (this._data.roomData.basicInfo.retainType == RoomInfo.RetainType.RT_MANUAL) {
+            storeAmount = bringInAmount - this._data.roomData.basicInfo.retainMinRate * this._data.roomData.basicInfo.sbante.sb * 2;
+        }
+        // 鱿鱼/蘑菇模式检查
+        // if (this.addChipsData._source == BringInChipsType.SQUID || this.addChipsData._source == BringInChipsType.MUSHROOM) {
+        //     let isShowToast = !GameCache.Instance._isRoomManager;
+        //     if (isShowToast && GameCache.Instance._friendsTableLimitBringIn) {
+        //         viewManager.showToastLanguage('UIWaitManagerAuditTip');
+        //     }
+        // }
+        this._commitFn(bringInAmount, storeAmount, autoOnTableAmount, this._data.currentWalletClubID);
     }
 }

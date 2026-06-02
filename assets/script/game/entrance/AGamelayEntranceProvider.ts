@@ -1,9 +1,9 @@
-import AGameplayEntrance from './AGameplayEntrance';
-import TexasGameplayEntrance from './TexasGameplayEntrance';
-import MttTexasGameplayEntrance from './MttTexasGameplayEntrance';
-import GameplayUtil from '../util/GameplayUtil';
-import { GameType } from '../constant/LogicTypeConf';
 import { traceClass } from '../../core/decorator/LogTrace';
+import { GameType } from '../constant/LogicTypeConf';
+import GameplayUtil from '../util/GameplayUtil';
+import AGameplayEntrance from './AGameplayEntrance';
+import MttTexasGameplayEntrance from './MttTexasGameplayEntrance';
+import TexasGameplayEntrance from './TexasGameplayEntrance';
 
 @traceClass()
 export class AGameplayEntranceProvider {

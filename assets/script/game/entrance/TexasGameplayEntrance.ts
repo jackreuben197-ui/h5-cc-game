@@ -444,6 +444,8 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         roomData.basicInfo.squidLeaveMode = this._roomInfo.squidLeaveMode; // 鱿鱼轮离开模式 1 可以离开 2 不可以离开（一轮结束才可以离开，如果筹码不足没补充就走模式1）
         roomData.basicInfo.squidPlayerCountLimit = this._roomInfo.squidPlayerCount; // 鱿鱼轮开启的人数限制
         roomData.basicInfo.squidCountRateList = this._roomInfo.squidCountRateList;
+        // 带入必须申请
+        roomData.basicInfo.limitBringIn = this._roomInfo.limitBringIn > 0;
         //hasMushroom
         roomData.basicInfo.mushroomBase = this._roomInfo.mushroomBase;
         roomData.basicInfo.mushroomMode = this._roomInfo.mushroomMode;

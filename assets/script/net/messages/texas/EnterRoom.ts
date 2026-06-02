@@ -1,5 +1,7 @@
-import { ServerMessageEnterRoom } from '../../../protobuf/holdem/req_th_enter_room_pb';
+import { createLogger } from '../../../core/decorator/LogTrace';
+import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine } from '../../../data/room/texas/model/Operator';
+import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import {
     AnimateDisplayTypeAction,
     AnimateDisplayTypeButton,
@@ -8,10 +10,8 @@ import {
     AnimateDisplayTypePublicCards,
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
+import { ServerMessageEnterRoom } from '../../../protobuf/holdem/req_th_enter_room_pb';
 import viewManager from '../../../views/UIViewManager';
-import roomDataManager from '../../../data/room/RoomDataManager';
-import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
-import { createLogger, traceMethod } from '../../../core/decorator/LogTrace';
 
 const _plog = createLogger('[TexasEnterRoom]');
 
@@ -62,8 +62,8 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         if (data.myInfo) {
             if (data.myInfo.seatId > 0) {
                 let mine = roomData.seatsStateManager.setMySeat(data.myInfo.seatId, AnimateDisplayTypePosition.Static);
-                mine.storeChips = data.myInfo.storeChips;
             }
+            roomData.mine.storeChips = data.myInfo.storeChips;
         }
         // setTimeout(() => {
         //     let mine = roomData.seatsStateManager.setMySeat(4, AnimateDisplayTypePosition.ToTarget);

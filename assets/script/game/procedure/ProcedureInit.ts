@@ -1,11 +1,11 @@
+import { GameConfig } from '../../config/GameConfig';
 import { traceClass } from '../../core/decorator/LogTrace';
+import h5MessageManager from '../../H5MsgMgr';
 import { i18nMgr } from '../../i18n/i18nMgr';
 import * as MainUtils from '../../MainUtils';
-import ProcedureBase from './ProcedureBase';
-import { GameConfig } from '../../config/GameConfig';
 import { PreloadDefinitionGame, PreloadDefinitionSound } from '../../views/loader/AssetManager';
 import viewManager from '../../views/UIViewManager';
-import h5MessageManager from '../../H5MsgMgr';
+import ProcedureBase from './ProcedureBase';
 
 @traceClass()
 export default class ProcedureInit extends ProcedureBase {

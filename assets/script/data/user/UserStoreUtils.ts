@@ -1,0 +1,41 @@
+import { traceClass, traceMethod } from '../../core/decorator/LogTrace';
+import { WebUserInfo, WebUserTraderApplyList } from '../../net/https/WebRequest';
+import { WWW } from '../../net/https/WebRequestBase';
+import { HttpUSDTApplyListProtocol } from '../../net/https/data/usdt/HttpUSDTApplyListProtocol';
+import { HttpUserInfoProtocol } from '../../net/https/data/user/HttpUserInfoProtocol';
+import userStore from './UserStore';
+
+@traceClass()
+export default class UserStoreUtils {
+    @traceMethod()
+    public static async checkIsApplying() {
+        const data = await WWW.Instance.CommonAPI<HttpUSDTApplyListProtocol.ResponseData>({
+            web_class: WebUserTraderApplyList,
+            body: {
+                status: 1
+            }
+        });
+        if (data.code != 0) {
+            UserStoreUtils.tracelog.error('get HttpUSDTApplyListProtocol error', data.code);
+            return;
+        }
+        userStore.isApplyingTrader = data.data.list.length > 0;
+    }
+
+    @traceMethod()
+    public static async updateUserInfoBasic() {
+        const data = await WWW.Instance.CommonAPI<HttpUserInfoProtocol.ResponseData>({
+            web_class: WebUserInfo
+        });
+        if (data.code != 0) {
+            UserStoreUtils.tracelog.error('get HttpUserInfoProtocol error', data.code);
+            return;
+        }
+        // @TODO更新用户信息
+        //GC.data.user.info  Update
+        userStore.diamonds = data.data.user.diamonds;
+        userStore.avatar = data.data.user.avatar;
+        userStore.name = data.data.user.nickname;
+        userStore.forbid = data.data.user.forbid == 0;
+    }
+}

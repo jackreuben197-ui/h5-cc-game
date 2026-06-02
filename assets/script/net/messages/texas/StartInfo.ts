@@ -1,6 +1,5 @@
-import { Def, PlayerStartInfo } from '../../../protobuf/holdem/define_pb';
-import { ServerMessageStartInfo } from '../../../protobuf/holdem/recv_th_start_info_pb';
 import roomDataManager from '../../../data/room/RoomDataManager';
+import { Operator, OperatorMine } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import {
     AnimateDisplayTypeAction,
@@ -9,7 +8,8 @@ import {
     AnimateDisplayTypePublicCards,
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
-import { Operator, OperatorMine } from '../../../data/room/texas/model/Operator';
+import { PlayerStartInfo } from '../../../protobuf/holdem/define_pb';
+import { ServerMessageStartInfo } from '../../../protobuf/holdem/recv_th_start_info_pb';
 
 // StartInfo 1103
 export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number, matchID: number) {

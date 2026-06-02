@@ -1,17 +1,19 @@
 import { traceClass } from '../../../../../core/decorator/LogTrace';
-import TexasGameRoomDataPlayer from '../../../../../data/room/texas/TexasGameRoomDataPlayer';
+import TexasGameRoomDataPlayerMine from '../../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import userStore from '../../../../../data/user/UserStore';
+import UserStoreUtils from '../../../../../data/user/UserStoreUtils';
+import { BringInChipsType, BringInMode } from '../../../../../game/constant/BringInChipsType';
 import { GameType } from '../../../../../game/constant/LogicTypeConf';
 import ProcedureDefine from '../../../../../game/procedure/ProcedureDefine';
 import ProcedureManager from '../../../../../game/procedure/ProcedureManager';
 import { i18nMgr } from '../../../../../i18n/i18nMgr';
 import { HttpRoomBringOutProtocol } from '../../../../../net/https/data/room/HttpRoomBringOutProtocol';
-import { HttpUserInfoProtocol } from '../../../../../net/https/data/user/HttpUserInfoProtocol';
-import { WebUserInfo, WebUserRoom, WWW } from '../../../../../net/https/WebRequest';
+import { WebUserRoom, WWW } from '../../../../../net/https/WebRequest';
 import ProtocolAgency from '../../../../../net/websocket/ProtocolAgency';
 import { Code } from '../../../../../protobuf/holdem/code_pb';
 import { RoomInfo } from '../../../../../protobuf/holdem/define_pb';
 import { ClientMessageSeated } from '../../../../../protobuf/holdem/req_th_seated_pb';
+import { BringInCommitFn } from '../../../../dialog/bringin/provider/BringInProvider';
 import viewManager from '../../../../UIViewManager';
 
 @traceClass({ level: 'debug' })
@@ -20,7 +22,7 @@ export default class SeatEvent {
     /// 坐下
     /// </summary>
     /// <param name="clientSeatId"></param>
-    public async Sitdown(seatData: TexasGameRoomDataPlayer): Promise<void> {
+    public async Sitdown(seatData: TexasGameRoomDataPlayerMine): Promise<void> {
         // if (this.mainPlayer.seatID != -1) {
         //     console.warn(
         //         LN,
@@ -38,13 +40,9 @@ export default class SeatEvent {
         // }
         const roomID = seatData.roomData.roomID;
         const matchID = seatData.roomData.matchID;
-        const userInfo = await WWW.Instance.CommonAPI<HttpUserInfoProtocol.ResponseData>({
-            web_class: WebUserInfo
-        });
-        // @TODO更新用户信息
-        //GC.data.user.info  Update
+        await UserStoreUtils.updateUserInfoBasic();
         //被冻结
-        if (userInfo.data.user.forbid == 0) {
+        if (userStore.forbid) {
             viewManager.openDialog('ConfirmOrNotice', {
                 content: i18nMgr.Get('UIForbidBringInTips')
             });
@@ -53,10 +51,10 @@ export default class SeatEvent {
         // 视频房间：坐下前先请求浏览器摄像头权限（不依赖 Agora 频道状态）
         if (seatData.needVideoPermision) {
             try {
-                console.log('[Sitdown] 请求浏览器摄像头权限...');
+                this.tracelog.debug('[Sitdown] 请求浏览器摄像头权限...');
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 // 权限通过，立即释放 stream（Agora 的 enableCamera 会自己创建 track）
-                console.log('[Sitdown] 摄像头权限通过，释放 stream');
+                this.tracelog.debug('[Sitdown] 摄像头权限通过，释放 stream');
                 stream.getTracks().forEach(t => t.stop());
             } catch (e) {
                 // 权限被拒绝
@@ -104,7 +102,7 @@ export default class SeatEvent {
             };
             userStore.setFullWalletInfo(response.data.wallet);
             // 联盟币
-            if (seatData.roomData.basicInfo.bringInType == 1) {
+            if (seatData.roomData.basicInfo.bringInType == BringInMode.CURRENCY) {
                 // 有带出
                 if (response.data.last_bring_out != null) {
                     let returnAmount = response.data.last_bring_out.to_wallet + response.data.last_bring_out.fee;
@@ -152,9 +150,10 @@ export default class SeatEvent {
                     }
                     // 其他都需要弹窗口输入
                     viewManager.openDialog('BringIn', {
-                        OpenType: '111',
+                        OpenType: BringInChipsType.BRING_IN,
                         GameType: GameType.HOLDEM,
-                        RoomPlayer: seatData
+                        RoomPlayer: seatData,
+                        CommitFn: this._commitBringInCallback(roomID, matchID, seatData.roomData.basicInfo.limitBringIn, seatedData)
                     });
                     return;
                 }
@@ -164,9 +163,10 @@ export default class SeatEvent {
                     //     // this.ShowAutoAddChips(data.wallet);
                     // } else {
                     viewManager.openDialog('BringIn', {
-                        OpenType: '111',
+                        OpenType: BringInChipsType.BRING_IN,
                         GameType: GameType.HOLDEM,
-                        RoomPlayer: seatData
+                        RoomPlayer: seatData,
+                        CommitFn: this._commitBringInCallback(roomID, matchID, seatData.roomData.basicInfo.limitBringIn, seatedData)
                     });
                     //}
                     return;
@@ -176,9 +176,10 @@ export default class SeatEvent {
                     isFromBringIn: true,
                     bringInAct: () => {
                         viewManager.openDialog('BringIn', {
-                            OpenType: '111',
+                            OpenType: BringInChipsType.BRING_IN,
                             GameType: GameType.HOLDEM,
-                            RoomPlayer: seatData
+                            RoomPlayer: seatData,
+                            CommitFn: this._commitBringInCallback(roomID, matchID, seatData.roomData.basicInfo.limitBringIn, seatedData)
                         });
                     },
                     noAnimation: true,
@@ -208,20 +209,83 @@ export default class SeatEvent {
                 }
                 // 其他都需要弹窗口输入
                 viewManager.openDialog('BringIn', {
-                    OpenType: '111',
+                    OpenType: BringInChipsType.BRING_IN,
                     GameType: GameType.HOLDEM,
-                    RoomPlayer: seatData
+                    RoomPlayer: seatData,
+                    CommitFn: this._commitBringInCallback(roomID, matchID, seatData.roomData.basicInfo.limitBringIn, seatedData)
                 });
                 return;
             }
             // 不提示安全提示直接带入
             viewManager.openDialog('BringIn', {
-                OpenType: '111',
+                OpenType: BringInChipsType.BRING_IN,
                 GameType: GameType.HOLDEM,
-                RoomPlayer: seatData
+                RoomPlayer: seatData,
+                CommitFn: this._commitBringInCallback(roomID, matchID, seatData.roomData.basicInfo.limitBringIn, seatedData)
             });
         } catch (e) {
             this.tracelog.error('sit down', e);
         }
+    }
+
+    // _commitBringInCallback 带入流程，最后按钮按下去的处理(要么坐下，要么带入)
+    private _commitBringInCallback(roomID: number, matchID: number, limitBringIn: boolean, seatedData?: ClientMessageSeated.AsObject): BringInCommitFn {
+        // 要坐下
+        if (seatedData)
+            return (amount, store, autoOnTable, clubID) => {
+                seatedData.bringIn = amount;
+                seatedData.clubId = clubID;
+                // 如果用钱包自动充值
+                if (autoOnTable > 0) {
+                    seatedData.autoOnTableNoStore = true;
+                    seatedData.autoUseWallet = true;
+                    seatedData.autoOnTable = autoOnTable;
+                } else {
+                    // 手动藏钱
+                    seatedData.store = store;
+                    // 如果是自动藏钱，已经在初始化的时候用房间配置设定
+                }
+                ProtocolAgency.Send({
+                    code: Code.MSG_D_SEATED,
+                    roomID: roomID,
+                    matchID: matchID,
+                    body: seatedData
+                });
+            };
+        return (amount, store, autoOnTable, clubID) => {
+            ProtocolAgency.Send({
+                code: Code.MSG_D_BRING_IN,
+                roomID: roomID,
+                matchID: matchID,
+                body: {
+                    room: {
+                        roomId: roomID,
+                        matchId: matchID
+                    },
+                    bringIn: amount,
+                    useWallet: true,
+                    applyBringIn: limitBringIn,
+                    depositAdvance: 0
+                }
+            });
+            // 用户想自动充值了使用协议设置自动化
+            if (autoOnTable > 0) {
+                ProtocolAgency.Send({
+                    code: Code.MSG_D_SET_AUTO_ON_TABLE,
+                    roomID: roomID,
+                    matchID: matchID,
+                    body: {
+                        room: {
+                            roomId: roomID,
+                            matchId: matchID
+                        },
+                        autoOnTable: autoOnTable,
+                        autoUseWallet: true,
+                        autoOnTableNoStore: true,
+                        autoOnTableFix: autoOnTable
+                    }
+                });
+            }
+        };
     }
 }

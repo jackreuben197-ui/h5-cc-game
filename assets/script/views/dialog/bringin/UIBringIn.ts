@@ -1,11 +1,13 @@
+import { autoBindEvents, bindData, bindEvent } from '../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../core/decorator/LogTrace';
 import { RoomPlayerGC } from '../../../data/room/RoomDataGenericConstraints';
 import TexasGameRoomDataPlayer from '../../../data/room/texas/TexasGameRoomDataPlayer';
+import TexasGameRoomDataPlayerMine from '../../../data/room/texas/TexasGameRoomDataPlayerMine';
+import tradeStore from '../../../data/trade/TradeStore';
+import TradeStoreUtils from '../../../data/trade/TradeStoreUtils';
 import userStore, { IWallet } from '../../../data/user/UserStore';
+import UserStoreUtils from '../../../data/user/UserStoreUtils';
 import { BringInChipsType } from '../../../game/constant/BringInChipsType';
-import { GameType } from '../../../game/constant/LogicTypeConf';
-import { TableType } from '../../../game/constant/TableType';
-import GameplayUtil from '../../../game/util/GameplayUtil';
 import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import { HttpUSDTApplyListProtocol } from '../../../net/https/data/usdt/HttpUSDTApplyListProtocol';
@@ -13,7 +15,6 @@ import { HttpUSDTApplyProtocol } from '../../../net/https/data/usdt/HttpUSDTAppl
 import { HttpUSDTPriceListProtocol } from '../../../net/https/data/usdt/HttpUSDTPriceListProtocol';
 import { HttpUSDTRechargeProtocol } from '../../../net/https/data/usdt/HttpUSDTRechargeProtocol';
 import { WebOrderUserUsdtRecharge, WebPropGoldPriceList, WebUserTraderApply, WebUserTraderApplyList, WWW } from '../../../net/https/WebRequest';
-import { RoomInfo } from '../../../protobuf/holdem/define_pb';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import viewManager from '../../UIViewManager';
 import UIViewUtil from '../../util/UIViewUtil';
@@ -21,7 +22,7 @@ import RemoteSprite from '../../widget/RemoteSprite';
 import StepSlider from '../../widget/StepSlider';
 import SwitchNode from '../../widget/SwitchNode';
 import { UIRechargeDiamondParam } from '../rechargediamond/UIRechargeDiamond';
-import { BringInProvider } from './provider/BringInProvider';
+import { BringInCommitFn, BringInProvider } from './provider/BringInProvider';
 import { BringInProviderTexas } from './provider/BringInProviderTexas';
 import USDTDiamond from './usdtdiamond/USDTDiamond';
 import USDTPaytype, { RateDetail } from './usdtdiamond/USDTPaytype';
@@ -38,9 +39,10 @@ export enum BringInTabType {
 
 // 1. 原来的基础定义保持不变
 export interface UIBringInParamBase<T extends keyof RoomPlayerGC> {
-    OpenType: string;
+    OpenType: BringInChipsType;
     GameType: T;
     RoomPlayer: RoomPlayerGC[T];
+    CommitFn: BringInCommitFn;
 }
 // 2. 核心魔法：通过映射，把所有玩法穷举并联合起来
 // 展开后等价于：UIBringInParamBase<'Texas'> | UIBringInParamBase<'Omaha'> | ...
@@ -176,17 +178,10 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     private _payType: number = 0; //1 //2
     private _exchangeRate: number = 0;
     // ========== end 钻石相关 ==========
-    // 滑动条长度，和最小刻度
-    private _bringInRange: number = 0;
-    private _bringInMin: number = 0;
-    // 自动带入滑动条长度和最小刻度
-    private _autoBringInRange: number = 0;
-    private _autoBringInMin: number = 0;
     /** 带入分段 */
     private _bringInAmount: number = 0;
     private _autoOnTable: number = 0;
     private _autoBringin: boolean = false;
-    private _userStore: typeof userStore;
 
     @traceMethod()
     protected onLoad(): void {
@@ -212,12 +207,10 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         this.regiterTouchEvents();
     }
 
-    @traceMethod()
     public initialize(param: UIBringInParam): void {
-        this._userStore = userStore;
         this._roomPlayer = param.RoomPlayer;
-        if (this._roomPlayer instanceof TexasGameRoomDataPlayer) {
-            this._provider = new BringInProviderTexas(this._roomPlayer, this);
+        if (this._roomPlayer instanceof TexasGameRoomDataPlayerMine) {
+            this._provider = new BringInProviderTexas(this._roomPlayer, param.CommitFn, this);
         }
         this._provider.process();
         this.initDiamond();
@@ -248,16 +241,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
             this._autoBringin = isOn;
         };
     }
-    // public _showCommitButton(te: number, s: boolean) {
-    //     this.buttonCommit.active = false;
-    //     this.buttonCommit2.active = false;
-    //     if (te == 1) {
-    //         this.buttonCommit.active = s;
-    //     }else{
-    //         this.buttonCommit.active = s;
-    //     }
-    // }
-    @traceMethod()
+
     public _showBalance(te: number) {
         switch (te) {
             case 1:
@@ -288,59 +272,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     public _showBringInArea(b: boolean) {
         this.bringInArea.active = b;
     }
-    // private _updateDisplayForWallet() {
-    //     this.buttonCommit.active = false;
-    //     this.buttonCommit2.active = false;
-    //     // 货币显示
-    //     this.balanceNode.active = true;
-    //     this.creditNode.active = false;
-    //     this.diamondNode.active = false;
-    //     this.textTotalCoin.string = '0';
-    //     this.textTotalCoinTitle.string = i18nMgr.Get('UIClub_CreateRoom31');
-    //     // 设置带入滑块
-    //     this._setupSlider(false);
-    //     // 设置自动充值部分(非AOF藏钱才会有)
-    //     if (this.addChipsData._retainInfo.RetainType == RoomInfo.RetainType.RT_DISABLE) {
-    //         this.autoBringinArea.active = true;
-    //         this._setUpAutoOnTableSlider();
-    //         this.switchAutoBringin.onoff(false, true);
-    //     }
-    //     // 钱包列表
-    //     this.walletArea.active = true;
-    //     this._setupWalletList();
-    // }
-    // private _updateDisplayForDiamond() {
-    //     // 货币显示
-    //     this.balanceNode.active = false;
-    //     this.creditNode.active = false;
-    //     this.diamondNode.active = true;
-    //     this.textTotalDiamond.string = StringHelper.GetLongStringLocale(this.addChipsData._diamonds, 1, 0);
-    //     this.textTotalDiamondTitle.string = i18nMgr.Get('UIClub_CreateRoom31');
-    //     // 设置滑块
-    //     this._setupSlider(true);
-    //     // 没有自动充值
-    //     this.autoBringinArea.active = false;
-    //     //提交按钮
-    //     this.buttonCommit2.active = true;
-    //     // 不处理钱包
-    //     this.walletArea.active = false;
-    // }
-    // private _updateDisplayForClubCredit() {
-    //     // 货币显示
-    //     this.balanceNode.active = false;
-    //     this.creditNode.active = true;
-    //     this.diamondNode.active = false;
-    //     this.textTotalCredit.string = StringHelper.GetLongStringLocale(this.addChipsData._creditNum, 1, 0);
-    //     this.textTotalCreditTitle.string = i18nMgr.Get('UIClubCreditLimit2');
-    //     // 设置滑块
-    //     this._setupSlider(true);
-    //     // 没有自动充值
-    //     this.autoBringinArea.active = false;
-    //     //提交按钮
-    //     this.buttonCommit2.active = true;
-    //     // 不处理钱包
-    //     this.walletArea.active = false;
-    // }
+
     public _updateBringAreaIntro(startText: string, endText: string) {
         this.bringInAreaIntro.string = startText;
         this.bringInAreaIntroContent.string = endText;
@@ -510,55 +442,12 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         this.paynowText.string = StringHelper.FormatString(i18nMgr.Get('Wallet_PayNow'), StringHelper.GetLongString(payData.pay_price, 1, 4));
     }
 
-    // initDiamond 初始化钻石购买界面
-    private async initDiamond(): Promise<void> {
-        this.diamondAmountLabel.string = i18nMgr.Get('UISend_diamondsNum') + ':';
-        this.diamondAmount.string = StringHelper.GetLongStringLocale(userStore.diamonds);
-        let promises = [];
-        promises.push(
-            WWW.Instance.CommonAPI<HttpUSDTPriceListProtocol.ResponseData>({
-                web_class: WebPropGoldPriceList,
-                body: {
-                    source_type: 2, // 玩家
-                    gold_types: [4],
-                    pay_gold_types: [],
-                    trader_type: 0,
-                    limit: 100,
-                    offset: 0
-                }
-            })
-        );
-        // 如果不是批发商，还需要请求是否在申请批发商中
-        if (!userStore.isTrader) {
-            promises.push(
-                WWW.Instance.CommonAPI<HttpUSDTApplyListProtocol.ResponseData>({
-                    web_class: WebUserTraderApplyList,
-                    body: {
-                        status: 1
-                    }
-                })
-            );
-        }
-        const results = await Promise.all(promises);
-        // 判断是否再申请批发商中
-        if (results.length > 1) {
-            const applyResp = results[1] as HttpUSDTApplyListProtocol.ResponseData;
-            if (applyResp.code != 0) {
-                this.tracelog.error('get trade apply list error', applyResp.code);
-                return;
-            }
-            this._isApplyingTrader = applyResp.data.list.length > 0;
-        }
-        // 获取购买项和渠道全信息
-        const resp = results[0] as HttpUSDTPriceListProtocol.ResponseData;
-        if (resp.code != 0) {
-            this.tracelog.error('get diamond list error', resp.code);
-            return;
-        }
+    @bindEvent('TRADEITEMS_AND_PAYTYPES_CHANGE', 'trade')
+    private onUpdateTradeItemsAndPayTimes(items: HttpUSDTPriceListProtocol.GoldInfo[], paytypes: HttpUSDTPriceListProtocol.PayType[]) {
         this.diamondBoard.removeAllChildren();
         // 先初始化所有购买选项
-        for (let i = 0; i < resp.data.list.length; i++) {
-            const item = resp.data.list[i];
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
             const node = cc.instantiate(this.diamondItem);
             node.parent = this.diamondBoard;
             const nsdtDiamond = node.getComponent(USDTDiamond);
@@ -569,8 +458,8 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         }
         this.paytypes.removeAllChildren();
         // 初始化所有渠道，并触发第一个选中
-        for (let i = 0; i < resp.data.pay_types.length; i++) {
-            const pt = resp.data.pay_types[i];
+        for (let i = 0; i < paytypes.length; i++) {
+            const pt = paytypes[i];
             const node = cc.instantiate(this.payttypeItem);
             node.parent = this.paytypes;
             const paytype = node.getComponent(USDTPaytype);
@@ -615,6 +504,20 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         }
     }
 
+    // initDiamond 初始化钻石购买界面
+    private async initDiamond(): Promise<void> {
+        this.diamondAmountLabel.string = i18nMgr.Get('UISend_diamondsNum') + ':';
+        this.diamondAmount.string = StringHelper.GetLongStringLocale(userStore.diamonds);
+        autoBindEvents(this, { trade: tradeStore });
+        let promises = [];
+        promises.push(TradeStoreUtils.prepareTradeItemsAndPaytypes());
+        // 如果不是批发商，还需要请求是否在申请批发商中
+        if (!userStore.isTrader) {
+            promises.push(UserStoreUtils.checkIsApplying());
+        }
+        Promise.all(promises);
+    }
+
     /**
      * 点击带入
      */
@@ -641,55 +544,11 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         this.diamondArea.active = diamondStatus;
     }
 
-    private removeAddChipsUI(): void {
-        // TODO: UIComponent 隐藏逻辑
-        // UIComponent.Instance.HideUI(UIType.UI_GAMEPLAY_ADD_CHIPS_DIAMOND);
-        this.close();
-    }
-    // private _confirmBringIn(): void {
-    //     GameCache.Instance._texasData._isAutoPopupBringIn = true;
-    //     if (GameplayUtil.GetTableType() == TableType.CLUB_EXTERNAL && this.mySelectWallet == null) {
-    //         return;
-    //     }
-    //     let bringInAmount = this._bringInAmount;
-    //     let storeAmount = 0;
-    //     // 手动存钱需要自己设置藏多少
-    //     if (this.addChipsData._retainInfo.RetainType == RoomInfo.RetainType.RT_MANUAL) {
-    //         storeAmount = this._bringInAmount - this.addChipsData._retainInfo.RetainMinRate * this.addChipsData._bigBlind;
-    //     }
-    //     // 鱿鱼/蘑菇模式检查
-    //     if (this.addChipsData._source == BringInChipsType.SQUID || this.addChipsData._source == BringInChipsType.MUSHROOM) {
-    //         let isShowToast = !GameCache.Instance._isRoomManager;
-    //         if (isShowToast && GameCache.Instance._friendsTableLimitBringIn) {
-    //             viewManager.showToastLanguage('UIWaitManagerAuditTip');
-    //         }
-    //     }
-    //     const autoOnTableAmount = this._autoBringin ? this._autoOnTable : 0;
-    //     let clubID = this.mySelectWallet != null ? this.mySelectWallet.club_id : 0;
-    //     this.addChipsData._commit(bringInAmount, storeAmount, autoOnTableAmount, clubID);
-    //     this.removeAddChipsUI();
-    // }
-
     private onClickCommit(): void {
         // DataStatisticsManager.Instance.Record(DataStatisticsConstant.GAME_BRING_COMMIT_BUTTON);
-        //this._confirmBringIn();
+        this._provider.commit(this._bringInAmount, this._autoBringin ? this._autoOnTable : 0);
+        this.close();
     }
-    // private onClickMask(): void {
-    //     if (this.addChipsData?._source == BringInChipsType.MATCH) {
-    //         return;
-    //     }
-    //     this.removeAddChipsUI();
-    // }
-    // private onClickClose(): void {
-    //     if (this.addChipsData?._source == BringInChipsType.MATCH) {
-    //         GameCache.Instance.CurGame.TexasGameUtils.LeaveRoom();
-    //     }
-    //     if (GameCache.Instance.game_type == GameType.MAHJONG) {
-    //         // MahjongGameManager.Instance._dao._mainTableDao.UpdateNeedBringIn();
-    //     }
-    //     this.removeAddChipsUI();
-    //     // DataStatisticsManager.Instance.Record(DataStatisticsConstant.GAME_BRING_CANCEL_BUTTON);
-    // }
 
     // 点击选择钱包按钮
     private onClickWalletBtn(): void {
@@ -720,7 +579,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         if (this.tipsMask) this.tipsMask.active = false;
         if (this.bringTips) this.bringTips.active = false;
     }
-    // 设置钱包相关
+
     // 设置钱包列表
     public _setupWalletList(wallets: IWallet[], seletedWalletClubID: number): void {
         if (seletedWalletClubID > 0) {
@@ -812,17 +671,10 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         this.bringInArea.active = true;
     }
 
-    onDestroy(): void {
-        super.onDestroy();
-        this.removeHandler();
-        //this.mySelectWallet = null;
-    }
-
-    private registerHandler(): void {
-        // TODO: 注册协议处理器
-    }
-
-    private removeHandler(): void {
-        // TODO: 移除协议处理器
+    onDisable(): void {
+        if (this._provider) {
+            this._provider.cleanup();
+            this._provider = null;
+        }
     }
 }

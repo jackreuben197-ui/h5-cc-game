@@ -1,11 +1,11 @@
-import * as MainUtils from './MainUtils';
-import ProcedureInit from './game/procedure/ProcedureInit';
-import { ITraceLog, traceClass } from './core/decorator/LogTrace';
 import DevConfig from './config/DevConfig';
-import h5MessageManager from './H5MsgMgr';
-import viewManager from './views/UIViewManager';
+import { ITraceLog, traceClass } from './core/decorator/LogTrace';
 import SoundComponent from './core/SoundComponent';
+import ProcedureInit from './game/procedure/ProcedureInit';
 import ProcedureManager from './game/procedure/ProcedureManager';
+import h5MessageManager from './H5MsgMgr';
+import * as MainUtils from './MainUtils';
+import viewManager from './views/UIViewManager';
 
 ///////////////////////////////////////////////
 cc.macro.ENABLE_TRANSPARENT_CANVAS = false;

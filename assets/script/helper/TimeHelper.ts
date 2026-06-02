@@ -6,10 +6,7 @@
  * @LastEditTime: 2023-04-07 12:04:50
  * @FilePath: /pokerqueen/assets/script/helper/TimeHelper.ts
  */
-import { maxHeaderSize } from 'http';
 import { i18nMgr } from '../i18n/i18nMgr';
-import { match } from 'assert';
-import { measureMemory } from 'vm';
 
 const { ccclass, property } = cc._decorator;
 

@@ -6,7 +6,6 @@ export default class CountDownLabel extends cc.Component {
     // 倒计时结束时的强类型回调
     public onTimeUpCallback: () => void = null;
     private _label: cc.Label = null;
-
     private _totalSeconds: number = 0; // 剩余总秒数
 
     onLoad() {

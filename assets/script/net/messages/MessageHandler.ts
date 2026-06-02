@@ -1,9 +1,9 @@
+import CowboyMessageHandler from './cowboy/CowboyMessageHandler';
+import FantasyMessageHandler from './fantasy/FantasyMessageHandler';
+import GuandanMessageHandler from './guandan/GuandanMessageHandler';
+import MahjongMessageHandler from './mahjong/MahjongMessageHandler';
 import OtherMessageHandler from './other/OtherMessageHandler';
 import TexasMessageHandler from './texas/TexasMessageHandler';
-import FantasyMessageHandler from './fantasy/FantasyMessageHandler';
-import CowboyMessageHandler from './cowboy/CowboyMessageHandler';
-import MahjongMessageHandler from './mahjong/MahjongMessageHandler';
-import GuandanMessageHandler from './guandan/GuandanMessageHandler';
 
 export default class MessageHandler {
     public static handle(code: number, data: any, roomID: number, matchID: number) {

@@ -22,6 +22,8 @@ class UserStore extends cc.EventTarget {
     public wallets: ClubWallet[];
     @observable('CLUBS_CREDIT_CHANGE')
     public credits: ClubCredit[];
+    @observable('FORBID_CHANGE')
+    public forbid: boolean;
 
     public setFullWalletInfo(wallet: HttpRoomBringOutProtocol.Wallet[]) {
         const clubsData: ClubData[] = [];
@@ -100,6 +102,7 @@ class UserStore extends cc.EventTarget {
     public get isTrader(): boolean {
         return Date.now() < this.traderExpireTime * 1000;
     }
+    public isApplyingTrader: boolean;
 }
 
 export class ClubData {

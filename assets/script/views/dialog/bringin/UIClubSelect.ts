@@ -11,7 +11,6 @@ export default class DynamicScrollView extends cc.Component {
     @property
     paddingTop: number = 10; // Layout 组件里的顶部内边距
     @property
-
     paddingBottom: number = 10; // Layout 组件里的底部内边距
 
     start() {

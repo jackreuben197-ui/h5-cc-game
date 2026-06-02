@@ -1,4 +1,3 @@
-import { Result } from '../../../protobuf/holdem/define_pb';
 import { WebCommon } from '../WebRequestBase';
 
 type RequestParamsOf<T extends { RequestParams?: unknown }> = T extends {

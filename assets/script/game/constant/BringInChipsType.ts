@@ -16,3 +16,9 @@ export enum BringInChipsType {
     /** 匹配界面 */
     MATCH = 5
 }
+
+export enum BringInMode {
+    CURRENCY = 1,
+    DIAMOND = 2,
+    CREDIT = 3
+}

@@ -1,4 +1,4 @@
-import { AnimateDisplayTypeCards, AnimateDisplayTypePublicCards } from '../../../game/constant/AnimateDisplayType';
+import { AnimateDisplayTypePublicCards } from '../../../game/constant/AnimateDisplayType';
 
 export default class TexasGameRoomDataPublicCards extends cc.EventTarget {
     private _publicCards: number[] = [];

@@ -4,14 +4,14 @@
  * 包含：SDK 动态加载、遮挡层刷新、H5 消息桥接、
  *       enterTable 数据校验与 GameCache 写入
  */
-import AgoraManager from './net/agora/AgoraManager';
-import h5MessageManager from './H5MsgMgr';
-import ProtocolAgency from './net/websocket/ProtocolAgency';
-import { createLogger } from './core/decorator/LogTrace';
 import { GameConfig } from './config/GameConfig';
-import ProcedureManager from './game/procedure/ProcedureManager';
+import { createLogger } from './core/decorator/LogTrace';
 import userStore from './data/user/UserStore';
 import ProcedureDefine from './game/procedure/ProcedureDefine';
+import ProcedureManager from './game/procedure/ProcedureManager';
+import h5MessageManager from './H5MsgMgr';
+import AgoraManager from './net/agora/AgoraManager';
+import ProtocolAgency from './net/websocket/ProtocolAgency';
 
 const _ploger = createLogger('[MainUtils]');
 // ==================== SDK 动态加载 ====================

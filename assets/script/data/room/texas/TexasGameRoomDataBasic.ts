@@ -1,4 +1,4 @@
-import { bindData, IObservableBindings, observable, pureEvent } from '../../../core/decorator/DataBind';
+import { bindData, IObservableBindings, observable } from '../../../core/decorator/DataBind';
 import { AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDisplayType';
 import { ChatType } from '../../../game/constant/ChatType';
 import { MushroomMode } from '../../../game/constant/Mushroom';
@@ -120,6 +120,8 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public videoPowerSaving: number;
     public videoVerifyType: number;
     public videoModel: number;
+    // 限制带入（只能申请）
+    public limitBringIn: boolean;
     //强制随机坐下
     public randomSeated: boolean;
     // 朋友卓信息

@@ -4,7 +4,7 @@ import { CPErrorCode } from '../../i18n/CPErrorCode';
 import { i18nMgr } from '../../i18n/i18nMgr';
 import CCTools from '../../tools/CCTools';
 import viewManager from '../../views/UIViewManager';
-import { WebClubFundAudit, WebClubApplyList, WebGuildGiveRecyCle } from './WebRequest';
+import { WebClubApplyList, WebClubFundAudit, WebGuildGiveRecyCle } from './WebRequest';
 
 type HttpCallback = Function | null;
 

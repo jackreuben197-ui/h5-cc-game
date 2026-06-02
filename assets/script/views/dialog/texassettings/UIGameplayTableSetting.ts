@@ -3,7 +3,7 @@ import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { GameType, PokerType } from '../../../game/constant/LogicTypeConf';
 import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
-import { APIOrgTribeRoomPermissions, APIOrgUserNewLabelReadNum, APIOrgUserNewLabelRead, WebConfigGlobalConfig } from '../../../net/https/WebRequest';
+import { APIOrgTribeRoomPermissions, APIOrgUserNewLabelRead, APIOrgUserNewLabelReadNum, WebConfigGlobalConfig } from '../../../net/https/WebRequest';
 import { WWW } from '../../../net/https/WebRequestBase';
 import { Def } from '../../../protobuf/holdem/define_pb';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';

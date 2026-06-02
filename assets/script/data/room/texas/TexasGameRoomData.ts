@@ -1,5 +1,6 @@
 import RoomData from '../RoomData';
 import TexasGameRoomDataBasic from './TexasGameRoomDataBasic';
+import TexasGameRoomDataPlayerMine from './TexasGameRoomDataPlayerMine';
 import TexasGameRoomDataPotInfo from './TexasGameRoomDataPotInfo';
 import TexasGameRoomDataPublicCards from './TexasGameRoomDataPublicCards';
 import TexasGameRoomDataRoundState from './TexasGameRoomDataRoundState';
@@ -16,4 +17,6 @@ export default class TexasGameRoomData extends RoomData {
     public readonly roundState = new TexasGameRoomDataRoundState();
     // 座位信息
     public readonly seatsStateManager = new TexasGameRoomDataSeatsStateManager(this);
+    // 自己信息
+    public readonly mine = new TexasGameRoomDataPlayerMine(this);
 }

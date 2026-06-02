@@ -1,13 +1,13 @@
-import { HttpUSDTRechargeProtocol } from '../../../../net/https/data/usdt/HttpUSDTRechargeProtocol';
+import { traceClass } from '../../../../core/decorator/LogTrace';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
+import { HttpUSDTRechargeProtocol } from '../../../../net/https/data/usdt/HttpUSDTRechargeProtocol';
 
 const { ccclass, property, menu } = cc._decorator;
 
-const LN = '[USDTDiamond]';
-
 @ccclass
 @menu('CrazyPoker/AddChips/usdtdiamond/USDTDiamond')
+@traceClass()
 export default class USDTDiamond extends cc.Component {
     public onChooseOneCallback: (payData: HttpUSDTRechargeProtocol.RequestData, isSp: boolean, payType: number) => void = null;
     @property(cc.Label)
@@ -16,8 +16,6 @@ export default class USDTDiamond extends cc.Component {
     private intro: cc.Label = null;
     @property(cc.Label)
     private usdtAmount: cc.Label = null;
-    @property(cc.Button)
-    private buyButton: cc.Button = null;
     //专属标记
     @property(cc.Node)
     private sp: cc.Node = null;
@@ -40,7 +38,7 @@ export default class USDTDiamond extends cc.Component {
     }
     public get payType(): number {
         if (this._payID == 0) {
-            console.error(LN, 'updateCost should be called');
+            this.tracelog.error('updateCost should be called');
             return 0;
         }
         return this._payType;
@@ -73,7 +71,7 @@ export default class USDTDiamond extends cc.Component {
         const totalPrice = this._roundPrice(this._amountForCaculate * rate);
         const discountPrice = discount > 0 ? this._roundPrice(totalPrice * discount) : 0;
         this._cost = this._roundPrice(totalPrice - discountPrice);
-        console.log(LN, 'updateCost', 'payID:', payID, 'payType:', payType, 'rate:', rate, 'discount:', discount, 'cost:', this._cost);
+        this.tracelog.debug('updateCost', 'payID:', payID, 'payType:', payType, 'rate:', rate, 'discount:', discount, 'cost:', this._cost);
         this.usdtAmount.string = StringHelper.GetLongStringLocale(this._cost, 1, 4);
         return {
             price_id: this._priceID,

@@ -1,6 +1,5 @@
 import { bindData, IObservableBindings, observable, pureEvent } from '../../../core/decorator/DataBind';
 import { traceClass } from '../../../core/decorator/LogTrace';
-import { Def } from '../../../protobuf/holdem/define_pb';
 import {
     AnimateDisplayTypeAction,
     AnimateDisplayTypeCards,
@@ -8,6 +7,7 @@ import {
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
 import { VideoModel } from '../../../game/constant/VideoModel';
+import { Def } from '../../../protobuf/holdem/define_pb';
 import { Operator } from './model/Operator';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from './TexasGameRoomDataPlayerMine';

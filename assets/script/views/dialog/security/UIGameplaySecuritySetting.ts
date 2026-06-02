@@ -1,12 +1,11 @@
-import { StringHelper } from '../../../helper/StringHelper';
-import { i18nMgr } from '../../../i18n/i18nMgr';
-import { WWW } from '../../../net/https/WebRequestBase';
-import { APIOrgTribeRoomPermissions, WebConfigGlobalConfig } from '../../../net/https/WebRequest';
-import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
+import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../data/room/texas/TexasGameRoomDataPlayerMine';
-import roomDataManager from '../../../data/room/RoomDataManager';
-import { VideoModel } from '../../../game/constant/VideoModel';
+import { StringHelper } from '../../../helper/StringHelper';
+import { i18nMgr } from '../../../i18n/i18nMgr';
+import { APIOrgTribeRoomPermissions, WebConfigGlobalConfig } from '../../../net/https/WebRequest';
+import { WWW } from '../../../net/https/WebRequestBase';
+import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import viewManager from '../../UIViewManager';
 
 export type UIGameplaySecuritySettingParam = {

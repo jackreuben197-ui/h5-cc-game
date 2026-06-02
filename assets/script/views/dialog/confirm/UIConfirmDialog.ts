@@ -1,3 +1,4 @@
+import { i18nMgr } from '../../../i18n/i18nMgr';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 
 /*
@@ -9,10 +10,17 @@ import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
  */
 const { ccclass, menu, property } = cc._decorator;
 
+export enum UIComfirmDialogType {
+    NONE = 0,
+    OK = 1,
+    CONFIRM = 2
+}
+
 export type UIConfirmDialogParam = {
     this?: any; //点击回调的this作用域
     title?: string; //富文本
     content: string; //富文本
+    diaolgType?: UIComfirmDialogType;
     ok?: string; //富文本
     cancel?: string; //富文本
     commit?: string; //富文本
@@ -25,7 +33,9 @@ export type UIConfirmDialogParam = {
 @ccclass
 @menu('Dialog/UIConfirmDialog')
 export default class UIConfirmDialog extends UIComponentBaseDialog<UIConfirmDialogParam> {
+    @property(cc.RichText)
     cc_RichText$title: cc.RichText = null;
+    @property(cc.RichText)
     cc_RichText$content: cc.RichText = null;
     //单按钮和双按钮、
     @property(cc.Button)
@@ -47,10 +57,6 @@ export default class UIConfirmDialog extends UIComponentBaseDialog<UIConfirmDial
         this.refreshUI(param);
     }
 
-    protected onClose(): void {
-        throw new Error('Method not implemented.');
-    }
-
     override onLoad(): void {
         this.$ok.node.on('click', this.onClickOK, this);
         this.$cancel.node.on('click', this.onClickCancel, this);
@@ -64,9 +70,23 @@ export default class UIConfirmDialog extends UIComponentBaseDialog<UIConfirmDial
     }
 
     refreshUI(data: UIConfirmDialogParam) {
-        this.$cancel.node.active = !data.ok_click;
-        this.$commit.node.active = !data.ok_click;
-        this.$ok.node.active = !!data.ok_click;
+        switch (data.diaolgType) {
+            default:
+                this.$cancel.node.active = false;
+                this.$commit.node.active = false;
+                this.$ok.node.active = true;
+                break;
+            case UIComfirmDialogType.NONE:
+                this.$cancel.node.active = false;
+                this.$commit.node.active = false;
+                this.$ok.node.active = false;
+                break;
+            case UIComfirmDialogType.CONFIRM:
+                this.$cancel.node.active = true;
+                this.$commit.node.active = true;
+                this.$ok.node.active = false;
+                break;
+        }
         if (data.title?.length > 0) {
             this.cc_RichText$title.node.active = true;
             this.cc_RichText$title.string = data.title;
@@ -76,12 +96,18 @@ export default class UIConfirmDialog extends UIComponentBaseDialog<UIConfirmDial
         this.cc_RichText$content.string = data.content;
         if (data.ok?.length > 0) {
             this.okLabel.string = data.ok;
+        } else {
+            this.okLabel.string = i18nMgr.Get('adaptation10012');
         }
         if (data.commit?.length > 0) {
             this.commitLabel.string = data.commit;
+        } else {
+            this.commitLabel.string = i18nMgr.Get('adaptation10012');
         }
         if (data.cancel?.length > 0) {
             this.cancelLabel.string = data.cancel;
+        } else {
+            this.cancelLabel.string = i18nMgr.Get('adaptation10013');
         }
     }
 
@@ -97,11 +123,6 @@ export default class UIConfirmDialog extends UIComponentBaseDialog<UIConfirmDial
 
     onClickCommit() {
         this._param.commit_click?.call(this._param.this);
-        this.hideUI();
-    }
-
-    onClickBack() {
-        if (this._param.stop_back) return;
         this.hideUI();
     }
 

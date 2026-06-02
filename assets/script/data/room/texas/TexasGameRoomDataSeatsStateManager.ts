@@ -2,7 +2,6 @@ import { bindData, pureEvent } from '../../../core/decorator/DataBind';
 import { AnimateDisplayTypeButton, AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';
-import TexasGameRoomDataPlayerMine from './TexasGameRoomDataPlayerMine';
 
 //   4 5 6
 // 3       7
@@ -130,7 +129,7 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
         return this._mySeat;
     }
 
-    public setMySeat(s: number, pat: AnimateDisplayTypePosition): TexasGameRoomDataPlayerMine {
+    public setMySeat(s: number, pat: AnimateDisplayTypePosition): void {
         if (this._mySeat == s) return;
         //重排
         const arrage = SeatsArrange[this._seatsCount];
@@ -139,32 +138,16 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
             let ss = i % this.seatsCount == 0 ? this.seatsCount : i % this.seatsCount;
             const player = this._playerMap.get(ss);
             if (ss == s) {
+                this._parentRoomData.mine.seatNo = ss;
                 player.setPosition(arrage[j], pat);
-                player.mine = new TexasGameRoomDataPlayerMine();
+                player.mine = this._parentRoomData.mine;
             } else {
                 player.setPosition(arrage[j], pat);
             }
             j++;
         }
-        return this._playerMap.get(s).mine;
     }
-    // public seated(seatNo: number, isSelf: boolean): TexasGameRoomDataPlayer{
-    //     if (isSelf) {
-    //         //重排
-    //         const arrage = SeatsArrange[this._seatsCount];
-    //         let j = 0;
-    //         for (let i = seatNo; i < seatNo + this._seatsCount; i++) {
-    //             let ss = i % this.seatsCount == 0 ? this.seatsCount : i % this.seatsCount;
-    //             const player = this._playerMap.get(ss);
-    //             player.setPosition(arrage[j], AnimateDisplayTypePosition.ToTarget);
-    //             j++;
-    //             if (ss == seatNo) {
-    //                 player.mine = new TexasGameRoomDataPlayerMine();
-    //             }
-    //         }
-    //     }
-    //     return this.getSeatPlayer(seatNo);
-    // }
+
     public roundClear() {
         this._playerMap.forEach(p => {
             p.roundClear();

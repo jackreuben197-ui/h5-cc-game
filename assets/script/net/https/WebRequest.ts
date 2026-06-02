@@ -49,23 +49,23 @@ export * from './web_request/WebRequestUser';
 export * from './web_request/WebRequestUserTask';
 
 export * from './web_request/WebRequestUserProxy';
+import { WebConfigGlobalConfig, WebConfigMultiLanguageTemplate } from './web_request/WebRequestConfig';
+import { WebMiscBannerList } from './web_request/WebRequestMisc';
+import { WebMsgMessageUnread } from './web_request/WebRequestMsg';
 import {
     WebOrgClubApproValJoin,
     WebOrgClubCancleJoinClub,
-    WebOrgClubGetJoinlList,
-    WebOrgClubIsManger,
-    WebOrgClubQuit,
     WebOrgClubCreate,
     WebOrgClubGet,
+    WebOrgClubGetJoinlList,
+    WebOrgClubIsManger,
     WebOrgClubJoin,
     WebOrgClubPlayerApplyList,
+    WebOrgClubQuit,
     WebOrgClubSearchById
 } from './web_request/WebRequestOrg';
-import { WebConfigGlobalConfig, WebConfigMultiLanguageTemplate } from './web_request/WebRequestConfig';
-import { API_User_Rooms_ids, API_User_Rooms_List, WebChannel, WebLogin, WebUserInfo, WebUserRoom, WebUserRoomSettleDetail } from './web_request/WebRequestUser';
-import { WebMiscBannerList } from './web_request/WebRequestMisc';
-import { WebMsgMessageUnread } from './web_request/WebRequestMsg';
 import { WebRoomCenterGroups, WebRoomCenterMttList, WebRoomCenterRooms, WebRoomCenterRoomsBlinds } from './web_request/WebRequestRoomCenter';
+import { API_User_Rooms_ids, API_User_Rooms_List, WebChannel, WebLogin, WebUserInfo, WebUserRoom, WebUserRoomSettleDetail } from './web_request/WebRequestUser';
 
 /**
  * 注册全局访问

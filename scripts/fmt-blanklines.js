@@ -173,8 +173,10 @@ async function fmt(file) {
                 const targetType = lineType[nextValidLine];
                 const targetNode = nodeAtLine[nextValidLine];
                 for (let l = cStart; l <= cEnd; l++) {
-                    lineType[l] = targetType;
-                    nodeAtLine[l] = targetNode;
+                    if (!lineType[l] || lineType[l] === 'topDecl') {
+                        lineType[l] = targetType;
+                        nodeAtLine[l] = targetNode;
+                    }
                 }
             }
         });

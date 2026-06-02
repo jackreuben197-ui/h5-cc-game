@@ -1,26 +1,26 @@
 import { Code } from '../../../protobuf/holdem/code_pb';
-import { CBEnterRoom } from './CBEnterRoom';
-import { CBPlay } from './CBPlay';
+import { CBBringIn } from './CBBringIn';
 import { CBCancelPlay } from './CBCancelPlay';
-import { CBLeave } from './CBLeave';
 import { CBChat } from './CBChat';
+import { CBChatOthers } from './CBChatOthers';
+import { CBEncryptCards } from './CBEncryptCards';
+import { CBEnterRoom } from './CBEnterRoom';
+import { CBGamePlayEnd } from './CBGamePlayEnd';
+import { CBGamePlayInfo } from './CBGamePlayInfo';
+import { CBGameResult } from './CBGameResult';
+import { CBGameStart } from './CBGameStart';
+import { CBLastGames } from './CBLastGames';
+import { CBLeave } from './CBLeave';
+import { CBLeaveNotification } from './CBLeaveNotification';
+import { CBOnline } from './CBOnline';
+import { CBPlay } from './CBPlay';
+import { CBRoomClose } from './CBRoomClose';
+import { CBStandupNotification } from './CBStandupNotification';
+import { CBSyncEnter } from './CBSyncEnter';
 import { CBTop } from './CBTop';
 import { CBWaymap } from './CBWaymap';
-import { CBLastGames } from './CBLastGames';
-import { CBBringIn } from './CBBringIn';
 import { CBWaymapSpec } from './CBWaymapSpec';
-import { CBOnline } from './CBOnline';
-import { CBSyncEnter } from './CBSyncEnter';
-import { CBGameStart } from './CBGameStart';
-import { CBGamePlayInfo } from './CBGamePlayInfo';
-import { CBGamePlayEnd } from './CBGamePlayEnd';
-import { CBGameResult } from './CBGameResult';
 import { CBWaymapUpdate } from './CBWaymapUpdate';
-import { CBRoomClose } from './CBRoomClose';
-import { CBChatOthers } from './CBChatOthers';
-import { CBLeaveNotification } from './CBLeaveNotification';
-import { CBStandupNotification } from './CBStandupNotification';
-import { CBEncryptCards } from './CBEncryptCards';
 
 export default class CowboyMessageHandler {
     public static handle(code: number, data: any, roomID: number, matchID: number) {

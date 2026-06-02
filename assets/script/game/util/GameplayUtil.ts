@@ -6,10 +6,6 @@ import { HttpUserInfoProtocol } from '../../net/https/data/user/HttpUserInfoProt
 
 type ValidBasicType = string | number | boolean | null | undefined | bigint;
 
-type SimpleFlatObject<T> = {
-    [K in keyof T]: T[K] extends ValidBasicType ? T[K] : never;
-};
-
 export default class GameplayUtil {
     constructor() {
         throw new Error(`${GameplayUtil.name} is a static class and cannot be instantiated`);
@@ -52,26 +48,34 @@ export default class GameplayUtil {
     }
 
     /**
-     * 判断两个单层纯对象是否完全相同
+     * 判断两个对象是否深度完全相同（支持嵌套对象/数组递归穿透）
      * @returns {boolean} true 表示【完全相同】，false 表示【不相同/有变化】
      */
-    public static isObjectSame<T extends SimpleFlatObject<T>>(objA: T, objB: T): boolean {
-        if (objA === objB) return true; // 引用相同 -> 完全相同 (true)
-        if (!objA || !objB) return false; // 有一个为空 -> 不相同 (false)
-        const keysA = Object.keys(objA) as Array<keyof T>;
+    public static isObjectSame<T extends Record<string, any>>(objA: T, objB: T): boolean {
+        if (objA === objB) return true;
+        if (!objA || !objB) return false;
+        const keysA = Object.keys(objA);
         const keysB = Object.keys(objB);
-        if (keysA.length !== keysB.length) return false; // 属性数量不等 -> 不相同 (false)
+        if (keysA.length !== keysB.length) return false;
         for (let key of keysA) {
-            if (objA[key] !== objB[key]) {
-                return false; // 发现值不一样 -> 不相同 (false)
+            const valA = objA[key];
+            const valB = objB[key];
+            if (Array.isArray(valA) && Array.isArray(valB)) {
+                if (!GameplayUtil.isArraySame(valA, valB)) return false;
+            } else if (typeof valA === 'object' && valA !== null && typeof valB === 'object' && valB !== null) {
+                if (!GameplayUtil.isObjectSame(valA, valB)) return false;
+            } else if (valA !== valB) {
+                return false;
             }
         }
-        return true; // 全都一样 -> 完全相同 (true)
+        return true;
     }
 
     // 内部提取一个通用的“单元素对比断言”
     private static isElementSame<T>(a: T, b: T): boolean {
-        // 如果是对象且不为 null，走对象对比逻辑；否则直接基础类型 === 对比
+        if (Array.isArray(a) && Array.isArray(b)) {
+            return GameplayUtil.isArraySame(a, b);
+        }
         if (typeof a === 'object' && a !== null && typeof b === 'object' && b !== null) {
             return GameplayUtil.isObjectSame(a as any, b as any);
         }
@@ -83,7 +87,7 @@ export default class GameplayUtil {
      * @param checkOrder 是否严格检查顺序。
      * @returns {boolean} true 表示【完全相同】，false 表示【不相同/有变化】
      */
-    public static isArraySame<T extends ValidBasicType | SimpleFlatObject<any>>(arrA: T[], arrB: T[], checkOrder: boolean = true): boolean {
+    public static isArraySame<T extends ValidBasicType | Record<string, any>>(arrA: T[], arrB: T[], checkOrder: boolean = true): boolean {
         if (arrA === arrB) return true;
         if (!arrA || !arrB) return false;
         if (arrA.length !== arrB.length) return false;

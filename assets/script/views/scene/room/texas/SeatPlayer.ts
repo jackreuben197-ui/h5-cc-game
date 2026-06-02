@@ -1,4 +1,4 @@
-import { unBindEventsAll, autoBindEvents, bindEvent } from '../../../../core/decorator/DataBind';
+import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass } from '../../../../core/decorator/LogTrace';
 import { Operator } from '../../../../data/room/texas/model/Operator';
 import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
@@ -114,7 +114,7 @@ export default class SeatPlayer extends cc.Component {
             if (node) this._cardBacks.push(node);
         }
         this._clickEmptySeat = () => {
-            this._directEvents.Sitdown(this._seatPlayer);
+            this._directEvents.Sitdown(this._seatPlayer.roomData.mine);
         };
         this.emptySeat.node.on('click', this._clickEmptySeat, this);
     }

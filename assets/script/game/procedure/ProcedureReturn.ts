@@ -1,5 +1,5 @@
-import ProcedureBase from './ProcedureBase';
 import H5MsgMgr, { H5NavigatePayload } from '../../H5MsgMgr';
+import ProcedureBase from './ProcedureBase';
 
 export interface ProcedureReturnNavigateParam {
     routeData?: H5NavigatePayload;

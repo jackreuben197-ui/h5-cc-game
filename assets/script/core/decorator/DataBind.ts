@@ -236,7 +236,7 @@ export function observable(config?: string | ObservableOptions) {
                     if (typeof a === 'object' && a !== null && typeof b === 'object' && b !== null) {
                         const keysA = Object.keys(a);
                         const keysB = Object.keys(b);
-                        if (keysA.length !== keysB.length || keysA.some(k => a[k] !== b[k])) return false;
+                        if (keysA.length !== keysB.length || keysA.some(k => !checkNormalSame(a[k], b[k]))) return false;
                     } else if (a !== b) {
                         return false;
                     }
@@ -248,7 +248,7 @@ export function observable(config?: string | ObservableOptions) {
                 const keysB = Object.keys(newVal);
                 if (keysA.length !== keysB.length) return false;
                 for (let key of keysA) {
-                    if (oldVal[key] !== newVal[key]) return false;
+                    if (!checkNormalSame(oldVal[key], newVal[key])) return false;
                 }
                 return true;
             }
@@ -270,7 +270,7 @@ export function observable(config?: string | ObservableOptions) {
                     const keysA = Object.keys(a);
                     const keysB = Object.keys(b);
                     if (keysA.length !== keysB.length) return false;
-                    return !keysA.some(k => a[k] !== b[k]);
+                    return !keysA.some(k => !checkNormalSame(a[k], b[k]));
                 }
                 return a === b;
             };
