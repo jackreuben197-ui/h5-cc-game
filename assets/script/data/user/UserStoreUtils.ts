@@ -1,4 +1,5 @@
 import { traceClass, traceMethod } from '../../core/decorator/LogTrace';
+import { BringInMode } from '../../game/constant/BringInChipsType';
 import { WebUserInfo, WebUserTraderApplyList } from '../../net/https/WebRequest';
 import { WWW } from '../../net/https/WebRequestBase';
 import { HttpUSDTApplyListProtocol } from '../../net/https/data/usdt/HttpUSDTApplyListProtocol';
@@ -39,5 +40,12 @@ export default class UserStoreUtils {
         userStore.avatar = data.data.user.avatar;
         userStore.name = data.data.user.nickname;
         userStore.forbid = data.data.user.forbid == 0;
+    }
+
+    public static updateUserWallet(amount: number, _clubID: number) {
+        const a = [...userStore.wallets];
+        const target = a.find(item => item._clubID === _clubID);
+        target.gold = amount;
+        userStore.wallets = a;
     }
 }

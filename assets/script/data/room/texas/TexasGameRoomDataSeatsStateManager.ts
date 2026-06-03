@@ -131,8 +131,8 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
         return this._mySeat;
     }
 
-    public setMySeat(s: number, pat: AnimateDisplayTypePosition): void {
-        if (this._mySeat == s) return;
+    public setMySeat(s: number, pat: AnimateDisplayTypePosition): TexasGameRoomDataPlayer {
+        if (this._mySeat == s) return this._playerMap.get(s);
         //重排
         const arrage = SeatsArrange[this._seatsCount];
         let j = 0;
@@ -141,13 +141,15 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
             const player = this._playerMap.get(ss);
             if (ss == s) {
                 this._parentRoomData.mine.seatNo = ss;
-                player.setPosition(arrage[j], pat);
                 player.mine = this._parentRoomData.mine;
+                player.setPosition(arrage[j], pat);
+                player.setSeated(true, player.mine);
             } else {
                 player.setPosition(arrage[j], pat);
             }
             j++;
         }
+        return this._playerMap.get(s);
     }
 
     public roundClear() {

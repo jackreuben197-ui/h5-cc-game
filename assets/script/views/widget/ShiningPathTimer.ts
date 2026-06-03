@@ -21,6 +21,8 @@ export default class ShiningPathTimer extends cc.Component {
     public progressBar: cc.Sprite = null;
     @property(cc.Node)
     public handle: cc.Node = null;
+    @property(cc.Label)
+    public countdownLabel: cc.Label = null;
     @property({
         type: cc.Enum(PathType),
         tooltip: '选择倒计时跑道的几何形状：Circle(正圆), RoundRect(圆角矩形), Custom(自定义)'
@@ -53,6 +55,7 @@ export default class ShiningPathTimer extends cc.Component {
     private _onCompleteCallback: () => void = null;
     private _onStepCallback: (remainingTime: number) => void = null;
     private _nextStepTriggerTime: number = 0;
+    private _lastDisplayedSecond: number = -1;
 
     protected onLoad(): void {
         this.initPathGeometry();
@@ -143,6 +146,7 @@ export default class ShiningPathTimer extends cc.Component {
 
     public startTimer(options: ITimerOptions): void {
         if (this._realPoints.length < 2) return;
+        if (this._isCounting) this.stop();
         const totalTime = options.totalTime;
         const elapsedTime = options.elapsedTime !== undefined ? options.elapsedTime : 0;
         const stepInterval = options.stepInterval !== undefined ? options.stepInterval : 0;
@@ -157,6 +161,8 @@ export default class ShiningPathTimer extends cc.Component {
         this._onCompleteCallback = options.onComplete || null;
         this._onStepCallback = options.onStep || null;
         this.resetStepTrigger();
+        this._lastDisplayedSecond = Math.ceil(this._currentTime);
+        this.updateCountdownLabel();
         this._isCounting = true;
         this.updateVisual(this._currentTime / this._totalTime);
     }
@@ -167,6 +173,8 @@ export default class ShiningPathTimer extends cc.Component {
         this._totalTime = newTotalTime;
         this._currentTime = newTotalTime;
         this.resetStepTrigger();
+        this._lastDisplayedSecond = Math.ceil(this._currentTime);
+        this.updateCountdownLabel();
         this.updateVisual(1.0);
     }
 
@@ -197,6 +205,8 @@ export default class ShiningPathTimer extends cc.Component {
         this._currentTime = 0;
         this._onCompleteCallback = null;
         this._onStepCallback = null;
+        this._lastDisplayedSecond = -1;
+        this.updateCountdownLabel();
         if (this.progressBar) {
             this.progressBar.fillRange = 0;
         }
@@ -215,6 +225,11 @@ export default class ShiningPathTimer extends cc.Component {
             this._currentTime = 0;
             this._isCounting = false;
             if (this._onCompleteCallback) this._onCompleteCallback();
+        }
+        const currentSecond = Math.ceil(this._currentTime);
+        if (currentSecond !== this._lastDisplayedSecond) {
+            this._lastDisplayedSecond = currentSecond;
+            this.updateCountdownLabel();
         }
         this.updateVisual(this._currentTime / this._totalTime);
     }
@@ -245,5 +260,10 @@ export default class ShiningPathTimer extends cc.Component {
             }
             currentAccumulatedLen += segLen;
         }
+    }
+
+    private updateCountdownLabel(): void {
+        if (!this.countdownLabel) return;
+        this.countdownLabel.string = `${Math.ceil(this._currentTime)}s`;
     }
 }

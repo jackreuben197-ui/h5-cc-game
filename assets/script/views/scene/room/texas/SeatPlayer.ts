@@ -1,4 +1,4 @@
-import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
+import { autoBindEvents, bindEvent, unBindEvents, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import { Operator } from '../../../../data/room/texas/model/Operator';
 import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
@@ -46,7 +46,7 @@ const yellowColor = cc.Color.fromHEX(new cc.Color(), '#F9CA9F');
 
 @ccclass
 @menu('CrazyPoker/Room/Texas/SeatPlayer')
-@traceClass({level: 'debug'})
+@traceClass({ level: 'debug' })
 export default class SeatPlayer extends cc.Component {
     @property(cc.Label)
     private nickName: cc.Label = null!;
@@ -81,6 +81,8 @@ export default class SeatPlayer extends cc.Component {
     private otherPersonActionCountdown: ShiningPathTimer = null!;
     @property(sp.Skeleton)
     private winAnimation: sp.Skeleton = null!;
+    @property(ShiningPathTimer)
+    private keepSeatTimer: ShiningPathTimer = null;
     private _seatPlayer: TexasGameRoomDataPlayer = null!;
     private _cardBacks: cc.Node[] = [];
     private _bigCards: CardView[] = [];
@@ -126,7 +128,6 @@ export default class SeatPlayer extends cc.Component {
     }
 
     public onDisable(): void {
-        console.log('it should not be called');
         unBindEventsAll(this);
     }
 
@@ -135,57 +136,46 @@ export default class SeatPlayer extends cc.Component {
      */
     private _bindEventsAndRefresh() {
         // 统一激活绑定，注入强类型 tag 推导过滤机制
-        autoBindEvents(this, { player: this._seatPlayer }, (evtName, tag, dataSource) => {
-            if (tag === 'player') {
-                if (evtName === 'WINNER' || evtName == 'HIGHLIGHT_CARDS') {
-                    return false;
-                }
-                if (dataSource.userID > 0) {
-                    if (evtName === 'EMPTY_SEAT') {
-                        return false;
-                    }
-                    return true;
-                }
-                if (evtName === 'EMPTY_SEAT' || evtName == 'SEAT_POSITION_CHANGE') {
-                    return true;
-                }
-                return false;
-            }
-            return true;
-        });
+        autoBindEvents(this, { player: this._seatPlayer });
     }
 
-    @traceMethod({level: 'debug'})
-    private _enableDisableUser(b: boolean) {
+    @traceMethod({ level: 'debug' })
+    @bindEvent(TexasGameRoomDataPlayer.SEATED_CHANGE, 'player')
+    private onUpdateSeated(b: boolean, mine: TexasGameRoomDataPlayer) {
         this.userSeat.active = b;
         this.emptySeat.node.active = !b;
         this.emptySeat.interactable = !b;
-        if (!this._seatPlayer.mine) {
-            this.roundBetNode.setPosition(0, 180);
-            this.bigCardsContainer.setPosition(0, 0);
-            this.bigCardsContainer.setScale(0.65, 0.65);
-            this._bigCards.forEach(v => (v.node.parent.active = false));
-            // 背面(显示)
-        } else {
+        // 本人相关,设置属性
+        if (b && mine) {
+            autoBindEvents(this, { mine: mine });
+            // 筹码位置
             this.roundBetNode.setPosition(135, 345);
-            this.bigCardsContainer.setPosition(0, 192);
+            // 大牌的显示位置调整,并隐藏
+            this.bigCardsContainer.setPosition(0, 220);
             this.bigCardsContainer.setScale(1, 1);
             this._bigCards.forEach(v => (v.node.parent.active = false));
-            // 背面(显示)
-        }
-    }
-
-    @bindEvent(TexasGameRoomDataPlayer.NICKNAME_CHANGE, 'player')
-    private onUpdateNickname(na: string) {
-        this._enableDisableUser(true);
-        // 自己不显示名字
-        if (this._seatPlayer.mine) {
+            //隐藏名字
             this.nickName.node.active = false;
             this.nickNameSplash.active = false;
             return;
         }
+        //解绑(自己站起)
+        if (mine) {
+            unBindEvents(this, 'mine');
+        }
+        // 筹码位置
+        this.roundBetNode.setPosition(0, 180);
+        // 大牌的显示位置调整,并隐藏
+        this.bigCardsContainer.setPosition(0, 0);
+        this.bigCardsContainer.setScale(0.65, 0.65);
+        this._bigCards.forEach(v => (v.node.parent.active = false));
+        // 显示名字
         this.nickName.node.active = true;
         this.nickNameSplash.active = true;
+    }
+
+    @bindEvent(TexasGameRoomDataPlayer.NICKNAME_CHANGE, 'player')
+    private onUpdateNickname(na: string) {
         this.nickName.string = na;
     }
 
@@ -198,16 +188,13 @@ export default class SeatPlayer extends cc.Component {
     private onUpdateChip(chip: number) {
         this.chips.string = StringHelper.GetLongString(chip);
     }
-
-    @bindEvent(TexasGameRoomDataPlayer.EMPTY_SEAT, 'player')
-    private onUpdateEmpty() {
-        this.tracelog.debug('empty');
-        this._enableDisableUser(false);
-    }
+    // @bindEvent(TexasGameRoomDataPlayer.EMPTY_SEAT, 'player')
+    // private onUpdateEmpty() {
+    //     this.tracelog.debug('empty');
+    // }
 
     // onUpdatePosition 位置变动导致的动画/位置调整
     @bindEvent(TexasGameRoomDataPlayer.SEAT_POSITION_CHANGE, 'player', AnimateDisplayTypePosition.Static)
-    @traceMethod()
     private onUpdatePosition(pos: SeatPosition, pat: AnimateDisplayTypePosition) {
         switch (pos) {
             case SeatPosition.BottomMiddle:
@@ -294,7 +281,6 @@ export default class SeatPlayer extends cc.Component {
 
     // AnimateDisplayTypeCards.Deal 时候还会有order
     @bindEvent(TexasGameRoomDataPlayer.SHOW_CARDS_CHANGE, 'player', AnimateDisplayTypeCards.Static)
-    @traceMethod()
     private onUpdateCards(cards: number[], atc: AnimateDisplayTypeCards, order?: number) {
         const l = cards.length;
         // reset
@@ -313,6 +299,8 @@ export default class SeatPlayer extends cc.Component {
         const hasShowCard = cards.filter(v => v != 0).length > 0;
         // 如果是显示牌
         if (hasShowCard && (atc == AnimateDisplayTypeCards.Static || atc == AnimateDisplayTypeCards.ShowCards)) {
+            // 背面(全部隐藏)
+            this._cardBacks.forEach(v => (v.active = false));
             //动作相关隐藏掉
             this.seatActionDisplay.node.active = false;
             //牌面展示
@@ -330,10 +318,9 @@ export default class SeatPlayer extends cc.Component {
                 }
                 node.node.parent.active = false;
             }
-            // 背面(全部隐藏)
-            this._cardBacks.forEach(v => (v.active = false));
             return;
         }
+        // 以下是把牌正确显示出来, 对应AnimateDisplayTypeCards.Static
         const animateCards: CardView[] = [];
         //其他人
         if (!this._seatPlayer.mine) {
@@ -381,6 +368,7 @@ export default class SeatPlayer extends cc.Component {
                 });
             }
         }
+        // 如果是发牌,则额外做个动画
         if (atc == AnimateDisplayTypeCards.Deal) {
             const currentOrder = order || 0;
             //其他人
@@ -426,7 +414,7 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.ACTION_CHANGE, 'player', AnimateDisplayTypeAction.Static)
-    @traceMethod({level:'debug'})
+    @traceMethod({ level: 'debug' })
     private onUpdateAction(action: Def.ActionMap[keyof Def.ActionMap], aat: AnimateDisplayTypeAction) {
         if (this._seatPlayer.mine) {
             this.tracelog.debug(action, aat, this._seatPlayer.seatNo);
@@ -496,20 +484,23 @@ export default class SeatPlayer extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayer.PREPARE_OPERATION, 'player')
     private onPrepareAction(oper: Operator) {
         // this.tracelog.debug(oper, this._seatPlayer.seatNo);
-        if (!oper) return;
+        if (!oper) {
+            this.otherPersonActionCountdown.stop();
+            this.otherPersonActionCountdown.node.active = false;
+            return;
+        }
         this.otherPersonActionCountdown.node.active = true;
         this.otherPersonActionCountdown.startTimer({
             totalTime: oper.totalOpDuration,
             elapsedTime: oper.totalOpDuration - oper.leftOpDuration,
             onComplete: () => {
+                this.otherPersonActionCountdown.stop();
                 this.otherPersonActionCountdown.node.active = false;
             }
         });
     }
-    // =========================================================================
-    // 网络级非拦截、非代理的原生自定义大招事件触发区域
-    // =========================================================================
-    @bindEvent(TexasGameRoomDataPlayer.WINNER, 'player')
+
+    @bindEvent(TexasGameRoomDataPlayer.WINNER, { dataSource: 'player', initIgnore: true })
     private onWin() {
         this.animatingChips.active = true;
         const startPos = UIViewUtil.caculatePostion(this.animatingChips, this._potNode);
@@ -530,7 +521,7 @@ export default class SeatPlayer extends cc.Component {
         });
     }
 
-    @bindEvent(TexasGameRoomDataPlayerMine.HIGHLIGHT_CARDS, 'player')
+    @bindEvent(TexasGameRoomDataPlayerMine.HIGHLIGHT_CARDS, 'player', { dataSource: 'player', initIgnore: true })
     private onHighlightCards(cardsNum: number[]) {
         const mp: Set<number> = new Set();
         cardsNum.forEach(v => mp.add(v));
@@ -541,6 +532,27 @@ export default class SeatPlayer extends cc.Component {
                 cd.highlight(false);
             }
         });
+    }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.STORECHIPS_CHANGE, 'mine')
+    @traceMethod({ level: 'debug' })
+    private onStoreChipChange(v: number) {}
+
+    @bindEvent(TexasGameRoomDataPlayer.KEEPSEAT_CHANGE, 'player')
+    private onKeepSeatStart(b: boolean, deadline: number, reason: Def.KeepSeatReasonMap[keyof Def.KeepSeatReasonMap]) {
+        if (b) {
+            this.keepSeatTimer.node.active = true;
+            this.keepSeatTimer.startTimer({
+                totalTime: Math.ceil(deadline - Date.now() / 1000),
+                onComplete: () => {
+                    this.keepSeatTimer.stop();
+                    this.keepSeatTimer.node.active = false;
+                }
+            });
+            return;
+        }
+        this.keepSeatTimer.stop();
+        this.keepSeatTimer.node.active = false;
     }
 
     public animateButtonChange(enable: boolean, positionFromNode?: cc.Node) {

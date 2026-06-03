@@ -34,13 +34,13 @@ export class UserStore extends cc.EventTarget {
     public forbid: boolean = false;
 
     public fillWalletInfo(wallet: HttpRoomBringOutProtocol.Wallet[]) {
-        let clubsData:ClubData[] = [];
-        let walletsData:ClubWallet[] = [];
+        let clubsData: ClubData[] = [];
+        let walletsData: ClubWallet[] = [];
         // 简单处理多个钱包就当全量,单个钱包当更新
         if (wallet.length == 1) {
             clubsData = [...this.clubsData];
             walletsData = [...this.wallets];
-        } 
+        }
         let clubDataMap = new Map(this.clubsData.map(item => [item._clubID, item]));
         let walletMap = new Map(this.wallets.map(item => [item._clubID, item]));
         wallet.forEach(v => {

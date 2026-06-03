@@ -29,21 +29,6 @@ export default class SeatEvent {
             return;
         }
         this.tracelog.debug('Sitdown', seatNo);
-        // if (this.mainPlayer.seatID != -1) {
-        //     console.warn(
-        //         LN,
-        //         `Sitdown 你已在其他位置 seatID ${this.mainPlayer.seatID}, clientSeatId ${this.GetSeatByLocalSeatID(this.mainPlayer.seatID).ClientSeatId}`
-        //     );
-        //     return;
-        // }
-        // if (null != mSeat.Player) {
-        //     if (mSeat.Player.userID == this.mainPlayer.userID) {
-        //         this.tracelog.warn(`Sitdown 你已在该位置 clientSeatId:${clientSeatId}`);
-        //         return;
-        //     }
-        //     this.tracelog.warn(`Sitdown 该位置有其他玩家 clientSeatId:${clientSeatId}`);
-        //     return;
-        // }
         const roomID = seatData.roomData.roomID;
         const matchID = seatData.roomData.matchID;
         await UserStoreUtils.updateUserInfoBasic();

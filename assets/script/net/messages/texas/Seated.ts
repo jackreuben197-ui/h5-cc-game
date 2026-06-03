@@ -2,7 +2,9 @@ import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import userStore from '../../../data/user/UserStore';
+import UserStoreUtils from '../../../data/user/UserStoreUtils';
 import { AnimateDisplayTypeAction, AnimateDisplayTypeCards, AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
+import { BringInMode } from '../../../game/constant/BringInChipsType';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import { Def } from '../../../protobuf/holdem/define_pb';
 import { ServerMessageSeated } from '../../../protobuf/holdem/req_th_seated_pb';
@@ -22,26 +24,33 @@ export function Seated(data: ServerMessageSeated.AsObject, roomID: number, match
     _plog.info('自己坐下, videoMaskId:', data.videoMaskId);
     // videoMaskId > 4 时客户端统一归为 1
     if (data.videoMaskId > 4) data.videoMaskId = 1;
-    roomData.seatsStateManager.setMySeat(data.recvSeatId, AnimateDisplayTypePosition.ToTarget);
-    const seatData = roomData.seatsStateManager.getSeatPlayer(data.recvSeatId);
+    const seatData = roomData.seatsStateManager.setMySeat(data.recvSeatId, AnimateDisplayTypePosition.ToTarget);
     const mine = roomData.mine;
-    setTimeout(() => {
-        seatData.setAction(Def.Action.NONE, AnimateDisplayTypeAction.Static);
-        seatData.setCards([], AnimateDisplayTypeCards.Static, 0);
-    }, 1000);
-    // seatData.userID = userStore.userID;
-    // seatData.name = userStore.name;
-    // seatData.avatar = userStore.avatar;
-    // seatData.chip = data.chips;
-    // seatData.roundBet = 0;
-    // seatData.handBet = 0;
-    // seatData.roundActioned = false;
-    
-    // seatData.deposit = data.deposit;
-    // mine.storeChips = data.storeChips;
-    // mine.totalBringIn = data.totalBringin;
-    // mine.deposit = data.deposit;
-    // mine.videoMaskId = data.videoMaskId;
+    seatData.userID = userStore.userID;
+    seatData.name = userStore.name;
+    seatData.avatar = userStore.avatar;
+    seatData.chip = data.chips;
+    // 货币桌,顺带更新下钱包
+    if (roomData.basicInfo.bringInType == BringInMode.CURRENCY) {
+        UserStoreUtils.updateUserWallet(data.accountChips, roomData.mine.currentWalletClubID);
+    }
+    seatData.roundBet = 0;
+    seatData.handBet = 0;
+    seatData.roundActioned = false;
+    seatData.deposit = data.deposit;
+    // 鱿鱼部分
+    seatData.squidIn = data.squidIn;
+    seatData.squidTotalLimit = data.squidTotalLimit;
+    seatData.squidRoundSeated = data.squidRoundSeated;
+    // 会员
+    seatData.subscriptionID = data.userSubscriptionId;
+    seatData.videoMaskId = data.videoMaskId;
+    // 留坐
+    seatData.keepSeat(data.keepSeatDeadline > 0, data.keepSeatDeadline, Def.KeepSeatReason.KSR_TAKE_SEAT);
+    // 我的部分
+    mine.storeChips = data.storeChips;
+    mine.totalBringIn = data.totalBringin;
+    mine.deposit = data.deposit;
     // this.game.mainPlayer.chips = data.chips;
     // this.game.mainPlayer.leavelChips = data.accountChips;
     // // GameCache.Instance.gold = data.accountChips;

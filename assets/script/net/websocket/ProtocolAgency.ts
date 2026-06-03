@@ -34,7 +34,7 @@ export default class ProtocolAgency extends cc.Component {
                 const val = Code[key as keyof CodeMap];
                 this._codeNameMap[val] = key;
             }
-            ProtocolAgency.tracelog.debug('=== CodeNameMap 核心初始化，仅执行一次 ===');
+            ProtocolAgency.tracelog.debug('CodeNameMap 初始化');
         }
         return this._codeNameMap[codeValue] || `UNKNOWN_CODE(${codeValue})`;
     }
@@ -231,7 +231,7 @@ export default class ProtocolAgency extends cc.Component {
             //     return;
             // }
             if (OpCodeHelper.NeedLog(param.code as (typeof Code)[keyof typeof Code])) {
-                this.tracelog.debug(`>>>>> protocol send (H5): ${protocol_name}`, `roomID:${param.roomID},matchID:${param.matchID},body:`, param.body);
+                this.tracelog.debug(`>>>>> send: ${protocol_name}`, `roomID:${param.roomID},matchID:${param.matchID},body:`, param.body);
             }
             const bodyBA = this._serializeBody(param.code, param.body, param.classDic);
             if (!bodyBA) return;
@@ -348,7 +348,7 @@ export default class ProtocolAgency extends cc.Component {
         const msg = ServerCtor.deserializeBinary(body_ua);
         let body: any = msg.toObject();
         if (OpCodeHelper.NeedLog(code as (typeof Code)[keyof typeof Code])) {
-            this.tracelog.debug(`>>>>> protocol receive : ${protocol_name}`, `RoomID:${roomid},MatchID:${matchid},body:`, body);
+            this.tracelog.debug(`<<<<< receive : ${protocol_name}`, `RoomID:${roomid},MatchID:${matchid},body:`, body);
         }
         const rpcId = this._getRpcId(body);
         // 检查是否有 SendAsync 在等这个 code

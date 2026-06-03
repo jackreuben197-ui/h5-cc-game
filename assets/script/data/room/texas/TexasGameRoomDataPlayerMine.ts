@@ -45,5 +45,5 @@ export default class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public callTimeCount: number = 0;
     // callTimeStay 满足条件了是否必须还得留下
     public callTimeStay: number = 0;
-    public videoMaskId: number = 0;
+    // public videoMaskId: number = 0;
 }

@@ -14,6 +14,12 @@ export function PublicCards(data: ServerMessagePublicCards.AsObject, roomID: num
         roomData.publicCards.addSecondPublicCards(data.extPublicCardsArrayList, AnimateDisplayTypePublicCards.Deal);
     }
     roomData.seatsStateManager.roundClear();
+    data.allinUsersList.forEach(v => {
+        const seat = roomData.seatsStateManager.getSeatPlayer(v.seatId);
+        if (v.leftCardsCount > 0) {
+            seat.winPercent100 = Math.min(100, Math.round((v.winCardsCount * 100) / v.leftCardsCount));
+        }
+    });
     if (data.nextOperator) {
         const operator = data.nextOperator;
         let seatData = roomData.seatsStateManager.getSeatPlayer(operator.seatId);

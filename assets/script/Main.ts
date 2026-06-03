@@ -1,4 +1,4 @@
-import DevConfig from './config/DevConfig';
+import { GameConfig } from './config/GameConfig';
 import { ITraceLog, traceClass } from './core/decorator/LogTrace';
 import SoundComponent from './core/SoundComponent';
 import ProcedureInit from './game/procedure/ProcedureInit';
@@ -46,7 +46,7 @@ export default class Main extends cc.Component {
     override async onLoad() {
         // 一键将全局日志级别锁定为 'error'
         // 此时：debug, info, warn 全都自动静音，只有 error 能打出来
-        ITraceLog.setGlobalLevel(DevConfig.LOG_LEVEL);
+        ITraceLog.setGlobalLevel(GameConfig.LOG_LEVEL);
         // 关闭左下角 FPS / DrawCall 统计信息
         cc.debug.setDisplayStats(false);
         // 初始化 Telegram WebApp SDK（必须在最开始）

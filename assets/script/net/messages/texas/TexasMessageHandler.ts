@@ -76,8 +76,6 @@ export default class TexasMessageHandler {
             }
             if (!roomDataManager.existRoomData(roomID, matchID)) {
                 this.tracelog.warn('no room data return', roomID, matchID);
-                //@TODO 注释掉先不退出
-                console.log(12222222222221);
                 ProtocolAgency.Send({
                     code: Code.MSG_D_LEAVE,
                     roomID: roomID,

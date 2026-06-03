@@ -7,5 +7,6 @@ export function Standup(data: ServerMessageStandup.AsObject, roomID: number, mat
     let roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     let seatData = roomData.seatsStateManager.getSeatPlayer(data.seatId);
     //@TODO
-    seatData.emptySeat();
+    seatData.setSeated(false, seatData.mine);
+    seatData.mine = null;
 }

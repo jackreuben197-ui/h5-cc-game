@@ -18,7 +18,6 @@ export default class ProcedureInit extends ProcedureBase {
         this.setCCC();
         this.setFit();
         //解析 语言配置
-        this.setNetwork();
         i18nMgr.initLanguage();
         await i18nMgr.loadAndRefreshConfig();
         // 已加载过牌桌资源则隐藏首次加载提示
@@ -86,48 +85,5 @@ export default class ProcedureInit extends ProcedureBase {
         this.tracelog.debug('set frame rate');
         cc.game.setFrameRate(GameConfig.FRAME_RATE); // FPS 设置
         cc.macro.ENABLE_MULTI_TOUCH = GameConfig.ENABLE_MULTI_TOUCH; // 禁止多点触摸
-    }
-
-    //初始化网络配置（static 供其他 Procedure 在 H5 桥接模式下兜底调用）
-    private setNetwork() {
-        this.tracelog.debug('set network');
-        switch (GameConfig.BUILD_TYPE) {
-            case 0:
-                GameConfig.Network = {
-                    WebHost: `http://${GameConfig.Web_Host_Dev}`,
-                    WSS: `ws://${GameConfig.Web_Host_Dev}{0}`
-                };
-                break;
-            case 1:
-                GameConfig.Network = {
-                    WebHost: `http://${GameConfig.Web_Host_Test1}`,
-                    WSS: `ws://${GameConfig.Web_Host_Test1}{0}`
-                };
-                break;
-            case 2:
-                GameConfig.Network = {
-                    WebHost: `http://${GameConfig.Web_Host_Dev1}`,
-                    WSS: `ws://${GameConfig.Web_Host_Dev1}/api/channel/`
-                };
-                break;
-            case 3:
-                GameConfig.Network = {
-                    WebHost: `https://${GameConfig.Web_Host_Test1}`,
-                    WSS: `wss://${GameConfig.Web_Host_Test1}/api/channel/`
-                };
-                break;
-            case 4:
-                GameConfig.Network = {
-                    WebHost: `https://${GameConfig.Web_Host_Dev1}`,
-                    WSS: `wss://${GameConfig.Web_Host_Dev1}/api/channel/`
-                };
-                break;
-            case 5:
-                GameConfig.Network = {
-                    WebHost: `https://${GameConfig.Web_Host_Test1}`,
-                    WSS: `wss://${GameConfig.Web_Host_Test1}{0}`
-                };
-                break;
-        }
     }
 }

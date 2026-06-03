@@ -41,6 +41,8 @@ export interface WsConnectPayload {
     /** 当前房间/比赛 ID（随连接请求一并下发，供 H5 日志参考）。*/
     roomId?: number;
     matchId?: number;
+    /** Cocos 主动要求强制重连：复位 attempt/timer，立即重连一次。*/
+    force?: boolean;
 }
 
 /** Cocos → H5：关闭 websocket 请求。*/
@@ -116,6 +118,15 @@ export interface H5NavigatePayload {
  * 保留此别名以兼容存量 ProcedureReturn / LeaveNotification 引用。
  */
 export type H5RouteData = H5NavigatePayload;
+
+/**
+ * Cocos → H5：通知 H5 切换 WebSocket 心跳频率，对齐 HeartbeatComponent 的 normal/in-gameplay 区分。
+ *   normal      —— 牌桌外，5s/次
+ *   in-gameplay —— 牌桌内，1s/次
+ */
+export interface SetHeartbeatModePayload {
+    mode: 'normal' | 'in-gameplay';
+}
 // ─── CC → H5 Payload 映射表 ────────────────────────────────────────────────
 // sendToH5<T>(action, msgtype, payload) 通过 T 自动推导 payload 的精确类型。
 // 如需新增 action，同步更新：h5-game/src/bridge/protocol/cocosToH5.ts → CocosToH5PayloadMap
@@ -141,6 +152,8 @@ export interface CocosToH5PayloadMap {
     h5Show: H5VisibilityPayload | undefined;
     // 路由跳转
     h5Navigate: H5NavigatePayload;
+    // 心跳频率切换（对齐 HeartbeatComponent.SendIntervalNormal/InGameplay）
+    setHeartbeatMode: SetHeartbeatModePayload;
 }
 // ─── H5 → CC Payload 类型定义 ──────────────────────────────────────────────
 // 与 h5-game/src/bridge/protocol/h5ToCocos.ts 保持同步，如需新增 action，两端同步更新。
@@ -176,6 +189,29 @@ export interface WsClosedPayload {
     wasClean?: boolean;
 }
 
+/** H5 → CC：已安排一次重连尝试。 */
+export interface WsReconnectingPayload {
+    attempt: number;
+    delayMs: number;
+    /** close=连接关闭, heartbeat=心跳超时, visibility=切回前台, online=网络恢复, force=Cocos 主动触发。*/
+    reason: 'close' | 'heartbeat' | 'visibility' | 'online' | 'force';
+}
+
+/** H5 → CC：重连成功（已 onopen 并完成 REGISTER 发送）。 */
+export interface WsReconnectedPayload {
+    url: string;
+    attempt: number;
+    /** 从首次失败到本次成功的总耗时（毫秒）。 */
+    durationMs: number;
+}
+
+/** H5 → CC：放弃重连（命中次数上限/整体超时/鉴权失败）。 */
+export interface WsReconnectFailedPayload {
+    reason: 'max-attempts' | 'overall-timeout' | 'auth-invalid';
+    attempts: number;
+    durationMs: number;
+}
+
 /** H5 → CC：对话框操作结果。*/
 export interface DialogResultPayload {
     dialogRequestId: string;
@@ -206,6 +242,7 @@ export interface EnterTableRoomInfo {
     share_table?: number;
     gold_type?: number;
     club_id?: number;
+    club_random_id?: number;
     tribe_id?: number;
     limit_bring_in?: number;
     anti_cheat_type?: number;
@@ -217,6 +254,8 @@ export interface EnterTablePayload {
     token: string;
     websocketPort: number;
     from?: string;
+    clubId?: number;
+    clubRandomId?: number;
     roomId?: string;
     roomName?: string;
     roomInfo: EnterTableRoomInfo;
@@ -349,6 +388,10 @@ export interface H5ToCocosPayloadMap {
     wsMessage: WsMessagePayload;
     wsError: WsErrorPayload;
     wsClosed: WsClosedPayload;
+    // 重连流程（H5 代理后通知 Cocos 显示遮罩/恢复玩法）
+    wsReconnecting: WsReconnectingPayload;
+    wsReconnected: WsReconnectedPayload;
+    wsReconnectFailed: WsReconnectFailedPayload;
     // UI 回调
     dialogResult: DialogResultPayload;
     panelEvent: PanelEventPayload;
@@ -450,7 +493,6 @@ class H5MsgMgr {
      */
     init(): void {
         const self = this;
-        this.tracelog.debug('PackHead Init(encode/decode)');
         // 方式1：bridge.js 检测到 window.CocosBridge 后直接调用。
         // H5 现在直接传 JSON 对象，兼容旧版字符串。
         window.CocosBridge = {
@@ -462,7 +504,6 @@ class H5MsgMgr {
                 }
             }
         };
-        this.tracelog.debug;
         this.tracelog.debug('window.CocosBridge 已注册');
         // 方式2：监听 window.postMessage
         window.addEventListener('message', (e: MessageEvent<unknown>) => {
@@ -491,7 +532,7 @@ class H5MsgMgr {
         // H5 主动发来 h5Ready → CC 回复 ccAck
         this.on('h5Ready', data => {
             this.tracelog.debug('收到 h5Ready，回复 ccAck', data);
-            if ((data as any)?.token){
+            if ((data as any)?.token) {
                 userStore.token = (data as any).token;
                 UserStoreUtils.updateUserInfoBasic();
             }

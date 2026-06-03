@@ -85,7 +85,7 @@ export class BringInProviderTexas extends BringInProvider {
         if (w.length == 0) return;
         let wallets = userStore.getWallets();
         if (this._data.currentWalletClubID > 0) {
-            wallets = wallets.filter( v => v._clubID == this._data.currentWalletClubID);
+            wallets = wallets.filter(v => v._clubID == this._data.currentWalletClubID);
         }
         this.tracelog.debug(wallets, this._data.currentWalletClubID);
         this._ui._setupWalletList(wallets);

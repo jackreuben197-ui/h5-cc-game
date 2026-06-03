@@ -338,17 +338,9 @@ class UIViewManager {
     }
 
     // showPreloading 加载资源进度条
-    public async showPreloading(param: PreloadParams) {
+    public showPreloading(param: PreloadParams) {
         let preload;
-        if (this._preload.childrenCount == 1) {
-            preload = this._preload.children[0].getComponent(UIPrefabComponent.Preloading.UIType);
-        } else {
-            let components = await viewManager.instantiate('Preloading');
-            if (components.length == 1) {
-                preload = components[0];
-            }
-            preload.node.parent = this._preload;
-        }
+        preload = this._preload.children[0].getComponent(UIPrefabComponent.Preloading.UIType);
         this._preload.active = true;
         preload.onShow(param);
     }
@@ -359,17 +351,9 @@ class UIViewManager {
     }
 
     /** showPrompting 显示网络请求 */
-    public async showPrompting() {
+    public showPrompting() {
         let prompt;
-        if (this._prompt.childrenCount == 1) {
-            prompt = this._prompt.children[0].getComponent(UIPrefabComponent.Prompt.UIType);
-        } else {
-            let components = await viewManager.instantiate('Prompt');
-            if (components.length == 1) {
-                prompt = components[0];
-            }
-            prompt.node.parent = this._prompt;
-        }
+        prompt = this._prompt.children[0].getComponent(UIPrefabComponent.Prompt.UIType);
         this._prompt.active = true;
         prompt.initialize();
     }

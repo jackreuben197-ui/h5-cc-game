@@ -14,7 +14,7 @@ import {
 import { ServerMessageEnterRoom } from '../../../protobuf/holdem/req_th_enter_room_pb';
 import viewManager from '../../../views/UIViewManager';
 
-const _plog = createLogger('[TexasEnterRoom]');
+const _plog = createLogger('ServerMessageEnterRoom', 'debug');
 
 // EnterRoom 1002
 export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: number, matchID: number): Promise<void> {
@@ -49,16 +49,43 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         }
         data.playersList.forEach(player => {
             let seatData = roomData.seatsStateManager.getSeatPlayer(player.seatId);
-            seatData.name = player.name;
+            seatData.seated = true;
             seatData.userID = player.userRid;
+            seatData.setAction(player.action, AnimateDisplayTypeAction.Static);
+            seatData.setCards(player.cardsList, AnimateDisplayTypeCards.Static);
+            seatData.name = player.name;
             seatData.avatar = player.avatar;
             seatData.chip = player.chip;
-            seatData.setRoundBet(player.roundBet, AnimateDisplayTypeRoundBet.Static);
             seatData.handBet = player.handBet;
-            seatData.roundActioned = player.roundActioned;
-            seatData.setCards(player.cardsList, AnimateDisplayTypeCards.Static);
-            seatData.setAction(player.action, AnimateDisplayTypeAction.Static);
+            seatData.setRoundBet(player.roundBet, AnimateDisplayTypeRoundBet.Static);
+            seatData.status = player.status;
+            seatData.keepSeat(player.keepSeatDeadline > 0, player.keepSeatDeadline, player.keepSeatReason);
             seatData.deposit = player.deposit;
+            seatData.buyInsuranceStep = player.buyInsuranceStep;
+            seatData.buyInsuranceList = player.buyInsuranceList;
+            seatData.roundActioned = player.roundActioned;
+            seatData.isAuto = player.isAutoop;
+            //MTT
+            seatData.mttHunterKill = player.hunterKill;
+            seatData.mttHunterKillAward = player.hunterKillAward;
+            seatData.mttHunterKillAwardOther = player.hunterKillAwardOther;
+            seatData.mttHunterHeadValue = player.hunterHeadValue;
+            //vip
+            seatData.vip = player.vip > 0;
+            seatData.subscriptionID = player.userSubscriptionId;
+            //mushroom
+            seatData.inMushroom = player.inMushroom;
+            seatData.costMushroom = player.costMushroom;
+            //squid
+            seatData.squidIn = player.inSquid;
+            seatData.squidEscaped = player.squidEscaped;
+            seatData.squidCount = player.squidCount;
+            //视频
+            seatData.videoMaskId = player.videoMaskId;
+            //获胜卡牌
+            if (player.winCardsInfo) {
+                seatData.winPercent100 = Math.min(100, Math.round((player.winCardsInfo.wcCount * 100) / player.winCardsInfo.lcCount));
+            }
         });
         if (data.myInfo) {
             if (data.myInfo.seatId > 0) {
@@ -66,16 +93,58 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             }
             roomData.mine.storeChips = data.myInfo.storeChips;
         }
-        setTimeout(() => {
-            roomData.seatsStateManager.setMySeat(4, AnimateDisplayTypePosition.ToTarget);
-                //mine.storeChips = data.myInfo.storeChips;
-            const seat = roomData.seatsStateManager.getSeatPlayer(4);
-            seat.cards = [];
-            //seat.setCards([], AnimateDisplayTypeCards.Static, 0);
-            seat.userID = userStore.userID;
-            seat.name = userStore.name;
-            _plog.info(seat.userID, seat.seatNo);
-        }, 3000);
+        // setTimeout(() => {
+        //     let seat = roomData.seatsStateManager.getSeatPlayer(4);
+        //     if (seat.seated) {
+        //         seat.seated = false;
+        //     }else{
+        //         seat = roomData.seatsStateManager.setMySeat(4, AnimateDisplayTypePosition.ToTarget);
+        //         seat.setCards([0, 0], AnimateDisplayTypeCards.Static, 0);
+        //         seat.setAction(Def.Action.ALLIN, AnimateDisplayTypeAction.Done);
+        //         seat.userID = userStore.userID;
+        //         seat.name = userStore.name;
+        //         seat.avatar= userStore.avatar;
+        //     }
+        // }, 3000);
+        // setTimeout(() => {
+        //     let seat = roomData.seatsStateManager.getSeatPlayer(4);
+        //     if (seat.seated) {
+        //         seat.seated = false;
+        //     }else{
+        //         seat = roomData.seatsStateManager.setMySeat(4, AnimateDisplayTypePosition.ToTarget);
+        //         seat.setCards([0, 0], AnimateDisplayTypeCards.Static, 0);
+        //         seat.setAction(Def.Action.ALLIN, AnimateDisplayTypeAction.Done);
+        //         seat.userID = userStore.userID;
+        //         seat.name = userStore.name;
+        //         seat.avatar= userStore.avatar;
+        //     }
+        // }, 6000);
+        // setTimeout(() => {
+        //     let seat = roomData.seatsStateManager.getSeatPlayer(6);
+        //     if (seat.seated) {
+        //         seat.seated = false;
+        //     }else{
+        //         seat.seated = true;
+        //         seat.setCards([0, 0], AnimateDisplayTypeCards.Static, 0);
+        //         seat.setAction(Def.Action.ALLIN, AnimateDisplayTypeAction.Done);
+        //         seat.userID = userStore.userID;
+        //         seat.name = userStore.name;
+        //         seat.avatar= userStore.avatar;
+        //     }
+        // }, 9000);
+        //  setTimeout(() => {
+        //     let seat = roomData.seatsStateManager.getSeatPlayer(6);
+        //     if (seat.seated) {
+        //         seat.seated = false;
+        //     }else{
+        //         seat.seated = true;
+        //         seat.setCards([0, 0], AnimateDisplayTypeCards.Static, 0);
+        //         seat.setAction(Def.Action.ALLIN, AnimateDisplayTypeAction.Done);
+        //         seat.userID = userStore.userID;
+        //         seat.name = userStore.name;
+        //         seat.avatar= userStore.avatar;
+        //     }
+        // }, 12000);
         data.operatorList.forEach(operator => {
             let seatData = roomData.seatsStateManager.getSeatPlayer(operator.seatId);
             if (seatData.mine) {

@@ -124,7 +124,6 @@ interface FlatEnterTableData {
     origin_type?: number;
     gold_type?: number;
 }
-
 // ==================== H5 消息监听注册 ====================
 /** 注册 H5 桥接消息（enterTable / exitTable / syncUser） */
 export async function registerH5Listeners(): Promise<void> {

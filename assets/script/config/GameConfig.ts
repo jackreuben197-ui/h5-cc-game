@@ -10,13 +10,14 @@
  * GameConfig
  * 游戏配置
  */
+import { LogLevel } from '../core/decorator/LogTrace';
 
-export interface INetWork {
+interface INetWork {
     WebHost: string;
     WSS: string;
 }
 
-export class GameConfig {
+class GameConfig {
     //需要清理storage,就递增这个值
     static clean_all_flag: number = 2;
     static debug: boolean = true;
@@ -54,76 +55,63 @@ export class GameConfig {
     static DefaultAreaCode: string = '+55';
     //是否是发布版本
     static readonly IS_PUBLISHED: boolean = false;
+    //日志等级
+    public static LOG_LEVEL: LogLevel = 'debug';
+
+    private constructor() {}
+
+    private static _isReady = false;
+
+    public static init() {
+        if (!GameConfig._isReady) {
+            GameConfig.setNetwork();
+            GameConfig._isReady = true;
+        }
+    }
+
+    //初始化网络配置（static 供其他 Procedure 在 H5 桥接模式下兜底调用）
+    private static setNetwork() {
+        switch (GameConfig.BUILD_TYPE) {
+            case 0:
+                GameConfig.Network = {
+                    WebHost: `http://${GameConfig.Web_Host_Dev}`,
+                    WSS: `ws://${GameConfig.Web_Host_Dev}{0}`
+                };
+                break;
+            case 1:
+                GameConfig.Network = {
+                    WebHost: `http://${GameConfig.Web_Host_Test1}`,
+                    WSS: `ws://${GameConfig.Web_Host_Test1}{0}`
+                };
+                break;
+            case 2:
+                GameConfig.Network = {
+                    WebHost: `http://${GameConfig.Web_Host_Dev1}`,
+                    WSS: `ws://${GameConfig.Web_Host_Dev1}/api/channel/`
+                };
+                break;
+            case 3:
+                GameConfig.Network = {
+                    WebHost: `https://${GameConfig.Web_Host_Test1}`,
+                    WSS: `wss://${GameConfig.Web_Host_Test1}/api/channel/`
+                };
+                break;
+            case 4:
+                GameConfig.Network = {
+                    WebHost: `https://${GameConfig.Web_Host_Dev1}`,
+                    WSS: `wss://${GameConfig.Web_Host_Dev1}/api/channel/`
+                };
+                break;
+            case 5:
+                GameConfig.Network = {
+                    WebHost: `https://${GameConfig.Web_Host_Test1}`,
+                    WSS: `wss://${GameConfig.Web_Host_Test1}{0}`
+                };
+                break;
+        }
+    }
 }
-/**
- * 网络配置
- */
-// export var NetWorkBase = {
-//     WebHostIP: "152.70.234.14",
-//     LoginHostIP: "152.70.234.14",
-//     LoginPort: "8058",
-//     APIPort: "5060",
-//     PayPort: "9403",
-//     HeadPort: "5051",
-//     PaipuPort: "6038",
-//     UploadPort: "5050",
-//     UseDNS: "false",
-//     AboutWeURL: "xxx",
-//     UserAgentURL: "xxx",
-//     DataAnalysisURL: "xxx",
-// }
-// /**
-//  * 语言列表
-//  */
-// export var LanguageList: { lan: string, name: string }[] = [
-//     { lan: "en", name: "UILogin_USA" },
-//     { lan: "pt", name: "sl_ptyyPutao" },
-//     { lan: "cn", name: "UILogin_China" },
-// ];
-// /**
-//  * Log样式
-//  */
-// export var LogStyle = {
-//     http_request: 'color:yellow;background:#1E1E1E',
-//     http_response: 'color:#38A7F1;background:#1E1E1E',
-//     ws_request: 'color:#E3C127;background:#47100A',
-//     ws_response: 'color:#19FF00;background:#47100A'
-// };
-// export var TextColor = {
-//     Color1: '#FFFFFF',
-//     Color2: '#35A3B3',
-//     Color3: '#757CAB',
-//     Color4: '#7187FF',
-//     Color5: '#B0FFAE',
-//     Color6: '#FF7C7C',
-//     Color7: '#EEF5FF',
-//     Color8: '#FEEC8E'
-// };
-// export var Member_Order_List = [
-//     { show: "UIGuild_MemberManagerSortByWinOrLose", index: 0, icon: "Up", sort_type: 1, order_type: 1 },
-//     { show: "UIGuild_MemberManagerSortByHands", index: 2, icon: "Up", sort_type: 2, order_type: 1 },
-//     { show: "UIGuild_MemberManagerSortByServiceFee", index: 4, icon: "Up", sort_type: 3, order_type: 1 },
-//     { show: "UIGuild_MemberManagerSortByLastLoginTime", index: 6, icon: "Up", sort_type: 4, order_type: 1 },
-// ];
-// export var Tabs_Status = {
-//     [-1]: [0, 0, 0, 0, 0, 0],
-//     0: [1, 0, 0, 0, 0, 0],
-//     1: [0, 1, 0, 0, 0, 0],
-//     2: [0, 0, 1, 0, 0, 0],
-//     3: [0, 0, 0, 1, 0, 0],
-//     4: [0, 0, 0, 0, 1, 0],
-//     5: [0, 0, 0, 0, 0, 1],
-// };
-// export function GetGameTypeName(data: any): string {
-//     let str = "NLH";
-//     if (data.game_type == 1) {
-//         str = "PLO4";
-//     } else if (data.game_type == 2) {
-//         str = "PLO5";
-//     } else if (data.game_type == 3) {
-//         str = "PLO6";
-//     } else if (data.poker_type == 2) {
-//         str = "6+";
-//     }
-//     return str;
-// }
+
+GameConfig.init();
+
+export { GameConfig };

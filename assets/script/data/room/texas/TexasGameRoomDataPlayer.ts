@@ -7,13 +7,14 @@ import {
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
 import { VideoModel } from '../../../game/constant/VideoModel';
-import { Def } from '../../../protobuf/holdem/define_pb';
+import { AllInWinCardsInfo, Def, PotInsuranceBuy } from '../../../protobuf/holdem/define_pb';
 import { Operator } from './model/Operator';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from './TexasGameRoomDataPlayerMine';
 import { SeatPosition } from './TexasGameRoomDataSeatsStateManager';
 
 type PlayerAnimBindings = {
+    seated: [TexasGameRoomDataPlayerMine];
     action: [AnimateDisplayTypeAction];
     roundBet: [AnimateDisplayTypeRoundBet];
     cards: [AnimateDisplayTypeCards, number?];
@@ -29,6 +30,7 @@ interface TexasGameRoomDataPlayer extends IObservableBindings<TexasGameRoomDataP
 @bindData()
 @traceClass()
 class TexasGameRoomDataPlayer extends cc.EventTarget {
+    public static readonly SEATED_CHANGE = 'SEATED_CHANGE';
     public static readonly ACTION_CHANGE = 'ACTION_CHANGE';
     public static readonly SEAT_POSITION_CHANGE = 'SEAT_POSITION_CHANGE';
     public static readonly SHOW_CARDS_CHANGE = 'SHOW_CARDS_CHANGE';
@@ -37,7 +39,8 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public static readonly CHIPS_CHANGE = 'CHIPS_CHANGE';
     public static readonly ROUND_BET_CHANGE = 'ROUND_BET_CHANGE';
     public static readonly PREPARE_OPERATION = 'PREPARE_OPERATION';
-    public static readonly EMPTY_SEAT = 'EMPTY_SEAT';
+    public static readonly CANPLAYSTATUS_CHANGE = 'CANPLAYSTATUS_CHANGE';
+    public static readonly KEEPSEAT_CHANGE = 'KEEPSEAT_CHANGE';
     public static readonly WINNER = 'WINNER';
     private _parentRoomData: TexasGameRoomData;
     public get roomData() {
@@ -49,7 +52,52 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public handBet: number;
     public mine: TexasGameRoomDataPlayerMine = null;
     public roundActioned: boolean;
-    public deposit: number;
+    public deposit: number = 0;
+    public isAuto: boolean = false;
+    public vip: boolean = false;
+    public subscriptionID: number = 0; // 订阅/会员ID
+    //Mushroom
+    public inMushroom: boolean = false;
+    public costMushroom: number = 0;
+    //Suqid
+    @observable(TexasGameRoomDataPlayer.CANPLAYSTATUS_CHANGE)
+    public status: Def.CanPlayStatusMap[keyof Def.CanPlayStatusMap] = Def.CanPlayStatus.NORMAL;
+    //保险
+    public buyInsuranceStep: number = 0;
+    public buyInsuranceList: Array<PotInsuranceBuy.AsObject> = [];
+    //留坐
+    private _keepSeatDeadline: number = 0;
+    public get keepSeatDeadline() {
+        return this._keepSeatDeadline;
+    }
+    private _keepSeatReason: Def.KeepSeatReasonMap[keyof Def.KeepSeatReasonMap] = Def.KeepSeatReason.KSR_NONE;
+
+    @pureEvent(TexasGameRoomDataPlayer.KEEPSEAT_CHANGE, {
+        initParams() {
+            return [this._keepSeatDeadline > 0, this._keepSeatDeadline, this._keepSeatReason];
+        }
+    })
+    public keepSeat(b: boolean, deadline: number, reason: Def.KeepSeatReasonMap[keyof Def.KeepSeatReasonMap]) {
+        this._keepSeatDeadline = deadline;
+        this._keepSeatReason = reason;
+    }
+
+    //MTT
+    public mttHunterHeadValue: number = 0;
+    public mttHunterKill: number = 0;
+    public mttHunterKillAward: number = 0;
+    public mttHunterKillAwardOther: number = 0;
+    //SQUID
+    public squidIn: boolean = false; // 是否加入鱿鱼
+    public squidTotalLimit: number = 0; // 鱿鱼上限
+    public squidRoundSeated: boolean = false; // 鱿鱼轮是否已经坐下
+    public squidEscaped: boolean = false; // 鱿鱼是否已经标记
+    public squidCount: number = 0;
+    //videoMaskId
+    public videoMaskId: number = 0;
+    //ALLIN胜率(目前只考虑第一套把) (0-100)%
+    @observable()
+    public winPercent100: number = 0;
 
     constructor(seatNo: number, position: SeatPosition, roomData: TexasGameRoomData) {
         super();
@@ -64,9 +112,8 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public get directlyViewCard() {
         return this._parentRoomData.basicInfo.gameStatus >= Def.GameStatus.HAND_PREFLOP && this.roundActioned;
     }
-    public get needVideoPermision() {
-        return this._parentRoomData.basicInfo.videoModel !== VideoModel.NONE;
-    }
+    @observable(TexasGameRoomDataPlayer.SEATED_CHANGE)
+    public seated: boolean = false;
     // =========================================================================
     // 响应式核心字段拦截配置区域
     // =========================================================================
@@ -89,19 +136,19 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     // =========================================================================
     // 扑克核心桌面业务方法层实现
     // =========================================================================
-    @pureEvent(TexasGameRoomDataPlayer.EMPTY_SEAT)
-    public emptySeat() {
-        this.muteEvents();
-        this.userID = 0;
-        this.clubID = 0;
-        this.chip = 0;
-        this.avatar = '';
-        this.name = '';
-        this.mine = null;
-        this.cards = [];
-        this.unmuteEvents();
-        // this.emit(TexasGameRoomDataPlayer.EMPTY_SEAT);
-    }
+    // @pureEvent(TexasGameRoomDataPlayer.EMPTY_SEAT)
+    // public emptySeat() {
+    //     this.muteEvents();
+    //     this.userID = 0;
+    //     this.clubID = 0;
+    //     this.chip = 0;
+    //     this.avatar = '';
+    //     this.name = '';
+    //     this.mine = null;
+    //     this.cards = [];
+    //     this.unmuteEvents();
+    //     // this.emit(TexasGameRoomDataPlayer.EMPTY_SEAT);
+    // }
 
     @pureEvent(TexasGameRoomDataPlayer.WINNER)
     public claimWin() {}
