@@ -21,9 +21,9 @@ export function LeaveNotification(data: ServerMessageLeaveNotification.AsObject,
         case Def.LeaveReason.LR_GAME_END: // 游戏结束
             {
                 if (!roomData.basicInfo.isMtt) {
-                    const gamePlaySubType = roomData.basicInfo.squidEnabled
+                    const gamePlaySubType = roomData.basicInfo.hasSquid
                         ? GamePlaySubType.SQUID
-                        : roomData.basicInfo.mushroomEnabled
+                        : roomData.basicInfo.hasMushroom
                           ? GamePlaySubType.MUSH
                           : GamePlaySubType.NONE;
                     const param: ProcedureReturnNavigateParam = {

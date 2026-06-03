@@ -41,6 +41,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public static readonly PREPARE_OPERATION = 'PREPARE_OPERATION';
     public static readonly CANPLAYSTATUS_CHANGE = 'CANPLAYSTATUS_CHANGE';
     public static readonly KEEPSEAT_CHANGE = 'KEEPSEAT_CHANGE';
+    public static readonly ALLIN_WIN_PERCENT = 'ALLIN_WIN_PERCENT';
     public static readonly WINNER = 'WINNER';
     private _parentRoomData: TexasGameRoomData;
     public get roomData() {
@@ -95,9 +96,9 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public squidCount: number = 0;
     //videoMaskId
     public videoMaskId: number = 0;
-    //ALLIN胜率(目前只考虑第一套把) (0-100)%
-    @observable()
-    public winPercent100: number = 0;
+    //ALLIN胜率(目前只考虑第一套把) (0-10000) 
+    @observable(TexasGameRoomDataPlayer.ALLIN_WIN_PERCENT)
+    public winPercent100: number = -1;
 
     constructor(seatNo: number, position: SeatPosition, roomData: TexasGameRoomData) {
         super();
@@ -112,7 +113,9 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public get directlyViewCard() {
         return this._parentRoomData.basicInfo.gameStatus >= Def.GameStatus.HAND_PREFLOP && this.roundActioned;
     }
-    @observable(TexasGameRoomDataPlayer.SEATED_CHANGE)
+    @observable(TexasGameRoomDataPlayer.SEATED_CHANGE,{initParams() {
+        return [this.mine];
+    }})
     public seated: boolean = false;
     // =========================================================================
     // 响应式核心字段拦截配置区域
@@ -160,6 +163,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
             this.setRoundBet(0, AnimateDisplayTypeRoundBet.Static);
             this.setCards([], AnimateDisplayTypeCards.Static, 0);
             this.roundActioned = false;
+            this.winPercent100 = -1;
         }
     }
 

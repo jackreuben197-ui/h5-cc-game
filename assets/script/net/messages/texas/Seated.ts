@@ -21,7 +21,6 @@ export function Seated(data: ServerMessageSeated.AsObject, roomID: number, match
         viewManager.showToast(CPErrorCode.ServerErrorDescription(data.status));
         return;
     }
-    _plog.info('自己坐下, videoMaskId:', data.videoMaskId);
     // videoMaskId > 4 时客户端统一归为 1
     if (data.videoMaskId > 4) data.videoMaskId = 1;
     const seatData = roomData.seatsStateManager.setMySeat(data.recvSeatId, AnimateDisplayTypePosition.ToTarget);

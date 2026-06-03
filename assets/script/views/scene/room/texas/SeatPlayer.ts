@@ -17,7 +17,7 @@ import UIViewUtil from '../../../util/UIViewUtil';
 import CardView from '../../../widget/CardView';
 import RemoteSprite from '../../../widget/RemoteSprite';
 import ShiningPathTimer from '../../../widget/ShiningPathTimer';
-import SeatEvent from './events/SeatEvent';
+import TexasTableEvent from './events/TexasTableEvent';
 import SeatAction from './SeatAction';
 
 const { ccclass, property, menu } = cc._decorator;
@@ -83,6 +83,10 @@ export default class SeatPlayer extends cc.Component {
     private winAnimation: sp.Skeleton = null!;
     @property(ShiningPathTimer)
     private keepSeatTimer: ShiningPathTimer = null;
+    @property(cc.Node)
+    private winPercent:cc.Node = null!;
+    @property(cc.Label) 
+    private winPercentLabel: cc.Label = null!;
     private _seatPlayer: TexasGameRoomDataPlayer = null!;
     private _cardBacks: cc.Node[] = [];
     private _bigCards: CardView[] = [];
@@ -90,7 +94,6 @@ export default class SeatPlayer extends cc.Component {
     private _potNode: cc.Node = null!;
     // 发牌
     private _dealNode: cc.Node = null!;
-    private _directEvents: SeatEvent = null;
 
     public initData(seatPlayer: TexasGameRoomDataPlayer, potNode: cc.Node, dealNode: cc.Node) {
         this._seatPlayer = seatPlayer;
@@ -99,7 +102,6 @@ export default class SeatPlayer extends cc.Component {
         if (this.node.activeInHierarchy) {
             this._bindEventsAndRefresh();
         }
-        this._directEvents = new SeatEvent();
     }
 
     // 防止内存泄露(简单说就是防止this丢失)
@@ -117,7 +119,7 @@ export default class SeatPlayer extends cc.Component {
             if (node) this._cardBacks.push(node);
         }
         this._clickEmptySeat = () => {
-            this._directEvents.Sitdown(this._seatPlayer.roomData.mine, this._seatPlayer.seatNo);
+            TexasTableEvent.Sitdown(this._seatPlayer.roomData.mine, this._seatPlayer.seatNo);
         };
         this.emptySeat.node.on('click', this._clickEmptySeat, this);
     }
@@ -139,8 +141,18 @@ export default class SeatPlayer extends cc.Component {
         autoBindEvents(this, { player: this._seatPlayer });
     }
 
+    @traceMethod()
+    @bindEvent(TexasGameRoomDataPlayer.ALLIN_WIN_PERCENT, 'player')
+    private updateWinPercentLabel(v: number) { 
+        if (this._seatPlayer.mine != null) {
+            this.winPercent.active = v >= 0;
+            this.winPercentLabel.string = v >= 0 ? StringHelper.GetLongString(v) + '%' : '';
+        }
+    }
+
+    //(优先于seated执行保证展示正确)
     @traceMethod({ level: 'debug' })
-    @bindEvent(TexasGameRoomDataPlayer.SEATED_CHANGE, 'player')
+    @bindEvent(TexasGameRoomDataPlayer.SEATED_CHANGE, { dataSource:'player', initPriority:10 })
     private onUpdateSeated(b: boolean, mine: TexasGameRoomDataPlayer) {
         this.userSeat.active = b;
         this.emptySeat.node.active = !b;
@@ -148,30 +160,12 @@ export default class SeatPlayer extends cc.Component {
         // 本人相关,设置属性
         if (b && mine) {
             autoBindEvents(this, { mine: mine });
-            // 筹码位置
-            this.roundBetNode.setPosition(135, 345);
-            // 大牌的显示位置调整,并隐藏
-            this.bigCardsContainer.setPosition(0, 220);
-            this.bigCardsContainer.setScale(1, 1);
-            this._bigCards.forEach(v => (v.node.parent.active = false));
-            //隐藏名字
-            this.nickName.node.active = false;
-            this.nickNameSplash.active = false;
             return;
         }
         //解绑(自己站起)
         if (mine) {
             unBindEvents(this, 'mine');
         }
-        // 筹码位置
-        this.roundBetNode.setPosition(0, 180);
-        // 大牌的显示位置调整,并隐藏
-        this.bigCardsContainer.setPosition(0, 0);
-        this.bigCardsContainer.setScale(0.65, 0.65);
-        this._bigCards.forEach(v => (v.node.parent.active = false));
-        // 显示名字
-        this.nickName.node.active = true;
-        this.nickNameSplash.active = true;
     }
 
     @bindEvent(TexasGameRoomDataPlayer.NICKNAME_CHANGE, 'player')
@@ -198,12 +192,35 @@ export default class SeatPlayer extends cc.Component {
     private onUpdatePosition(pos: SeatPosition, pat: AnimateDisplayTypePosition) {
         switch (pos) {
             case SeatPosition.BottomMiddle:
-                this.buttonIcon.setPosition(-160, -120);
-                this.roudBetIcon.setPosition(-25, 0);
+                if (this._seatPlayer.seated && this._seatPlayer.mine) {
+                    this.buttonIcon.setPosition(-320, -30);
+                    // 筹码位置
+                    this.roudBetIcon.setPosition(-25, 0);
+                    this.roundBetNode.setPosition(135, 345);
+                    // 大牌的显示位置调整,并隐藏
+                    this.bigCardsContainer.setPosition(0, 220);
+                    this.bigCardsContainer.setScale(1, 1);
+                    this._bigCards.forEach(v => (v.node.parent.active = false));
+                    //隐藏名字
+                    this.nickName.node.active = false;
+                    this.nickNameSplash.active = false;
+                }else{
+                    this.winPercent.active = false;
+                    this.buttonIcon.setPosition(-160, -120);
+                    // 筹码位置
+                    this.roudBetIcon.setPosition(-25, 0);
+                    this.roundBetNode.setPosition(0, 180);
+                    // 大牌的显示位置调整,并隐藏
+                    this.bigCardsContainer.setPosition(0, 0);
+                    this.bigCardsContainer.setScale(0.65, 0.65);
+                    this._bigCards.forEach(v => (v.node.parent.active = false));
+                    // 显示名字
+                    this.nickName.node.active = true;
+                    this.nickNameSplash.active = true;
+                }
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.roundBetNode.setPosition(0, 180);
-                this.bigCardsContainer.setPosition(0, 0);
-                this.bigCardsContainer.setScale(0.65, 0.65);
+                this.winPercent.active = false;
                 break;
             case SeatPosition.BottomLeft:
             case SeatPosition.MiddleLeft:
@@ -215,6 +232,7 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
+                this.winPercent.active = false;
                 break;
             case SeatPosition.TopLeft1:
                 this.buttonIcon.setPosition(65, -220);
@@ -223,6 +241,7 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
+                this.winPercent.active = false;
                 break;
             case SeatPosition.TopMiddle:
             case SeatPosition.TopRight1:
@@ -232,6 +251,7 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
+                this.winPercent.active = false;
                 break;
             case SeatPosition.TopRight:
             case SeatPosition.MiddleRight:
@@ -243,6 +263,7 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
+                this.winPercent.active = false;
                 break;
         }
         const realPos = seatArrange[pos];
@@ -414,7 +435,6 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.ACTION_CHANGE, 'player', AnimateDisplayTypeAction.Static)
-    @traceMethod({ level: 'debug' })
     private onUpdateAction(action: Def.ActionMap[keyof Def.ActionMap], aat: AnimateDisplayTypeAction) {
         if (this._seatPlayer.mine) {
             this.tracelog.debug(action, aat, this._seatPlayer.seatNo);
@@ -521,7 +541,7 @@ export default class SeatPlayer extends cc.Component {
         });
     }
 
-    @bindEvent(TexasGameRoomDataPlayerMine.HIGHLIGHT_CARDS, 'player', { dataSource: 'player', initIgnore: true })
+    @bindEvent(TexasGameRoomDataPlayerMine.HIGHLIGHT_CARDS, { dataSource: 'player', initIgnore: true })
     private onHighlightCards(cardsNum: number[]) {
         const mp: Set<number> = new Set();
         cardsNum.forEach(v => mp.add(v));

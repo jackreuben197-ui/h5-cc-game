@@ -84,7 +84,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             seatData.videoMaskId = player.videoMaskId;
             //获胜卡牌
             if (player.winCardsInfo) {
-                seatData.winPercent100 = Math.min(100, Math.round((player.winCardsInfo.wcCount * 100) / player.winCardsInfo.lcCount));
+                seatData.winPercent100 = Math.min(10000, Math.round((player.winCardsInfo.wcCount * 10000) / player.winCardsInfo.lcCount));
             }
         });
         if (data.myInfo) {

@@ -142,8 +142,9 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
             if (ss == s) {
                 this._parentRoomData.mine.seatNo = ss;
                 player.mine = this._parentRoomData.mine;
-                player.setPosition(arrage[j], pat);
+                //先坐下再调整位置注意顺序
                 player.setSeated(true, player.mine);
+                player.setPosition(arrage[j], pat);
             } else {
                 player.setPosition(arrage[j], pat);
             }

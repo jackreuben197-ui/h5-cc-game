@@ -52,7 +52,8 @@ export default class RoomInfo extends cc.Component {
         });
     }
 
-    @bindEvent([TexasGameRoomDataBasic.TABLE_BET_INFO_CHANGE, TexasGameRoomDataBasic.TABLE_HANDINFO_CHANGE], 'basic')
+    @bindEvent(TexasGameRoomDataBasic.TABLE_BET_INFO_CHANGE, 'basic')
+    @bindEvent(TexasGameRoomDataBasic.TABLE_HANDINFO_CHANGE, 'basic')
     private onUpdateText() {
         let info: string = ``;
         if (this._roomBaseInfo.invitationCode != '') {

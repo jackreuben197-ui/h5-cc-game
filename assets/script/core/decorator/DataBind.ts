@@ -23,9 +23,6 @@
  * * // 示例 1: 常规响应式变量声明
  * @observable('CHIPS_CHANGE')
  * public chip: number = 0;
- * * // 示例 2: 强断言无序集合比对数组（如手牌、高亮牌组等乱序等价不重新渲染 UI 场景）
- * @observable({ eventName: 'SHOW_CARDS_CHANGE', compareType: 'arrayAsSet' })
- * public cards: number[] = [];
  * * // 示例 3: 带 shouldEmit 的高级控制变量声明（满足特定条件时才向 UI 发送事件通知）
  * @observable({
  * eventName: 'VIP_SCORE_CHANGE',
@@ -104,7 +101,7 @@ export type IObservableBindings<Class, Bindings extends Record<string, any[]> = 
  * UI 组件层内部记录的绑定元数据结构
  */
 interface BindingInfo {
-    eventName: string | string[]; // 监听的引擎事件名（支持多选）
+    eventName: string; // 监听的引擎事件名
     methodName: string; // UI 组件上接收回调的成员方法名
     defaultArgs: any[]; // 静态初始值后面追加的透传默认参数
     dataSourceTag: string; // 对应绑定的真理源数据源标签（如 'player'）
@@ -116,10 +113,14 @@ interface BindingInfo {
  * 响应式属性高级配置项
  */
 export interface ObservableOptions {
-    eventName?: string; // 自定义派发的事件名，缺省为物理属性名
     forceEmit?: boolean; // 是否强制发射（跳过前后值脏检查比对）
     shouldEmit?: (oldVal: any, newVal: any, ...args: any[]) => boolean; // 自定义脏检查过滤器
     compareType?: 'normal' | 'arrayAsSet'; // 脏检查比对模式：'normal' 严格序比对 | 'arrayAsSet' 集合无序比对
+    /**
+     * 首屏对齐初始额外参数（不含 value 本身）
+     * 可以是一个固定的数组，用来给 autoBindEvents 初始对齐时拼入 value 后面
+     */
+    initParams?: any[] | ((this: any) => any[]);
 }
 
 /**
@@ -136,6 +137,7 @@ export interface PureEventOptions {
 
 class _pureEventInitParamsWrap {
     params: any[] | ((this: any) => any[]);
+    privateKey?: string; // undefined = pureEvent; 有值 = observable，值为私有存储键
 }
 // =========================================================================
 // ==================== 核心响应式装饰器实现 ==============================
@@ -200,29 +202,35 @@ export function pureEvent(eventName: string, options?: PureEventOptions) {
  * 【属性装饰器】@observable
  * 接管变量的 Getter/Setter 劫持，并在原型链上生成标准化的小驼峰 setXxxx 更新方法。
  */
-export function observable(config?: string | ObservableOptions) {
+export function observable(eventName: string, options?: ObservableOptions) {
     return function (target: any, propertyKey: string) {
-        const privateKey = `_${propertyKey}`; // 自动派生的物理私有存储键名
+        const privateKey = `_${propertyKey}`;
         const capitalizedKey = propertyKey.charAt(0).toUpperCase() + propertyKey.slice(1);
-        const setterMethodName = `set${capitalizedKey}`; // 标准小驼峰契约方法名
-        let evt = propertyKey;
+        const setterMethodName = `set${capitalizedKey}`;
+        const evt = eventName;
         let forceEmit = false;
         let shouldEmitCustom: ((oldVal: any, newVal: any, ...args: any[]) => boolean) | undefined = undefined;
         let compareType: 'normal' | 'arrayAsSet' = 'normal';
-        if (typeof config === 'string') {
-            evt = config;
-        } else if (config && typeof config === 'object') {
-            evt = config.eventName || propertyKey;
-            forceEmit = !!config.forceEmit;
-            shouldEmitCustom = config.shouldEmit;
-            if (config.compareType) {
-                compareType = config.compareType;
-            }
+        let initParams: any[] | ((this: any) => any[]) | undefined;
+
+        if (options) {
+            forceEmit = !!options.forceEmit;
+            shouldEmitCustom = options.shouldEmit;
+            if (options.compareType) compareType = options.compareType;
+            initParams = options.initParams;
         }
+
         if (!target[EVENT_MAP_KEY]) {
             target[EVENT_MAP_KEY] = new Map<string, string | _pureEventInitParamsWrap>();
         }
-        target[EVENT_MAP_KEY].set(evt, privateKey);
+        if (initParams) {
+            const wrap = new _pureEventInitParamsWrap();
+            wrap.params = initParams;
+            wrap.privateKey = privateKey;
+            target[EVENT_MAP_KEY].set(evt, wrap);
+        } else {
+            target[EVENT_MAP_KEY].set(evt, privateKey);
+        }
         /**
          * 深度内置脏检查：常规对象/数组或基础类型的深度相等判定
          */
@@ -357,7 +365,7 @@ export type BindEventConfig =
  * 【方法装饰器】@bindEvent
  * 核心职责：用于 UI 组件（cc.Component）的接收函数上方，登记当前的绑定依赖信息
  */
-export function bindEvent<Args extends any[]>(eventName: string | string[], dataSourceTag: BindEventConfig, ...defaultArgs: Args) {
+export function bindEvent<Args extends any[]>(eventName: string, dataSourceTag: BindEventConfig, ...defaultArgs: Args) {
     return function (target: any, propertyKey: string) {
         const componentInstance = target as any;
         if (!componentInstance[OBSERVER_KEY]) {
@@ -429,32 +437,37 @@ export function autoBindEvents<T extends Record<string, cc.EventTarget | null | 
         if (!dataSource) continue; // 如果显式传了 { key1: null }，上面已经 off 过了，这里直接放行
         const callback = (component as any)[binder.methodName];
         const sourceAny = dataSource as any;
-        const eventList = Array.isArray(binder.eventName) ? binder.eventName : [binder.eventName];
+        const evtName = binder.eventName;
         let hasSynced = false;
-        for (const evtName of eventList) {
-            // @TIPS 因为底层 cocos 2.4的原因, 最少会传5个参数, 所以不要惊讶多传了好多undefined
-            dataSource.on(evtName, callback, component);
-            if (!hasSynced) {
-                if (binder.initIgnore) {
-                    hasSynced = true;
+        // @TIPS 因为底层 cocos 2.4的原因, 最少会传5个参数, 所以不要惊讶多传了好多undefined
+        dataSource.on(evtName, callback, component);
+        if (!hasSynced) {
+            if (binder.initIgnore) {
+                hasSynced = true;
+                continue;
+            }
+            const eventToPropertyMap: Map<string, string | _pureEventInitParamsWrap> = sourceAny[EVENT_MAP_KEY];
+            if (eventToPropertyMap && eventToPropertyMap.has(evtName)) {
+                const realPrivateKey = eventToPropertyMap.get(evtName)!;
+                hasSynced = true;
+                let currentVals = [];
+                if (realPrivateKey instanceof _pureEventInitParamsWrap) {
+                    const rawParams = realPrivateKey.params;
+                    const extraPars = typeof rawParams === 'function' ? rawParams.call(dataSource) : rawParams;
+                    if (realPrivateKey.privateKey !== undefined) {
+                        // observable: [value, ...extra]
+                        currentVals = [sourceAny[realPrivateKey.privateKey], ...extraPars];
+                    } else {
+                        // pureEvent: [...extra]
+                        currentVals = extraPars;
+                    }
+                } else {
+                    currentVals = [sourceAny[realPrivateKey]];
+                }
+                if (shouldInitSync && !shouldInitSync(evtName, sourceTag, dataSource as NonNullable<T[keyof T]>)) {
                     continue;
                 }
-                const eventToPropertyMap: Map<string, string | _pureEventInitParamsWrap> = sourceAny[EVENT_MAP_KEY];
-                if (eventToPropertyMap && eventToPropertyMap.has(evtName)) {
-                    const realPrivateKey = eventToPropertyMap.get(evtName)!;
-                    hasSynced = true;
-                    let currentVals = [];
-                    if (realPrivateKey instanceof _pureEventInitParamsWrap) {
-                        const rawParams = realPrivateKey.params;
-                        currentVals = typeof rawParams === 'function' ? rawParams.call(dataSource) : rawParams;
-                    } else {
-                        currentVals = [sourceAny[realPrivateKey]];
-                    }
-                    if (shouldInitSync && !shouldInitSync(evtName, sourceTag, dataSource as NonNullable<T[keyof T]>)) {
-                        continue;
-                    }
-                    callback.call(component, ...[...currentVals, ...binder.defaultArgs]);
-                }
+                callback.call(component, ...[...currentVals, ...binder.defaultArgs]);
             }
         }
     }

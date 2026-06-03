@@ -224,8 +224,8 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public squidCountRateList: SquidCountRateConfig.AsObject[] = []; // // 血战鱿鱼，鱿鱼个数翻倍
     // 鱿鱼玩法以下都开启后计算的配置
     @observable(TexasGameRoomDataBasic.SQUID_ENABLED)
-    public squidEnabled: boolean;
-    public squidRounds: number; // 第几轮了
+    public squidStatusEnabled: boolean;
+    public squidStatusRounds: number; // 第几轮了
     // ============== 蘑菇玩法 ==================
     public get hasMushroom() {
         return this.mushroomBase > 0;

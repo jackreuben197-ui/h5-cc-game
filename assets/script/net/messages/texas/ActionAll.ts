@@ -2,7 +2,7 @@ import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
-import { AnimateDisplayTypeAction, AnimateDisplayTypeRoundBet } from '../../../game/constant/AnimateDisplayType';
+import { AnimateDisplayTypeAction, AnimateDisplayTypeCards, AnimateDisplayTypeRoundBet } from '../../../game/constant/AnimateDisplayType';
 import { ServerMessageActionAll } from '../../../protobuf/holdem/recv_th_action_all_pb';
 
 const _plog = createLogger('[ServerMessageActionAll]');
@@ -39,6 +39,9 @@ export function ActionAll(data: ServerMessageActionAll.AsObject, roomID: number,
                 op.opType = 3;
             } else {
                 op.opType = 1;
+            }
+            if (operator.cardsList.length > 0) {
+                seatData.setCards(operator.cardsList, AnimateDisplayTypeCards.ShowCards);
             }
             seatData.mine.operator = op;
         } else {

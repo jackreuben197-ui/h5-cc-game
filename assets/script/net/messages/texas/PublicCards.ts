@@ -17,7 +17,7 @@ export function PublicCards(data: ServerMessagePublicCards.AsObject, roomID: num
     data.allinUsersList.forEach(v => {
         const seat = roomData.seatsStateManager.getSeatPlayer(v.seatId);
         if (v.leftCardsCount > 0) {
-            seat.winPercent100 = Math.min(100, Math.round((v.winCardsCount * 100) / v.leftCardsCount));
+            seat.winPercent100 = Math.min(10000, Math.round((v.winCardsCount * 10000) / v.leftCardsCount));
         }
     });
     if (data.nextOperator) {

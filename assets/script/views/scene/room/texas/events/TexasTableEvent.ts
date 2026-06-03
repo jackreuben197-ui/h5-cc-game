@@ -6,9 +6,12 @@ import { BringInChipsType, BringInMode } from '../../../../../game/constant/Brin
 import { GameType } from '../../../../../game/constant/LogicTypeConf';
 import ProcedureDefine from '../../../../../game/procedure/ProcedureDefine';
 import ProcedureManager from '../../../../../game/procedure/ProcedureManager';
+import h5MessageManager from '../../../../../H5MsgMgr';
 import { i18nMgr } from '../../../../../i18n/i18nMgr';
+import { HttpRoomBringInByIDProtocol } from '../../../../../net/https/data/room/HttpRoomBringInByIDProtocol';
 import { HttpRoomBringOutProtocol } from '../../../../../net/https/data/room/HttpRoomBringOutProtocol';
-import { WebUserRoom, WWW } from '../../../../../net/https/WebRequest';
+import { HttpUserInfoProtocol } from '../../../../../net/https/data/user/HttpUserInfoProtocol';
+import { WebUserInfo, WebUserRoom, WebUserRoomBringin, WWW } from '../../../../../net/https/WebRequest';
 import ProtocolAgency from '../../../../../net/websocket/ProtocolAgency';
 import { Code } from '../../../../../protobuf/holdem/code_pb';
 import { RoomInfo } from '../../../../../protobuf/holdem/define_pb';
@@ -17,12 +20,12 @@ import { BringInCommitFn } from '../../../../dialog/bringin/provider/BringInProv
 import viewManager from '../../../../UIViewManager';
 
 @traceClass({ level: 'debug' })
-export default class SeatEvent {
+export default class TexasTableEvent {
     /// <summary>
     /// 坐下
     /// </summary>
     /// <param name="clientSeatId"></param>
-    public async Sitdown(seatData: TexasGameRoomDataPlayerMine, seatNo: number): Promise<void> {
+    public static async Sitdown(seatData: TexasGameRoomDataPlayerMine, seatNo: number): Promise<void> {
         // 已经坐下,点击不处理
         if (seatData.roomData.mine.seatNo > 0) {
             this.tracelog.debug('Sitdown 不应该能点');
@@ -156,7 +159,7 @@ export default class SeatEvent {
                         OpenType: BringInChipsType.BRING_IN,
                         GameType: GameType.HOLDEM,
                         RoomPlayer: seatData,
-                        CommitFn: this._commitBringInCallback(roomID, matchID, seatData.roomData.basicInfo.limitBringIn, seatedData)
+                        CommitFn: TexasTableEvent._commitBringInCallback(roomID, matchID, seatData.roomData.basicInfo.limitBringIn, seatedData)
                     });
                     return;
                 }
@@ -169,7 +172,7 @@ export default class SeatEvent {
                         OpenType: BringInChipsType.BRING_IN,
                         GameType: GameType.HOLDEM,
                         RoomPlayer: seatData,
-                        CommitFn: this._commitBringInCallback(roomID, matchID, seatData.roomData.basicInfo.limitBringIn, seatedData)
+                        CommitFn: TexasTableEvent._commitBringInCallback(roomID, matchID, seatData.roomData.basicInfo.limitBringIn, seatedData)
                     });
                     //}
                     return;
@@ -182,7 +185,7 @@ export default class SeatEvent {
                             OpenType: BringInChipsType.BRING_IN,
                             GameType: GameType.HOLDEM,
                             RoomPlayer: seatData,
-                            CommitFn: this._commitBringInCallback(roomID, matchID, seatData.roomData.basicInfo.limitBringIn, seatedData)
+                            CommitFn: TexasTableEvent._commitBringInCallback(roomID, matchID, seatData.roomData.basicInfo.limitBringIn, seatedData)
                         });
                     },
                     noAnimation: true,
@@ -215,7 +218,7 @@ export default class SeatEvent {
                     OpenType: BringInChipsType.BRING_IN,
                     GameType: GameType.HOLDEM,
                     RoomPlayer: seatData,
-                    CommitFn: this._commitBringInCallback(roomID, matchID, seatData.roomData.basicInfo.limitBringIn, seatedData)
+                    CommitFn: TexasTableEvent._commitBringInCallback(roomID, matchID, seatData.roomData.basicInfo.limitBringIn, seatedData)
                 });
                 return;
             }
@@ -224,7 +227,7 @@ export default class SeatEvent {
                 OpenType: BringInChipsType.BRING_IN,
                 GameType: GameType.HOLDEM,
                 RoomPlayer: seatData,
-                CommitFn: this._commitBringInCallback(roomID, matchID, seatData.roomData.basicInfo.limitBringIn, seatedData)
+                CommitFn: TexasTableEvent._commitBringInCallback(roomID, matchID, seatData.roomData.basicInfo.limitBringIn, seatedData)
             });
         } catch (e) {
             this.tracelog.error('sit down', e);
@@ -232,7 +235,7 @@ export default class SeatEvent {
     }
 
     // _commitBringInCallback 带入流程，最后按钮按下去的处理(要么坐下，要么带入)
-    private _commitBringInCallback(roomID: number, matchID: number, limitBringIn: boolean, seatedData?: ClientMessageSeated.AsObject): BringInCommitFn {
+    private static _commitBringInCallback(roomID: number, matchID: number, limitBringIn: boolean, seatedData?: ClientMessageSeated.AsObject): BringInCommitFn {
         // 要坐下
         if (seatedData)
             return (amount, store, autoOnTable, clubID) => {
@@ -291,4 +294,106 @@ export default class SeatEvent {
             }
         };
     }
+
+    /// <summary>
+    /// 站起
+    /// </summary>
+    /// <param name="clientSeatId"></param>
+    public static Standup(seatData: TexasGameRoomDataPlayerMine): void {
+        if (seatData.seatNo == 0) {
+            return;
+        }
+        ProtocolAgency.Send({
+            code: Code.MSG_D_STANDUP_ACTIVE,
+            roomID: seatData.roomData.roomID,
+            matchID: seatData.roomData.matchID,
+            body: {
+                room: {
+                    roomId: seatData.roomData.roomID,
+                    matchId: seatData.roomData.matchID,
+                },
+                cancelStandup: false,
+                manualChangeRoom: false
+            }
+        });
+    }
+
+    // AddChips 补充筹码
+    public static async BringIn(player: TexasGameRoomDataPlayerMine): Promise<void> {
+        try {
+            const [_nouse, response] = await Promise.all([
+                UserStoreUtils.updateUserInfoBasic(),
+                WWW.Instance.CommonAPI<HttpRoomBringInByIDProtocol.ResponseData>({
+                    web_class: WebUserRoomBringin,
+                    api_id: player.roomData.roomID,
+                })
+            ]);
+            // @TODO更新用户信息
+            //GC.data.user.info  Update
+            //被冻结
+            if (userStore.forbid) {
+                viewManager.openDialog('ConfirmOrNotice', {
+                    content: i18nMgr.Get('UIForbidBringInTips'),
+                    ok: i18nMgr.Get('UIClub_CreateRoom7')
+                });
+                return;
+            }
+            // 联盟币
+            if (player.seatNo == 0) {
+                TexasTableEvent.tracelog.error('BringIn mainPlayer is null, abort');
+                return;
+            }
+            if (player.roomData.basicInfo.bringInType == BringInMode.CURRENCY) {
+                userStore.fillWalletInfo([response.data]);
+                viewManager.openDialog('BringIn', {
+                    OpenType: BringInChipsType.BRING_IN,
+                    GameType: GameType.HOLDEM,
+                    RoomPlayer: player,
+                    CommitFn: TexasTableEvent._commitBringInCallback(player.roomData.roomID, player.roomData.matchID, player.roomData.basicInfo.limitBringIn)
+                })
+                return;
+            }
+            // 记分牌 @TODO
+            viewManager.openDialog('BringIn', {
+                OpenType: BringInChipsType.BRING_IN,
+                GameType: GameType.HOLDEM,
+                RoomPlayer: player,
+                CommitFn: TexasTableEvent._commitBringInCallback(player.roomData.roomID, player.roomData.matchID, player.roomData.basicInfo.limitBringIn)
+            })
+        } catch (e) {
+            TexasTableEvent.tracelog.error('BringIn', e);
+        }
+    }
+
+    /**
+     * 离开房间
+     */
+    public static LeaveRoom(player:TexasGameRoomDataPlayerMine) {
+        if (player.roomData.closed) {
+            ProcedureManager.StartProcedure(ProcedureDefine.Return); // 直接离开 不做处理
+            return;
+        }
+        if (player.roomData.basicInfo.isMtt) {
+            ProcedureManager.StartProcedure(ProcedureDefine.Return); // 直接离开 不做处理
+            return;
+        }
+        if (h5MessageManager.handshakeDone) {
+            //GameCache.Instance.isActiveLeaving = true;
+            ProtocolAgency.Send({
+                code: Code.MSG_D_LEAVE,
+                roomID: player.roomData.roomID,
+                matchID: player.roomData.matchID,
+                body: {
+                    room: {
+                        roomId: player.roomData.roomID,
+                        matchId: player.roomData.matchID
+                    }
+                }
+            });
+        } else {
+            ProcedureManager.StartProcedure(ProcedureDefine.Return); // 直接离开 不做处理
+            return;
+        }
+    }
+
 }
