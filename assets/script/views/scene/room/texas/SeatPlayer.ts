@@ -47,7 +47,7 @@ const yellowColor = cc.Color.fromHEX(new cc.Color(), '#F9CA9F');
 
 @ccclass
 @menu('CrazyPoker/Room/Texas/SeatPlayer')
-@traceClass({ level: 'debug' })
+@traceClass()
 export default class SeatPlayer extends cc.Component {
     @property(cc.Label)
     private nickName: cc.Label = null!;
@@ -153,7 +153,6 @@ export default class SeatPlayer extends cc.Component {
     }
 
     //(优先于seated执行保证展示正确)
-    @traceMethod({ level: 'debug' })
     @bindEvent(TexasGameRoomDataPlayer.SEATED_CHANGE, { dataSource: 'player', initPriority: 10 })
     private onUpdateSeated(b: boolean, mine: TexasGameRoomDataPlayer) {
         this.userSeat.active = b;

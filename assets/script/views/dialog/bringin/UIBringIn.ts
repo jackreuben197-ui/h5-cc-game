@@ -53,7 +53,7 @@ export type UIBringInParam = {
  */
 @ccclass
 @menu('Dialog/UIBringIn')
-@traceClass({ level: 'debug' })
+@traceClass()
 export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     private _roomPlayer: RoomPlayerGC[keyof RoomPlayerGC];
     private _provider: BringInProvider = null;
@@ -573,7 +573,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     }
 
     // 设置钱包列表
-    public _setupWalletList(wallets: IWallet[]): void {
+    public _setupWalletList(wallets: IWallet[], selectWalletClubID: number): void {
         if (wallets.length == 1) {
             this._updateTotalCoinAndWalletChoosen(false, wallets[0]);
             return;
@@ -594,17 +594,19 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
             let toggle = temp.getComponent(cc.Toggle);
             let index = i;
             // // 处理选中状态
-            // if (this.mySelectWallet != null && this.mySelectWallet.club_id == walletItem.club_id) {
-            //     toggle.isChecked = true;
-            //     let bgNode = cc.find('bg', temp);
-            //     if (bgNode) bgNode.active = true;
-            //     this.currentSelect = index;
-            // }
+            if (selectWalletClubID == walletItem._clubID) {
+                toggle.isChecked = true;
+                let bgNode = cc.find('bg', temp);
+                if (bgNode) bgNode.active = true;
+                this._walletSelect = index;
+                this._updateTotalCoinAndWalletChoosen(true, wallets[index]);
+            }
             // 添加Toggle监听
             toggle.node.on('toggle', (sender: cc.Toggle) => {
                 let bgNode = cc.find('bg', temp);
                 if (bgNode) bgNode.active = sender.isChecked;
                 if (!sender.isChecked) return;
+                this._walletSelect = index;
                 this._updateTotalCoinAndWalletChoosen(true, wallets[index]);
             });
         }

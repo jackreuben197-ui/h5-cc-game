@@ -40,7 +40,15 @@ export default class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     // 纯本地记录自动带上桌(wallet)
     public autoOnTableLocal: number = 0;
     // 当前货币的卡包俱乐部ID(真实ID,非RID)
-    public currentWalletClubID: number = 0;
+    private _currentWalletClubID: number = 0;
+    public get currentWalletClubID() {
+        return this._currentWalletClubID;
+    }
+    public set currentWalletClubID(v: number) {
+        this._currentWalletClubID = v;
+        this.tmpCurrentWalletClubID = v;
+    }
+    public tmpCurrentWalletClubID: number = 0;
     // calltime手数
     public callTimeCount: number = 0;
     // callTimeStay 满足条件了是否必须还得留下

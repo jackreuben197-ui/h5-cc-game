@@ -10,7 +10,7 @@ import UIBringIn, { BringInTabType } from '../UIBringIn';
 import { BringInCommitFn, BringInProvider } from './BringInProvider';
 
 @bindData()
-@traceClass({ level: 'debug' })
+@traceClass()
 export class BringInProviderTexas extends BringInProvider {
     private _ui: UIBringIn;
     private _data: TexasGameRoomDataPlayerMine;
@@ -46,7 +46,7 @@ export class BringInProviderTexas extends BringInProvider {
 
     protected afterBind(): void {}
 
-    public override autoBind() {
+    protected autoBind() {
         autoBindEvents(this, {
             roomBasic: this._data.roomData.basicInfo,
             user: userStore
@@ -87,8 +87,7 @@ export class BringInProviderTexas extends BringInProvider {
         if (this._data.currentWalletClubID > 0) {
             wallets = wallets.filter(v => v._clubID == this._data.currentWalletClubID);
         }
-        this.tracelog.debug(wallets, this._data.currentWalletClubID);
-        this._ui._setupWalletList(wallets);
+        this._ui._setupWalletList(wallets, this._data.tmpCurrentWalletClubID);
     }
 
     public cleanup(): void {
@@ -96,7 +95,7 @@ export class BringInProviderTexas extends BringInProvider {
     }
 
     public clubSelected(_clubID: number): void {
-        this._data.currentWalletClubID = _clubID;
+        this._data.tmpCurrentWalletClubID = _clubID;
     }
 
     @traceMethod()
@@ -113,6 +112,6 @@ export class BringInProviderTexas extends BringInProvider {
         //         viewManager.showToastLanguage('UIWaitManagerAuditTip');
         //     }
         // }
-        this._commitFn(bringInAmount, storeAmount, autoOnTableAmount, this._data.currentWalletClubID);
+        this._commitFn(bringInAmount, storeAmount, autoOnTableAmount, this._data.tmpCurrentWalletClubID);
     }
 }

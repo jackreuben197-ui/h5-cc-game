@@ -1,4 +1,4 @@
-import { traceClass } from '../core/decorator/LogTrace';
+import { traceClass, traceMethod } from '../core/decorator/LogTrace';
 import UIComponentBase from '../views/base/UIComponentBase';
 import UIComponentDialogBase from '../views/base/UIComponentDialogBase';
 import AssetManager, { PreloadParams } from './loader/AssetManager';
@@ -174,7 +174,7 @@ class ToastManager {
     }
 }
 
-@traceClass({ level: 'debug' })
+@traceClass()
 class UIViewManager {
     private constructor() {}
 
@@ -245,7 +245,6 @@ class UIViewManager {
             ui.node.parent = this._sceneLayer;
             ui.initialize(param);
             this._scenesPool.set(key, ui);
-            this._hidePreloading();
             // 老场景缓存
             if (this._curretScene) {
                 const s = this._scenesPool.get(this._curretScene);
@@ -256,6 +255,9 @@ class UIViewManager {
                     this._curretScene = key;
                 }
             }
+            ui.scheduleOnce(() => {
+                this._hidePreloading();
+            }, 0);
         } catch (e) {
             this.tracelog.error('switchScene', e);
         }
@@ -264,7 +266,7 @@ class UIViewManager {
     // openDialog 打开对话框
     public async openDialog<K extends UIPrefabDialogType>(
         key: K,
-        param: InstanceType<(typeof UIPrefabDialog)[K]['UIType']> extends UIComponentBase<infer P> ? P : any,
+        param: InstanceType<(typeof UIPrefabDialog)[K]['UIType']> extends UIComponentDialogBase<infer P> ? P : any,
         masked: boolean = true,
         directShow: boolean = true
     ) {

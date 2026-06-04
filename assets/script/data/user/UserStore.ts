@@ -41,8 +41,8 @@ export class UserStore extends cc.EventTarget {
             clubsData = [...this.clubsData];
             walletsData = [...this.wallets];
         }
-        let clubDataMap = new Map(this.clubsData.map(item => [item._clubID, item]));
-        let walletMap = new Map(this.wallets.map(item => [item._clubID, item]));
+        let clubDataMap = new Map(clubsData.map(item => [item._clubID, item]));
+        let walletMap = new Map(walletsData.map(item => [item._clubID, item]));
         wallet.forEach(v => {
             if (clubDataMap.has(v.club_id)) {
                 let item = clubDataMap.get(v.club_id);
