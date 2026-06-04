@@ -8,7 +8,7 @@ export default class TexasGameRoomDataSetting extends cc.EventTarget {
     public static readonly SHOW_BB = 'SHOW_BB';
     // 用BB显示
     @observable(TexasGameRoomDataSetting.SHOW_BB)
-    public showBB: boolean;
+    public showBB: boolean = false;
 
     constructor(rd: TexasGameRoomData) {
         super();

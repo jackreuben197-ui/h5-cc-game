@@ -1,4 +1,5 @@
-import { autoBindEvents, bindEvent } from '../../../../core/decorator/DataBind';
+import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
+import { traceMethod } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPublicCards from '../../../../data/room/texas/TexasGameRoomDataPublicCards';
@@ -38,22 +39,11 @@ export default class PublicCardsInfo extends cc.Component {
     }
 
     public onDisable(): void {
-        if (this._publicCardsData) {
-            this._publicCardsData.targetOff(this);
-            this._publicCardsData = null;
-        }
+        unBindEventsAll(this);
     }
 
     private _bindEventsAndRefresh() {
         autoBindEvents(this, { publicCards: this._publicCardsData });
-        // this._publicCardsData.on(TexasGameRoomDataPublicCards.PUBLICCARDS_CHANGE, this.onUpdatePublicCards, this);
-        // this._publicCardsData.on(TexasGameRoomDataPublicCards.SECOND_PUBLICCARDS_CHANGE, this.onUpdateSecPublicCards, this);
-        // this._publicCardsData.on(TexasGameRoomDataPublicCards.ALL_PUBLICCARDS_RESET, this.onUpdateResetPublicCards, this);
-        // this._publicCardsData.on(TexasGameRoomDataPublicCards.PUBLICCARDS_HIGHLIGHT, this.onHighlightPublicCards, this);
-        // this._publicCardsData.on(TexasGameRoomDataPublicCards.SECOND_PUBLICCARDS_HIGHLIGHT, this.onHighlightSecondPublicCards, this);
-        // 初始化
-        // this.onUpdatePublicCards([], this._publicCardsData.publicCards, AnimateDisplayTypePublicCards.Static);
-        // this.onUpdateSecPublicCards([], this._publicCardsData.secondPublicCards, AnimateDisplayTypePublicCards.Static);
     }
 
     @bindEvent(TexasGameRoomDataPublicCards.ALL_PUBLICCARDS_RESET, { dataSource: 'publicCards', initIgnore: true })
@@ -69,6 +59,7 @@ export default class PublicCardsInfo extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPublicCards.PUBLICCARDS_CHANGE, 'publicCards')
+    @traceMethod()
     private onUpdatePublicCards(prev: number[], plus: number[], pat: AnimateDisplayTypePublicCards) {
         const prevCardsLen = prev.length;
         this._publicCards.slice(prevCardsLen + plus.length).forEach(v => (v.node.active = false));

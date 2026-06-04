@@ -11,6 +11,9 @@ export default class TexasGameRoomDataPublicCards extends cc.EventTarget {
     public get publicCards() {
         return this._publicCards;
     }
+    public set publicCards(cards: number[]) {
+        this._publicCards = cards;
+    }
 
     public addPublicCards(cards: number[], pat: AnimateDisplayTypePublicCards) {
         if (cards.length == 0) return;
@@ -37,6 +40,9 @@ export default class TexasGameRoomDataPublicCards extends cc.EventTarget {
     private _secondPublicCards: number[] = [];
     public get secondPublicCards() {
         return this._secondPublicCards;
+    }
+    public set secondPublicCards(cards: number[]) {
+        this._secondPublicCards = cards;
     }
 
     public addSecondPublicCards(cards: number[], pat: AnimateDisplayTypePublicCards) {

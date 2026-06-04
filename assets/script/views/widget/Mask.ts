@@ -10,7 +10,6 @@ export default class Mask extends cc.Component {
     private button: cc.Button = null!;
     public closeCallback: () => void = null!;
 
-    @traceMethod()
     private onButtonClick() {
         if (this.closeCallback) {
             this.closeCallback();

@@ -31,7 +31,6 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         _plog.error('no store room data');
         return;
     }
-    viewManager.hidePreloading();
     if (data.status == 0) {
         roomData.basicInfo.sbante = { sb: data.roomInfo.smallBlind, ante: data.roomInfo.ante };
         roomData.basicInfo.gameStatus = data.gameStatus;
@@ -44,11 +43,14 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             roomData.potInfo.potList = data.handInfo.potsList;
             roomData.potInfo.secPotList = data.handInfo.secondPotsList;
             roomData.seatsStateManager.setButtonPosition(data.handInfo.buSeatId, AnimateDisplayTypeButton.Static);
-            roomData.publicCards.addPublicCards(data.handInfo.publicCardsList, AnimateDisplayTypePublicCards.Static);
-            roomData.publicCards.addSecondPublicCards(data.handInfo.secondPublicCardsList, AnimateDisplayTypePublicCards.Static);
+            roomData.publicCards.publicCards = data.handInfo.publicCardsList;
+            roomData.publicCards.secondPublicCards = data.handInfo.secondPublicCardsList;
         }
         data.playersList.forEach(player => {
             let seatData = roomData.seatsStateManager.getSeatPlayer(player.seatId);
+            //操作重置
+            seatData.operator = null;
+            //坐下
             seatData.seated = true;
             seatData.userID = player.userRid;
             seatData.setAction(player.action, AnimateDisplayTypeAction.Static);

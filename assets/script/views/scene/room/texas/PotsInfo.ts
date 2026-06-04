@@ -1,4 +1,5 @@
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
+import { traceMethod } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPotInfo from '../../../../data/room/texas/TexasGameRoomDataPotInfo';
@@ -66,12 +67,14 @@ export default class PotsInfo extends cc.Component {
         autoBindEvents(this, { pot: this._potInfo, setting: this._setting });
     }
 
+    @traceMethod()
     @bindEvent(TexasGameRoomDataPotInfo.ALLPOTS_CHANGE, 'pot')
     private onUpdateAllPots(allpots: number) {
         this.allPotsLabel.string = `${i18nMgr.Get('adaptation20005')} : ${this._setting.showNumberWithShowBB(allpots)}`;
         this.allPotsLabel.node.active = true;
     }
 
+    @traceMethod()
     @bindEvent(TexasGameRoomDataSetting.SHOW_BB, { dataSource: 'setting', initPriority: 99 })
     private onUpdateShowBB(b: number) {
         this.allPotsLabel.string = `${i18nMgr.Get('adaptation20005')} : ${this._setting.showNumberWithShowBB(this._potInfo.allPot)}`;

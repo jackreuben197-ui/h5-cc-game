@@ -1,4 +1,4 @@
-import { autoBindEvents, bindData, bindEvent } from '../../../../core/decorator/DataBind';
+import { autoBindEvents, bindData, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
@@ -41,10 +41,7 @@ export default class SeatManager extends cc.Component {
     }
 
     public onDisable(): void {
-        if (this._seatManager) {
-            this._seatManager.targetOff(this);
-            this._seatManager = null;
-        }
+        unBindEventsAll(this);
     }
 
     private _bindEventsAndRefresh() {
@@ -53,6 +50,9 @@ export default class SeatManager extends cc.Component {
 
     @bindEvent(TexasGameRoomDataSeatsStateManager.BUTTON_CHANGE, 'seats')
     private onUpdateButton(prevSeat: number, currentSeat: number, bat: AnimateDisplayTypeButton) {
+        this._seatNodesMap.forEach(v => {
+            v.animateButtonChange(false);
+        });
         if (bat == AnimateDisplayTypeButton.Static) {
             if (prevSeat > 0) {
                 const ps = this._seatNodesMap.get(prevSeat);
