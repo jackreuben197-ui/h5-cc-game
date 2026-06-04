@@ -71,13 +71,22 @@ _ploger.(debug|info|warn|error)
 @observerable('事件名')
 public variable: [number|string|boolean|Object|Array];
 
+// 也可以初始化额外参数, 传给绑定端的是 [variable, arg1, arg2 ...] 
+@observerable('事件名', {
+    initParams() {
+        return [arg1, arg2, ...];
+    }
+})
+public variable: [number|string|boolean|Object|Array];
+
 // 纯事件，这个事件函数被执行后，会把参数传给接收端的函数, initParams 是再保证第一次初始化的时候有参数执行
 @pureEvent('纯事件')
 public updateXXXX(arg1,arg2,arg3) { ... }
 
+// 传给绑定端的的是 [arg1, arg2, arg3, ...] 注意和observerable区别
 @pureEvent('BUTTON_CHANGE', {
     initParams() {
-        return [0, this._buttonPosition, AnimateDisplayTypeButton.Static];
+        return [arg1, arg2, arg3, ...];
     }
 })
 public buttonChangeEvent(prev: number, cur: number, bat: AnimateDisplayTypeButton) {...}
