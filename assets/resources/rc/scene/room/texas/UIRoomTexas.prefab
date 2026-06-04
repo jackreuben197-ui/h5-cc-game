@@ -45,14 +45,14 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 555
+        "__id__": 557
       },
       {
-        "__id__": 556
+        "__id__": 558
       }
     ],
     "_prefab": {
-      "__id__": 557
+      "__id__": 559
     },
     "_opacity": 255,
     "_color": {
@@ -20294,15 +20294,19 @@
     "_parent": {
       "__id__": 1
     },
-    "_children": [],
-    "_active": true,
-    "_components": [
+    "_children": [
       {
         "__id__": 553
       }
     ],
+    "_active": true,
+    "_components": [
+      {
+        "__id__": 555
+      }
+    ],
     "_prefab": {
-      "__id__": 554
+      "__id__": 556
     },
     "_opacity": 255,
     "_color": {
@@ -20350,6 +20354,52 @@
     "_groupIndex": 0,
     "groupIndex": 0,
     "_id": ""
+  },
+  {
+    "__type__": "cc.Node",
+    "_objFlags": 0,
+    "_parent": {
+      "__id__": 552
+    },
+    "_prefab": {
+      "__id__": 554
+    },
+    "_name": "UITexasMenu",
+    "_active": true,
+    "_trs": {
+      "__type__": "TypedArray",
+      "ctor": "Float64Array",
+      "array": [
+        0,
+        -1344,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    "_eulerAngles": {
+      "__type__": "cc.Vec3",
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "_id": ""
+  },
+  {
+    "__type__": "cc.PrefabInfo",
+    "root": {
+      "__id__": 553
+    },
+    "asset": {
+      "__uuid__": "30193323-87e5-4429-b479-bfee61c8beb4"
+    },
+    "fileId": "8aALhKKEdHyY90nzT098Br",
+    "sync": true
   },
   {
     "__type__": "cc.Widget",
@@ -20435,6 +20485,12 @@
     },
     "publicCardsInfo": {
       "__id__": 378
+    },
+    "sideMenu": {
+      "__id__": 15
+    },
+    "sideMenuNode": {
+      "__id__": 553
     },
     "_id": ""
   },

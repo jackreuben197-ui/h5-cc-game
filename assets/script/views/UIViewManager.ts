@@ -245,11 +245,13 @@ class UIViewManager {
             ui.node.parent = this._sceneLayer;
             ui.initialize(param);
             this._scenesPool.set(key, ui);
+            this._hidePreloading();
             // 老场景缓存
             if (this._curretScene) {
                 const s = this._scenesPool.get(this._curretScene);
                 if (s) {
                     s.node.active = false;
+                    s.node.stopAllActions();
                     s.node.parent = this._caceLayer;
                     this._curretScene = key;
                 }
@@ -345,8 +347,17 @@ class UIViewManager {
         preload.onShow(param);
     }
 
+    // 把加载最终结果页显示一下
+    public showPreloadingLayer() {
+        this._preload.children[0].active = true;
+    }
+
     // hidePreloading 隐藏进度条
     public hidePreloading() {
+        this._hidePreloading();
+    }
+
+    private _hidePreloading() {
         this._preload.children[0].active = false;
     }
 

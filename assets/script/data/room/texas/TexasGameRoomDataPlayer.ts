@@ -96,7 +96,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public squidCount: number = 0;
     //videoMaskId
     public videoMaskId: number = 0;
-    //ALLIN胜率(目前只考虑第一套把) (0-10000) 
+    //ALLIN胜率(目前只考虑第一套把) (0-10000)
     @observable(TexasGameRoomDataPlayer.ALLIN_WIN_PERCENT)
     public winPercent100: number = -1;
 
@@ -113,9 +113,11 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public get directlyViewCard() {
         return this._parentRoomData.basicInfo.gameStatus >= Def.GameStatus.HAND_PREFLOP && this.roundActioned;
     }
-    @observable(TexasGameRoomDataPlayer.SEATED_CHANGE,{initParams() {
-        return [this.mine];
-    }})
+    @observable(TexasGameRoomDataPlayer.SEATED_CHANGE, {
+        initParams() {
+            return [this.mine];
+        }
+    })
     public seated: boolean = false;
     // =========================================================================
     // 响应式核心字段拦截配置区域

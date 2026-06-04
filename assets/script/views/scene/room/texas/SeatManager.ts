@@ -60,7 +60,7 @@ export default class SeatManager extends cc.Component {
             }
             if (currentSeat > 0) {
                 const cps = this._seatNodesMap.get(currentSeat);
-                this.tracelog.debug(cps);
+                this.tracelog.debug(currentSeat, cps, this._seatNodesMap.size);
                 cps.animateButtonChange(true);
             }
             return;
@@ -76,7 +76,7 @@ export default class SeatManager extends cc.Component {
         }
         if (currentSeat > 0) {
             const cps = this._seatNodesMap.get(currentSeat);
-            this.tracelog.debug(cps);
+            this.tracelog.debug(currentSeat, cps, this._seatNodesMap.size);
             cps.animateButtonChange(true);
         }
     }
@@ -85,18 +85,24 @@ export default class SeatManager extends cc.Component {
     @bindEvent(TexasGameRoomDataSeatsStateManager.SEATS_CHANGE, { dataSource: 'seats', initPriority: 10 })
     @traceMethod()
     private onUpdateSeats(count: number) {
-        this._seatNodesMap.clear();
-        if (this._seatNodes.length != count) {
-            for (let i = 0; i < count; i++) {
+        if (this._seatNodes.length < count) {
+            for (let i = this._seatNodes.length; i < count; i++) {
                 let nd = cc.instantiate(this.seatPrefab);
                 nd.parent = this.node;
                 this._seatNodes.push(nd);
                 this._seatNodesMap.set(i + 1, nd.getComponent(SeatPlayer));
             }
         }
-        this._seatNodesMap.forEach((comp, seatNo) => {
-            const seatData = this._seatManager.getSeatPlayer(seatNo);
-            comp.initData(seatData, this.potNot, this.dealNode);
-        });
+        const cl = this._seatNodes.length;
+        for (let i = 0; i < cl; i++) {
+            let node = this._seatNodes[i];
+            node.active = false;
+            if (i < count) {
+                const seatData = this._seatManager.getSeatPlayer(i + 1);
+                let comp = this._seatNodesMap.get(i + 1);
+                comp.initData(seatData, this.potNot, this.dealNode);
+                node.active = true;
+            }
+        }
     }
 }

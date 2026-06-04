@@ -1,4 +1,6 @@
+import h5MessageManager from '../../H5MsgMgr';
 import H5MsgMgr, { H5NavigatePayload } from '../../H5MsgMgr';
+import viewManager from '../../views/UIViewManager';
 import ProcedureBase from './ProcedureBase';
 
 export interface ProcedureReturnNavigateParam {
@@ -13,6 +15,7 @@ export default class ProcedureReturn extends ProcedureBase {
     override Name: string = 'ProcedureReturn';
 
     override lateEnter(param: ProcedureReturnNavigateParam) {
+        viewManager.showPreloadingLayer();
         if (param && param.routeData) {
             H5MsgMgr.sendToH5('h5Navigate', 1, param.routeData);
             return;
@@ -23,5 +26,6 @@ export default class ProcedureReturn extends ProcedureBase {
 
     override Leave() {
         super.Leave();
+        h5MessageManager.sendToH5('h5Hide', 1);
     }
 }

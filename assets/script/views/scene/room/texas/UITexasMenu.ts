@@ -1,23 +1,18 @@
-import { traceClass } from "../../../../core/decorator/LogTrace";
-import TexasGameRoomData from "../../../../data/room/texas/TexasGameRoomData";
-import { SquidMode } from "../../../../game/constant/Squid";
-import h5MessageManager from "../../../../H5MsgMgr";
-import { i18nMgr } from "../../../../i18n/i18nMgr";
-import UIComponentBase from "../../../base/UIComponentBase";
-import viewManager from "../../../UIViewManager";
-import TexasTableEvent from "./events/TexasTableEvent";
+import { traceClass } from '../../../../core/decorator/LogTrace';
+import roomDataManager from '../../../../data/room/RoomDataManager';
+import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
+import { SquidMode } from '../../../../game/constant/Squid';
+import h5MessageManager from '../../../../H5MsgMgr';
+import { i18nMgr } from '../../../../i18n/i18nMgr';
+import viewManager from '../../../UIViewManager';
+import SwitchNode from '../../../widget/SwitchNode';
+import TexasTableEvent from './events/TexasTableEvent';
 
 const { ccclass, property } = cc._decorator;
 
 @ccclass
-@traceClass({level:'debug'})
+@traceClass({ level: 'debug' })
 export default class UITexasMenu extends cc.Component {
-    //文字透明度
-    Text_Light_Alpha = 178;
-    Text_Dark_Alpha = 70;
-    transSubMenu: cc.Node = null;
-    imageMenuMask: cc.Node = null;
-    textTotalBean: cc.Label = null;
     //Menu_Buttons: cc.Node = null;
     @property(cc.Button)
     public btnSetting: cc.Button = null;
@@ -31,20 +26,14 @@ export default class UITexasMenu extends cc.Component {
     public btnHalfLeave: cc.Button = null;
     @property(cc.Button)
     public btnShowBB: cc.Button = null;
+    @property(SwitchNode)
+    public showBBSwitch: SwitchNode = null!;
     @property(cc.Button)
     public btnStand: cc.Button = null;
     @property(cc.Button)
     public btnLeaveGame: cc.Button = null;
     @property(cc.Button)
     public btnDissolve: cc.Button = null;
-    // BB 开关图片
-    @property(cc.SpriteFrame)
-    public sfUnchecked: cc.SpriteFrame = null;
-    @property(cc.SpriteFrame)
-    public sfChecked: cc.SpriteFrame = null;
-    // BB 开关图片节点
-    @property(cc.Node)
-    public checkNode: cc.Node = null;
     //按钮模板节点
     //Menu_Button: cc.Node = null;
     outTipNode: cc.Node = null;
@@ -52,41 +41,24 @@ export default class UITexasMenu extends cc.Component {
     gold_click: cc.Node = null;
     ////////////////////////////////////
     //面板
+    @property(cc.Node)
     $panel: cc.Node = null;
     //黑色挡板
+    @property(cc.Node)
     $black: cc.Node = null;
+    @property(cc.Node)
     $block: cc.Node = null;
-    //容器
-    $layout: cc.Node = null;
-    //选项
-    $option_0: cc.Node = null;
-    $option_bb: cc.Node = null;
-    //金币节点
-    $node_coin: cc.Node = null;
-    //仓库存储节点
-    $node_storage: cc.Node = null;
-    tips_show: boolean = false;
-    IMenuButton_Type: {
-        node: cc.Node;
-        text: string;
-        i18n_string: string;
-        hideLine?: boolean;
-        onClick?: Function;
-    };
-
     private _roomData: TexasGameRoomData = null!;
 
     protected onLoad(): void {
         this.regiterTouchEvents();
     }
 
-    initData(roomData: TexasGameRoomData) {
-        this._fadeOut(false);
+    initData(roomID: number, matchID: number) {
+        this._roomData = roomDataManager.getRoomData(roomID, matchID);
+        this.fadeOut(false);
         this._updateDisplay();
         //this.centerMenuContent();
-        this._fadeIn();
-        //刷新bb
-        //this.refreshBB();
     }
 
     private _updateDisplay() {
@@ -97,6 +69,7 @@ export default class UITexasMenu extends cc.Component {
             this.btnBet.node.active = true;
             this.btnHalfLeave.node.active = true;
             this.btnStand.node.active = true;
+            this.showBBSwitch.onoff(this._roomData.setting.showBB, true);
             if (this.btnDissolve) this.btnDissolve.node.active = isDissolve;
             return;
         }
@@ -106,7 +79,7 @@ export default class UITexasMenu extends cc.Component {
         if (this.btnDissolve) this.btnDissolve.node.active = isDissolve;
     }
 
-    regiterTouchEvents() {
+    private regiterTouchEvents() {
         this.$black.on('click', this.click_black, this);
         this.$block.on('click', this.click_black, this);
         // $block 没有 cc.Button 组件，需要用 node.on 直接注册触摸关闭
@@ -122,43 +95,48 @@ export default class UITexasMenu extends cc.Component {
         this.btnInsure.node.on('click', this.click_insurance, this);
         this.btnLeaveGame.node.on('click', this.click_leave, this);
         this.btnShowBB.node.on('click', this.click_bb, this);
+        this.showBBSwitch.onSwitchCallback = v => {
+            this._roomData.setting.showBB = v;
+        };
         this.btnDissolve.node.on('click', this.click_dissolve, this);
     }
 
     //面板移入
-    private _fadeIn(animation: boolean = true) {
+    public fadeIn(animation: boolean = true) {
         if (animation) {
+            this.node.active = true;
             cc.tween(this.$panel).to(0.25, { x: 0 }).start();
         } else {
             this.$panel.x = 0;
+            this.node.active = true;
         }
         this.$black.active = true;
         this.$block.active = true;
     }
 
     //面板移出
-    private _fadeOut(animation: boolean = true) {
+    public fadeOut(animation: boolean = true) {
         let view_width = 1242;
         this.$panel.width = view_width;
         if (animation) {
-            cc.tween(this.$panel).to(0.25, { x: -view_width }).start();
+            cc.tween(this.$panel)
+                .to(0.25, { x: -view_width })
+                .call(() => {
+                    this.node.active = false;
+                })
+                .start();
         } else {
             this.$panel.x = -view_width;
+            this.node.active = false;
         }
         this.$black.active = false;
         this.$block.active = false;
     }
-
     /////////////////////////////////////////////
     //黑色挡板点击
     click_black() {
-        this.onClose(true);
+        this.fadeOut(true);
     }
-
-    onClose(param?: any) {
-        this._fadeOut(param);
-    }
-
     /******左侧菜单按钮点击******/
     //站起
     click_stand_up() {
@@ -169,9 +147,7 @@ export default class UITexasMenu extends cc.Component {
         }
         // 鱿鱼模式下的站起需要额外确认逻辑
         const mine = this._roomData.seatsStateManager.getSeatPlayer(this._roomData.mine.seatNo);
-
-        if (this._roomData.basicInfo.hasSquid 
-            && this._roomData.basicInfo.squidStatusEnabled && mine.squidIn) {
+        if (this._roomData.basicInfo.hasSquid && this._roomData.basicInfo.squidStatusEnabled && mine.squidIn) {
             if (this._roomData.basicInfo.squidMode === SquidMode.NORMAL) {
                 TexasTableEvent.Standup(this._roomData.mine);
                 return;
@@ -216,9 +192,9 @@ export default class UITexasMenu extends cc.Component {
 
     click_setting() {
         this.click_black();
-        UIComponent.open(UIDefine.UITexasSettingComponent, null, {
-            parentUI: this._roomData.basicInfo.uirc.Common_Con
-        });
+        // UIComponent.open(UIDefine.UITexasSettingComponent, null, {
+        //     parentUI: this._roomData.basicInfo.uirc.Common_Con
+        // });
     }
 
     click_rule_tips() {
@@ -229,8 +205,8 @@ export default class UITexasMenu extends cc.Component {
                 ruleType: 1,
                 gameInfo: {
                     game_type: this._roomData.basicInfo.gameType,
-                    poker_type:  this._roomData.basicInfo.pokerType,
-                    room_critical_hit: this._roomData.basicInfo.hasCriticalHit,
+                    poker_type: this._roomData.basicInfo.pokerType,
+                    room_critical_hit: this._roomData.basicInfo.hasCriticalHit
                 }
             }
         });
@@ -316,71 +292,49 @@ export default class UITexasMenu extends cc.Component {
             //Game.EventSystem.Run(EventIdType.GameErrorReconnect);
             return;
         }
-        if (this._roomData.basicInfo.mainPlayer.IsAutoOp) return;
-        this._roomData.basicInfo.SendTrustAction(true);
+        // if (this._roomData.basicInfo.mainPlayer.IsAutoOp) return;
+        // this._roomData.basicInfo.SendTrustAction(true);
     }
 
     //留座离桌
     click_leave_table() {
         // this.post(EventName.updateFriendChessView)
-        this._roomData.basicInfo.uirc.HideMenu();
-        this._roomData.basicInfo.SendReserveSeatAction(true);
+        // this._roomData.basicInfo.uirc.HideMenu();
+        // this._roomData.basicInfo.SendReserveSeatAction(true);
     }
 
     click_leave() {
         TexasTableEvent.LeaveRoom(this._roomData.mine);
+        this.click_black();
     }
 
     /** 解散牌桌 */
     click_dissolve() {
         this.click_black();
-        UIComponent.open<UIDialogParam>(UIDefine.UIDialogComponent, {
-            type: UIDialogComponent.DialogType.CommitCancel,
-            title: CPErrorCode.LanguageDescription(10007),
-            content: i18nMgr.Get('UITexasRoomManagerOpTips2'),
-            contentCommit: i18nMgr.Get('UI_Recharge_confirm'),
-            contentCancel: CPErrorCode.LanguageDescription(10013),
-            actionCommit: () => {
-                WWW.Instance.CommonAPI({
-                    web_class: WebRoomCenterRoomDisbAnd,
-                    body: WebRoomCenterRoomDisbAnd.Request({
-                        room_id: GameCache.Instance.room_id
-                    })
-                }).then((res: any) => {
-                    if (res?.code === 0) {
-                        viewManager.showToast(i18nMgr.Get('UITexasRoomManagerOpTips3'));
-                    } else {
-                        viewManager.showToast(res?.message || CPErrorCode.ServerErrorDescription(res?.code));
-                    }
-                });
-            }
-        });
+        // UIComponent.open<UIDialogParam>(UIDefine.UIDialogComponent, {
+        //     type: UIDialogComponent.DialogType.CommitCancel,
+        //     title: CPErrorCode.LanguageDescription(10007),
+        //     content: i18nMgr.Get('UITexasRoomManagerOpTips2'),
+        //     contentCommit: i18nMgr.Get('UI_Recharge_confirm'),
+        //     contentCancel: CPErrorCode.LanguageDescription(10013),
+        //     actionCommit: () => {
+        //         WWW.Instance.CommonAPI({
+        //             web_class: WebRoomCenterRoomDisbAnd,
+        //             body: WebRoomCenterRoomDisbAnd.Request({
+        //                 room_id: GameCache.Instance.room_id
+        //             })
+        //         }).then((res: any) => {
+        //             if (res?.code === 0) {
+        //                 viewManager.showToast(i18nMgr.Get('UITexasRoomManagerOpTips3'));
+        //             } else {
+        //                 viewManager.showToast(res?.message || CPErrorCode.ServerErrorDescription(res?.code));
+        //             }
+        //         });
+        //     }
+        // });
     }
 
     click_bb() {
-        GameCache.Instance.bb_on = !GameCache.Instance.bb_on;
-        this.refreshBB_switch(GameCache.Instance.bb_on);
-        this._roomData.basicInfo.UpdateAllBB();
-    }
-
-    click_bb_showtips() {
-        this.tips_show = !this.tips_show;
-        this.setChildVisible(this.$option_bb, 'tips', this.tips_show);
-    }
-
-    click_bb_hidetips() {
-        this.tips_show = false;
-        this.setChildVisible(this.$option_bb, 'tips', false);
-    }
-
-    refreshBB_switch(boo: boolean) {
-        this.setChildVisible(this.$option_bb, 'switch/on', boo);
-        this.setChildVisible(this.$option_bb, 'switch/off', !boo);
-        if (this.checkNode) {
-            let sprite = this.checkNode.getComponent(cc.Sprite);
-            if (sprite) {
-                sprite.spriteFrame = boo ? this.sfChecked : this.sfUnchecked;
-            }
-        }
+        this.showBBSwitch.onoff(!this.showBBSwitch.isOn, true);
     }
 }

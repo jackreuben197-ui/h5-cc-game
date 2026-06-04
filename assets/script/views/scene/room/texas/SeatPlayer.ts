@@ -4,6 +4,7 @@ import { Operator } from '../../../../data/room/texas/model/Operator';
 import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import { SeatPosition } from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
+import TexasGameRoomDataSetting from '../../../../data/room/texas/TexasGameRoomDataSetting';
 import {
     AnimateDisplayTypeAction,
     AnimateDisplayTypeCards,
@@ -84,10 +85,11 @@ export default class SeatPlayer extends cc.Component {
     @property(ShiningPathTimer)
     private keepSeatTimer: ShiningPathTimer = null;
     @property(cc.Node)
-    private winPercent:cc.Node = null!;
-    @property(cc.Label) 
+    private winPercent: cc.Node = null!;
+    @property(cc.Label)
     private winPercentLabel: cc.Label = null!;
     private _seatPlayer: TexasGameRoomDataPlayer = null!;
+    private _setting: TexasGameRoomDataSetting = null!;
     private _cardBacks: cc.Node[] = [];
     private _bigCards: CardView[] = [];
     // 动画的池的位置（可能是发起，也可能是结尾,计算坐标使用)
@@ -97,6 +99,7 @@ export default class SeatPlayer extends cc.Component {
 
     public initData(seatPlayer: TexasGameRoomDataPlayer, potNode: cc.Node, dealNode: cc.Node) {
         this._seatPlayer = seatPlayer;
+        this._setting = seatPlayer.roomData.setting;
         this._potNode = potNode;
         this._dealNode = dealNode;
         if (this.node.activeInHierarchy) {
@@ -107,7 +110,7 @@ export default class SeatPlayer extends cc.Component {
     // 防止内存泄露(简单说就是防止this丢失)
     private _clickEmptySeat: () => void = null!;
 
-    public onLoad() {
+    protected onLoad() {
         // 如果绑定点击写这里
         for (let i = 0; i < this.bigCardsContainer.children[0].childrenCount; i++) {
             //Cards/l2r/New Node/Image_Card(CardView)
@@ -124,12 +127,12 @@ export default class SeatPlayer extends cc.Component {
         this.emptySeat.node.on('click', this._clickEmptySeat, this);
     }
 
-    public onEnable(): void {
+    protected onEnable(): void {
         if (!this._seatPlayer) return;
         this._bindEventsAndRefresh();
     }
 
-    public onDisable(): void {
+    protected onDisable(): void {
         unBindEventsAll(this);
     }
 
@@ -138,12 +141,11 @@ export default class SeatPlayer extends cc.Component {
      */
     private _bindEventsAndRefresh() {
         // 统一激活绑定，注入强类型 tag 推导过滤机制
-        autoBindEvents(this, { player: this._seatPlayer });
+        autoBindEvents(this, { player: this._seatPlayer, setting: this._setting });
     }
 
-    @traceMethod()
     @bindEvent(TexasGameRoomDataPlayer.ALLIN_WIN_PERCENT, 'player')
-    private updateWinPercentLabel(v: number) { 
+    private updateWinPercentLabel(v: number) {
         if (this._seatPlayer.mine != null) {
             this.winPercent.active = v >= 0;
             this.winPercentLabel.string = v >= 0 ? StringHelper.GetLongString(v) + '%' : '';
@@ -152,7 +154,7 @@ export default class SeatPlayer extends cc.Component {
 
     //(优先于seated执行保证展示正确)
     @traceMethod({ level: 'debug' })
-    @bindEvent(TexasGameRoomDataPlayer.SEATED_CHANGE, { dataSource:'player', initPriority:10 })
+    @bindEvent(TexasGameRoomDataPlayer.SEATED_CHANGE, { dataSource: 'player', initPriority: 10 })
     private onUpdateSeated(b: boolean, mine: TexasGameRoomDataPlayer) {
         this.userSeat.active = b;
         this.emptySeat.node.active = !b;
@@ -180,12 +182,14 @@ export default class SeatPlayer extends cc.Component {
 
     @bindEvent(TexasGameRoomDataPlayer.CHIPS_CHANGE, 'player')
     private onUpdateChip(chip: number) {
-        this.chips.string = StringHelper.GetLongString(chip);
+        this.chips.string = this._setting.showNumberWithShowBB(chip);
     }
-    // @bindEvent(TexasGameRoomDataPlayer.EMPTY_SEAT, 'player')
-    // private onUpdateEmpty() {
-    //     this.tracelog.debug('empty');
-    // }
+
+    @bindEvent(TexasGameRoomDataSetting.SHOW_BB, { dataSource: 'setting', initPriority: 99 })
+    private onUpdateShowBB(b: number) {
+        this.chips.string = this._setting.showNumberWithShowBB(this._seatPlayer.chip);
+        this.roundBetLabel.string = this._setting.showNumberWithShowBB(this._seatPlayer.roundBet);
+    }
 
     // onUpdatePosition 位置变动导致的动画/位置调整
     @bindEvent(TexasGameRoomDataPlayer.SEAT_POSITION_CHANGE, 'player', AnimateDisplayTypePosition.Static)
@@ -204,7 +208,7 @@ export default class SeatPlayer extends cc.Component {
                     //隐藏名字
                     this.nickName.node.active = false;
                     this.nickNameSplash.active = false;
-                }else{
+                } else {
                     this.winPercent.active = false;
                     this.buttonIcon.setPosition(-160, -120);
                     // 筹码位置
@@ -288,13 +292,13 @@ export default class SeatPlayer extends cc.Component {
                 cc.tween(this.animatingChips)
                     .to(0.5, { x: endPos.x, y: endPos.y }, { easing: 'cubicOut' })
                     .call(() => {
-                        this.roundBetLabel.string = StringHelper.GetLongString(amount);
+                        this.roundBetLabel.string = this._setting.showNumberWithShowBB(amount);
                         this.animatingChips.active = false;
                     })
                     .start();
                 return;
             }
-            this.roundBetLabel.string = StringHelper.GetLongString(amount);
+            this.roundBetLabel.string = this._setting.showNumberWithShowBB(amount);
             return;
         }
         this.roundBetNode.active = false;

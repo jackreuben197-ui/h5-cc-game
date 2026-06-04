@@ -294,7 +294,6 @@ export default class TexasTableEvent {
             }
         };
     }
-
     /// <summary>
     /// 站起
     /// </summary>
@@ -310,7 +309,7 @@ export default class TexasTableEvent {
             body: {
                 room: {
                     roomId: seatData.roomData.roomID,
-                    matchId: seatData.roomData.matchID,
+                    matchId: seatData.roomData.matchID
                 },
                 cancelStandup: false,
                 manualChangeRoom: false
@@ -325,7 +324,7 @@ export default class TexasTableEvent {
                 UserStoreUtils.updateUserInfoBasic(),
                 WWW.Instance.CommonAPI<HttpRoomBringInByIDProtocol.ResponseData>({
                     web_class: WebUserRoomBringin,
-                    api_id: player.roomData.roomID,
+                    api_id: player.roomData.roomID
                 })
             ]);
             // @TODO更新用户信息
@@ -350,7 +349,7 @@ export default class TexasTableEvent {
                     GameType: GameType.HOLDEM,
                     RoomPlayer: player,
                     CommitFn: TexasTableEvent._commitBringInCallback(player.roomData.roomID, player.roomData.matchID, player.roomData.basicInfo.limitBringIn)
-                })
+                });
                 return;
             }
             // 记分牌 @TODO
@@ -359,7 +358,7 @@ export default class TexasTableEvent {
                 GameType: GameType.HOLDEM,
                 RoomPlayer: player,
                 CommitFn: TexasTableEvent._commitBringInCallback(player.roomData.roomID, player.roomData.matchID, player.roomData.basicInfo.limitBringIn)
-            })
+            });
         } catch (e) {
             TexasTableEvent.tracelog.error('BringIn', e);
         }
@@ -368,7 +367,7 @@ export default class TexasTableEvent {
     /**
      * 离开房间
      */
-    public static LeaveRoom(player:TexasGameRoomDataPlayerMine) {
+    public static LeaveRoom(player: TexasGameRoomDataPlayerMine) {
         if (player.roomData.closed) {
             ProcedureManager.StartProcedure(ProcedureDefine.Return); // 直接离开 不做处理
             return;
@@ -395,5 +394,4 @@ export default class TexasTableEvent {
             return;
         }
     }
-
 }

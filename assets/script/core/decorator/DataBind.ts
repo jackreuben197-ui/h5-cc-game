@@ -212,14 +212,12 @@ export function observable(eventName: string, options?: ObservableOptions) {
         let shouldEmitCustom: ((oldVal: any, newVal: any, ...args: any[]) => boolean) | undefined = undefined;
         let compareType: 'normal' | 'arrayAsSet' = 'normal';
         let initParams: any[] | ((this: any) => any[]) | undefined;
-
         if (options) {
             forceEmit = !!options.forceEmit;
             shouldEmitCustom = options.shouldEmit;
             if (options.compareType) compareType = options.compareType;
             initParams = options.initParams;
         }
-
         if (!target[EVENT_MAP_KEY]) {
             target[EVENT_MAP_KEY] = new Map<string, string | _pureEventInitParamsWrap>();
         }

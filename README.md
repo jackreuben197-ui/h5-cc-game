@@ -4,6 +4,12 @@
 
 git submodule update --init --recursive --remote
 
+## 常规使用
+```shell
+# 提交前使用以下 命令保证代码格式正确
+npm run commit:prepare
+```
+
 ## 同步Hybrid代码
 
 ```shell

@@ -315,7 +315,7 @@
       "__id__": 1
     },
     "_children": [],
-    "_active": true,
+    "_active": false,
     "_components": [
       {
         "__id__": 9
@@ -5140,6 +5140,9 @@
     "btnShowBB": {
       "__id__": 92
     },
+    "showBBSwitch": {
+      "__id__": 89
+    },
     "btnStand": {
       "__id__": 114
     },
@@ -5149,9 +5152,15 @@
     "btnDissolve": {
       "__id__": 103
     },
-    "sfUnchecked": null,
-    "sfChecked": null,
-    "checkNode": null,
+    "$panel": {
+      "__id__": 14
+    },
+    "$black": {
+      "__id__": 2
+    },
+    "$block": {
+      "__id__": 8
+    },
     "_id": ""
   },
   {

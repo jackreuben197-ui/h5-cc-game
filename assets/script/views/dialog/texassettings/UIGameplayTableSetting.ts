@@ -325,11 +325,11 @@ export default class UIGameplayTableSetting extends UIComponentBaseDialog<UIGame
                 blockchain ? '#7ED27E' : '#FF6666'
             );
         }
-        const squidEnabled = !!this._roomData.basicInfo.squidEnabled;
+        const squidEnabled = !!this._roomData.basicInfo.squidStatusEnabled;
         this.FillDataByLanguageOpen('UISquid', squidEnabled);
         if (squidEnabled) {
             this.FillData('squid_open_number', this.L('UICreateTableSquidOpenNumTip'), String(this._roomData.basicInfo.squidPlayerCountLimit || 0), '#FFFFFF');
-            this.FillData('squid_round', this.L('UISquidGameRounds'), String(this._roomData.basicInfo.squidRounds || 0), '#FFFFFF');
+            this.FillData('squid_round', this.L('UISquidGameRounds'), String(this._roomData.basicInfo.squidStatusRounds || 0), '#FFFFFF');
             this.FillData('squid_base', this.L('UIGameTableSquidShow'), StringHelper.GetLongString(Number(this._roomData.basicInfo.squidBase || 0)), '#FFFFFF');
             this.FillData('squid_max_count', this.L('UISquidGetCap'), String(this._roomData.basicInfo.squidMax || 0), '#FFFFFF');
             if (Number(this._roomData.basicInfo.squidMostGet || 0) === 1) {

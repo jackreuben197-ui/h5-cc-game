@@ -8,7 +8,7 @@ import { ProcedureReturnNavigateParam } from '../../../game/procedure/ProcedureR
 import { Def } from '../../../protobuf/holdem/define_pb';
 import { ServerMessageLeaveNotification } from '../../../protobuf/holdem/recv_th_leave_notification_pb';
 
-const _glog = createLogger('[LeaveNotification]');
+const _glog = createLogger('LeaveNotification');
 
 // LeaveNotification 1114
 export function LeaveNotification(data: ServerMessageLeaveNotification.AsObject, roomID: number, matchID: number) {
