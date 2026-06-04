@@ -169,7 +169,7 @@
       "__uuid__": "229e0942-623f-4dad-9231-726ab1d16473"
     },
     "_type": 0,
-    "_sizeMode": 1,
+    "_sizeMode": 0,
     "_fillType": 0,
     "_fillCenter": {
       "__type__": "cc.Vec2",
@@ -306,7 +306,7 @@
       "__uuid__": "c4d51b82-3e59-4502-939f-1bb6072c02fb"
     },
     "_type": 0,
-    "_sizeMode": 1,
+    "_sizeMode": 0,
     "_fillType": 0,
     "_fillCenter": {
       "__type__": "cc.Vec2",

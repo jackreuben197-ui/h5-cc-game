@@ -146,6 +146,45 @@ export function createLogger(prefix: string, level?: LogLevel): IFunctionLogger 
 }
 
 /**
+ * 内部辅助：确保目标对象上存在 tracelog，@traceMethod 与 @traceClass 共用
+ */
+function ensureTracelog(target: any, className: string, traceLocalLevelWeight?: number) {
+    if (target.tracelog) return;
+    const finalClassPrefix = (className || 'Anonymous').startsWith('[') ? className : `[${className}]`;
+    if (traceLocalLevelWeight !== undefined) {
+        target._traceLocalLevelWeight = traceLocalLevelWeight;
+    }
+    Object.defineProperty(target, 'tracelog', {
+        get: function () {
+            const methodPrefix = this._activeMethodPrefix || '';
+            const currentFullTag = `${finalClassPrefix}${methodPrefix}`;
+            const createLogWrapper = (level: LogLevel, nativeLogMethod: Function) => {
+                return (...args: any[]) => {
+                    const currentLineWeight = LOG_LEVEL_WEIGHTS[level];
+                    let targetThreshold = currentGlobalLogLevel;
+                    if (this._activeMethodLevelWeight !== undefined) {
+                        targetThreshold = this._activeMethodLevelWeight;
+                    } else if (this._traceLocalLevelWeight !== undefined) {
+                        targetThreshold = this._traceLocalLevelWeight;
+                    }
+                    if (currentLineWeight >= targetThreshold) {
+                        nativeLogMethod.call(console, currentFullTag, ...args);
+                    }
+                };
+            };
+            return {
+                debug: createLogWrapper('debug', console.log),
+                info: createLogWrapper('info', console.info),
+                warn: createLogWrapper('warn', console.warn),
+                error: createLogWrapper('error', console.error)
+            };
+        },
+        enumerable: false,
+        configurable: true
+    });
+}
+
+/**
  * 1. 【全能方法装饰器】@traceMethod
  */
 export function traceMethod(options?: TraceMethodOptions) {
@@ -159,8 +198,8 @@ export function traceMethod(options?: TraceMethodOptions) {
         }
         originalMethod[METHOD_TRACE_KEY] = finalMethodPrefix;
         descriptor.value = function (...args: any[]) {
-            const hasExplicitPrefix = options && options.prefix !== undefined;
-            const classPrefix = hasExplicitPrefix ? '' : (this as any)?._traceClassPrefix || '';
+            ensureTracelog(this, this.constructor.name);
+            const classPrefix = (this as any)?._traceClassPrefix || `[${this.constructor.name}]`;
             const fullPrefix = `${classPrefix}${finalMethodPrefix}`;
             let activeThreshold = currentGlobalLogLevel;
             if (options && options.level) {
@@ -173,7 +212,7 @@ export function traceMethod(options?: TraceMethodOptions) {
             }
             const prevMethodPrefix = (this as any)?._activeMethodPrefix;
             const instance = this as any;
-            if (instance && !hasExplicitPrefix) {
+            if (instance) {
                 instance._activeMethodPrefix = finalMethodPrefix;
                 if (options && options.level) {
                     instance._activeMethodLevelWeight = LOG_LEVEL_WEIGHTS[options.level];
@@ -182,7 +221,7 @@ export function traceMethod(options?: TraceMethodOptions) {
             try {
                 return originalMethod.apply(this, args);
             } finally {
-                if (instance && !hasExplicitPrefix) {
+                if (instance) {
                     instance._activeMethodPrefix = prevMethodPrefix;
                     delete instance._activeMethodLevelWeight;
                 }
@@ -197,50 +236,14 @@ export function traceMethod(options?: TraceMethodOptions) {
 export function traceClass(options?: TraceClassOptions) {
     return function (constructor: any) {
         const proto = constructor.prototype;
-        const finalClassPrefix = options && options.prefix && options.prefix.trim() !== '' ? options.prefix : `[${constructor.name}]`;
+        const finalClassPrefix = options?.prefix?.trim() ? `[${options.prefix}]` : `[${constructor.name}]`;
         // 为实例原型和类构造器静态空间同步注入类前缀标识
         proto._traceClassPrefix = finalClassPrefix;
         constructor._traceClassPrefix = finalClassPrefix;
-        // 为实例原型和类构造器静态空间同步注入局部过滤门禁
-        if (options && options.level) {
-            proto._traceLocalLevelWeight = LOG_LEVEL_WEIGHTS[options.level];
-            constructor._traceLocalLevelWeight = LOG_LEVEL_WEIGHTS[options.level];
-        }
-        // 统一属性劫持逻辑定义
-        const defineLogProperty = (target: any) => {
-            Object.defineProperty(target, 'tracelog', {
-                get: function () {
-                    // 兼容静态方法：静态调用时 this 指向类构造函数自身，无实例生命周期上的 _activeMethodPrefix 字段
-                    const methodPrefix = this._activeMethodPrefix || '';
-                    const currentFullTag = `${finalClassPrefix}${methodPrefix}`;
-                    const createLogWrapper = (level: LogLevel, nativeLogMethod: Function) => {
-                        return (...args: any[]) => {
-                            const currentLineWeight = LOG_LEVEL_WEIGHTS[level];
-                            let targetThreshold = currentGlobalLogLevel;
-                            if (this._activeMethodLevelWeight !== undefined) {
-                                targetThreshold = this._activeMethodLevelWeight;
-                            } else if (this._traceLocalLevelWeight !== undefined) {
-                                targetThreshold = this._traceLocalLevelWeight;
-                            }
-                            if (currentLineWeight >= targetThreshold) {
-                                nativeLogMethod.call(console, currentFullTag, ...args);
-                            }
-                        };
-                    };
-                    return {
-                        debug: createLogWrapper('debug', console.log),
-                        info: createLogWrapper('info', console.info),
-                        warn: createLogWrapper('warn', console.warn),
-                        error: createLogWrapper('error', console.error)
-                    };
-                },
-                enumerable: false,
-                configurable: true
-            });
-        };
-        // 一箭双雕：同时完成实例方法与静态方法的物理注入
-        defineLogProperty(proto);
-        defineLogProperty(constructor);
+        // 为实例原型和类构造器静态空间同步注入 tracelog
+        const localWeight = options && options.level ? LOG_LEVEL_WEIGHTS[options.level] : undefined;
+        ensureTracelog(proto, finalClassPrefix, localWeight);
+        ensureTracelog(constructor, finalClassPrefix, localWeight);
         // 统一类名/节点前缀获取器（LN）的物理定义
         const defineLNProperty = (target: any) => {
             Object.defineProperty(target, 'LN', {

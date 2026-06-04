@@ -368,7 +368,13 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
      * @param isUseCache 是否使用缓存
      */
     public override async requestEnterAsync(isUseCache: boolean): Promise<number> {
-        const roomData = new TexasGameRoomData(this._roomId, this.matchId);
+        let roomData: TexasGameRoomData;
+        if (roomDataManager.existRoomData(this._roomId, this.matchId)) {
+            roomData = roomDataManager.getRoomData<TexasGameRoomData>(this._roomId, this.matchId);
+        }
+        if (!roomData) {
+            roomData = new TexasGameRoomData(this._roomId, this.matchId);
+        }
         roomData.basicInfo.subRoomConfig = this._roomInfo.subConfigsList ?? [];
         roomData.basicInfo.roomName = this._roomInfo.name;
         roomData.basicInfo.roomType = this._roomInfo.roomType;

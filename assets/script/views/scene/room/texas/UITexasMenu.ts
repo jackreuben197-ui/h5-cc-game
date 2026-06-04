@@ -69,10 +69,10 @@ export default class UITexasMenu extends cc.Component {
             this.btnBet.node.active = true;
             this.btnHalfLeave.node.active = true;
             this.btnStand.node.active = true;
-            this.showBBSwitch.onoff(this._roomData.setting.showBB, true);
             if (this.btnDissolve) this.btnDissolve.node.active = isDissolve;
             return;
         }
+        this.showBBSwitch.onoff(this._roomData.setting.showBB);
         this.btnBet.node.active = false;
         this.btnHalfLeave.node.active = false;
         this.btnStand.node.active = false;
