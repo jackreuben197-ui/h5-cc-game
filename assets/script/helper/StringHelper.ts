@@ -284,6 +284,35 @@ export class StringHelper {
         let b = arr[1].substring(0, n);
         return `${+`${a}.${b}`}`;
     }
+
+    /**
+     * 核心算法：将任意数字格式化为“最多保留一位小数”的严格去尾文本
+     * 示例：2.59 -> "2.5";  2.00 -> "2";  0.55 -> "0.5"
+     */
+    private static formatToOneDecimalFloor(num: number): string {
+        // 核心黑魔法：利用乘以10去尾再除以10，实现严格的“保留一位小数且去尾”
+        let floored = Math.floor(num * 10) / 10;
+        
+        // 如果去尾后是个整数（比如 2.0），转换为字符串时去掉后面的 .0，直接显示 "2"
+        // 如果是小数（比如 2.5），则正常输出 "2.5"
+        return floored % 1 === 0 ? floored.toString() : floored.toFixed(1);
+    }
+
+    /**
+     * 核心大数精简算法：纯数字缩写（严格执行一位小数去尾）
+     */
+    public static GetDecimalNWithKM(num: number): string {
+        if (num >= 1000000) {
+            let m = num / 1000000;
+            return this.formatToOneDecimalFloor(m) + "M";
+        } else if (num >= 1000) {
+            let k = num / 1000;
+            return this.formatToOneDecimalFloor(k) + "K";
+        }
+        
+        // 达不到 K/M 级别的小数，同样用我们自己的去尾算法输出
+        return this.formatToOneDecimalFloor(num);
+    }
 }
 
 (window as any).StringHelper = StringHelper;

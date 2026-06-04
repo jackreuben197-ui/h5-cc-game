@@ -39,20 +39,20 @@
         "__id__": 549
       },
       {
-        "__id__": 552
+        "__id__": 554
       }
     ],
     "_active": true,
     "_components": [
       {
-        "__id__": 557
+        "__id__": 559
       },
       {
-        "__id__": 558
+        "__id__": 560
       }
     ],
     "_prefab": {
-      "__id__": 559
+      "__id__": 561
     },
     "_opacity": 255,
     "_color": {
@@ -20187,20 +20187,24 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "UIChips_Con",
+    "_name": "Operation_Con",
     "_objFlags": 0,
     "_parent": {
       "__id__": 1
     },
-    "_children": [],
-    "_active": true,
-    "_components": [
+    "_children": [
       {
         "__id__": 550
       }
     ],
+    "_active": true,
+    "_components": [
+      {
+        "__id__": 552
+      }
+    ],
     "_prefab": {
-      "__id__": 551
+      "__id__": 553
     },
     "_opacity": 255,
     "_color": {
@@ -20250,6 +20254,52 @@
     "_id": ""
   },
   {
+    "__type__": "cc.Node",
+    "_objFlags": 0,
+    "_parent": {
+      "__id__": 549
+    },
+    "_prefab": {
+      "__id__": 551
+    },
+    "_name": "UIOperation",
+    "_active": true,
+    "_trs": {
+      "__type__": "TypedArray",
+      "ctor": "Float64Array",
+      "array": [
+        0,
+        1344,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    "_eulerAngles": {
+      "__type__": "cc.Vec3",
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "_id": ""
+  },
+  {
+    "__type__": "cc.PrefabInfo",
+    "root": {
+      "__id__": 550
+    },
+    "asset": {
+      "__uuid__": "93683445-1741-486c-89b2-f929416c144b"
+    },
+    "fileId": "4fMMrMb3lJRrT27yUj1MLt",
+    "sync": true
+  },
+  {
     "__type__": "cc.Widget",
     "_name": "",
     "_objFlags": 0,
@@ -20296,17 +20346,17 @@
     },
     "_children": [
       {
-        "__id__": 553
-      }
-    ],
-    "_active": true,
-    "_components": [
-      {
         "__id__": 555
       }
     ],
+    "_active": false,
+    "_components": [
+      {
+        "__id__": 557
+      }
+    ],
     "_prefab": {
-      "__id__": 556
+      "__id__": 558
     },
     "_opacity": 255,
     "_color": {
@@ -20359,10 +20409,10 @@
     "__type__": "cc.Node",
     "_objFlags": 0,
     "_parent": {
-      "__id__": 552
+      "__id__": 554
     },
     "_prefab": {
-      "__id__": 554
+      "__id__": 556
     },
     "_name": "UITexasMenu",
     "_active": true,
@@ -20393,7 +20443,7 @@
   {
     "__type__": "cc.PrefabInfo",
     "root": {
-      "__id__": 553
+      "__id__": 555
     },
     "asset": {
       "__uuid__": "30193323-87e5-4429-b479-bfee61c8beb4"
@@ -20406,7 +20456,7 @@
     "_name": "",
     "_objFlags": 0,
     "node": {
-      "__id__": 552
+      "__id__": 554
     },
     "_enabled": true,
     "alignMode": 1,
@@ -20490,7 +20540,7 @@
       "__id__": 15
     },
     "sideMenuNode": {
-      "__id__": 553
+      "__id__": 555
     },
     "_id": ""
   },
