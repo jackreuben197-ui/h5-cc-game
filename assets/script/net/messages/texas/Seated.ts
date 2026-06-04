@@ -3,7 +3,7 @@ import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import userStore from '../../../data/user/UserStore';
 import UserStoreUtils from '../../../data/user/UserStoreUtils';
-import { AnimateDisplayTypeAction, AnimateDisplayTypeCards, AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
+import { AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
 import { BringInMode } from '../../../game/constant/BringInChipsType';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import { Def } from '../../../protobuf/holdem/define_pb';
@@ -19,6 +19,7 @@ export function Seated(data: ServerMessageSeated.AsObject, roomID: number, match
     if (data.status != 0) {
         _plog.debug('坐下失败, status:', data.status, CPErrorCode.ServerErrorDescription(data.status));
         viewManager.showToast(CPErrorCode.ServerErrorDescription(data.status));
+        roomData.mine.currentWalletClubID = 0;
         return;
     }
     // videoMaskId > 4 时客户端统一归为 1
