@@ -50,11 +50,9 @@ export default class ToggleButton extends cc.Component {
     set content(value: string) {
         this.content_label.string = '';
     }
-
     set isOn(bool: boolean) {
         this.check_node.active = bool;
     }
-
     get isOn(): boolean {
         return this.check_node.active;
     }

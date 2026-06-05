@@ -71,23 +71,23 @@ export default class TexasMessageHandler {
     public static handle(code: number, data: any, roomID: number, matchID: number) {
         if (code != Code.MSG_D_ENTER_ROOM && code != Code.MSG_D_LEAVE && code != Code.MSG_S_LEAVE_NOTIFICATION) {
             // 已经主动离开了不管
-            if (roomDataManager.isInternalLeaving(roomID, matchID)) {
-                return;
-            }
+            // if (roomDataManager.isInternalLeaving(roomID, matchID)) {
+            //     return;
+            // }
             if (!roomDataManager.existRoomData(roomID, matchID)) {
                 this.tracelog.warn('no room data return', roomID, matchID);
-                ProtocolAgency.Send({
-                    code: Code.MSG_D_LEAVE,
-                    roomID: roomID,
-                    matchID: matchID,
-                    body: {
-                        room: {
-                            roomId: roomID,
-                            matchId: matchID
-                        }
-                    }
-                });
-                roomDataManager.startInternalLeaveLock(roomID, matchID);
+                // ProtocolAgency.Send({
+                //     code: Code.MSG_D_LEAVE,
+                //     roomID: roomID,
+                //     matchID: matchID,
+                //     body: {
+                //         room: {
+                //             roomId: roomID,
+                //             matchId: matchID
+                //         }
+                //     }
+                // });
+                //roomDataManager.startInternalLeaveLock(roomID, matchID);
                 return;
             }
         }

@@ -1,9 +1,9 @@
-
 import UIComponentBase from '../../../base/UIComponentBase';
 
 export type AutoOperationData = {
     callAmount?: number;
 };
+
 const { ccclass } = cc._decorator;
 
 @ccclass
@@ -25,7 +25,6 @@ export default class AutoOperation extends UIComponentBase<any> {
     //  */
     // public ParamType: AutoOperationData;
     // LocalCallNum: number = 0;
-
     // protected lateLoad(): void {
     //     super.lateLoad();
     //     this.toggleAutoFold = this.getChildNodeOrComponent('Toggle_AutoFold', ToggleButton);
@@ -35,7 +34,6 @@ export default class AutoOperation extends UIComponentBase<any> {
     //     this.textAutoCall = this.getChildNodeOrComponent('Text_AutoCall', cc.Label);
     //     this.UI = this.getChildNodeOrComponent('UI');
     // }
-
     // onShow(param?: any): void {
     //     super.onShow(param);
     //     let autoOperationData: AutoOperationData = param as AutoOperationData;
@@ -81,25 +79,21 @@ export default class AutoOperation extends UIComponentBase<any> {
     //         this.toggleAutoAllin.node.active = true;
     //     }
     // }
-
     // protected regiterTouchEvents(): void {
     //     this.toggleAutoFold.onValueChanged(this.onValueChangeAutoFold.bind(this));
     //     this.toggleAutoCall.onValueChanged(this.onValueChangeAutoCall.bind(this));
     //     this.toggleAutoAllin.onValueChanged(this.onValueChangeAutoAllin.bind(this));
     //     this.toggleAutoCheck.onValueChanged(this.onValueChangeAutoCheck.bind(this));
     // }
-
     // static AutoOperationData(callAmount: number): AutoOperationData {
     //     return {
     //         callAmount: callAmount
     //     };
     // }
-
     // //设置UI位置
     // public SetUIPos(pos: cc.Vec2) {
     //     this.UI.setPosition(pos);
     // }
-
     // onValueChangeAutoFold(boo: boolean) {
     //     GameCache.Instance.CurGame.autoFold = boo;
     //     if (boo) {
@@ -108,7 +102,6 @@ export default class AutoOperation extends UIComponentBase<any> {
     //         this.toggleAutoCheck.isOn = false;
     //     }
     // }
-
     // onValueChangeAutoCall(boo: boolean) {
     //     GameCache.Instance.CurGame.autoCall = boo;
     //     if (boo) {
@@ -117,7 +110,6 @@ export default class AutoOperation extends UIComponentBase<any> {
     //         this.toggleAutoCheck.isOn = false;
     //     }
     // }
-
     // onValueChangeAutoAllin(boo: boolean) {
     //     GameCache.Instance.CurGame.autoAllin = boo;
     //     if (boo) {
@@ -126,7 +118,6 @@ export default class AutoOperation extends UIComponentBase<any> {
     //         this.toggleAutoCheck.isOn = false;
     //     }
     // }
-
     // onValueChangeAutoCheck(boo: boolean) {
     //     GameCache.Instance.CurGame.autoCheck = boo;
     //     if (boo) {

@@ -1,67 +1,76 @@
-import { unBindEventsAll, autoBindEvents, bindEvent } from "../../../../core/decorator/DataBind";
-import TexasGameRoomDataPlayer from "../../../../data/room/texas/TexasGameRoomDataPlayer";
-import TexasGameRoomDataPlayerMine from "../../../../data/room/texas/TexasGameRoomDataPlayerMine";
-import TexasGameRoomDataSetting from "../../../../data/room/texas/TexasGameRoomDataSetting";
-import { ActionLimit, ActionShortcutLimit, Def } from "../../../../protobuf/holdem/define_pb";
-import UIComponentBase from "../../../base/UIComponentBase";
-import StepSlider from "../../../widget/StepSlider";
-import BetButtonsContainer from "./widget/BetButtonContainer";
+import { unBindEventsAll, autoBindEvents, bindEvent } from '../../../../core/decorator/DataBind';
+import { traceMethod } from '../../../../core/decorator/LogTrace';
+import { OperatorMine } from '../../../../data/room/texas/model/Operator';
+import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
+import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
+import TexasGameRoomDataSetting from '../../../../data/room/texas/TexasGameRoomDataSetting';
+import { CPErrorCode } from '../../../../i18n/CPErrorCode';
+import { ActionLimit, ActionShortcutLimit, Def } from '../../../../protobuf/holdem/define_pb';
+import UIComponentBase from '../../../base/UIComponentBase';
+import viewManager from '../../../UIViewManager';
+import ShiningPathTimer from '../../../widget/ShiningPathTimer';
+import StepSlider from '../../../widget/StepSlider';
+import TexasTableEvent from './events/TexasTableEvent';
+import BetButtonsContainer from './widget/BetButtonContainer';
 
-export type OperationParam = {
-    actionsList: ActionLimit.AsObject[];
-    shortcutsList: ActionShortcutLimit.AsObject[];
-};
-
-class ActionDataInfo {
-
-    // public ActionLimit actionLimit;//只用于raise 或 bet
-    public constructor(
-        public CallAmount: number = 0,
-        public StraddleAmount: number = 0,
-        public AllInAmount: number = 0,
-        public actionLimit: ActionLimit.AsObject = null
-    ) {}
-}
 const { ccclass, property } = cc._decorator;
 
 @ccclass
 export default class Operation extends cc.Component {
-    @property({ type: cc.Node, displayName: "加注条大容器" })
+    @property({ type: ShiningPathTimer, displayName: '倒计时' })
+    opTimer: ShiningPathTimer = null;
+    @property({ type: cc.Node, displayName: '加注条大容器' })
     freeBetContainer: cc.Node = null;
-    @property({ type: cc.Button, displayName: "FOLD" })
+    @property({ type: cc.Button, displayName: 'STRADDLE' })
+    btnStraddle: cc.Button = null;
+    @property({ type: cc.Label, displayName: 'STRADDLE Amount' })
+    btnStraddleAmount: cc.Label = null;
+    @property({ type: cc.Button, displayName: 'FOLD' })
     btnFold: cc.Button = null;
-    @property({ type: cc.Button, displayName: "CALL" })
+    @property({ type: cc.Button, displayName: 'CALL' })
     btnCall: cc.Button = null;
-    @property({ type: cc.Button, displayName: "CHECK" })
+    @property({ type: cc.Label, displayName: 'CALL Amount' })
+    btnCallAmount: cc.Label = null;
+    @property({ type: cc.Button, displayName: 'CHECK' })
     btnCheck: cc.Button = null;
-    @property({ type: cc.Button, displayName: "RAISE" })
+    @property({ type: cc.Button, displayName: 'RAISE' })
     btnRaise: cc.Button = null;
-    @property({ type: cc.Button, displayName: "ALLIN" })
+    @property({ type: cc.Button, displayName: 'ALLIN' })
     btnAllIn: cc.Button = null;
-    @property({ type: cc.Button, displayName: "自由加CONFIRM" })
+    @property({ type: cc.Button, displayName: '自由加CONFIRM' })
     btnRaiseConfirm: cc.Button = null;
-    @property({ type: StepSlider, displayName: "自由加注进度条" })
+    @property({ type: StepSlider, displayName: '自由加注进度条' })
     freeBetSilder: StepSlider = null;
-    @property({ type: BetButtonsContainer, displayName: "快捷按钮容器" })
+    @property({ type: BetButtonsContainer, displayName: '快捷按钮容器' })
     shortCutContainer: BetButtonsContainer = null;
-    @property({ type: cc.Node, displayName: "自由下注信息" })
+    @property({ type: cc.Node, displayName: '自由下注信息' })
     freeBetInfoNode: cc.Node = null;
-    @property({ type: cc.Label, displayName: "自由下注百分比" })
+    @property({ type: cc.Label, displayName: '自由下注百分比' })
     freeBetPercent: cc.Label = null;
-    @property({ type: cc.Label, displayName: "自由下注数额" })
+    @property({ type: cc.Label, displayName: '自由下注数额' })
     freeBetAmount: cc.Label = null;
-    private _raiseAmount:number = 0;
+    private _raiseAmount: number = 0;
+    private _action: Def.ActionMap[keyof Def.ActionMap];
+    private _seatPlayer: TexasGameRoomDataPlayerMine = null;
 
-    private _seatPlayer: TexasGameRoomDataPlayer = null;
     protected onLoad(): void {
-        this.freeBetContainer.active =  false;
+        this.freeBetContainer.active = false;
         this.freeBetSilder.step = 0;
-        this.regiterTouchEvents()
+        this.regiterTouchEvents();
     }
 
     private _onRaiseClicked: () => void;
+    private _onActionClicked: () => void = () => {
+        this.opTimer.stop();
+        TexasTableEvent.DoAction(this._seatPlayer, this._action, this._raiseAmount);
+    };
 
     protected regiterTouchEvents(): void {
+        this.btnFold.node.on('click', this._onFoldClicked, this);
+        this.btnCheck.node.on('click', this._onActionClicked, this);
+        this.btnCall.node.on('click', this._onActionClicked, this);
+        this.btnAllIn.node.on('click', this._onActionClicked, this);
+        this.btnStraddle.node.on('click', this._onActionClicked, this);
         // this.setButtonClick(this.buttonCall, this.onClickCall);
         // this.setButtonClick(this.buttonCheck, this.onClickCheck);
         // this.setButtonClick(this.buttonCall0, this.onClickCall0);
@@ -79,27 +88,72 @@ export default class Operation extends cc.Component {
             this.freeBetContainer.active = true;
             this.freeBetInfoNode.active = false;
             this.freeBetSilder.progressColor = cc.Color.fromHEX(new cc.Color(), '#ffffff');
-            this.freeBetSilder.setProgress(0)
-        }
+            this.freeBetSilder.setProgress(0);
+        };
         this.btnRaise.node.on('click', this._onRaiseClicked, this);
     }
 
-    public initData(mine: TexasGameRoomDataPlayer, param: OperationParam): void {
+    @traceMethod({ level: 'debug' })
+    public startOperation(param: OperatorMine, mine: TexasGameRoomDataPlayerMine): void {
         this._seatPlayer = mine;
-        const actionMap: Map< Def.ActionMap[keyof Def.ActionMap], ActionLimit.AsObject> = new Map();
-        param.actionsList.forEach(v => actionMap.set(v.action, v));
-        if (actionMap.has(Def.Action.RAISE)) {
-            const actionLimit = actionMap.get(Def.Action.RAISE)
-            this.btnRaise.node.active = true;
-            const rangeAmount = actionLimit.max - actionLimit.min + 1; // Raise 是 ALLIN -1
-            this.freeBetSilder.onValueChanged = progress => {
-                this._raiseAmount = Math.min(rangeAmount + actionLimit.min, Math.round(progress * rangeAmount + actionLimit.min));
-                this.freeBetAmount.string = this._seatPlayer.roomData.setting.showNumberWithShowBB(this._raiseAmount);
-                this.freeBetPercent.string = Math.min(100, Math.round(progress * 100)) + '%';
-            };
-            this.freeBetInfoNode.active = true;
-        }
+        this.opTimer.startTimer({
+            totalTime: param.totalOpDuration,
+            elapsedTime: param.leftOpDuration,
+            onComplete: () => {
+                this.opTimer.stop();
+            }
+        });
+        this._refreshUI(param.actionLimitList);
         this._bindEventsAndRefresh();
+    }
+
+    private _refreshUI(actionsList: ActionLimit.AsObject[]) {
+        this.btnAllIn.node.active = false;
+        this.btnCall.node.active = false;
+        this.btnStraddle.node.active = false;
+        this.btnRaise.node.active = false;
+        this.btnCheck.node.active = false;
+        actionsList.forEach(actionLimit => {
+            switch (actionLimit.action) {
+                case Def.Action.CHECK:
+                    this._action = Def.Action.CHECK;
+                    this._raiseAmount = 0;
+                    this.btnCheck.node.active = true;
+                    break;
+                case Def.Action.FOLD:
+                    this._action = Def.Action.FOLD;
+                    this._raiseAmount = 0;
+                    this.btnFold.node.active = true;
+                    break;
+                case Def.Action.STRADDLE:
+                    this._action = Def.Action.STRADDLE;
+                    this._raiseAmount = actionLimit.min;
+                    this.btnStraddleAmount.string = this._seatPlayer.roomData.setting.showNumberWithShowBB(actionLimit.min);
+                    this.btnStraddle.node.active = true;
+                    break;
+                case Def.Action.CALL:
+                    this._action = Def.Action.CALL;
+                    this._raiseAmount = actionLimit.min;
+                    this.btnCallAmount.string = this._seatPlayer.roomData.setting.showNumberWithShowBB(actionLimit.min);
+                    this.btnCall.node.active = true;
+                    break;
+                case Def.Action.RAISE:
+                    this.btnRaise.node.active = true;
+                    const rangeAmount = actionLimit.max - actionLimit.min + 1; // Raise 是 ALLIN -1
+                    this.freeBetSilder.onValueChanged = progress => {
+                        this.freeBetInfoNode.active = true;
+                        this._raiseAmount = Math.min(rangeAmount + actionLimit.min, Math.round(progress * rangeAmount + actionLimit.min));
+                        this.freeBetAmount.string = this._seatPlayer.roomData.setting.showNumberWithShowBB(this._raiseAmount);
+                        this.freeBetPercent.string = Math.min(100, Math.round(progress * 100)) + '%';
+                    };
+                case Def.Action.ALLIN:
+                    this._raiseAmount = actionLimit.max;
+                    this.btnAllIn.node.active = true;
+                    break;
+            }
+        });
+        // if (actionMap.has(Def.Action.RAISE)) {
+        // }
     }
 
     @bindEvent(TexasGameRoomDataSetting.SHOW_BB, 'setting')
@@ -119,8 +173,8 @@ export default class Operation extends cc.Component {
      * 托管全自动事件激活绑定
      */
     private _bindEventsAndRefresh() {
-        if (this._seatPlayer == null || this._seatPlayer.mine == null) return;
-        autoBindEvents(this, { player: this._seatPlayer, setting: this._seatPlayer.roomData.setting, mine: this._seatPlayer.mine});
+        if (this._seatPlayer == null) return;
+        autoBindEvents(this, { setting: this._seatPlayer.roomData.setting });
     }
 
     //点击显示滑竿
@@ -128,77 +182,30 @@ export default class Operation extends cc.Component {
         //this.showFreeCall(true);
     }
 
-
-    // private onClickCall2(): void {
-    //     this.callValue = this.callValue2;
-    //     this.CheckOpt();
-    // }
-
-    // private onClickCall1(): void {
-    //     this.callValue = this.callValue1;
-    //     this.CheckOpt();
-    // }
-
-    // private onClickCall0(): void {
-    //     this.callValue = this.callValue0;
-    //     this.CheckOpt();
-    // }
-
-    // private onClickCallLeft(): void {
-    //     this.callValue = this.callValueLeft;
-    //     this.CheckOpt();
-    // }
-
-    // private onClickCallRight(): void {
-    //     this.callValue = this.callValueRight;
-    //     this.CheckOpt();
-    // }
-
-    // private onClickAllin(): void {
-    //     GameCache.Instance.CurGame.OptAction(Def.Action.ALLIN, this.actionDataInfo.AllInAmount);
-    // }
-
-    // private onClickStraddle(): void {
-    //     GameCache.Instance.CurGame.OptAction(Def.Action.STRADDLE, this.actionDataInfo.StraddleAmount);
-    // }
-
-    // private onClickCall(): void {
-    //     GameCache.Instance.CurGame.OptAction(Def.Action.CALL, this.actionDataInfo.CallAmount);
-    // }
-
-    // private onClickCheck(): void {
-    //     GameCache.Instance.CurGame.OptAction(Def.Action.CHECK, 0);
-    //     this.isCountDown = false;
-    // }
-
-    // private onClickFold(): void {
-    //     if (this.buttonCheck.activeInHierarchy) {
-    //         //如果可以让牌，需要弹窗询问弃牌还是让牌
-    //         this.isShowingDialog = true;
-    //         UIComponent.open<UIConfirmDialogParam>(UIDefine.UIConfirmDialog, {
-    //             this: this,
-    //             // title = $"确定弃牌？",
-    //             title: CPErrorCode.LanguageDescription(20037),
-    //             // content = $"你可以让牌而不需要任何记分牌",
-    //             content: CPErrorCode.LanguageDescription(20038),
-    //             // contentCommit = "弃牌",
-    //             commit: CPErrorCode.LanguageDescription(10047),
-    //             // contentCancel = "让牌",
-    //             cancel: CPErrorCode.LanguageDescription(10315),
-    //             commit_click: () => {
-    //                 GameCache.Instance.CurGame?.OptAction(Def.Action.FOLD, 0);
-    //                 this.isCountDown = false;
-    //             },
-    //             cancel_click: () => {
-    //                 GameCache.Instance.CurGame?.OptAction(Def.Action.CHECK, 0);
-    //                 this.isCountDown = false;
-    //             }
-    //         });
-    //         return;
-    //     }
-    //     GameCache.Instance.CurGame.OptAction(Def.Action.FOLD, 0);
-    // }
-
+    private _onFoldClicked(): void {
+        if (this.btnCheck.node.activeInHierarchy) {
+            //如果可以让牌，需要弹窗询问弃牌还是让牌
+            viewManager.openDialog('ConfirmOrNotice', {
+                title: CPErrorCode.LanguageDescription(20037),
+                // content = $"你可以让牌而不需要任何记分牌",
+                content: CPErrorCode.LanguageDescription(20038),
+                // contentCommit = "弃牌",
+                commit: CPErrorCode.LanguageDescription(10047),
+                // contentCancel = "让牌",
+                cancel: CPErrorCode.LanguageDescription(10315),
+                commit_click: () => {
+                    TexasTableEvent.DoAction(this._seatPlayer, Def.Action.CHECK, 0);
+                    this.opTimer.stop();
+                },
+                cancel_click: () => {
+                    TexasTableEvent.DoAction(this._seatPlayer, Def.Action.FOLD, 0);
+                    this.opTimer.stop();
+                }
+            });
+            return;
+        }
+        TexasTableEvent.DoAction(this._seatPlayer, Def.Action.CHECK, 0);
+    }
     // /// <summary>
     // /// 自由加注
     // /// </summary>
@@ -232,7 +239,6 @@ export default class Operation extends cc.Component {
     //     }
     //     this.isCountDown = false;
     // }
-
     // /// <summary>
     // /// 设置 n/m底池加注按钮
     // /// </summary>
@@ -279,7 +285,6 @@ export default class Operation extends cc.Component {
     //     //展示加注按钮和自由加注按钮
     //     this.showRaiseButton();
     // }
-
     // UpdateAllValue() {
     //     let totalChips: number = GameCache.Instance.CurGame.mainPlayer.chips;
     //     let a = GameUtil.TransBetValue(this.callValue0);
@@ -293,7 +298,6 @@ export default class Operation extends cc.Component {
     //     this.textCallPotValueLeft.string = this.callValueLeft <= 0 ? '' : this.callValueLeft < totalChips ? d : 'All in';
     //     this.textCallPotValueRight.string = this.callValueRight <= 0 ? '' : this.callValueRight < totalChips ? e : 'All in';
     // }
-
     // /// <summary>
     // /// 展示加注按钮和自由加注按钮
     // /// </summary>
@@ -305,7 +309,6 @@ export default class Operation extends cc.Component {
     //     this.buttonCallRight.active = UITexasSettingComponent.GetCurQuickActionNum(4) != '0';
     //     this.buttonFreeCall.active = true;
     // }
-
     // /// <summary>
     // /// 获取快捷面板底池加注值
     // /// </summary>
@@ -359,7 +362,6 @@ export default class Operation extends cc.Component {
     //     console.log(LN, 'times:' + times + '  valueTmp:' + valueTmp + '  potMutiplier(times):' + this.potMutiplier(times));
     //     return valueTmp;
     // }
-
     // // /// <summary>
     // // /// 通过Action 取得ActionLimit
     // // /// </summary>
@@ -381,7 +383,6 @@ export default class Operation extends cc.Component {
     // private potMutiplier(times: number): number {
     //     return this.actionDataInfo.CallAmount + (GameCache.Instance.CurGame.alreadAnte + this.actionDataInfo.CallAmount) * times;
     // }
-
     // protected update(dt: number): void {
     //     if (!this._isCheckCountDown && !this._isFoldCountDown) {
     //         return;
@@ -428,12 +429,10 @@ export default class Operation extends cc.Component {
     //         this.hadAlertSound = true;
     //     }
     // }
-
     // protected regiterDispatchEvent(): void {
     //     super.regiterDispatchEvent();
     //     this.listen(ProtocolCode.Protocol_Holdem_AddTime, this.HANDLER_REQ_ADD_TIME); // 操作加时
     // }
-
     // protected HANDLER_REQ_ADD_TIME(rec: ServerMessageAddTime.AsObject): void {
     //     if (rec == null) {
     //         return;
@@ -464,7 +463,6 @@ export default class Operation extends cc.Component {
     //         GameCache.Instance.CurGame.ClickAddTime = false;
     //     }
     // }
-
     // /// <summary>
     // /// 用于关闭操作面板时初始化按钮显示
     // /// </summary>
@@ -484,7 +482,6 @@ export default class Operation extends cc.Component {
     //     this.Check_CountDown.active = false;
     //     this.Fold_CountDown.active = false;
     // }
-
     // lateClose(param?: any): void {
     //     super.lateClose();
     //     this.isCountDown = false;
@@ -496,7 +493,6 @@ export default class Operation extends cc.Component {
     //     this.Fold_CountDown.active = false;
     //     this.hideAllOperationButton();
     // }
-
     // ///////////////////////////////滑动条////////////////////////////////
     // //设置比例值
     // private SetCalibrationWeight(): void {
@@ -504,7 +500,6 @@ export default class Operation extends cc.Component {
     //     this.slider_ab = GameCache.Instance.CurGame.smallBlind < 100 ? 10 : 100;
     //     console.log(LN, 'slider_ab', this.slider_ab);
     // }
-
     // //点击滑动条下确定按钮
     // onClickFreeCallConfirm() {
     //     console.log(LN, 'value :: ', this.slider.value);
@@ -516,11 +511,9 @@ export default class Operation extends cc.Component {
     //     this.CheckOpt();
     //     this.showFreeCall(false);
     // }
-
     // refreshSliderMaxLabel() {
     //     this.label_slider_max.string = GameUtil.TransBetValue(this.slider_max_value);
     // }
-
     // private show(actions: ActionLimit.AsObject[]): void {
     //     this.ActionMap.clear();
     //     actions.forEach(action => {
@@ -570,7 +563,6 @@ export default class Operation extends cc.Component {
     //         }
     //     });
     // }
-
     // //4 观
     // private showStraddle(action: ActionLimit.AsObject): void {
     //     console.log(LN, '+ showStraddle');
@@ -578,7 +570,6 @@ export default class Operation extends cc.Component {
     //     this.actionDataInfo.StraddleAmount = action.min;
     //     this.Text_Straddle.string = StringHelper.GetLongString(action.min);
     // }
-
     // //5 , 9
     // private showBet(action: ActionLimit.AsObject): void {
     //     console.log(LN, '+ showBet');
@@ -631,7 +622,6 @@ export default class Operation extends cc.Component {
     //     console.log(LN, ' >> slider = > ', this.slider_min_value, this.slider_max_value, this.slider_ab);
     //     this.setTopCallButtons();
     // }
-
     // // 6
     // private showCall(action: ActionLimit.AsObject): void {
     //     console.log(LN, '+ showCall');
@@ -639,7 +629,6 @@ export default class Operation extends cc.Component {
     //     this.actionDataInfo.CallAmount = action.min;
     //     this.textCall.string = StringHelper.GetLongString(action.min);
     // }
-
     // // 7
     // private showFold(action: ActionLimit.AsObject): void {
     //     console.log(LN, '+ showFold');
@@ -651,7 +640,6 @@ export default class Operation extends cc.Component {
     //     this.Fold_CountDown.active = true;
     //     this.imageFoldCountDown.fillRange = 1;
     // }
-
     // // 8
     // private showCheck(action: ActionLimit.AsObject): void {
     //     console.log(LN, '+ showCheck');
@@ -661,7 +649,6 @@ export default class Operation extends cc.Component {
     //     this.Check_CountDown.active = true;
     //     this.imageCheckCountDown.fillRange = 1;
     // }
-
     // //10-1
     // private showAllInRaise(action: ActionLimit.AsObject): void {
     //     console.log(LN, '+ showRaise');
@@ -681,14 +668,12 @@ export default class Operation extends cc.Component {
     //         scale: 100
     //     });
     // }
-
     // //10-2
     // private showAllin(actionLimit: ActionLimit.AsObject) {
     //     console.log(LN, '+ showAllin');
     //     this.buttonAllin.active = true;
     //     this.actionDataInfo.AllInAmount = actionLimit.min;
     // }
-
     // //显示或者隐藏 自由加注条
     // private showFreeCall(show: boolean): void {
     //     if (show) {

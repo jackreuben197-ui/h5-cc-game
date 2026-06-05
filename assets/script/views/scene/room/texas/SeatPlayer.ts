@@ -1,6 +1,6 @@
 import { autoBindEvents, bindEvent, unBindEvents, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
-import { Operator } from '../../../../data/room/texas/model/Operator';
+import { Operator, OperatorMine } from '../../../../data/room/texas/model/Operator';
 import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import { SeatPosition } from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
@@ -19,6 +19,7 @@ import CardView from '../../../widget/CardView';
 import RemoteSprite from '../../../widget/RemoteSprite';
 import ShiningPathTimer from '../../../widget/ShiningPathTimer';
 import TexasTableEvent from './events/TexasTableEvent';
+import Operation from './Operation';
 import SeatAction from './SeatAction';
 
 const { ccclass, property, menu } = cc._decorator;
@@ -88,6 +89,8 @@ export default class SeatPlayer extends cc.Component {
     private winPercent: cc.Node = null!;
     @property(cc.Label)
     private winPercentLabel: cc.Label = null!;
+    @property({ type: cc.Node, displayName: '游戏状态CanPlayStatus' })
+    private canPlayStatusNode: cc.Node = null;
     private _seatPlayer: TexasGameRoomDataPlayer = null!;
     private _setting: TexasGameRoomDataSetting = null!;
     private _cardBacks: cc.Node[] = [];
@@ -188,6 +191,13 @@ export default class SeatPlayer extends cc.Component {
     private onUpdateShowBB(b: number) {
         this.chips.string = this._setting.showNumberWithShowBB(this._seatPlayer.chip);
         this.roundBetLabel.string = this._setting.showNumberWithShowBB(this._seatPlayer.roundBet);
+    }
+
+    @bindEvent(TexasGameRoomDataPlayer.CANPLAYSTATUS_CHANGE, 'player')
+    private onUpdateCanPlayStatus(v: Def.CanPlayStatusMap[keyof Def.CanPlayStatusMap]) {
+        switch (v) {
+            case Def.CanPlayStatus.DISABLE:
+        }
     }
 
     // onUpdatePosition 位置变动导致的动画/位置调整
@@ -557,10 +567,6 @@ export default class SeatPlayer extends cc.Component {
         });
     }
 
-    @bindEvent(TexasGameRoomDataPlayerMine.STORECHIPS_CHANGE, 'mine')
-    @traceMethod({ level: 'debug' })
-    private onStoreChipChange(v: number) {}
-
     @bindEvent(TexasGameRoomDataPlayer.KEEPSEAT_CHANGE, 'player')
     private onKeepSeatStart(b: boolean, deadline: number, reason: Def.KeepSeatReasonMap[keyof Def.KeepSeatReasonMap]) {
         if (b) {
@@ -577,6 +583,10 @@ export default class SeatPlayer extends cc.Component {
         this.keepSeatTimer.stop();
         this.keepSeatTimer.node.active = false;
     }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.STORECHIPS_CHANGE, 'mine')
+    @traceMethod({ level: 'debug' })
+    private onStoreChipChange(v: number) {}
 
     public animateButtonChange(enable: boolean, positionFromNode?: cc.Node) {
         this.buttonIcon.active = enable;

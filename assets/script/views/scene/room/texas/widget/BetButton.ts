@@ -1,22 +1,18 @@
-import { autoBindEvents, bindEvent, unBindEventsAll } from "../../../../../core/decorator/DataBind";
-import TexasGameRoomDataSetting from "../../../../../data/room/texas/TexasGameRoomDataSetting";
+import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../../core/decorator/DataBind';
+import TexasGameRoomDataSetting from '../../../../../data/room/texas/TexasGameRoomDataSetting';
 
 const { ccclass, property, menu } = cc._decorator;
 
 @ccclass
 @menu('Scene/Room/Texas/Widget/BetButton')
 export default class BetButton extends cc.Component {
-
-    @property({ type: cc.Label, displayName: "显示标签(如 1/2)" })
+    @property({ type: cc.Label, displayName: '显示标签(如 1/2)' })
     showLabel: cc.Label = null;
-
-    @property({ type: cc.Label, displayName: "金额标签(如 666K)" })
+    @property({ type: cc.Label, displayName: '金额标签(如 666K)' })
     amountLabel: cc.Label = null;
-
     // 核心修改：回调里的 amount 改为 number 类型
     private onClickCallback: (amount: number, ratioStr: string) => void = null;
-
-    private _ratioStr: string = "";
+    private _ratioStr: string = '';
     private _amountNum: number = 0; // 内部存成数字
     private _setting: TexasGameRoomDataSetting;
 
@@ -34,18 +30,17 @@ export default class BetButton extends cc.Component {
         this._ratioStr = ratioStr;
         this._amountNum = amountNum;
         this.onClickCallback = callback;
-
         // 1. 刷新比例文本
         if (this.showLabel) this.showLabel.string = ratioStr;
         this._bindAndRefresh();
     }
 
     private _bindAndRefresh() {
-        autoBindEvents(this, {setting: this._setting});
+        autoBindEvents(this, { setting: this._setting });
     }
 
     protected onEnable(): void {
-         this._bindAndRefresh();
+        this._bindAndRefresh();
     }
 
     protected onDisable(): void {

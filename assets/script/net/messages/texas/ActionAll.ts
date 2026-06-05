@@ -5,7 +5,7 @@ import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { AnimateDisplayTypeAction, AnimateDisplayTypeCards, AnimateDisplayTypeRoundBet } from '../../../game/constant/AnimateDisplayType';
 import { ServerMessageActionAll } from '../../../protobuf/holdem/recv_th_action_all_pb';
 
-const _plog = createLogger('[ServerMessageActionAll]');
+const _plog = createLogger('ServerMessageActionAll');
 
 // ActionAll 1108
 export function ActionAll(data: ServerMessageActionAll.AsObject, roomID: number, matchID: number) {
@@ -16,6 +16,9 @@ export function ActionAll(data: ServerMessageActionAll.AsObject, roomID: number,
     seatPlayer.chip = data.leftChips;
     seatPlayer.setRoundBet(seatPlayer.roundBet + data.amount, AnimateDisplayTypeRoundBet.PutNear);
     seatPlayer.operator = null;
+    if (seatPlayer.mine) {
+        seatPlayer.mine.operator = null;
+    }
     //所有下注
     roomData.potInfo.allPot = data.allBet;
     //当前轮的最大投注
