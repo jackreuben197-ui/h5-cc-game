@@ -12,7 +12,7 @@
 //   repeated int32 cards = 11;                                 // 底牌完整数组 自己操作时能看到,配合delayViewCard
 //   repeated PlayerCards player_cards = 12;                    // 所有用户底牌（非当前操作者看不到，包含已弃牌玩家的，低水保险模式才返回）
 // }
-import { ActionLimit, InsurancePotInvalid, InsurancePotLimit, PlayerCards } from '../../../../protobuf/holdem/define_pb';
+import { ActionLimit, Def, InsurancePotInvalid, InsurancePotLimit, PlayerCards } from '../../../../protobuf/holdem/define_pb';
 
 export class Operator {
     /** 1: NORMAL 2: INSURANCE 3: AGREESECPUB  */
@@ -30,4 +30,6 @@ export class OperatorMine extends Operator {
     public insurancePotLimitList?: InsurancePotLimit.AsObject[];
     public insurancePotInvalidList?: InsurancePotInvalid.AsObject[];
     public playerCardsList: PlayerCards.AsObject[];
+    // 保险触发的轮次（FLOP 时配合 basicInfo.insuranceForceBuyRatio 用作强制保险判断）
+    public round?: Def.RoundMap[keyof Def.RoundMap];
 }
