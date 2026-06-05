@@ -1,6 +1,6 @@
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import roomDataManager from '../../../../data/room/RoomDataManager';
-import { OperatorMine } from '../../../../data/room/texas/model/Operator';
+import { OperatorMine, OpertionType } from '../../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import UIComponentBase from '../../../base/UIComponentBase';
@@ -79,13 +79,21 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
 
     @bindEvent(TexasGameRoomDataPlayerMine.PREPARE_OPERATION_MINE, 'mine')
     private onPrepareActionMine(oper: OperatorMine) {
-        // this.tracelog.debug(oper, this._seatPlayer.seatNo);
         if (!oper) {
             this.opPannelNode.active = false;
             this._opPannel.node.stopAllActions();
             return;
         }
-        this.opPannelNode.active = true;
-        this._opPannel.startOperation(oper, this._mine);
+        switch(oper.opType) {
+        case OpertionType.INSURANCE:
+            this.tracelog.warn('NOT SUPPORTED inusurance op')
+            break;
+        case OpertionType.AGREESECPUB:
+            this.tracelog.warn('NOT SUPPORTED agrees secp op')
+            break;
+        default:
+            this.opPannelNode.active = true;
+            this._opPannel.startOperation(oper, this._mine);
+        } 
     }
 }

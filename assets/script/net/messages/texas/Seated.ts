@@ -19,7 +19,6 @@ export function Seated(data: ServerMessageSeated.AsObject, roomID: number, match
     if (data.status != 0) {
         _plog.debug('坐下失败, status:', data.status, CPErrorCode.ServerErrorDescription(data.status));
         viewManager.showToast(CPErrorCode.ServerErrorDescription(data.status));
-        roomData.mine.currentWalletClubID = 0;
         return;
     }
     // videoMaskId > 4 时客户端统一归为 1
@@ -30,6 +29,7 @@ export function Seated(data: ServerMessageSeated.AsObject, roomID: number, match
     seatData.name = userStore.name;
     seatData.avatar = userStore.avatar;
     seatData.chip = data.chips;
+    seatData.status = data.postStatus;
     // 货币桌,顺带更新下钱包
     if (roomData.basicInfo.bringInType == BringInMode.CURRENCY) {
         UserStoreUtils.updateUserWallet(data.accountChips, roomData.mine.currentWalletClubID);
@@ -49,7 +49,7 @@ export function Seated(data: ServerMessageSeated.AsObject, roomID: number, match
     seatData.keepSeat(data.keepSeatDeadline > 0, data.keepSeatDeadline, Def.KeepSeatReason.KSR_TAKE_SEAT);
     // 我的部分
     mine.storeChips = data.storeChips;
-    mine.totalBringIn = data.totalBringin;
+    mine.totalChips = data.chips;
     mine.deposit = data.deposit;
     // this.game.mainPlayer.chips = data.chips;
     // this.game.mainPlayer.leavelChips = data.accountChips;

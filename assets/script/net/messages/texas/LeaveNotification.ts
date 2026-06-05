@@ -5,16 +5,18 @@ import { GamePlaySubType } from '../../../game/constant/Constants';
 import ProcedureDefine from '../../../game/procedure/ProcedureDefine';
 import ProcedureManager from '../../../game/procedure/ProcedureManager';
 import { ProcedureReturnNavigateParam } from '../../../game/procedure/ProcedureReturn';
+import { i18nMgr } from '../../../i18n/i18nMgr';
 import { Def } from '../../../protobuf/holdem/define_pb';
 import { ServerMessageLeaveNotification } from '../../../protobuf/holdem/recv_th_leave_notification_pb';
+import viewManager from '../../../views/UIViewManager';
 
-const _glog = createLogger('LeaveNotification');
+const _glog = createLogger('LeaveNotification', 'debug');
 
 // LeaveNotification 1114
 export function LeaveNotification(data: ServerMessageLeaveNotification.AsObject, roomID: number, matchID: number) {
     roomDataManager.clearInternalLeave(roomID, matchID);
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
-    _glog.debug('leave', data.reason);
+    _glog.debug('leave', data.reason, roomData);
     switch (data.reason) {
         case Def.LeaveReason.LR_ACTIVE: // 主动退出
             break;
@@ -50,14 +52,12 @@ export function LeaveNotification(data: ServerMessageLeaveNotification.AsObject,
                 ProcedureManager.StartProcedure(ProcedureDefine.Return);
             }
             break;
-        // case Def.LeaveReason.LR_AUTO_EXCEED_MAX_TIMES: // 超过最大自动操作次数限制
-        //     break;
-        // case Def.LeaveReason.LR_FORCE: // 强制退出
-        //     break;
-        // case Def.LeaveReason.LR_OFFLINE: // 离线
-        //     break;
+        case Def.LeaveReason.LR_AUTO_EXCEED_MAX_TIMES: // 超过最大自动操作次数限制
+        case Def.LeaveReason.LR_FORCE: // 强制退出
+        case Def.LeaveReason.LR_OFFLINE: // 离线
         default:
-            ProcedureManager.StartProcedure(ProcedureDefine.Return);
+            viewManager.showToast(i18nMgr.Get(`LeaveReason${data.reason}`), undefined, () => {
+                ProcedureManager.StartProcedure(ProcedureDefine.Return);
+            })
     }
-    //UIComponent.Instance.Toast(i18nMgr.Get(`LeaveReason${data.reason}`));
 }

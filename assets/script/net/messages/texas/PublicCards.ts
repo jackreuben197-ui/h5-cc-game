@@ -1,5 +1,5 @@
 import roomDataManager from '../../../data/room/RoomDataManager';
-import { Operator, OperatorMine } from '../../../data/room/texas/model/Operator';
+import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { AnimateDisplayTypePublicCards } from '../../../game/constant/AnimateDisplayType';
 import { ServerMessagePublicCards } from '../../../protobuf/holdem/recv_th_public_cards_pb';
@@ -25,6 +25,8 @@ export function PublicCards(data: ServerMessagePublicCards.AsObject, roomID: num
         let seatData = roomData.seatsStateManager.getSeatPlayer(operator.seatId);
         if (seatData.mine) {
             let op = new OperatorMine();
+            op.allPot = roomData.potInfo.allPot;
+            op.roundBetEqual = 0
             op.alreadyDelayTImes = operator.delayTimes;
             op.deadlineTImestamp = operator.opDeadline;
             op.leftOpDuration = operator.leftOpTime;
@@ -34,25 +36,27 @@ export function PublicCards(data: ServerMessagePublicCards.AsObject, roomID: num
             op.insurancePotLimitList = operator.insuranceLimitList;
             op.playerCardsList = operator.playerCardsList;
             if (operator.isInsurance) {
-                op.opType = 2;
+                op.opType = OpertionType.INSURANCE;
             } else if (operator.isAgreeSecondPc) {
-                op.opType = 3;
+                op.opType = OpertionType.AGREESECPUB;
             } else {
-                op.opType = 1;
+                op.opType = OpertionType.NORMAL;
             }
             seatData.mine.operator = op;
         } else {
             let op = new Operator();
+            op.allPot = roomData.potInfo.allPot;
+            op.roundBetEqual = 0;
             op.alreadyDelayTImes = operator.delayTimes;
             op.deadlineTImestamp = operator.opDeadline;
             op.leftOpDuration = operator.leftOpTime;
             op.totalOpDuration = roomData.basicInfo.opDuration;
             if (operator.isInsurance) {
-                op.opType = 2;
+                op.opType = OpertionType.INSURANCE;
             } else if (operator.isAgreeSecondPc) {
-                op.opType = 3;
+                op.opType = OpertionType.AGREESECPUB;
             } else {
-                op.opType = 1;
+                op.opType = OpertionType.NORMAL;
             }
             seatData.operator = op;
         }

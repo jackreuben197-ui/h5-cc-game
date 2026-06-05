@@ -7,6 +7,7 @@ import { GameType } from '../../../../../game/constant/LogicTypeConf';
 import ProcedureDefine from '../../../../../game/procedure/ProcedureDefine';
 import ProcedureManager from '../../../../../game/procedure/ProcedureManager';
 import h5MessageManager from '../../../../../H5MsgMgr';
+import { CPErrorCode } from '../../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../../i18n/i18nMgr';
 import { HttpRoomBringInByIDProtocol } from '../../../../../net/https/data/room/HttpRoomBringInByIDProtocol';
 import { HttpRoomBringOutProtocol } from '../../../../../net/https/data/room/HttpRoomBringOutProtocol';
@@ -325,9 +326,14 @@ export default class TexasTableEvent {
         });
     }
 
-    // AddChips 补充筹码
+    /** BringIn 补充筹码 */
     public static async BringIn(player: TexasGameRoomDataPlayerMine): Promise<void> {
         try {
+            const {minAmount, maxAmount} = player.caculateCanBringMinMax();
+            if (maxAmount < minAmount) {
+                viewManager.showToast(CPErrorCode.ServerErrorDescription(20058));
+                return;
+            }
             const [_nouse, response] = await Promise.all([
                 UserStoreUtils.updateUserInfoBasic(),
                 WWW.Instance.CommonAPI<HttpRoomBringInByIDProtocol.ResponseData>({
@@ -419,6 +425,52 @@ export default class TexasTableEvent {
                 action: action,
                 amount: amount,
                 clubId: player.currentWalletClubID
+            }
+        });
+    }
+
+    public static AgreePost(player: TexasGameRoomDataPlayerMine) {
+        ProtocolAgency.Send({
+            code: Code.MSG_D_AGREE_POST,
+            roomID: player.roomData.roomID,
+            matchID: player.roomData.matchID,
+            body: {
+                room: {
+                    roomId: player.roomData.roomID,
+                    matchId: player.roomData.matchID
+                },
+            }
+        });
+    }
+
+    public static CancelKeepSeat(player: TexasGameRoomDataPlayerMine) {
+        ProtocolAgency.Send({
+            code: Code.MSG_D_KEEP_SEAT_ACTIVE,
+            roomID: player.roomData.roomID,
+            matchID: player.roomData.matchID,
+            body: {
+                room: {
+                    roomId: player.roomData.roomID,
+                    matchId: player.roomData.matchID
+                },
+                keep: false,
+                duration: 0,
+            }
+        });
+    }
+
+    public static KeepSeat(player: TexasGameRoomDataPlayerMine, duration: number) {
+        ProtocolAgency.Send({
+            code: Code.MSG_D_KEEP_SEAT_ACTIVE,
+            roomID: player.roomData.roomID,
+            matchID: player.roomData.matchID,
+            body: {
+                room: {
+                    roomId: player.roomData.roomID,
+                    matchId: player.roomData.matchID
+                },
+                keep: true,
+                duration: duration,
             }
         });
     }

@@ -5,4 +5,8 @@ import { ServerMessagePostStatusChange } from '../../../protobuf/holdem/recv_th_
 // PostStatusChange 1117
 export function PostStatusChange(data: ServerMessagePostStatusChange.AsObject, roomID: number, matchID: number) {
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
+    data.changesList.forEach(v => {
+        const seat = roomData.seatsStateManager.getSeatPlayer(v.seatId);
+        seat.status = v.currentPostStatus;
+    })
 }

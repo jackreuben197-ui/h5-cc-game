@@ -126,13 +126,12 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     })
     private seatCountChange(cnt: number) {}
 
-    private _mySeat: number = 0;
-    public get mySeat() {
-        return this._mySeat;
-    }
-
     public setMySeat(s: number, pat: AnimateDisplayTypePosition): TexasGameRoomDataPlayer {
-        if (this._mySeat == s) return this._playerMap.get(s);
+        if (this._parentRoomData.mine.seatNo == s) return this._playerMap.get(s);
+        if (s == 0) {
+            this._parentRoomData.mine.seatNo = 0;
+            return null;
+        }
         //重排
         const arrage = SeatsArrange[this._seatsCount];
         let j = 0;

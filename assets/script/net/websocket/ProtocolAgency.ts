@@ -332,7 +332,7 @@ export default class ProtocolAgency extends cc.Component {
             code != Code.MSG_S_UTIL_ANTI_CHEAT_ROOM_VIDEO &&
             code != Code.MSG_S_NOTIFICATION_ROOM_READY
         ) {
-            this.tracelog.debug('drop code:', ProtocolAgency.getCodeName(code));
+            // this.tracelog.debug('drop code:', ProtocolAgency.getCodeName(code));
             return;
         }
         let roomid_offset = packetHead.FieldOffset.RoomID - packetHead.FieldSize.DataLength;

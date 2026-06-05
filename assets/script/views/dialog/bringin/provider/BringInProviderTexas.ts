@@ -4,8 +4,10 @@ import TexasGameRoomDataBasic, { tableBetInfo } from '../../../../data/room/texa
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import userStore, { ClubWallet, UserStore } from '../../../../data/user/UserStore';
 import { StringHelper } from '../../../../helper/StringHelper';
+import { CPErrorCode } from '../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
 import { RoomInfo } from '../../../../protobuf/holdem/define_pb';
+import viewManager from '../../../UIViewManager';
 import UIBringIn, { BringInTabType } from '../UIBringIn';
 import { BringInCommitFn, BringInProvider } from './BringInProvider';
 
@@ -59,25 +61,23 @@ export class BringInProviderTexas extends BringInProvider {
     }
 
     @bindEvent(TexasGameRoomDataBasic.TABLE_BET_INFO_CHANGE, 'roomBasic')
+    @traceMethod({level: 'debug'})
     private onTableInfoChange(info: tableBetInfo) {
         this._ui._updateBringAreaIntro(
             i18nMgr.Get('UITexas_smallBigBlind'),
             `${StringHelper.GetLongString(info.sb)}/${StringHelper.GetLongString(info.sb * 2)}`
         );
-        let needDeposit = this._data.roomData.basicInfo.deposit;
-        let totalBringIn = 0;
-        needDeposit = needDeposit - this._data.deposit;
-        totalBringIn = this._data.totalBringIn;
-        let step = info.sb * 2;
-        let minAmount = this._data.roomData.basicInfo.curMinRate * step;
-        let autoMin = minAmount;
-        minAmount += needDeposit;
-        const maxAmount = this._data.roomData.basicInfo.curMaxRate * step - totalBringIn;
+        const {minAmount, maxAmount, step, needDeposit} = this._data.caculateCanBringMinMax();
         if (maxAmount < minAmount) {
-            // @TODO 显示不能带入
+            //外层应该已经拦截了
+            // 显示不能带入
+            this.tracelog.warn('cant bring more', 'canMax', maxAmount, 'min', minAmount);
+            viewManager.showToast(CPErrorCode.ServerErrorDescription(20058));
+            // 这次操作是在UIBringIn的initialize里，所以需要下一帧关闭;
+            this._ui.scheduleOnce(this._ui.close);
             return;
         }
-        this._ui._setupBringInSider(minAmount, maxAmount, step, needDeposit > 0, this._needAutoBringIn, autoMin);
+        this._ui._setupBringInSider(minAmount, maxAmount, step, needDeposit, this._needAutoBringIn, minAmount);
     }
 
     @bindEvent(UserStore.CLUBS_WALLET_CHANGE, 'user')

@@ -11,9 +11,9 @@ const _plog = createLogger('ServerMessageEnterRoom');
 export function BringIn(data: ServerMessageBringIn.AsObject, roomID: number, matchID: number) {
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     if (data.status != 0) {
-        _plog.error('bring err', data.status);
+        _plog.error('bring err', data.status, 'deposit', roomData.basicInfo.deposit, 'min', roomData.basicInfo.curMinRate * roomData.basicInfo.sbante.sb * 2, 'max', roomData.basicInfo.curMaxRate * roomData.basicInfo.sbante.sb * 2, 'ret', data.totalChips, 'mine', roomData.mine.totalChips );
         viewManager.showToast(CPErrorCode.ServerErrorDescription(data.status));
-        // 你没有选中任何俱乐部
-        roomData.mine.currentWalletClubID = 0;
+        return;
     }
+    roomData.mine.totalChips = data.totalChips;
 }

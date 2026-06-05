@@ -1,4 +1,5 @@
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../../core/decorator/DataBind';
+import { traceMethod } from '../../../../../core/decorator/LogTrace';
 import TexasGameRoomDataSetting from '../../../../../data/room/texas/TexasGameRoomDataSetting';
 
 const { ccclass, property, menu } = cc._decorator;
@@ -10,6 +11,8 @@ export default class BetButton extends cc.Component {
     showLabel: cc.Label = null;
     @property({ type: cc.Label, displayName: '金额标签(如 666K)' })
     amountLabel: cc.Label = null;
+    @property({ type: cc.Button, displayName: '按钮实体' })
+    realButton: cc.Button = null!;
     // 核心修改：回调里的 amount 改为 number 类型
     private onClickCallback: (amount: number, ratioStr: string) => void = null;
     private _ratioStr: string = '';
@@ -17,7 +20,7 @@ export default class BetButton extends cc.Component {
     private _setting: TexasGameRoomDataSetting;
 
     onLoad() {
-        this.node.on(cc.Node.EventType.TOUCH_END, this.onButtonClicked, this);
+        this.realButton.node.on('click', this.onButtonClicked, this);
     }
 
     /**
@@ -29,6 +32,7 @@ export default class BetButton extends cc.Component {
     public initData(ratioStr: string, amountNum: number, settings: TexasGameRoomDataSetting, callback: (amount: number, ratio: string) => void) {
         this._ratioStr = ratioStr;
         this._amountNum = amountNum;
+        this._setting = settings;
         this.onClickCallback = callback;
         // 1. 刷新比例文本
         if (this.showLabel) this.showLabel.string = ratioStr;
@@ -36,6 +40,7 @@ export default class BetButton extends cc.Component {
     }
 
     private _bindAndRefresh() {
+        if (!this._setting) return;
         autoBindEvents(this, { setting: this._setting });
     }
 

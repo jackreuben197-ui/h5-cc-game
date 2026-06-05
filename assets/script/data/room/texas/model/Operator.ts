@@ -14,13 +14,21 @@
 // }
 import { ActionLimit, InsurancePotInvalid, InsurancePotLimit, PlayerCards } from '../../../../protobuf/holdem/define_pb';
 
+export enum OpertionType {
+    NORMAL = 1,
+    INSURANCE = 2,
+    AGREESECPUB = 3,
+}
+
 export class Operator {
     /** 1: NORMAL 2: INSURANCE 3: AGREESECPUB  */
-    public opType: number;
+    public opType: OpertionType;
     public leftOpDuration: number;
     public alreadyDelayTImes: number;
     public deadlineTImestamp: number;
     public totalOpDuration: number; // 房间配置
+    public allPot: number;
+    public roundBetEqual: number; // 本轮CALL平的RoundBet
 }
 
 export class OperatorMine extends Operator {
