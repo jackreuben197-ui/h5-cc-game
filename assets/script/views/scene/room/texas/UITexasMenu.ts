@@ -1,6 +1,9 @@
+import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
+import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
+import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import { SquidMode } from '../../../../game/constant/Squid';
 import h5MessageManager from '../../../../H5MsgMgr';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
@@ -57,15 +60,32 @@ export default class UITexasMenu extends cc.Component {
     initData(roomID: number, matchID: number) {
         this._roomData = roomDataManager.getRoomData(roomID, matchID);
         this.fadeOut(false);
-        this._updateDisplay();
-        //this.centerMenuContent();
+        this._bindEventsAndRefresh();
+    }
+    
+    protected onEnable(): void {
+        this._bindEventsAndRefresh();
     }
 
-    private _updateDisplay() {
-        this.btnInsure.node.active = this._roomData.basicInfo.hasInsurance;
-        //@TODO
+    protected onDisable(): void {
+        unBindEventsAll(this);
+    }
+
+    /**
+     * 托管全自动事件激活绑定
+     */
+    private _bindEventsAndRefresh() {
+        // 统一激活绑定，注入强类型 tag 推导过滤机制
+        if (!this._roomData ) return;
+        autoBindEvents(this, { mine: this._roomData.mine});
+    }
+
+    //(优先于seated执行保证展示正确)
+    @bindEvent(TexasGameRoomDataPlayerMine.SEATNO_CHANGED, 'mine')
+    private onUpdateSeated(seatNo: number) {
         const isDissolve = false; //gc._isRoomManager && gc._isHasDisbandRoomPrivileges;
-        if (this._roomData.mine.seatNo > 0) {
+        this.btnInsure.node.active = this._roomData.basicInfo.hasInsurance;
+        if (seatNo > 0) {
             this.btnBet.node.active = true;
             this.btnHalfLeave.node.active = true;
             this.btnStand.node.active = true;
@@ -116,17 +136,15 @@ export default class UITexasMenu extends cc.Component {
 
     //面板移出
     public fadeOut(animation: boolean = true) {
-        let view_width = 1242;
-        this.$panel.width = view_width;
         if (animation) {
             cc.tween(this.$panel)
-                .to(0.25, { x: -view_width })
+                .to(0.25, { x: -696 })
                 .call(() => {
                     this.node.active = false;
                 })
                 .start();
         } else {
-            this.$panel.x = -view_width;
+            this.$panel.x = -696;
             this.node.active = false;
         }
         this.$black.active = false;
@@ -149,7 +167,11 @@ export default class UITexasMenu extends cc.Component {
         const mine = this._roomData.seatsStateManager.getSeatPlayer(this._roomData.mine.seatNo);
         if (this._roomData.basicInfo.hasSquid && this._roomData.basicInfo.squidStatusEnabled && mine.squidIn) {
             if (this._roomData.basicInfo.squidMode === SquidMode.NORMAL) {
-                TexasTableEvent.Standup(this._roomData.mine);
+                if (mine.keepSeat) {
+                    TexasTableEvent.CancelKeepSeat(this._roomData.mine);
+                }else{
+                    TexasTableEvent.Standup(this._roomData.mine);
+                }
                 return;
             }
             if (this._roomData.basicInfo.squidMode === SquidMode.XZ) {
@@ -159,7 +181,13 @@ export default class UITexasMenu extends cc.Component {
                         content: i18nMgr.Get('UISquid_Tips3'),
                         commit: i18nMgr.Get('adaptation10012'),
                         cancel: i18nMgr.Get('adaptation10013'),
-                        commit_click: () => TexasTableEvent.Standup(this._roomData.mine)
+                        commit_click: () => {
+                            if (mine.keepSeat) {
+                                TexasTableEvent.CancelKeepSeat(this._roomData.mine);
+                            }else{
+                                TexasTableEvent.Standup(this._roomData.mine);
+                            }
+                        }
                     });
                 } else {
                     viewManager.openDialog('ConfirmOrNotice', {
@@ -167,7 +195,13 @@ export default class UITexasMenu extends cc.Component {
                         content: i18nMgr.Get('UIDelayLeaveTips'),
                         commit: i18nMgr.Get('UILeave'),
                         cancel: i18nMgr.Get('UIPause_sdXLZk7S'),
-                        commit_click: () => TexasTableEvent.Standup(this._roomData.mine)
+                        commit_click: () => {
+                            if (mine.keepSeat) {
+                                TexasTableEvent.CancelKeepSeat(this._roomData.mine);
+                            }else{
+                                TexasTableEvent.Standup(this._roomData.mine);
+                            }
+                        }
                     });
                 }
                 return;

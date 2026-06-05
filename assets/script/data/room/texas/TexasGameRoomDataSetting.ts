@@ -19,6 +19,6 @@ export default class TexasGameRoomDataSetting extends cc.EventTarget {
         let base = this._roomData.basicInfo.sbante.sb * 2;
         let ratio = this.showBB ? base : 100;
         let ex: string = this.showBB ? 'BB' : '';
-        return `${StringHelper.GetDecimalN(value / ratio)}${ex}`;
+        return `${StringHelper.GetDecimalNWithKM(value / ratio)}${ex}`;
     }
 }

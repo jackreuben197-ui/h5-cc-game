@@ -141,19 +141,19 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     // =========================================================================
     // 扑克核心桌面业务方法层实现
     // =========================================================================
-    // @pureEvent(TexasGameRoomDataPlayer.EMPTY_SEAT)
-    // public emptySeat() {
-    //     this.muteEvents();
-    //     this.userID = 0;
-    //     this.clubID = 0;
-    //     this.chip = 0;
-    //     this.avatar = '';
-    //     this.name = '';
-    //     this.mine = null;
-    //     this.cards = [];
-    //     this.unmuteEvents();
-    //     // this.emit(TexasGameRoomDataPlayer.EMPTY_SEAT);
-    // }
+    public clearData() {
+        this.muteEvents();
+        this.userID = 0;
+        this.clubID = 0;
+        this.chip = 0;
+        this.avatar = '';
+        this.name = '';
+        this.mine = null;
+        this.cards = [];
+        this.status = undefined;
+        this.unmuteEvents();
+        // this.emit(TexasGameRoomDataPlayer.EMPTY_SEAT);
+    }
 
     @pureEvent(TexasGameRoomDataPlayer.WINNER)
     public claimWin() {}

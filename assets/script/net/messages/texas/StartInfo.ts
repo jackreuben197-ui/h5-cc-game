@@ -1,5 +1,6 @@
+import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
-import { Operator, OperatorMine } from '../../../data/room/texas/model/Operator';
+import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import {
     AnimateDisplayTypeAction,
@@ -8,13 +9,16 @@ import {
     AnimateDisplayTypePublicCards,
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
-import { PlayerStartInfo } from '../../../protobuf/holdem/define_pb';
+import { Def, PlayerStartInfo } from '../../../protobuf/holdem/define_pb';
 import { ServerMessageStartInfo } from '../../../protobuf/holdem/recv_th_start_info_pb';
+
+const _plog = createLogger('ServerMessageStartInfo');
 
 // StartInfo 1103
 export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number, matchID: number) {
     let roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     const defaultHandCards = new Array(roomData.basicInfo.handCardNum).fill(0);
+    _plog.debug(data);
     if (data.handInfo) {
         roomData.basicInfo.handNum = data.handInfo.handNum;
         roomData.potInfo.allPot = data.handInfo.allBet;
@@ -31,6 +35,9 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
     for (let i = 0; i < data.handInfo.dealOrderList.length; i++) {
         const seatData = roomData.seatsStateManager.getSeatPlayer(data.handInfo.dealOrderList[i]);
         const player = pm.get(data.handInfo.dealOrderList[i]);
+        //@PROBLEM(S) 这是自己修改状态服务端没给
+        seatData.status = Def.CanPlayStatus.NORMAL;
+        //@PROBLEM(E)
         seatData.chip = player.chip;
         seatData.setRoundBet(player.roundBet, AnimateDisplayTypeRoundBet.Static);
         seatData.handBet = 0;
@@ -38,7 +45,12 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
         if (player.cardsList.length == 0) {
             seatData.setCards([...defaultHandCards], AnimateDisplayTypeCards.Deal, i);
         } else {
-            seatData.setCards(player.cardsList, AnimateDisplayTypeCards.Deal, i);
+            //如果是延迟看牌也先不传信息,给服务端修正
+            if (roomData.basicInfo.delaySeeCard) {
+                seatData.setCards([...defaultHandCards], AnimateDisplayTypeCards.Deal, i);
+            }else{
+                seatData.setCards(player.cardsList, AnimateDisplayTypeCards.Deal, i);
+            }
         }
         seatData.setAction(player.action, AnimateDisplayTypeAction.Static);
         seatData.deposit = player.deposit;
@@ -51,6 +63,8 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
         let seatData = roomData.seatsStateManager.getSeatPlayer(operator.seatId);
         if (seatData.mine) {
             let op = new OperatorMine();
+            op.allPot = data.handInfo.allBet;
+            op.roundBetEqual = data.handInfo.roundBet;
             op.alreadyDelayTImes = operator.delayTimes;
             op.deadlineTImestamp = operator.opDeadline;
             op.leftOpDuration = operator.leftOpTime;
@@ -60,25 +74,27 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
             op.insurancePotLimitList = operator.insuranceLimitList;
             op.playerCardsList = operator.playerCardsList;
             if (operator.isInsurance) {
-                op.opType = 2;
+                op.opType = OpertionType.INSURANCE;
             } else if (operator.isAgreeSecondPc) {
-                op.opType = 3;
+                op.opType = OpertionType.AGREESECPUB;
             } else {
-                op.opType = 1;
+                op.opType = OpertionType.NORMAL;
             }
             seatData.mine.operator = op;
         } else {
             let op = new Operator();
+            op.allPot = data.handInfo.allBet;
+            op.roundBetEqual = data.handInfo.roundBet;
             op.alreadyDelayTImes = operator.delayTimes;
             op.deadlineTImestamp = operator.opDeadline;
             op.leftOpDuration = operator.leftOpTime;
             op.totalOpDuration = roomData.basicInfo.opDuration;
             if (operator.isInsurance) {
-                op.opType = 2;
+                op.opType = OpertionType.INSURANCE;
             } else if (operator.isAgreeSecondPc) {
-                op.opType = 3;
+                op.opType = OpertionType.AGREESECPUB;
             } else {
-                op.opType = 1;
+                op.opType = OpertionType.NORMAL;
             }
             seatData.operator = op;
         }

@@ -1,9 +1,10 @@
-import { autoBindEvents, bindEvent } from '../../../../core/decorator/DataBind';
+import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import roomDataManager from '../../../../data/room/RoomDataManager';
-import { OperatorMine } from '../../../../data/room/texas/model/Operator';
+import { OperatorMine, OpertionType } from '../../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import UIComponentBase from '../../../base/UIComponentBase';
+import Operation from './Operation';
 import viewManager from '../../../UIViewManager';
 import PotsInfo from './PotsInfo';
 import PublicCardsInfo from './PublicCardsInfo';
@@ -33,6 +34,9 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private sideMenu: cc.Button = null!;
     @property(cc.Node)
     private sideMenuNode: cc.Node = null;
+    @property({ type: cc.Node, displayName: '操作面板' })
+    private opPannelNode: cc.Node = null!;
+    private _opPannel: Operation = null!;
     private _sideMenuTexasMenu: UITexasMenu = null;
     private _onSideMenuClicked: () => void = null!;
     private _mine: TexasGameRoomDataPlayerMine = null;
@@ -44,6 +48,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         };
         this.sideMenu.node.on('click', this._onSideMenuClicked, this);
         this._sideMenuTexasMenu = this.sideMenuNode.getComponent(UITexasMenu);
+        this._opPannel = this.opPannelNode.children[0].getComponent(Operation);
     }
 
     initialize(param: UIRoomTexasEnterParam) {
@@ -57,21 +62,43 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this._bindEventsAndRefresh();
     }
 
+    protected onEnable(): void {
+        this._bindEventsAndRefresh();
+    }
+
+    protected onDisable(): void {
+        unBindEventsAll(this);
+    }
+
+    /**
+     * 托管全自动事件激活绑定
+     */
     private _bindEventsAndRefresh() {
-        // 监听 mine 上"我"的操作分发：opType=2 → 保险面板; opType=3 → 二套牌(暂未实现)
-        // autoBindEvents 内置重绑保护账本, 场景切回来再次 initialize 也不会泄漏。
+        // 统一激活绑定，注入强类型 tag 推导过滤机制
+        if (!this._mine) return;
         autoBindEvents(this, { mine: this._mine });
     }
 
-    // 由 @bindEvent 装饰器登记, 运行时由 autoBindEvents 挂到 mine.on(PREPARE_OPERATION_MINE)。
-    // IDE 的"查找引用"看不到调用点是正常现象 —— SeatPlayer / PotsInfo 等组件里所有 @bindEvent 回调都一样。
     @bindEvent(TexasGameRoomDataPlayerMine.PREPARE_OPERATION_MINE, 'mine')
-    private onMineOperator(op: OperatorMine) {
-        if (op && op.opType === 2) {
-            if (this._insuranceOpen) return;
-            this._insuranceOpen = true;
-            viewManager.openDialog('Insurance', { player: this._mine });
+    private onPrepareActionMine(oper: OperatorMine) {
+        if (!oper) {
+            this.opPannelNode.active = false;
+            this._opPannel.node.stopAllActions();
             return;
+        }
+        switch (oper.opType) {
+            case OpertionType.INSURANCE:
+                if (this._insuranceOpen) return;
+                this._insuranceOpen = true;
+                viewManager.openDialog('Insurance', { player: this._mine });
+                return;
+                break;
+            case OpertionType.AGREESECPUB:
+                this.tracelog.warn('NOT SUPPORTED agrees secp op')
+                break;
+            default:
+                this.opPannelNode.active = true;
+                this._opPannel.startOperation(oper, this._mine);
         }
         if (this._insuranceOpen) {
             this._insuranceOpen = false;

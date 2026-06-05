@@ -20,7 +20,7 @@ export interface IProtocolRpc {
 }
 
 @ccclass
-@traceClass()
+@traceClass({ level: 'debug' })
 export default class ProtocolAgency extends cc.Component {
     private static _codeNameMap: Record<number, string> | null = null;
     // 序列化的时候，如果找不到类定义用这个
@@ -332,7 +332,7 @@ export default class ProtocolAgency extends cc.Component {
             code != Code.MSG_S_UTIL_ANTI_CHEAT_ROOM_VIDEO &&
             code != Code.MSG_S_NOTIFICATION_ROOM_READY
         ) {
-            this.tracelog.debug('drop code:', ProtocolAgency.getCodeName(code));
+            // this.tracelog.debug('drop code:', ProtocolAgency.getCodeName(code));
             return;
         }
         let roomid_offset = packetHead.FieldOffset.RoomID - packetHead.FieldSize.DataLength;

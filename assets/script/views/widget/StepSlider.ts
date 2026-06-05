@@ -82,6 +82,10 @@ export default class StepSlider extends cc.Component {
         }
     }
 
+    public get progress() {
+        return this.progressBar.progress;
+    }
+
     public setProgress(progress: number) {
         let p = Math.min(1, Math.max(0, progress));
         if (this.step > 0) {
