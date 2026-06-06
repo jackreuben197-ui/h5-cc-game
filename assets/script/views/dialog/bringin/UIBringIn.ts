@@ -276,7 +276,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         this.bringInAreaIntroContent.string = endText;
     }
 
-    @traceMethod({level: 'debug'})
+    @traceMethod()
     public _setupBringInSider(minAmount: number, maxAmount: number, stepAmount: number, showTip: boolean, needAutoBringIn: boolean, autoMin?: number) {
         const rangeAmount = maxAmount - minAmount;
         let step = 1;
@@ -287,7 +287,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
                 step = 0;
             }
         }
-        this.tracelog.debug('bring in slider', 'min', minAmount, 'max', maxAmount, 'step', stepAmount, 'mystep',  step, rangeAmount)
+        this.tracelog.debug('bring in slider', 'min', minAmount, 'max', maxAmount, 'step', stepAmount, 'mystep', step, rangeAmount);
         this.autoBringinArea.active = needAutoBringIn;
         this.bringInSlider.step = Math.round(step * 10000) / 10000;
         this.bringInSlider.onValueChanged = (progress: number) => {

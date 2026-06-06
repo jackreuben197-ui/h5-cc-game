@@ -84,16 +84,16 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
             this._opPannel.node.stopAllActions();
             return;
         }
-        switch(oper.opType) {
-        case OpertionType.INSURANCE:
-            this.tracelog.warn('NOT SUPPORTED inusurance op')
-            break;
-        case OpertionType.AGREESECPUB:
-            this.tracelog.warn('NOT SUPPORTED agrees secp op')
-            break;
-        default:
-            this.opPannelNode.active = true;
-            this._opPannel.startOperation(oper, this._mine);
-        } 
+        switch (oper.opType) {
+            case OpertionType.INSURANCE:
+                this.tracelog.warn('NOT SUPPORTED inusurance op');
+                break;
+            case OpertionType.AGREESECPUB:
+                this.tracelog.warn('NOT SUPPORTED agrees secp op');
+                break;
+            default:
+                this.opPannelNode.active = true;
+                this._opPannel.startOperation(oper, this._mine);
+        }
     }
 }

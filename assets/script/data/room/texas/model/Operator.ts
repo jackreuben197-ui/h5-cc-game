@@ -17,7 +17,7 @@ import { ActionLimit, InsurancePotInvalid, InsurancePotLimit, PlayerCards } from
 export enum OpertionType {
     NORMAL = 1,
     INSURANCE = 2,
-    AGREESECPUB = 3,
+    AGREESECPUB = 3
 }
 
 export class Operator {

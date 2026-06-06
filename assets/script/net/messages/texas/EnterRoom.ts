@@ -11,11 +11,11 @@ import {
     AnimateDisplayTypePublicCards,
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
-import { Def } from '../../../protobuf/holdem/define_pb';
+import { Def, Player } from '../../../protobuf/holdem/define_pb';
 import { ServerMessageEnterRoom } from '../../../protobuf/holdem/req_th_enter_room_pb';
 import viewManager from '../../../views/UIViewManager';
 
-const _plog = createLogger('ServerMessageEnterRoom', 'debug');
+const _plog = createLogger('ServerMessageEnterRoom');
 
 // EnterRoom 1002
 export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: number, matchID: number): Promise<void> {
@@ -32,6 +32,9 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         _plog.error('no store room data');
         return;
     }
+    const myseat = data.myInfo.seatId;
+    const seatCount = roomData.seatsStateManager.seatsCount;
+    const myOp = myseat > 0 && data.operatorList.filter(v => v.seatId == myseat && !v.isAgreeSecondPc && !v.isInsurance).length > 0;
     const defaultHandCards = new Array(roomData.basicInfo.handCardNum).fill(0);
     if (data.status == 0) {
         roomData.basicInfo.sbante = { sb: data.roomInfo.smallBlind, ante: data.roomInfo.ante };
@@ -48,112 +51,80 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             roomData.publicCards.publicCards = data.handInfo.publicCardsList;
             roomData.publicCards.secondPublicCards = data.handInfo.secondPublicCardsList;
         }
-        data.playersList.forEach(player => {
-            let seatData = roomData.seatsStateManager.getSeatPlayer(player.seatId);
-            //操作重置
-            seatData.operator = null;
-            //坐下
-            seatData.seated = true;
-            seatData.userID = player.userRid;
-            seatData.setAction(player.action, AnimateDisplayTypeAction.Static);
-            // 延迟看牌做个修正,目前服务端逻辑异常
-            if (data.myInfo?.seatId > 0 && player.cardsList.length > 0 && !(data.gameStatus >= Def.GameStatus.HAND_PREFLOP && player.roundActioned)) {
-                seatData.setCards([...defaultHandCards], AnimateDisplayTypeCards.Static);
-            }else{
-                seatData.setCards(player.cardsList, AnimateDisplayTypeCards.Static);
+        const playerMap: Map<number, Player.AsObject> = new Map();
+        data.playersList.map(v => playerMap.set(v.seatId, v));
+        for (let seat = 1; seat <= seatCount; seat++) {
+            let seatData = roomData.seatsStateManager.getSeatPlayer(seat);
+            let player = playerMap.get(seat);
+            if (player) {
+                //操作重置
+                seatData.operator = null;
+                //坐下
+                seatData.seated = true;
+                seatData.userID = player.userRid;
+                seatData.setAction(player.action, AnimateDisplayTypeAction.Static);
+                // 延迟看牌做个修正,目前服务端逻辑异常
+                // 非自己操作 && 手牌有内容 && 起手轮前且未行动过 && 非ALLIN
+                if (myseat == player.seatId) {
+                    if (
+                        data.roomInfo.delaySeeCard &&
+                        !myOp &&
+                        player.cardsList.length > 0 &&
+                        data.gameStatus <= Def.GameStatus.HAND_PREFLOP &&
+                        !player.roundActioned &&
+                        player.action != Def.Action.ALLIN
+                    ) {
+                        seatData.setCards([...defaultHandCards], AnimateDisplayTypeCards.Static);
+                    } else {
+                        seatData.setCards(player.cardsList, AnimateDisplayTypeCards.Static);
+                    }
+                } else {
+                    seatData.setCards(player.cardsList, AnimateDisplayTypeCards.Static);
+                }
+                seatData.name = player.name;
+                seatData.avatar = player.avatar;
+                seatData.chip = player.chip;
+                seatData.handBet = player.handBet;
+                seatData.setRoundBet(player.roundBet, AnimateDisplayTypeRoundBet.Static);
+                seatData.status = player.status;
+                seatData.keepSeat(player.keepSeatDeadline > 0, player.keepSeatDeadline, player.keepSeatReason);
+                seatData.deposit = player.deposit;
+                seatData.buyInsuranceStep = player.buyInsuranceStep;
+                seatData.buyInsuranceList = player.buyInsuranceList;
+                seatData.roundActioned = player.roundActioned;
+                seatData.isAuto = player.isAutoop;
+                //MTT
+                seatData.mttHunterKill = player.hunterKill;
+                seatData.mttHunterKillAward = player.hunterKillAward;
+                seatData.mttHunterKillAwardOther = player.hunterKillAwardOther;
+                seatData.mttHunterHeadValue = player.hunterHeadValue;
+                //vip
+                seatData.vip = player.vip > 0;
+                seatData.subscriptionID = player.userSubscriptionId;
+                //mushroom
+                seatData.inMushroom = player.inMushroom;
+                seatData.costMushroom = player.costMushroom;
+                //squid
+                seatData.squidIn = player.inSquid;
+                seatData.squidEscaped = player.squidEscaped;
+                seatData.squidCount = player.squidCount;
+                //视频
+                seatData.videoMaskId = player.videoMaskId;
+                //获胜卡牌
+                if (player.winCardsInfo) {
+                    seatData.winPercent100 = Math.min(10000, Math.round((player.winCardsInfo.wcCount * 10000) / player.winCardsInfo.lcCount));
+                }
+            } else {
+                seatData.seated = false;
+                seatData.clearData;
             }
-            seatData.setCards(player.cardsList, AnimateDisplayTypeCards.Static);
-            seatData.name = player.name;
-            seatData.avatar = player.avatar;
-            seatData.chip = player.chip;
-            seatData.handBet = player.handBet;
-            seatData.setRoundBet(player.roundBet, AnimateDisplayTypeRoundBet.Static);
-            seatData.status = player.status;
-            seatData.keepSeat(player.keepSeatDeadline > 0, player.keepSeatDeadline, player.keepSeatReason);
-            seatData.deposit = player.deposit;
-            seatData.buyInsuranceStep = player.buyInsuranceStep;
-            seatData.buyInsuranceList = player.buyInsuranceList;
-            seatData.roundActioned = player.roundActioned;
-            seatData.isAuto = player.isAutoop;
-            //MTT
-            seatData.mttHunterKill = player.hunterKill;
-            seatData.mttHunterKillAward = player.hunterKillAward;
-            seatData.mttHunterKillAwardOther = player.hunterKillAwardOther;
-            seatData.mttHunterHeadValue = player.hunterHeadValue;
-            //vip
-            seatData.vip = player.vip > 0;
-            seatData.subscriptionID = player.userSubscriptionId;
-            //mushroom
-            seatData.inMushroom = player.inMushroom;
-            seatData.costMushroom = player.costMushroom;
-            //squid
-            seatData.squidIn = player.inSquid;
-            seatData.squidEscaped = player.squidEscaped;
-            seatData.squidCount = player.squidCount;
-            //视频
-            seatData.videoMaskId = player.videoMaskId;
-            //获胜卡牌
-            if (player.winCardsInfo) {
-                seatData.winPercent100 = Math.min(10000, Math.round((player.winCardsInfo.wcCount * 10000) / player.winCardsInfo.lcCount));
-            }
-        });
+        }
         if (data.myInfo) {
             roomData.seatsStateManager.setMySeat(data.myInfo.seatId, AnimateDisplayTypePosition.Static);
             roomData.mine.storeChips = data.myInfo.storeChips;
             roomData.mine.totalChips = data.myInfo.totalChips;
+            roomData.mine.caculateHandValueTypeAndHighlight();
         }
-        // setTimeout(() => {
-        //     let seat = roomData.seatsStateManager.getSeatPlayer(4);
-        //     if (seat.seated) {
-        //         seat.seated = false;
-        //     }else{
-        //         seat = roomData.seatsStateManager.setMySeat(4, AnimateDisplayTypePosition.ToTarget);
-        //         seat.setCards([0, 0], AnimateDisplayTypeCards.Static, 0);
-        //         seat.setAction(Def.Action.ALLIN, AnimateDisplayTypeAction.Done);
-        //         seat.userID = userStore.userID;
-        //         seat.name = userStore.name;
-        //         seat.avatar= userStore.avatar;
-        //     }
-        // }, 3000);
-        // setTimeout(() => {
-        //     let seat = roomData.seatsStateManager.getSeatPlayer(4);
-        //     if (seat.seated) {
-        //         seat.seated = false;
-        //     }else{
-        //         seat = roomData.seatsStateManager.setMySeat(4, AnimateDisplayTypePosition.ToTarget);
-        //         seat.setCards([0, 0], AnimateDisplayTypeCards.Static, 0);
-        //         seat.setAction(Def.Action.ALLIN, AnimateDisplayTypeAction.Done);
-        //         seat.userID = userStore.userID;
-        //         seat.name = userStore.name;
-        //         seat.avatar= userStore.avatar;
-        //     }
-        // }, 6000);
-        // setTimeout(() => {
-        //     let seat = roomData.seatsStateManager.getSeatPlayer(6);
-        //     if (seat.seated) {
-        //         seat.seated = false;
-        //     }else{
-        //         seat.seated = true;
-        //         seat.setCards([0, 0], AnimateDisplayTypeCards.Static, 0);
-        //         seat.setAction(Def.Action.ALLIN, AnimateDisplayTypeAction.Done);
-        //         seat.userID = userStore.userID;
-        //         seat.name = userStore.name;
-        //         seat.avatar= userStore.avatar;
-        //     }
-        // }, 9000);
-        //  setTimeout(() => {
-        //     let seat = roomData.seatsStateManager.getSeatPlayer(6);
-        //     if (seat.seated) {
-        //         seat.seated = false;
-        //     }else{
-        //         seat.seated = true;
-        //         seat.setCards([0, 0], AnimateDisplayTypeCards.Static, 0);
-        //         seat.setAction(Def.Action.ALLIN, AnimateDisplayTypeAction.Done);
-        //         seat.userID = userStore.userID;
-        //         seat.name = userStore.name;
-        //         seat.avatar= userStore.avatar;
-        //     }
-        // }, 12000);
         data.operatorList.forEach(operator => {
             let seatData = roomData.seatsStateManager.getSeatPlayer(operator.seatId);
             if (seatData.mine) {

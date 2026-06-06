@@ -61,13 +61,13 @@ export class BringInProviderTexas extends BringInProvider {
     }
 
     @bindEvent(TexasGameRoomDataBasic.TABLE_BET_INFO_CHANGE, 'roomBasic')
-    @traceMethod({level: 'debug'})
+    @traceMethod()
     private onTableInfoChange(info: tableBetInfo) {
         this._ui._updateBringAreaIntro(
             i18nMgr.Get('UITexas_smallBigBlind'),
             `${StringHelper.GetLongString(info.sb)}/${StringHelper.GetLongString(info.sb * 2)}`
         );
-        const {minAmount, maxAmount, step, needDeposit} = this._data.caculateCanBringMinMax();
+        const { minAmount, maxAmount, step, needDeposit } = this._data.caculateCanBringMinMax();
         if (maxAmount < minAmount) {
             //外层应该已经拦截了
             // 显示不能带入

@@ -58,6 +58,6 @@ export function LeaveNotification(data: ServerMessageLeaveNotification.AsObject,
         default:
             viewManager.showToast(i18nMgr.Get(`LeaveReason${data.reason}`), undefined, () => {
                 ProcedureManager.StartProcedure(ProcedureDefine.Return);
-            })
+            });
     }
 }

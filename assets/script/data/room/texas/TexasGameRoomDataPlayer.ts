@@ -107,12 +107,6 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
         this._parentRoomData = roomData;
     }
 
-    public get delayViewCard() {
-        return this._parentRoomData.basicInfo.delaySeeCard;
-    }
-    public get directlyViewCard() {
-        return this._parentRoomData.basicInfo.gameStatus >= Def.GameStatus.HAND_PREFLOP && this.roundActioned;
-    }
     @observable(TexasGameRoomDataPlayer.SEATED_CHANGE, {
         initParams() {
             return [this.mine];
@@ -166,6 +160,9 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
             this.setCards([], AnimateDisplayTypeCards.Static, 0);
             this.roundActioned = false;
             this.winPercent100 = -1;
+            if (this.mine) {
+                this.mine.handClear();
+            }
         }
     }
 

@@ -47,6 +47,7 @@ export function ActionAll(data: ServerMessageActionAll.AsObject, roomID: number,
             }
             if (operator.cardsList.length > 0) {
                 seatData.setCards(operator.cardsList, AnimateDisplayTypeCards.ShowCards);
+                roomData.mine.caculateHandValueTypeAndHighlight();
             }
             seatData.mine.operator = op;
         } else {

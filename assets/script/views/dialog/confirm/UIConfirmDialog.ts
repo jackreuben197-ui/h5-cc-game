@@ -71,21 +71,21 @@ export default class UIConfirmDialog extends UIComponentBaseDialog<UIConfirmDial
 
     refreshUI(data: UIConfirmDialogParam) {
         switch (data.diaolgType) {
-        case UIComfirmDialogType.NONE:
-            this.$cancel.node.active = false;
-            this.$commit.node.active = false;
-            this.$ok.node.active = false;
-            break;
-        case UIComfirmDialogType.CONFIRM:
-            this.$cancel.node.active = true;
-            this.$commit.node.active = true;
-            this.$ok.node.active = false;
-            break;
-        default:
-            this.$cancel.node.active = false;
-            this.$commit.node.active = false;
-            this.$ok.node.active = true;
-            break;
+            case UIComfirmDialogType.NONE:
+                this.$cancel.node.active = false;
+                this.$commit.node.active = false;
+                this.$ok.node.active = false;
+                break;
+            case UIComfirmDialogType.CONFIRM:
+                this.$cancel.node.active = true;
+                this.$commit.node.active = true;
+                this.$ok.node.active = false;
+                break;
+            default:
+                this.$cancel.node.active = false;
+                this.$commit.node.active = false;
+                this.$ok.node.active = true;
+                break;
         }
         if (data.title?.length > 0) {
             this.cc_RichText$title.node.active = true;

@@ -62,7 +62,7 @@ export default class UITexasMenu extends cc.Component {
         this.fadeOut(false);
         this._bindEventsAndRefresh();
     }
-    
+
     protected onEnable(): void {
         this._bindEventsAndRefresh();
     }
@@ -76,8 +76,8 @@ export default class UITexasMenu extends cc.Component {
      */
     private _bindEventsAndRefresh() {
         // 统一激活绑定，注入强类型 tag 推导过滤机制
-        if (!this._roomData ) return;
-        autoBindEvents(this, { mine: this._roomData.mine});
+        if (!this._roomData) return;
+        autoBindEvents(this, { mine: this._roomData.mine });
     }
 
     //(优先于seated执行保证展示正确)
@@ -169,7 +169,7 @@ export default class UITexasMenu extends cc.Component {
             if (this._roomData.basicInfo.squidMode === SquidMode.NORMAL) {
                 if (mine.keepSeat) {
                     TexasTableEvent.CancelKeepSeat(this._roomData.mine);
-                }else{
+                } else {
                     TexasTableEvent.Standup(this._roomData.mine);
                 }
                 return;
@@ -184,7 +184,7 @@ export default class UITexasMenu extends cc.Component {
                         commit_click: () => {
                             if (mine.keepSeat) {
                                 TexasTableEvent.CancelKeepSeat(this._roomData.mine);
-                            }else{
+                            } else {
                                 TexasTableEvent.Standup(this._roomData.mine);
                             }
                         }
@@ -198,7 +198,7 @@ export default class UITexasMenu extends cc.Component {
                         commit_click: () => {
                             if (mine.keepSeat) {
                                 TexasTableEvent.CancelKeepSeat(this._roomData.mine);
-                            }else{
+                            } else {
                                 TexasTableEvent.Standup(this._roomData.mine);
                             }
                         }

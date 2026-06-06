@@ -32,6 +32,7 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
     data.playersList.forEach(player => {
         pm.set(player.seatId, player);
     });
+    const myOp = data.nextOperator?.seatId == roomData.mine.seatNo;
     for (let i = 0; i < data.handInfo.dealOrderList.length; i++) {
         const seatData = roomData.seatsStateManager.getSeatPlayer(data.handInfo.dealOrderList[i]);
         const player = pm.get(data.handInfo.dealOrderList[i]);
@@ -42,14 +43,19 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
         seatData.setRoundBet(player.roundBet, AnimateDisplayTypeRoundBet.Static);
         seatData.handBet = 0;
         seatData.roundActioned = false;
-        if (player.cardsList.length == 0) {
-            seatData.setCards([...defaultHandCards], AnimateDisplayTypeCards.Deal, i);
-        } else {
-            //如果是延迟看牌也先不传信息,给服务端修正
-            if (roomData.basicInfo.delaySeeCard) {
+        // 自己
+        if (player.seatId == roomData.mine.seatNo) {
+            //如果是延迟看牌也先不传信息,给服务端修正 (延迟看牌,但是不是我操作)
+            if (!myOp && roomData.basicInfo.delaySeeCard) {
                 seatData.setCards([...defaultHandCards], AnimateDisplayTypeCards.Deal, i);
-            }else{
+            } else {
                 seatData.setCards(player.cardsList, AnimateDisplayTypeCards.Deal, i);
+            }
+        } else {
+            if (player.cardsList.length > 0) {
+                seatData.setCards(player.cardsList, AnimateDisplayTypeCards.Deal, i);
+            } else {
+                seatData.setCards([...defaultHandCards], AnimateDisplayTypeCards.Deal, i);
             }
         }
         seatData.setAction(player.action, AnimateDisplayTypeAction.Static);

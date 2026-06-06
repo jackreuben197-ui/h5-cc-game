@@ -1,7 +1,10 @@
+import { handValueTypeToString } from '../../../core/poker/PoerkCard';
+import { getMaxHandValueByPokeType } from '../../../core/poker/PokerUtil';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
-import { AnimateDisplayTypePublicCards } from '../../../game/constant/AnimateDisplayType';
+import { AnimateDisplayTypeCards, AnimateDisplayTypePublicCards } from '../../../game/constant/AnimateDisplayType';
+import { Def } from '../../../protobuf/holdem/define_pb';
 import { ServerMessagePublicCards } from '../../../protobuf/holdem/recv_th_public_cards_pb';
 
 // PublicCards 1104
@@ -20,13 +23,14 @@ export function PublicCards(data: ServerMessagePublicCards.AsObject, roomID: num
             seat.winPercent100 = Math.min(10000, Math.round((v.winCardsCount * 10000) / v.leftCardsCount));
         }
     });
+    roomData.mine.caculateHandValueTypeAndHighlight();
     if (data.nextOperator) {
         const operator = data.nextOperator;
         let seatData = roomData.seatsStateManager.getSeatPlayer(operator.seatId);
         if (seatData.mine) {
             let op = new OperatorMine();
             op.allPot = roomData.potInfo.allPot;
-            op.roundBetEqual = 0
+            op.roundBetEqual = 0;
             op.alreadyDelayTImes = operator.delayTimes;
             op.deadlineTImestamp = operator.opDeadline;
             op.leftOpDuration = operator.leftOpTime;
@@ -41,6 +45,10 @@ export function PublicCards(data: ServerMessagePublicCards.AsObject, roomID: num
                 op.opType = OpertionType.AGREESECPUB;
             } else {
                 op.opType = OpertionType.NORMAL;
+            }
+            if (operator.cardsList.length > 0) {
+                seatData.setCards(operator.cardsList, AnimateDisplayTypeCards.ShowCards);
+                roomData.mine.caculateHandValueTypeAndHighlight();
             }
             seatData.mine.operator = op;
         } else {

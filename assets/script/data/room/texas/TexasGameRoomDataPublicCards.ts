@@ -7,7 +7,7 @@ export default class TexasGameRoomDataPublicCards extends cc.EventTarget {
     public static readonly SECOND_PUBLICCARDS_CHANGE = 'SECOND_PUBLICCARDS_CHANGE';
     public static readonly PUBLICCARDS_HIGHLIGHT = 'PUBLICCARDS_HIGHLIGHT';
     public static readonly SECOND_PUBLICCARDS_HIGHLIGHT = 'SECOND_PUBLICCARDS_HIGHLIGHT';
-    public _publicCards: number[] = [];
+    private _publicCards: number[] = [];
     public get publicCards() {
         return this._publicCards;
     }

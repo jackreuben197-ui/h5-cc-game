@@ -1,5 +1,5 @@
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
-import { traceMethod } from '../../../../core/decorator/LogTrace';
+import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPublicCards from '../../../../data/room/texas/TexasGameRoomDataPublicCards';
@@ -9,6 +9,7 @@ import CardView from '../../../widget/CardView';
 const { ccclass, property, menu } = cc._decorator;
 
 @ccclass
+@traceClass()
 @menu('CrazyPoker/Room/Texas/PublicCardsInfo')
 export default class PublicCardsInfo extends cc.Component {
     private _publicCards: CardView[] = [];
@@ -68,6 +69,7 @@ export default class PublicCardsInfo extends cc.Component {
             plus.forEach((v, index) => {
                 this._publicCards[prevCardsLen + index].node.active = true;
                 this._publicCards[prevCardsLen + index].cardNum = v;
+                this._publicCards[prevCardsLen + index].storeCardNum = v;
             });
             return;
         }
@@ -79,6 +81,7 @@ export default class PublicCardsInfo extends cc.Component {
         }
         plus.forEach((v, index) => {
             const node = this._publicCards[index + prevCardsLen];
+            node.storeCardNum = v;
             node.node.active = true;
             if (prevCardsLen == 0) {
                 const endPos = node.node.position;
@@ -87,12 +90,17 @@ export default class PublicCardsInfo extends cc.Component {
                 cc.tween(node.node)
                     .to(moveDuration, { position: endPos }, { easing: 'cubicOut' })
                     .call(() => {
-                        node.animateFlipToFront(v, 0.6);
+                        node.animateFlipToFront(node.storeCardNum, 0.6, () => {
+                            if (node.delayHighlight) {
+                                node.delayHighlight = false;
+                                node.highlight(true);
+                            }
+                        });
                     })
                     .start();
                 return;
             }
-            node.animateFlipToFront(v, 0.6);
+            node.animateFlipToFront(node.storeCardNum, 0.6);
         });
     }
 
@@ -105,6 +113,7 @@ export default class PublicCardsInfo extends cc.Component {
             plus.forEach((v, index) => {
                 this._secPublicCards[prevCardsLen + index].node.active = true;
                 this._secPublicCards[prevCardsLen + index].cardNum = v;
+                this._secPublicCards[prevCardsLen + index].storeCardNum = v;
             });
             return;
         }
@@ -117,6 +126,7 @@ export default class PublicCardsInfo extends cc.Component {
         plus.forEach((v, index) => {
             const node = this._secPublicCards[index + prevCardsLen];
             node.node.active = true;
+            node.storeCardNum = v;
             if (prevCardsLen == 0) {
                 const endPos = node.node.position;
                 node.node.setPosition(startPos);
@@ -124,22 +134,27 @@ export default class PublicCardsInfo extends cc.Component {
                 cc.tween(node.node)
                     .to(moveDuration, { position: endPos }, { easing: 'cubicOut' })
                     .call(() => {
-                        node.animateFlipToFront(v, 0.6);
+                        node.animateFlipToFront(node.storeCardNum, 0.6);
                     })
                     .start();
                 return;
             }
-            node.animateFlipToFront(v, 0.6);
+            node.animateFlipToFront(node.storeCardNum, 0.6);
         });
     }
 
     @bindEvent(TexasGameRoomDataPublicCards.PUBLICCARDS_HIGHLIGHT, { dataSource: 'publicCards', initIgnore: true })
+    @traceMethod({ level: 'debug' })
     private onHighlightPublicCards(cardsNum: number[]) {
-        const mp: Set<number> = new Set();
-        cardsNum.forEach(v => mp.add(v));
+        const mp: Set<number> = new Set(cardsNum);
         this._publicCards.forEach(cd => {
-            if (mp.has(cd.cardNum)) {
-                cd.highlight(true);
+            if (mp.has(cd.storeCardNum)) {
+                if (cd.cardNum == cd.storeCardNum) {
+                    cd.highlight(true);
+                } else {
+                    //延迟高亮
+                    cd.delayHighlight = true;
+                }
             } else {
                 cd.highlight(false);
             }

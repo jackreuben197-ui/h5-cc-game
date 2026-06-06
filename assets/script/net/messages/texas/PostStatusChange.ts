@@ -8,5 +8,5 @@ export function PostStatusChange(data: ServerMessagePostStatusChange.AsObject, r
     data.changesList.forEach(v => {
         const seat = roomData.seatsStateManager.getSeatPlayer(v.seatId);
         seat.status = v.currentPostStatus;
-    })
+    });
 }

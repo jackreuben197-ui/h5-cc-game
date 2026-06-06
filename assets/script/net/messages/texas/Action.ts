@@ -1,4 +1,6 @@
 import { createLogger } from '../../../core/decorator/LogTrace';
+import roomDataManager from '../../../data/room/RoomDataManager';
+import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import { ServerMessageAction } from '../../../protobuf/holdem/req_th_action_pb';
 import viewManager from '../../../views/UIViewManager';

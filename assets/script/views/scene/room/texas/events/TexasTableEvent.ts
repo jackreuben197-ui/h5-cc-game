@@ -329,7 +329,7 @@ export default class TexasTableEvent {
     /** BringIn 补充筹码 */
     public static async BringIn(player: TexasGameRoomDataPlayerMine): Promise<void> {
         try {
-            const {minAmount, maxAmount} = player.caculateCanBringMinMax();
+            const { minAmount, maxAmount } = player.caculateCanBringMinMax();
             if (maxAmount < minAmount) {
                 viewManager.showToast(CPErrorCode.ServerErrorDescription(20058));
                 return;
@@ -413,6 +413,12 @@ export default class TexasTableEvent {
      * 操作
      */
     public static DoAction(player: TexasGameRoomDataPlayerMine, action: Def.ActionMap[keyof Def.ActionMap], amount: number) {
+        if (action == Def.Action.FOLD) {
+            //不显示牌型了，也不高亮了
+            player.handValueType = '';
+            player.highlightCards([]);
+            player.roomData.publicCards.higlightPublicards([]);
+        }
         ProtocolAgency.Send({
             code: Code.MSG_D_ACTION,
             roomID: player.roomData.roomID,
@@ -438,7 +444,7 @@ export default class TexasTableEvent {
                 room: {
                     roomId: player.roomData.roomID,
                     matchId: player.roomData.matchID
-                },
+                }
             }
         });
     }
@@ -454,7 +460,7 @@ export default class TexasTableEvent {
                     matchId: player.roomData.matchID
                 },
                 keep: false,
-                duration: 0,
+                duration: 0
             }
         });
     }
@@ -470,7 +476,7 @@ export default class TexasTableEvent {
                     matchId: player.roomData.matchID
                 },
                 keep: true,
-                duration: duration,
+                duration: duration
             }
         });
     }

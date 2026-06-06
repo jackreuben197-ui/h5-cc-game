@@ -38,7 +38,6 @@ export function Winner(data: ServerMessageWinner.AsObject, roomID: number, match
             });
             mine.highlightCards(myCardsH);
             roomData.publicCards.higlightPublicards(pubH);
-            roomData.publicCards.higlightSecondPublicCards(pub2H);
         }
     });
 }

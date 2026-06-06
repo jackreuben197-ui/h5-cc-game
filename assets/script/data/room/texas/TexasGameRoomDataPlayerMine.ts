@@ -1,5 +1,8 @@
 import { bindData, observable, pureEvent } from '../../../core/decorator/DataBind';
+import { handValueTypeToString } from '../../../core/poker/PoerkCard';
+import { getMaxHandValueByPokeType } from '../../../core/poker/PokerUtil';
 import { VideoModel } from '../../../game/constant/VideoModel';
+import { Def } from '../../../protobuf/holdem/define_pb';
 import { OperatorMine } from './model/Operator';
 import TexasGameRoomData from './TexasGameRoomData';
 
@@ -11,6 +14,7 @@ export default class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public static readonly TABLE_USER_DEPOSIT = 'TABLE_USER_DEPOSIT';
     public static readonly HIGHLIGHT_CARDS = 'HIGHLIGHT_CARDS';
     public static readonly SEATNO_CHANGED = 'SEATNO_CHANGED';
+    public static readonly HAND_VALUE_TYPE_CHANGE = 'HAND_VALUE_TYPE_CHANGE';
     private _roomData: TexasGameRoomData;
     public get roomData() {
         return this._roomData;
@@ -56,6 +60,8 @@ export default class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     // callTimeStay 满足条件了是否必须还得留下
     public callTimeStay: number = 0;
     // public videoMaskId: number = 0;
+    @observable(TexasGameRoomDataPlayerMine.HAND_VALUE_TYPE_CHANGE)
+    public handValueType: string = '';
 
     public caculateCanBringMinMax() {
         let needDeposit = this.roomData.basicInfo.deposit;
@@ -70,7 +76,31 @@ export default class TexasGameRoomDataPlayerMine extends cc.EventTarget {
             minAmount,
             maxAmount,
             step,
-            needDeposit: needDeposit>0,
+            needDeposit: needDeposit > 0
+        };
+    }
+
+    public caculateHandValueTypeAndHighlight() {
+        if (this.seatNo == 0) return;
+        const mineSeatPlayer = this.roomData.seatsStateManager.getSeatPlayer(this.seatNo);
+        if (
+            mineSeatPlayer.action != Def.Action.FOLD &&
+            mineSeatPlayer.cards.length > 0 &&
+            mineSeatPlayer.cards.filter(v => v == 0).length == 0 &&
+            this.roomData.publicCards.publicCards.length > 0
+        ) {
+            const hv = getMaxHandValueByPokeType(this.roomData.publicCards.publicCards, mineSeatPlayer.cards, this.roomData.basicInfo.pokerType);
+            //牌型显示
+            this.handValueType = handValueTypeToString(hv.handValueType);
+            const sets = new Set(hv.rawCards());
+            //牌型高亮
+            this.highlightCards(mineSeatPlayer.cards.filter(v => sets.has(v)));
+            //公共牌高亮
+            this.roomData.publicCards.higlightPublicards(this.roomData.publicCards.publicCards.filter(v => sets.has(v)));
         }
+    }
+
+    public handClear() {
+        this.handValueType = '';
     }
 }
