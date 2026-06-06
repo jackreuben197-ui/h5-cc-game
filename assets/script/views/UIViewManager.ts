@@ -1,4 +1,4 @@
-import { traceClass, traceMethod } from '../core/decorator/LogTrace';
+import { traceClass } from '../core/decorator/LogTrace';
 import UIComponentBase from '../views/base/UIComponentBase';
 import UIComponentDialogBase from '../views/base/UIComponentDialogBase';
 import AssetManager, { PreloadParams } from './loader/AssetManager';

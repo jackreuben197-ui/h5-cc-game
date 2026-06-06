@@ -1,5 +1,4 @@
-import h5MessageManager from '../../H5MsgMgr';
-import H5MsgMgr, { H5NavigatePayload } from '../../H5MsgMgr';
+import { default as h5MessageManager, default as H5MsgMgr, H5NavigatePayload } from '../../H5MsgMgr';
 import viewManager from '../../views/UIViewManager';
 import ProcedureBase from './ProcedureBase';
 

@@ -1,7 +1,6 @@
 import { traceClass } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Code } from '../../../protobuf/holdem/code_pb';
-import ProtocolAgency from '../../websocket/ProtocolAgency';
 import { Action } from './Action';
 import { ActionAll } from './ActionAll';
 import { AddOn } from './AddOn';

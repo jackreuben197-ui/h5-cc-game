@@ -1,12 +1,11 @@
-import { unBindEventsAll, autoBindEvents, bindEvent } from '../../../../core/decorator/DataBind';
-import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
+import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
+import { traceClass } from '../../../../core/decorator/LogTrace';
 import { OperatorMine } from '../../../../data/room/texas/model/Operator';
 import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import TexasGameRoomDataSetting from '../../../../data/room/texas/TexasGameRoomDataSetting';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
-import { ActionLimit, ActionShortcutLimit, Def } from '../../../../protobuf/holdem/define_pb';
-import UIComponentBase from '../../../base/UIComponentBase';
+import { ActionLimit, Def } from '../../../../protobuf/holdem/define_pb';
 import { UIComfirmDialogType } from '../../../dialog/confirm/UIConfirmDialog';
 import viewManager from '../../../UIViewManager';
 import ShiningPathTimer from '../../../widget/ShiningPathTimer';

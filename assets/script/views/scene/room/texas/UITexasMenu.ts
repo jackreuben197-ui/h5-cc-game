@@ -2,7 +2,6 @@ import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/dec
 import { traceClass } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
-import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import { SquidMode } from '../../../../game/constant/Squid';
 import h5MessageManager from '../../../../H5MsgMgr';

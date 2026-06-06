@@ -1,5 +1,4 @@
 import { traceClass, traceMethod } from '../../core/decorator/LogTrace';
-import { BringInMode } from '../../game/constant/BringInChipsType';
 import { WebUserInfo, WebUserTraderApplyList } from '../../net/https/WebRequest';
 import { WWW } from '../../net/https/WebRequestBase';
 import { HttpUSDTApplyListProtocol } from '../../net/https/data/usdt/HttpUSDTApplyListProtocol';

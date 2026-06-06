@@ -2,13 +2,11 @@ import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
-import userStore from '../../../data/user/UserStore';
 import {
     AnimateDisplayTypeAction,
     AnimateDisplayTypeButton,
     AnimateDisplayTypeCards,
     AnimateDisplayTypePosition,
-    AnimateDisplayTypePublicCards,
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
 import { Def, Player } from '../../../protobuf/holdem/define_pb';

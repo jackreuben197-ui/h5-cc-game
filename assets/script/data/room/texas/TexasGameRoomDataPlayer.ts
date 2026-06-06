@@ -6,8 +6,7 @@ import {
     AnimateDisplayTypePosition,
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
-import { VideoModel } from '../../../game/constant/VideoModel';
-import { AllInWinCardsInfo, Def, PotInsuranceBuy } from '../../../protobuf/holdem/define_pb';
+import { Def, PotInsuranceBuy } from '../../../protobuf/holdem/define_pb';
 import { Operator } from './model/Operator';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from './TexasGameRoomDataPlayerMine';

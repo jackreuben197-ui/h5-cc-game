@@ -1,6 +1,6 @@
 import { autoBindEvents, bindEvent, unBindEvents, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
-import { Operator, OperatorMine } from '../../../../data/room/texas/model/Operator';
+import { Operator } from '../../../../data/room/texas/model/Operator';
 import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import { SeatPosition } from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
@@ -14,14 +14,12 @@ import {
 import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
 import { Def } from '../../../../protobuf/holdem/define_pb';
-import viewManager from '../../../UIViewManager';
 import UIViewUtil from '../../../util/UIViewUtil';
 import CardView from '../../../widget/CardView';
 import { DisplayNode } from '../../../widget/DisplayNode';
 import RemoteSprite from '../../../widget/RemoteSprite';
 import ShiningPathTimer from '../../../widget/ShiningPathTimer';
 import TexasTableEvent from './events/TexasTableEvent';
-import Operation from './Operation';
 import SeatAction from './SeatAction';
 
 const { ccclass, property, menu } = cc._decorator;

@@ -1,4 +1,4 @@
-import { traceClass, traceMethod } from '../../core/decorator/LogTrace';
+import { traceClass } from '../../core/decorator/LogTrace';
 
 const { ccclass, property, menu } = cc._decorator;
 

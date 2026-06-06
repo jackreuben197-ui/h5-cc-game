@@ -114,6 +114,7 @@ async function main() {
         }
     }
     console.log(`Done: ${updated} files updated`);
+    process.exit(0);
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

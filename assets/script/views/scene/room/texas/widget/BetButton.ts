@@ -1,5 +1,4 @@
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../../core/decorator/DataBind';
-import { traceMethod } from '../../../../../core/decorator/LogTrace';
 import TexasGameRoomDataSetting from '../../../../../data/room/texas/TexasGameRoomDataSetting';
 
 const { ccclass, property, menu } = cc._decorator;

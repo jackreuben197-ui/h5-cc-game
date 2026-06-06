@@ -4,7 +4,6 @@ import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPotInfo from '../../../../data/room/texas/TexasGameRoomDataPotInfo';
 import TexasGameRoomDataSetting from '../../../../data/room/texas/TexasGameRoomDataSetting';
-import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
 import { SidePot } from '../../../../protobuf/holdem/define_pb';
 import UIViewUtil from '../../../util/UIViewUtil';
