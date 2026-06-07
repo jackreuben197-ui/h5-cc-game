@@ -165,6 +165,28 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     @pureEvent(TexasGameRoomDataPlayer.WINNER)
     public claimWin() {}
 
+    public roundReset() {
+        if (this.userID > 0) {
+            if (this.action != Def.Action.FOLD && this.action != Def.Action.ALLIN) {
+                this.setAction(Def.Action.READY, AnimateDisplayTypeAction.Done);
+            }
+            this.setRoundBet(0, AnimateDisplayTypeRoundBet.Static);
+            this.roundActioned = false;
+            this.operator = null;
+            if (this.mine) {
+                this.mine.roundReset();
+            }
+        }
+    }
+
+    public handEnd() {
+        if (this.userID > 0) {
+            if (this.mine) {
+                this.mine.handEnd();
+            }
+        }
+    }
+
     public handClear() {
         if (this.userID > 0) {
             this.setAction(Def.Action.NONE, AnimateDisplayTypeAction.Done);
@@ -176,17 +198,6 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
             if (this.mine) {
                 this.mine.handClear();
             }
-        }
-    }
-
-    public roundClear() {
-        if (this.userID > 0) {
-            if (this.action != Def.Action.FOLD && this.action != Def.Action.ALLIN) {
-                this.setAction(Def.Action.READY, AnimateDisplayTypeAction.Done);
-            }
-            this.setRoundBet(0, AnimateDisplayTypeRoundBet.Static);
-            this.roundActioned = false;
-            this.operator = null;
         }
     }
 }

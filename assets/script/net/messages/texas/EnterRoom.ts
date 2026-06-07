@@ -120,6 +120,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             }
         }
         if (data.myInfo) {
+            roomData.mine.clearData();
             const player = roomData.seatsStateManager.setMySeat(data.myInfo.seatId, AnimateDisplayTypePosition.Static);
             if (player) {
                 player.mine.autoOperationType = AutoOperationTypeTexas.NO;

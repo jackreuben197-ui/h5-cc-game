@@ -42,4 +42,5 @@ export function Winner(data: ServerMessageWinner.AsObject, roomID: number, match
             roomData.publicCards.higlightPublicards(pubH);
         }
     });
+    roomData.seatsStateManager.handEnd();
 }

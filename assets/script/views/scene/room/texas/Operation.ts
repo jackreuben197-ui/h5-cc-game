@@ -263,6 +263,11 @@ export default class Operation extends cc.Component {
         if (this._seatPlayer.autoOperationType != AutoOperationTypeTexas.NO) {
             switch (this._seatPlayer.autoOperationType) {
                 case AutoOperationTypeTexas.AUTO_FOLD:
+                    // 有check优先Check
+                    if (this._actionMap.has(Def.Action.CHECK)) {
+                        TexasTableEvent.DoAction(this._seatPlayer, Def.Action.CHECK, 0);
+                        break;
+                    }
                     TexasTableEvent.DoAction(this._seatPlayer, Def.Action.FOLD, 0);
                     break;
                 case AutoOperationTypeTexas.AUTO_CHECK:
@@ -285,6 +290,8 @@ export default class Operation extends cc.Component {
                     TexasTableEvent.DoAction(this._seatPlayer, Def.Action.ALLIN, actionLimit.min);
                     break;
             }
+            //自动操作过以后立刻重置
+            this._seatPlayer.autoOperationType = AutoOperationTypeTexas.NO;
             return;
         }
         // 手动操作

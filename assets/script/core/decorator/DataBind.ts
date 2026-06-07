@@ -411,14 +411,20 @@ export function autoBindEvents<T extends Record<string, cc.EventTarget | null | 
     // ==========================================
     // 核心硬核步骤：精准查账，消灭历史幽灵（解决第3次漏清理问题）
     // ==========================================
+    const skippedTags = new Set<keyof T>();
     for (const sourceTag in dataSources) {
         // 1. 检查这个 key (比如 'key1') 以前有没有绑定过别的数据源
+        const newDataSource = dataSources[sourceTag];
         if (historyMap.has(sourceTag)) {
             const oldDataSource = historyMap.get(sourceTag)!;
+            // 2. refrence不相同则处理下,做下清理(相同就不处理了,节省开销)
+            if (newDataSource == oldDataSource) {
+                skippedTags.add(sourceTag);
+                continue;
+            }
             oldDataSource.targetOff(component);
             historyMap.delete(sourceTag);
         }
-        const newDataSource = dataSources[sourceTag];
         // 3. 将这次新传进来的非空数据源更新到历史账本中，为下一次更替做准备
         if (newDataSource) {
             historyMap.set(sourceTag, newDataSource);
@@ -429,6 +435,7 @@ export function autoBindEvents<T extends Record<string, cc.EventTarget | null | 
     // ==========================================
     for (const binder of bindings) {
         const sourceTag = binder.dataSourceTag as keyof T;
+        if (skippedTags.has(sourceTag)) continue;
         // 关键安全点：如果这次调用没传这个 tag (比如只传了 key1，没传 key2)，直接跳过绑定，不破坏 key2 的现状
         if (!(sourceTag in dataSources)) continue;
         const dataSource = dataSources[sourceTag];

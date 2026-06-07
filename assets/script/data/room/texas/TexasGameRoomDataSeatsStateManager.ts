@@ -152,9 +152,15 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
         return this._playerMap.get(s);
     }
 
-    public roundClear() {
+    public roundReset() {
         this._playerMap.forEach(p => {
-            p.roundClear();
+            p.roundReset();
+        });
+    }
+
+    public handEnd() {
+        this._playerMap.forEach(p => {
+            p.handEnd();
         });
     }
 
