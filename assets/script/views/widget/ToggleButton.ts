@@ -35,17 +35,30 @@ export default class ToggleButton extends cc.Component {
         }
     }
 
-    public setUncheckText(s: string) {
+    private _uncheckRelatedInfo: any = null;
+    private _checkRelateInfo: any = null;
+
+    public getUncheckRelatedInfo<T>() {
+        return this._uncheckRelatedInfo as T;
+    }
+
+    public getCheckRelatedInfo<T>() {
+        return this._checkRelateInfo as T;
+    }
+
+    public setUncheckText(s: string, relatedInfo: any = null) {
         if (this.uncheckedLabel) {
             this.uncheckedLabel.string = s;
+            this._uncheckRelatedInfo = relatedInfo;
         } else {
             this.tracelog.warn('no unchecked label binding', s);
         }
     }
 
-    public setCheckText(s: string) {
+    public setCheckText(s: string, relatedInfo: any = null) {
         if (this.checkedlabel) {
             this.checkedlabel.string = s;
+            this._checkRelateInfo = relatedInfo;
         } else {
             this.tracelog.warn('no unchecked label binding', s);
         }

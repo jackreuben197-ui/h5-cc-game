@@ -176,21 +176,25 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
         }
     }
 
-    public roundClear() {
+    public roundReset() {
         if (this.seatNo == 0) return;
         this.autoOperationType = AutoOperationTypeTexas.NO;
         const mineSeatPlayer = this.player;
-        if (mineSeatPlayer.action == Def.Action.ALLIN || mineSeatPlayer.action == Def.Action.FOLD) {
-            this.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
-        } else {
+        if (mineSeatPlayer.canOpearate) {
             this.setRightAutoOpPannel(AutoOperationTypeTexas.AUTO_CHECK, 0);
+        } else {
+            this.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
         }
+    }
+
+    public handEnd() {
+        if (this.seatNo == 0) return;
+        this.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
+        this.autoOperationType = AutoOperationTypeTexas.NO;
     }
 
     public handClear() {
         this.handValueType = '';
-        this.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
-        this.autoOperationType = AutoOperationTypeTexas.NO;
     }
 
     public clearData() {

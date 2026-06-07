@@ -31,7 +31,8 @@ export function PublicCards(data: ServerMessagePublicCards.AsObject, roomID: num
             _plog.warn('unkonwn round', data.rnd);
             break;
     }
-    roomData.seatsStateManager.roundClear();
+    //回合变更数据清理
+    roomData.seatsStateManager.roundReset();
     data.allinUsersList.forEach(v => {
         const seat = roomData.seatsStateManager.getSeatPlayer(v.seatId);
         if (v.leftCardsCount > 0) {

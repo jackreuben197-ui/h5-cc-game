@@ -502,6 +502,8 @@ export default class SeatPlayer extends cc.Component {
                 break;
             case Def.Action.FOLD:
                 this.seatActionDisplay.node.active = true;
+                // 投入的筹码池也隐藏把
+                this.roundBetNode.active = false;
                 this.seatActionDisplay.fold(i18nMgr.Get('adaptation10047'));
                 if (aat == AnimateDisplayTypeAction.Done) {
                     if (this._seatPlayer.mine) {
