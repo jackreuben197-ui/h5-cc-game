@@ -406,11 +406,7 @@ export default class TexasTableEvent {
      * 当多池存在时，前面的池调用 confirm=false 仅缓存到服务端；最后一池或超时/放弃时 confirm=true。
      * 服务端会以 BuyInsuranceActive(失败) 或 BuyInsurance(成功) 形式回执，由消息层负责清 operator。
      */
-    public static CommitBuyInsurance(
-        player: TexasGameRoomDataPlayerMine,
-        buyList: PotInsuranceBuy.AsObject[],
-        confirm: boolean
-    ): void {
+    public static CommitBuyInsurance(player: TexasGameRoomDataPlayerMine, buyList: PotInsuranceBuy.AsObject[], confirm: boolean): void {
         ProtocolAgency.Send({
             code: Code.MSG_D_BUY_INSURANCE_ACTIVE,
             roomID: player.roomData.roomID,
@@ -423,9 +419,10 @@ export default class TexasTableEvent {
             }
         });
     }
+
     /**
-    * 操作
-    */
+     * 操作
+     */
     public static DoAction(player: TexasGameRoomDataPlayerMine, action: Def.ActionMap[keyof Def.ActionMap], amount: number) {
         if (action == Def.Action.FOLD) {
             //不显示牌型了，也不高亮了

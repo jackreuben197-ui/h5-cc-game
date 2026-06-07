@@ -10,6 +10,7 @@ import GameplayUtil from '../../../game/util/GameplayUtil';
 import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import { Def, InsurancePotLimit, OutsCard, PotInsuranceBuy } from '../../../protobuf/holdem/define_pb';
+import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import { AssetCollectionType } from '../../loader/AssetLoader';
 import AssetManager from '../../loader/AssetManager';
 import TexasTableEvent from '../../scene/room/texas/events/TexasTableEvent';
@@ -32,15 +33,15 @@ class InsuranceCardItem {
     public readonly sprite: cc.Sprite;
     public cardId: number = -1;
     public isOver: boolean = true;
+
     public constructor(public readonly node: cc.Node) {
-        this.sprite =
-            node.getComponent(cc.Sprite) ||
-            node.getChildByName('Image_InsuranceCard')?.getComponent(cc.Sprite) ||
-            null;
+        this.sprite = node.getComponent(cc.Sprite) || node.getChildByName('Image_InsuranceCard')?.getComponent(cc.Sprite) || null;
     }
+
     public get cardReadId(): number {
         return this.cardId % 15;
     }
+
     public updateItem(cardId: number): void {
         this.cardId = cardId;
         if (this.sprite) {
@@ -61,6 +62,7 @@ class PlayerItem {
         5: [-66, -33, 0, 33, 66],
         6: [-66, -40, -13, 13, 40, 66]
     };
+
     public constructor(public readonly node: cc.Node) {
         const pokerRoot = node.getChildByName('pokers') || node;
         for (let i = 0; i < 6; i++) {
@@ -70,6 +72,7 @@ class PlayerItem {
         this.textNickname = node.getChildByName('Text_Nickname')?.getComponent(cc.Label) || null;
         this.textOuts = node.getChildByName('Text_Outs')?.getComponent(cc.Label) || null;
     }
+
     public updateItem(cards: number[], nickname: string, outs: number, handCards: number): void {
         const cardCount = Math.min(handCards, this.pokerNodes.length, cards.length);
         const posX = PlayerItem.POKER_POS[handCards] || PlayerItem.POKER_POS[2];
@@ -91,6 +94,11 @@ class PlayerItem {
         }
     }
 }
+
+export type UIGameplaySecuritySettingParam = {
+    Operator: OperatorMine;
+    Player: TexasGameRoomDataPlayerMine;
+};
 
 /**
  * 保险面板（自治组件版）
@@ -116,14 +124,13 @@ class PlayerItem {
 @ccclass
 @menu('Scene/Room/Texas/Insurance/UIInsuranceNewPanel')
 @traceClass({ level: 'debug' })
-export default class UIInsuranceNewPanel extends cc.Component {
+export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGameplaySecuritySettingParam> {
     // ─── 数据源句柄 ──────────────────────────────────────
     private _player: TexasGameRoomDataPlayerMine = null;
     private _roomData: TexasGameRoomData = null;
     private _basic: TexasGameRoomDataBasic = null;
     private _publicCards: TexasGameRoomDataPublicCards = null;
     private _seats: TexasGameRoomDataSeatsStateManager = null;
-
     // ─── 节点缓存（按 prefab 结构 cc.find 一次性查全部） ──
     private backClickNode: cc.Node = null;
     private dialogNode: cc.Node = null;
@@ -144,7 +151,6 @@ export default class UIInsuranceNewPanel extends cc.Component {
     private insuranceCardsSplitContent: cc.Node = null;
     private insuranceCardOverTemplate: cc.Node = null;
     private insuranceCardSplitTemplate: cc.Node = null;
-
     private textPot: cc.Label = null;
     private textMainPut: cc.Label = null;
     private textInsuranceValue: cc.Label = null;
@@ -156,12 +162,10 @@ export default class UIInsuranceNewPanel extends cc.Component {
     private classicTurnText: cc.Label = null;
     private textDelayBean: cc.Label = null;
     private countDownImage: cc.Sprite = null;
-
     private buttonBuy: cc.Node = null;
     private buttonDelay: cc.Node = null;
     private buttonCancel: cc.Node = null;
     private poolButtons: { node: cc.Node; type: PoolType; checked: cc.Node; money: cc.Label }[] = [];
-
     // ─── 运行时状态 ──────────────────────────────────────
     private readonly _multiToggleNodes: cc.Node[] = [];
     private readonly _playerClones: cc.Node[] = [];
@@ -177,7 +181,6 @@ export default class UIInsuranceNewPanel extends cc.Component {
     private _countDownEnd: number = 0;
     private _countDownTotal: number = 0;
     private _isCounting: boolean = false;
-
     // ============================================================
     // 生命周期
     // ============================================================
@@ -185,13 +188,31 @@ export default class UIInsuranceNewPanel extends cc.Component {
      * 外部唯一入口：UIRoomTexas 拿到房间数据后调一次，传 mine 引用。
      * 后续显隐与刷新完全由组件自己监听 PREPARE_OPERATION_MINE 决定。
      */
-    public initData(mine: TexasGameRoomDataPlayerMine): void {
-        this._player = mine;
-        this._roomData = mine.roomData;
+    public initialize(param: UIGameplaySecuritySettingParam): void {
+        this._player = param.Player;
+        this._roomData = param.Player.roomData;
         this._basic = this._roomData.basicInfo;
         this._publicCards = this._roomData.publicCards;
         this._seats = this._roomData.seatsStateManager;
-        this._bindEventsAndRefresh();
+        const op = param.Operator;
+        // this._bindEventsAndRefresh();
+        this._cachedBuyList.length = 0;
+        this._currentPotIndex = 0;
+        this._currentPool = PoolType.THIRD;
+        // 倒计时
+        this._countDownTotal = Math.max(1, op.totalOpDuration || this._basic.insuranceOpduration || 30);
+        const now = Date.now() / 1000;
+        const remain = op.deadlineTImestamp > 0 ? Math.max(0, op.deadlineTImestamp - now) : Math.max(0, op.leftOpDuration || 0);
+        this._countDownEnd = now + remain;
+        this._isCounting = remain > 0;
+        this._refreshCountDownProgress(remain);
+        // 多池切换条
+        this._renderMultiPoolToggles();
+        // 当前池
+        this._refreshCurrentPot();
+        this._publicCardsChange();
+        // 显示
+        this._setVisible(true);
     }
 
     protected onLoad(): void {
@@ -202,12 +223,10 @@ export default class UIInsuranceNewPanel extends cc.Component {
         this._setVisible(false);
     }
 
-    protected onEnable(): void {
-        this._bindEventsAndRefresh();
-    }
+    protected onEnable(): void {}
 
     protected onDisable(): void {
-        unBindEventsAll(this);
+        // unBindEventsAll(this);
         this._clearTransientState();
     }
 
@@ -221,39 +240,34 @@ export default class UIInsuranceNewPanel extends cc.Component {
             // 倒计时归零：把已缓存内容一次性提交并 confirm。
             // 之后服务端会清 mine.operator，组件自己监听到后会切到隐藏态。
             TexasTableEvent.CommitBuyInsurance(this._player, this._cachedBuyList.slice(), true);
+            // 父类关闭窗口
+            super.close();
         }
     }
-
     // ============================================================
     // 节点绑定（按 prefab 结构 cc.find 一次性查全部）
     // ============================================================
     private _bindNodes(): void {
         const root = this.node;
-        this.backClickNode = root.getChildByName('$back_click') || root.getChildByName('back_click');
+        //this.backClickNode = root.getChildByName('$back_click') || root.getChildByName('back_click');
         const dialog = root.getChildByName('Image_Dialog');
         this.dialogNode = dialog;
-
         this.scrollViewRoot = cc.find('Image_Dialog/ScrollViewRoot', root);
         this.scrollView = this.scrollViewRoot?.getComponent(cc.ScrollView) || null;
         this.scrollViewport = cc.find('Viewport', this.scrollViewRoot);
         this.insuranceCardsRoot = cc.find('Viewport/InsuranceCards', this.scrollViewRoot);
-
         this.textPot = cc.find('Header/Text_Pot_title/Text_Pot', dialog)?.getComponent(cc.Label) || null;
         this.multiPoolToggles = cc.find('Header/MultiPoolToggles', dialog);
         this.multiPoolToggleTemplate = this.multiPoolToggles?.getChildByName('MultiPoolToggle') || null;
         this.playerMineNode = cc.find('Header/Player_Mine', dialog);
-        this.playersContent =
-            cc.find('Header/Players/view/Players_Content', dialog) ||
-            cc.find('Header/Players/view/players_Content', dialog);
+        this.playersContent = cc.find('Header/Players/view/Players_Content', dialog) || cc.find('Header/Players/view/players_Content', dialog);
         this.playersNext = cc.find('ScrollViewRoot/Viewport/InsuranceCards/Players_Next', dialog);
         this.playerTemplate = this.playersContent?.children.find(c => c.name === 'Player') || null;
-
         const publicCards = cc.find('Header/PublicCardContent/PublicCards', dialog);
         for (let i = 0; i < 5; i++) {
             const sp = publicCards?.getChildByName(`Image_PublicCard${i}`)?.getComponent(cc.Sprite) || null;
             this.publicCardSprites.push(sp);
         }
-
         this.insuranceCardsOver = cc.find('ScrollViewRoot/Viewport/InsuranceCards/InsuranceCardsOver', dialog);
         this.insuranceCardsSplit = cc.find('ScrollViewRoot/Viewport/InsuranceCards/InsuranceCardsSplit', dialog);
         this.insuranceCardsOverContent = this.insuranceCardsOver?.getChildByName('insuranceCardOver') || null;
@@ -262,12 +276,10 @@ export default class UIInsuranceNewPanel extends cc.Component {
         this.insuranceCardSplitTemplate = this.insuranceCardsSplitContent?.getChildByName('Image_InsuranceCard') || null;
         this.textOddsOver = cc.find('Label/Text_Odds_Over', this.insuranceCardsOver)?.getComponent(cc.Label) || null;
         this.textOddsSplit = cc.find('Label/Text_Odds_Split', this.insuranceCardsSplit)?.getComponent(cc.Label) || null;
-
         this.textMainPut = cc.find('ContentPar/Text_MainPut', dialog)?.getComponent(cc.Label) || null;
         this.textInsuranceValue = cc.find('ContentPar/Text_InsuranceValue', dialog)?.getComponent(cc.Label) || null;
         this.textPayValue = cc.find('ContentPar/Text_PayValue', dialog)?.getComponent(cc.Label) || null;
         this.textOuts = cc.find('ContentPar/Text_Outs', dialog)?.getComponent(cc.Label) || null;
-
         const find = (name: string) => cc.find(`ContentPar/OptionButtons/${name}`, dialog);
         const buildPool = (name: string, checkedName: string, moneyName: string, type: PoolType) => {
             const node = find(name);
@@ -285,7 +297,6 @@ export default class UIInsuranceNewPanel extends cc.Component {
         buildPool('Button_Third', 'Image_Third_checked', 'Text_Third_money', PoolType.THIRD);
         buildPool('Button_Fifth', 'Image_Fifth_checked', 'Text_Fifth_money', PoolType.FIFTH);
         buildPool('Button_Eighth', 'Image_Eighth_checked', 'Text_Eighth_money', PoolType.EIGHTH);
-
         this.buttonDelay = cc.find('SubstratumBut/Button_Delay', dialog);
         this.buttonCancel = cc.find('SubstratumBut/Button_Cancel', dialog);
         this.buttonBuy = cc.find('SubstratumBut/Button_Buy', dialog);
@@ -298,9 +309,7 @@ export default class UIInsuranceNewPanel extends cc.Component {
     private _initStaticNodes(): void {
         if (this.multiPoolToggleTemplate) this.multiPoolToggleTemplate.active = false;
         if (this.playerTemplate) {
-            this.playersContent.children
-                .filter(c => c.name === 'Player')
-                .forEach(c => (c.active = false));
+            this.playersContent.children.filter(c => c.name === 'Player').forEach(c => (c.active = false));
         }
         if (this.playersNext) this.playersNext.active = false;
         if (this.insuranceCardOverTemplate) this.insuranceCardOverTemplate.active = false;
@@ -309,7 +318,7 @@ export default class UIInsuranceNewPanel extends cc.Component {
     }
 
     private _registerClicks(): void {
-        if (this.backClickNode) this.backClickNode.on('click', this._onClickBackdrop, this);
+        //if (this.backClickNode) this.backClickNode.on('click', this._onClickBackdrop, this);
         if (this.buttonBuy) this.buttonBuy.on('click', this._onClickBuy, this);
         if (this.buttonCancel) this.buttonCancel.on('click', this._onClickCancel, this);
         if (this.buttonDelay) this.buttonDelay.on('click', this._onClickDelay, this);
@@ -322,60 +331,45 @@ export default class UIInsuranceNewPanel extends cc.Component {
      * 切的是它的两个顶层可视子节点（暗化背景 + 弹框）。
      */
     private _setVisible(b: boolean): void {
-        if (this.backClickNode) this.backClickNode.active = b;
+        //if (this.backClickNode) this.backClickNode.active = b;
         if (this.dialogNode) this.dialogNode.active = b;
     }
-
-    // ============================================================
-    // 数据绑定 + 首屏对齐
-    // ============================================================
-    private _bindEventsAndRefresh(): void {
-        if (!this._player) return;
-        autoBindEvents(this, {
-            mine: this._player,
-            publicCards: this._publicCards,
-            basic: this._basic
-        });
-    }
-
     /**
      * 保险流程的唯一开关：
      *  - opType=INSURANCE：渲染并显示
      *  - 其它（含 null / NORMAL / AGREESECPUB）：隐藏 + 清理临时态
-     */
-    @bindEvent(TexasGameRoomDataPlayerMine.PREPARE_OPERATION_MINE, 'mine')
-    @traceMethod({ level: 'debug' })
-    private onOperatorChange(op: OperatorMine): void {
-        if (!op || op.opType !== OpertionType.INSURANCE) {
-            this._isCounting = false;
-            this._clearTransientState();
-            this._setVisible(false);
-            return;
-        }
-        this._cachedBuyList.length = 0;
-        this._currentPotIndex = 0;
-        this._currentPool = PoolType.THIRD;
-        // 倒计时
-        this._countDownTotal = Math.max(1, op.totalOpDuration || this._basic.insuranceOpduration || 30);
-        const now = Date.now() / 1000;
-        const remain =
-            op.deadlineTImestamp > 0
-                ? Math.max(0, op.deadlineTImestamp - now)
-                : Math.max(0, op.leftOpDuration || 0);
-        this._countDownEnd = now + remain;
-        this._isCounting = remain > 0;
-        this._refreshCountDownProgress(remain);
-        // 多池切换条
-        this._renderMultiPoolToggles();
-        // 当前池
-        this._refreshCurrentPot();
-        // 显示
-        this._setVisible(true);
-    }
+    //  */
+    // @bindEvent(TexasGameRoomDataPlayerMine.PREPARE_OPERATION_MINE, 'mine')
+    // @traceMethod({ level: 'debug' })
+    // private onOperatorChange(op: OperatorMine): void {
+    //     if (!op || op.opType !== OpertionType.INSURANCE) {
+    //         this._isCounting = false;
+    //         this._clearTransientState();
+    //         this._setVisible(false);
+    //         return;
+    //     }
+    //     this._cachedBuyList.length = 0;
+    //     this._currentPotIndex = 0;
+    //     this._currentPool = PoolType.THIRD;
+    //     // 倒计时
+    //     this._countDownTotal = Math.max(1, op.totalOpDuration || this._basic.insuranceOpduration || 30);
+    //     const now = Date.now() / 1000;
+    //     const remain =
+    //         op.deadlineTImestamp > 0
+    //             ? Math.max(0, op.deadlineTImestamp - now)
+    //             : Math.max(0, op.leftOpDuration || 0);
+    //     this._countDownEnd = now + remain;
+    //     this._isCounting = remain > 0;
+    //     this._refreshCountDownProgress(remain);
+    //     // 多池切换条
+    //     this._renderMultiPoolToggles();
+    //     // 当前池
+    //     this._refreshCurrentPot();
+    //     // 显示
+    //     this._setVisible(true);
+    // }
 
-    /** 公共牌变化 → 顶部公共牌刷新 */
-    @bindEvent(TexasGameRoomDataPublicCards.PUBLICCARDS_CHANGE, 'publicCards')
-    private onPublicCardsChange(): void {
+    private _publicCardsChange(): void {
         const cards = this._publicCards.publicCards || [];
         for (let i = 0; i < this.publicCardSprites.length; i++) {
             const sp = this.publicCardSprites[i];
@@ -385,12 +379,6 @@ export default class UIInsuranceNewPanel extends cc.Component {
             sp.spriteFrame = AssetManager.getAsset(AssetCollectionType.SpriteFrameCard, resName);
         }
     }
-
-    @bindEvent(TexasGameRoomDataPublicCards.ALL_PUBLICCARDS_RESET, { dataSource: 'publicCards', initIgnore: true })
-    private onPublicCardsReset(): void {
-        this.onPublicCardsChange();
-    }
-
     // ============================================================
     // 多池切换
     // ============================================================
@@ -435,7 +423,6 @@ export default class UIInsuranceNewPanel extends cc.Component {
         const bg = node.getChildByName('Background');
         if (bg) bg.opacity = isOn ? 255 : 180;
     }
-
     // ============================================================
     // 单池刷新（主流程）
     // ============================================================
@@ -535,7 +522,6 @@ export default class UIInsuranceNewPanel extends cc.Component {
         });
         return { overOuts: Array.from(overSet), equalOuts: Array.from(equalSet) };
     }
-
     // ============================================================
     // 档位（六档）逻辑
     // ============================================================
@@ -642,7 +628,6 @@ export default class UIInsuranceNewPanel extends cc.Component {
                 return PoolType.NONE;
         }
     }
-
     // ============================================================
     // 用户交互
     // ============================================================
@@ -676,14 +661,19 @@ export default class UIInsuranceNewPanel extends cc.Component {
         // 加时按钮：当前重构暂不接入钻石折扣 UI，留待后续完善
         // 服务端协议在 AddTime.ts 已经实现，需要时通过 ProtocolAgency.Send(MSG_D_ADD_TIME, ...) 走一次
     }
-
     /** 点击半透明背景：等同于放弃整体保险。 */
-    private _onClickBackdrop(): void {
+    // private _onClickBackdrop(): void {
+    //     TexasTableEvent.CommitBuyInsurance(this._player, this._cachedBuyList.slice(), true);
+    //     // 立即隐藏给用户反馈；之后服务端 BuyInsuranceActive/BuyInsurance 会清空 mine.operator
+    //     // → 自己再触发一次 onOperatorChange 把状态归零。
+    //     this._isCounting = false;
+    //     this._setVisible(false);
+    // }
+    public override close(): void {
         TexasTableEvent.CommitBuyInsurance(this._player, this._cachedBuyList.slice(), true);
-        // 立即隐藏给用户反馈；之后服务端 BuyInsuranceActive/BuyInsurance 会清空 mine.operator
-        // → 自己再触发一次 onOperatorChange 把状态归零。
         this._isCounting = false;
-        this._setVisible(false);
+        // 调用父类关闭
+        super.close();
     }
 
     private _advanceOrCommit(): void {
@@ -705,7 +695,6 @@ export default class UIInsuranceNewPanel extends cc.Component {
         TexasTableEvent.CommitBuyInsurance(this._player, this._cachedBuyList.slice(), true);
         this._isCounting = false;
     }
-
     // ============================================================
     // 数值计算（对齐老版逻辑：先按池档算赔付目标，再反推保费）
     // ============================================================
@@ -815,7 +804,6 @@ export default class UIInsuranceNewPanel extends cc.Component {
         }
         return Number.isFinite(pot.odds) ? pot.odds : 0;
     }
-
     // ============================================================
     // 提交缓存
     // ============================================================
@@ -838,7 +826,6 @@ export default class UIInsuranceNewPanel extends cc.Component {
         this._cachedBuyList.push(buy);
         return true;
     }
-
     // ============================================================
     // 倒计时
     // ============================================================
@@ -847,7 +834,6 @@ export default class UIInsuranceNewPanel extends cc.Component {
         const ratio = this._countDownTotal > 0 ? remain / this._countDownTotal : 0;
         this.countDownImage.fillRange = Math.max(0, Math.min(1, ratio));
     }
-
     // ============================================================
     // 工具
     // ============================================================

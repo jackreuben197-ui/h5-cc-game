@@ -24,9 +24,7 @@ export function InsuranceTrigged(data: ServerMessageInsuranceTrigged.AsObject, r
             op.insurancePotLimitList = operator.insuranceLimitList;
             // 服务端在 operator 内 / 顶层 invalidPotsList 都可能下发无法投保的池
             op.insurancePotInvalidList =
-                operator.invalidInsurancePotsList && operator.invalidInsurancePotsList.length > 0
-                    ? operator.invalidInsurancePotsList
-                    : data.invalidPotsList;
+                operator.invalidInsurancePotsList && operator.invalidInsurancePotsList.length > 0 ? operator.invalidInsurancePotsList : data.invalidPotsList;
             op.playerCardsList = operator.playerCardsList;
             op.round = data.round;
             seatData.mine.operator = op;

@@ -2,6 +2,7 @@
 import UIBringIn from './dialog/bringin/UIBringIn';
 import UIBringOut from './dialog/bringout/UIBringInOut';
 import UIConfirmDialog from './dialog/confirm/UIConfirmDialog';
+import UIInsuranceNewPanel from './dialog/insurance/UIInsuranceNewPanel';
 import UIRechargeDiamond from './dialog/rechargediamond/UIRechargeDiamond';
 import UIGameplaySecuritySetting from './dialog/security/UIGameplaySecuritySetting';
 import UIGameplayTableSetting from './dialog/texassettings/UIGameplayTableSetting';
@@ -35,6 +36,12 @@ export const UIPrefabDialog = {
         Name: '牌桌安全设置',
         Bundle: BUNDLE_RESOURCES,
         Path: 'rc/dialog/security/UIGameplaySecuritySetting'
+    },
+    BuyInsurance: {
+        UIType: UIInsuranceNewPanel,
+        Name: '购买保险',
+        Bundle: BUNDLE_RESOURCES,
+        Path: 'rc/dialog/insurance/UIInsuranceNewPanel'
     },
     BringIn: {
         UIType: UIBringIn,

@@ -3,6 +3,7 @@ import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import UIComponentBase from '../../../base/UIComponentBase';
 import UIInsuranceNewPanel from '../../../dialog/insurance/UIInsuranceNewPanel';
+import InsuranceOperation from './InsuranceOperation';
 import Operation from './Operation';
 import PotsInfo from './PotsInfo';
 import PublicCardsInfo from './PublicCardsInfo';
@@ -37,9 +38,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     @property({ type: cc.Node, displayName: '操作面板' })
     private opPannelNode: cc.Node = null!;
     private _opPannel: Operation = null!;
-    @property({ type: cc.Node, displayName: '保险面板' })
-    private insurancePannelNode: cc.Node = null!;
-    private _insurancePannel: UIInsuranceNewPanel = null!;
+    @property({ type: InsuranceOperation, displayName: '保险弹窗触发器' })
+    private insuranceOperation: InsuranceOperation = null!;
     //数据绑定
     private _mine: TexasGameRoomDataPlayerMine = null;
 
@@ -52,8 +52,6 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this._sideMenuTexasMenu = this.sideMenuNode.getComponent(UITexasMenu);
         //操作面板
         this._opPannel = this.opPannelNode.children[0].getComponent(Operation);
-        //保险面板
-        this._insurancePannel = this.insurancePannelNode.children[0].getComponent(UIInsuranceNewPanel);
     }
 
     initialize(param: UIRoomTexasEnterParam) {
@@ -65,6 +63,6 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this.publicCardsInfo.initData(param.roomID, param.matchID);
         this._sideMenuTexasMenu.initData(param.roomID, param.matchID);
         this._opPannel.initData(this._mine);
-        this._insurancePannel.initData(this._mine);
+        this.insuranceOperation.initData(this._mine);
     }
 }
