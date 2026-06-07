@@ -1,6 +1,6 @@
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../core/decorator/DataBind';
-import { traceClass } from '../../../core/decorator/LogTrace';
-import { OperatorMine } from '../../../data/room/texas/model/Operator';
+import { traceClass, traceMethod } from '../../../core/decorator/LogTrace';
+import { OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataBasic from '../../../data/room/texas/TexasGameRoomDataBasic';
 import TexasGameRoomDataPlayerMine from '../../../data/room/texas/TexasGameRoomDataPlayerMine';
@@ -10,19 +10,11 @@ import GameplayUtil from '../../../game/util/GameplayUtil';
 import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import { Def, InsurancePotLimit, OutsCard, PotInsuranceBuy } from '../../../protobuf/holdem/define_pb';
-import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import { AssetCollectionType } from '../../loader/AssetLoader';
 import AssetManager from '../../loader/AssetManager';
 import TexasTableEvent from '../../scene/room/texas/events/TexasTableEvent';
 
 const { ccclass, menu } = cc._decorator;
-
-/**
- * 保险面板入参 —— 由 UIRoomTexas 监听到 PREPARE_OPERATION_MINE(opType=2) 后传入。
- */
-export interface UIInsuranceNewPanelParam {
-    player: TexasGameRoomDataPlayerMine;
-}
 
 /** 六档投保按钮枚举（仅本组件内部使用） */
 enum PoolType {
@@ -101,23 +93,30 @@ class PlayerItem {
 }
 
 /**
- * 保险面板（新版）
+ * 保险面板（自治组件版）
+ *
+ * 设计原则（与 Operation 一致）：
+ *  - 父组件（UIRoomTexas）只调一次 `initData(mine)`，之后完全不管。
+ *  - 脚本节点常驻 active=true，显隐通过 `_setVisible(b)` 切换 $back_click + Image_Dialog 这两个可视子节点，
+ *    保证 @bindEvent 监听始终在线 —— 替代了 dialog 模型里 `openDialog/closeDialog` 的命令式开关。
+ *  - PREPARE_OPERATION_MINE 是唯一的开关：opType=INSURANCE 时显示并渲染，否则隐藏。
  *
  * 数据来源：
- *   - mine (TexasGameRoomDataPlayerMine)   : operator(opType=2/insurancePotLimitList/round/deadline...)
- *   - basicInfo (TexasGameRoomDataBasic)   : insuranceOpduration / insuranceForceBuyRatio / insuranceOdds 表 / handCardNum
- *   - publicCards (TexasGameRoomDataPublicCards) : 顶部公共牌
- *   - seats (TexasGameRoomDataSeatsStateManager) : 玩家名字 / 手牌（由当前 operator.playerCardsList 决定，必要时也可从 seats 兜底）
+ *  - mine (TexasGameRoomDataPlayerMine)         : operator(opType=INSURANCE/insurancePotLimitList/round/deadline...)
+ *  - basicInfo (TexasGameRoomDataBasic)         : insuranceOpduration / insuranceForceBuyRatio / insuranceOdds / handCardNum
+ *  - publicCards (TexasGameRoomDataPublicCards) : 顶部公共牌
+ *  - seats (TexasGameRoomDataSeatsStateManager) : 玩家名字 / 手牌兜底
  *
  * 与服务端交互（统一走 TexasTableEvent）：
- *   - 购买当前池：CommitBuyInsurance(player, buyList, confirm=false) 进入下一池
- *   - 最后一池/超时/放弃：CommitBuyInsurance(player, buyList, confirm=true) 结束
- *   - 失败由 BuyInsuranceActive 消息处理；成功由 BuyInsurance 消息广播，并触发 mine.operator=null 关闭面板
+ *  - 购买当前池：CommitBuyInsurance(player, buyList, confirm=false) 进入下一池
+ *  - 最后一池/超时/放弃：CommitBuyInsurance(player, buyList, confirm=true) 结束
+ *  - 失败由 BuyInsuranceActive 消息处理；成功由 BuyInsurance 消息广播，并触发 mine.operator=null。
+ *  - mine.operator=null → @bindEvent 触发 onOperatorChange → 自动隐藏。
  */
 @ccclass
-@menu('Dialog/Insurance/UIInsuranceNewPanel')
+@menu('Scene/Room/Texas/Insurance/UIInsuranceNewPanel')
 @traceClass({ level: 'debug' })
-export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIInsuranceNewPanelParam> {
+export default class UIInsuranceNewPanel extends cc.Component {
     // ─── 数据源句柄 ──────────────────────────────────────
     private _player: TexasGameRoomDataPlayerMine = null;
     private _roomData: TexasGameRoomData = null;
@@ -125,7 +124,7 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIInsuran
     private _publicCards: TexasGameRoomDataPublicCards = null;
     private _seats: TexasGameRoomDataSeatsStateManager = null;
 
-    // ─── 节点缓存（运行时按 prefab 结构查找，无需编辑器再次绑定） ──
+    // ─── 节点缓存（按 prefab 结构 cc.find 一次性查全部） ──
     private backClickNode: cc.Node = null;
     private dialogNode: cc.Node = null;
     private scrollViewRoot: cc.Node = null;
@@ -182,23 +181,28 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIInsuran
     // ============================================================
     // 生命周期
     // ============================================================
-    public initialize(param: UIInsuranceNewPanelParam): void {
-        this._player = param.player;
-        this._roomData = param.player.roomData;
+    /**
+     * 外部唯一入口：UIRoomTexas 拿到房间数据后调一次，传 mine 引用。
+     * 后续显隐与刷新完全由组件自己监听 PREPARE_OPERATION_MINE 决定。
+     */
+    public initData(mine: TexasGameRoomDataPlayerMine): void {
+        this._player = mine;
+        this._roomData = mine.roomData;
         this._basic = this._roomData.basicInfo;
         this._publicCards = this._roomData.publicCards;
         this._seats = this._roomData.seatsStateManager;
-        if (this.node.activeInHierarchy) this._bindEventsAndRefresh();
+        this._bindEventsAndRefresh();
     }
 
     protected onLoad(): void {
         this._bindNodes();
         this._initStaticNodes();
         this._registerClicks();
+        // 默认隐藏，等 mine.operator 触发 INSURANCE 时再亮起
+        this._setVisible(false);
     }
 
     protected onEnable(): void {
-        if (!this._player) return;
         this._bindEventsAndRefresh();
     }
 
@@ -214,9 +218,9 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIInsuran
         this._refreshCountDownProgress(remain);
         if (remain <= 0) {
             this._isCounting = false;
-            // 倒计时归零：把已缓存内容一次性提交并 confirm
+            // 倒计时归零：把已缓存内容一次性提交并 confirm。
+            // 之后服务端会清 mine.operator，组件自己监听到后会切到隐藏态。
             TexasTableEvent.CommitBuyInsurance(this._player, this._cachedBuyList.slice(), true);
-            this.close();
         }
     }
 
@@ -305,17 +309,28 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIInsuran
     }
 
     private _registerClicks(): void {
-        if (this.backClickNode) this.backClickNode.on('click', this._onClose, this);
+        if (this.backClickNode) this.backClickNode.on('click', this._onClickBackdrop, this);
         if (this.buttonBuy) this.buttonBuy.on('click', this._onClickBuy, this);
         if (this.buttonCancel) this.buttonCancel.on('click', this._onClickCancel, this);
         if (this.buttonDelay) this.buttonDelay.on('click', this._onClickDelay, this);
         this.poolButtons.forEach(pb => pb.node.on('click', () => this._onClickPool(pb.type), this));
     }
 
+    /**
+     * 切换可视部分的显隐。
+     * 脚本本身的 node 永远 active=true（这样 @bindEvent 监听不会被 onDisable 拔掉）；
+     * 切的是它的两个顶层可视子节点（暗化背景 + 弹框）。
+     */
+    private _setVisible(b: boolean): void {
+        if (this.backClickNode) this.backClickNode.active = b;
+        if (this.dialogNode) this.dialogNode.active = b;
+    }
+
     // ============================================================
     // 数据绑定 + 首屏对齐
     // ============================================================
     private _bindEventsAndRefresh(): void {
+        if (!this._player) return;
         autoBindEvents(this, {
             mine: this._player,
             publicCards: this._publicCards,
@@ -323,11 +338,18 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIInsuran
         });
     }
 
-    /** 触发/取消保险 —— operator 变更是唯一开关。opType !== 2 时关闭。 */
+    /**
+     * 保险流程的唯一开关：
+     *  - opType=INSURANCE：渲染并显示
+     *  - 其它（含 null / NORMAL / AGREESECPUB）：隐藏 + 清理临时态
+     */
     @bindEvent(TexasGameRoomDataPlayerMine.PREPARE_OPERATION_MINE, 'mine')
+    @traceMethod({ level: 'debug' })
     private onOperatorChange(op: OperatorMine): void {
-        if (!op || op.opType !== 2) {
-            this.close();
+        if (!op || op.opType !== OpertionType.INSURANCE) {
+            this._isCounting = false;
+            this._clearTransientState();
+            this._setVisible(false);
             return;
         }
         this._cachedBuyList.length = 0;
@@ -347,9 +369,11 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIInsuran
         this._renderMultiPoolToggles();
         // 当前池
         this._refreshCurrentPot();
+        // 显示
+        this._setVisible(true);
     }
 
-    /** 公共牌变化 → 顶部公共牌刷新（attr 直接读 publicCards.publicCards 数组） */
+    /** 公共牌变化 → 顶部公共牌刷新 */
     @bindEvent(TexasGameRoomDataPublicCards.PUBLICCARDS_CHANGE, 'publicCards')
     private onPublicCardsChange(): void {
         const cards = this._publicCards.publicCards || [];
@@ -418,16 +442,11 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIInsuran
     private _refreshCurrentPot(): void {
         const pot = this._currentPot();
         if (!pot) return;
-        // 玩家行
         this._renderPlayers(pot);
-        // outs
         this._renderOuts(pot);
-        // 顶部数字
         if (this.textPot) this.textPot.string = StringHelper.GetLongString(pot.potAmount);
         if (this.textMainPut) this.textMainPut.string = StringHelper.GetLongString(pot.bet + pot.insuranced);
-        // 默认选 1/3
         this._currentPool = PoolType.THIRD;
-        // 强制保险 / FLOP 提示
         this._applyForceBuyConstraint(pot);
         this._refreshPoolMoney(pot);
         this._refreshSelectedPool(pot);
@@ -443,16 +462,12 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIInsuran
         const operator = this._currentOperator();
         const cardMap = new Map<number, number[]>(); // seatId → cards
         (operator?.playerCardsList || []).forEach(pc => cardMap.set(pc.seatId, pc.cardsList || []));
-        // 自己优先
         if (this.playerMineNode && minePlayer) {
             this.playerMineNode.active = true;
             const cards = (cardMap.get(mineSeatNo) || minePlayer.cards || []).slice(0, handCards);
             new PlayerItem(this.playerMineNode).updateItem(cards, minePlayer.name, -1, handCards);
         }
-        // 其他参与池玩家：从 outsDetailList 拿座位
-        const otherSeats = (pot.outsDetailList || [])
-            .map(uo => uo.seatId)
-            .filter(sid => sid !== mineSeatNo);
+        const otherSeats = (pot.outsDetailList || []).map(uo => uo.seatId).filter(sid => sid !== mineSeatNo);
         otherSeats.forEach((seatId, index) => {
             if (!this.playerTemplate) return;
             const parent = index < 2 ? this.playersContent : this.playersNext;
@@ -502,7 +517,6 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIInsuran
             item.updateItem(cardId);
             this._outsSplitItems.push(item);
         });
-        // 已选 outs（新版默认全选）
         const totalOuts = overOuts.length + equalOuts.length;
         if (this.textOuts) {
             this.textOuts.string = `${totalOuts}${i18nMgr.Get('UIInsurance_zhang')}`;
@@ -526,7 +540,6 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIInsuran
     // 档位（六档）逻辑
     // ============================================================
     private _applyForceBuyConstraint(pot: InsurancePotLimit.AsObject): void {
-        // Flop 强制保险：禁用低档位
         const ratio = this._basic.insuranceForceBuyRatio || 0;
         const isFlop = this._currentOperator()?.round === Def.Round.FLOP;
         const forceType = isFlop && ratio > 0 ? this._ratioToPool(ratio) : PoolType.NONE;
@@ -553,19 +566,16 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIInsuran
             default:
                 break;
         }
-        // 超过 mostAmount 的档位也禁用
         this.poolButtons.forEach(pb => {
             const realPay = Math.floor(this._realPayAmount(pot, pb.type) * 100);
             if (realPay > pot.max) this._setPoolBtnEnabled(pb, false);
         });
-        // 选首个可点档位
         const order = [PoolType.ALL, PoolType.HALF, PoolType.THIRD, PoolType.FIFTH, PoolType.EIGHTH, PoolType.MIN_MONEY];
         const found = order.find(t => {
             const pb = this.poolButtons.find(p => p.type === t);
             return pb && pb.node.getComponent(cc.Button)?.interactable;
         });
         if (found !== undefined) this._onClickPool(found);
-        // FLOP 强制保险提示
         if (this.classicTurnText) {
             if (isFlop && ratio > 0) {
                 const v = this._floorTrim(pot.min / 100);
@@ -656,7 +666,6 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIInsuran
     private _onClickCancel(): void {
         const pot = this._currentPot();
         if (!pot) return;
-        // Flop 强制保险时，放弃也要按 min 缓存一笔
         const ratio = this._basic.insuranceForceBuyRatio || 0;
         const isFlop = this._currentOperator()?.round === Def.Round.FLOP;
         if (isFlop && ratio > 0) this._cacheCurrentPotBuy(pot, true);
@@ -668,10 +677,13 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIInsuran
         // 服务端协议在 AddTime.ts 已经实现，需要时通过 ProtocolAgency.Send(MSG_D_ADD_TIME, ...) 走一次
     }
 
-    private _onClose(): void {
-        // 关闭等同于放弃整体保险
+    /** 点击半透明背景：等同于放弃整体保险。 */
+    private _onClickBackdrop(): void {
         TexasTableEvent.CommitBuyInsurance(this._player, this._cachedBuyList.slice(), true);
-        this.close();
+        // 立即隐藏给用户反馈；之后服务端 BuyInsuranceActive/BuyInsurance 会清空 mine.operator
+        // → 自己再触发一次 onOperatorChange 把状态归零。
+        this._isCounting = false;
+        this._setVisible(false);
     }
 
     private _advanceOrCommit(): void {
@@ -682,16 +694,16 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIInsuran
             TexasTableEvent.CommitBuyInsurance(this._player, this._cachedBuyList.slice(), false);
             this._currentPotIndex += 1;
             this._refreshCurrentPot();
-            // 切换多池切换条的可视态
             const node = this._multiToggleNodes[this._currentPotIndex];
             if (node) {
                 this._multiToggleNodes.forEach(n => this._setToggleVisual(n, n === node));
             }
             return;
         }
-        // 最后一池：确认提交并关闭
+        // 最后一池：确认提交。隐藏不在这里做 ——
+        // 等服务端清掉 mine.operator 后，onOperatorChange 会自动隐藏面板。
         TexasTableEvent.CommitBuyInsurance(this._player, this._cachedBuyList.slice(), true);
-        this.close();
+        this._isCounting = false;
     }
 
     // ============================================================
@@ -752,7 +764,6 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIInsuran
                 overValue = maxPay / 8;
                 break;
         }
-        // Flop 强制保险：命中目标档位时直接用 pot.min（leastAmount）
         const ratio = this._basic.insuranceForceBuyRatio || 0;
         const isFlop = this._currentOperator()?.round === Def.Round.FLOP;
         if (isFlop && ratio > 0) {
@@ -813,9 +824,7 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIInsuran
         if (!useMinAsActiveAmount && (!overOuts.length || this._overOutsPayValue <= 0)) {
             return false;
         }
-        const activeAmount = useMinAsActiveAmount
-            ? pot.min
-            : Math.max(this._overOutsPayValue, pot.min);
+        const activeAmount = useMinAsActiveAmount ? pot.min : Math.max(this._overOutsPayValue, pot.min);
         const operator = this._currentOperator();
         const buy: PotInsuranceBuy.AsObject = {
             activeAmount,
@@ -852,7 +861,6 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIInsuran
     }
 
     private _clearTransientState(): void {
-        this._isCounting = false;
         this._cachedBuyList.length = 0;
         this._currentPotIndex = 0;
         this._destroyArray(this._multiToggleNodes);

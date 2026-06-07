@@ -1,12 +1,9 @@
-import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import roomDataManager from '../../../../data/room/RoomDataManager';
-import { OperatorMine, OpertionType } from '../../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import UIComponentBase from '../../../base/UIComponentBase';
-import AutoOperation from './operations/AutoOperation';
+import UIInsuranceNewPanel from '../../../dialog/insurance/UIInsuranceNewPanel';
 import Operation from './Operation';
-import viewManager from '../../../UIViewManager';
 import PotsInfo from './PotsInfo';
 import PublicCardsInfo from './PublicCardsInfo';
 import RoomInfo from './RoomInfo';
@@ -40,9 +37,11 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     @property({ type: cc.Node, displayName: '操作面板' })
     private opPannelNode: cc.Node = null!;
     private _opPannel: Operation = null!;
+    @property({ type: cc.Node, displayName: '保险面板' })
+    private insurancePannelNode: cc.Node = null!;
+    private _insurancePannel: UIInsuranceNewPanel = null!;
     //数据绑定
     private _mine: TexasGameRoomDataPlayerMine = null;
-    private _insuranceOpen: boolean = false;
 
     protected onLoad(): void {
         //菜单项
@@ -53,6 +52,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this._sideMenuTexasMenu = this.sideMenuNode.getComponent(UITexasMenu);
         //操作面板
         this._opPannel = this.opPannelNode.children[0].getComponent(Operation);
+        //保险面板
+        this._insurancePannel = this.insurancePannelNode.children[0].getComponent(UIInsuranceNewPanel);
     }
 
     initialize(param: UIRoomTexasEnterParam) {
@@ -63,51 +64,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this.seatManager.initData(param.roomID, param.matchID);
         this.publicCardsInfo.initData(param.roomID, param.matchID);
         this._sideMenuTexasMenu.initData(param.roomID, param.matchID);
-        this._mine = roomData.mine;
-        this._bindEventsAndRefresh();
-    }
-
-    protected onEnable(): void {
-        this._bindEventsAndRefresh();
-    }
-
-    protected onDisable(): void {
-        unBindEventsAll(this);
-    }
-
-    /**
-     * 托管全自动事件激活绑定
-     */
-    private _bindEventsAndRefresh() {
-        // 统一激活绑定，注入强类型 tag 推导过滤机制
-        if (!this._mine) return;
-        autoBindEvents(this, { mine: this._mine });
-    }
-
-    @bindEvent(TexasGameRoomDataPlayerMine.PREPARE_OPERATION_MINE, 'mine')
-    private onPrepareActionMine(oper: OperatorMine) {
-        if (!oper) {
-            this.opPannelNode.active = false;
-            this._opPannel.node.stopAllActions();
-            return;
-        }
-        switch (oper.opType) {
-            case OpertionType.INSURANCE:
-                if (this._insuranceOpen) return;
-                this._insuranceOpen = true;
-                viewManager.openDialog('Insurance', { player: this._mine });
-                return;
-                break;
-            case OpertionType.AGREESECPUB:
-                this.tracelog.warn('NOT SUPPORTED agrees secp op')
-                break;
-            default:
-                this.opPannelNode.active = true;
-                this._opPannel.startOperation(oper, this._mine);
-        }
-        if (this._insuranceOpen) {
-            this._insuranceOpen = false;
-            viewManager.closeDialog('Insurance');
-        }
+        this._opPannel.initData(this._mine);
+        this._insurancePannel.initData(this._mine);
     }
 }

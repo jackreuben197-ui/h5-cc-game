@@ -2,7 +2,6 @@
 import UIBringIn from './dialog/bringin/UIBringIn';
 import UIBringOut from './dialog/bringout/UIBringInOut';
 import UIConfirmDialog from './dialog/confirm/UIConfirmDialog';
-import UIInsuranceNewPanel from './dialog/insurance/UIInsuranceNewPanel';
 import UIRechargeDiamond from './dialog/rechargediamond/UIRechargeDiamond';
 import UIGameplaySecuritySetting from './dialog/security/UIGameplaySecuritySetting';
 import UIGameplayTableSetting from './dialog/texassettings/UIGameplayTableSetting';
@@ -54,12 +53,6 @@ export const UIPrefabDialog = {
         Name: '扫码充钻石',
         Bundle: BUNDLE_RESOURCES,
         Path: 'rc/dialog/rechargediamond/UIRechargeDiamond'
-    },
-    Insurance: {
-        UIType: UIInsuranceNewPanel,
-        Name: '保险面板',
-        Bundle: BUNDLE_RESOURCES,
-        Path: 'rc/dialog/insurance/UIInsuranceNewPanel'
     }
 } as const;
 
