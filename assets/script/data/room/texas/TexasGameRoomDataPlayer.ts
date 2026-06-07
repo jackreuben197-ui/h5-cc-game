@@ -6,8 +6,7 @@ import {
     AnimateDisplayTypePosition,
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
-import { VideoModel } from '../../../game/constant/VideoModel';
-import { AllInWinCardsInfo, Def, PotInsuranceBuy } from '../../../protobuf/holdem/define_pb';
+import { Def, PotInsuranceBuy } from '../../../protobuf/holdem/define_pb';
 import { Operator } from './model/Operator';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from './TexasGameRoomDataPlayerMine';
@@ -51,7 +50,13 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public userID: number;
     public clubID: number;
     public handBet: number;
-    public mine: TexasGameRoomDataPlayerMine = null;
+    public get mine(): TexasGameRoomDataPlayerMine | null {
+        if (this.roomData.mine.seatNo == 0) return null;
+        if (this.roomData.mine.seatNo == this.seatNo) {
+            return this.roomData.mine;
+        }
+        return null;
+    }
     public roundActioned: boolean;
     public deposit: number = 0;
     public isAuto: boolean = false;
@@ -107,12 +112,6 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
         this._parentRoomData = roomData;
     }
 
-    public get delayViewCard() {
-        return this._parentRoomData.basicInfo.delaySeeCard;
-    }
-    public get directlyViewCard() {
-        return this._parentRoomData.basicInfo.gameStatus >= Def.GameStatus.HAND_PREFLOP && this.roundActioned;
-    }
     @observable(TexasGameRoomDataPlayer.SEATED_CHANGE, {
         initParams() {
             return [this.mine];
@@ -128,6 +127,15 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public position: SeatPosition = SeatPosition.Default;
     @observable(TexasGameRoomDataPlayer.SHOW_CARDS_CHANGE)
     public cards: number[] = [];
+    public get canOpearate() {
+        return (
+            this.roomData.basicInfo.gameStatus >= Def.GameStatus.HAND_STARTED &&
+            this.roomData.basicInfo.gameStatus < Def.GameStatus.HAND_END &&
+            this.cards.length > 0 &&
+            this.action != Def.Action.FOLD &&
+            this.action != Def.Action.ALLIN
+        );
+    }
     @observable(TexasGameRoomDataPlayer.NICKNAME_CHANGE)
     public name: string = '';
     @observable(TexasGameRoomDataPlayer.AVATAR_CHANGE)
@@ -148,7 +156,6 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
         this.chip = 0;
         this.avatar = '';
         this.name = '';
-        this.mine = null;
         this.cards = [];
         this.status = undefined;
         this.unmuteEvents();
@@ -166,6 +173,9 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
             this.setCards([], AnimateDisplayTypeCards.Static, 0);
             this.roundActioned = false;
             this.winPercent100 = -1;
+            if (this.mine) {
+                this.mine.handClear();
+            }
         }
     }
 

@@ -16,6 +16,6 @@ export function AgreePost(data: ServerMessageAgreePost.AsObject, roomID: number,
         viewManager.showToast(CPErrorCode.ServerErrorDescription(data.status));
         return;
     }
-    const player = roomData.seatsStateManager.getSeatPlayer(roomData.mine.seatNo);
+    const player = roomData.mine.player;
     player.status = Def.CanPlayStatus.AGREE_POST;
 }

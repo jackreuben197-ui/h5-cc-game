@@ -9,7 +9,7 @@ import { i18nMgr } from '../../../../i18n/i18nMgr';
 const { ccclass, property, menu } = cc._decorator;
 
 @ccclass
-@menu('CrazyPoker/Room/Texas/RoomInfo')
+@menu('Scene/Room/Texas/RoomInfo')
 @traceClass()
 export default class RoomInfo extends cc.Component {
     @property(cc.Label)

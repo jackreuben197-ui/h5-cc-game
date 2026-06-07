@@ -11,15 +11,15 @@ export interface IBetBtnData {
     cb: (amount: number, ratio: string) => void; // 点击回调
 }
 
-export function caculatePotsBet(roundBet:number, minRaise:number, player: TexasGameRoomDataPlayer):IBetBtnData[]{
+export function caculatePotsBet(roundBet: number, minRaise: number, player: TexasGameRoomDataPlayer): IBetBtnData[] {
     if (!player || !player.mine) return;
-    const pot = player.roomData.potInfo.allPot + roundBet - player.roundBet; 
+    const pot = player.roomData.potInfo.allPot + roundBet - player.roundBet;
     const myCall = roundBet - player.roundBet;
     const myChip = player.chip;
-    const btn = [1/3, 1/2, 2/3, 1, 1.2];
-    const str = ['1/3', '1/2', '2/3', '1.0', '1.2']
-    const ret:IBetBtnData[] = [];
-    btn.forEach((v, i)=> {
+    const btn = [1 / 3, 1 / 2, 2 / 3, 1, 1.2];
+    const str = ['1/3', '1/2', '2/3', '1.0', '1.2'];
+    const ret: IBetBtnData[] = [];
+    btn.forEach((v, i) => {
         const amount = Math.floor(pot * v + myCall);
         //有钱，还得大于最小下注
         if (amount <= myChip && amount >= minRaise) {
@@ -28,22 +28,21 @@ export function caculatePotsBet(roundBet:number, minRaise:number, player: TexasG
                 amount: amount,
                 cb: function (amount: number, ratio: string): void {
                     if (amount == myChip) {
-                        TexasTableEvent.DoAction(player.mine,  Def.Action.ALLIN, player.chip);
+                        TexasTableEvent.DoAction(player.mine, Def.Action.ALLIN, player.chip);
                         return;
                     }
                     if (roundBet == 0) {
-                        TexasTableEvent.DoAction(player.mine,  Def.Action.BET, amount);
+                        TexasTableEvent.DoAction(player.mine, Def.Action.BET, amount);
                         return;
                     }
-                    TexasTableEvent.DoAction(player.mine,  Def.Action.RAISE, amount);
+                    TexasTableEvent.DoAction(player.mine, Def.Action.RAISE, amount);
                     return;
                 }
-            })
+            });
         }
-    })
+    });
     return ret;
 }
-
 
 const { ccclass, property } = cc._decorator;
 

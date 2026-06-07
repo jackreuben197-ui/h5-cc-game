@@ -82,6 +82,7 @@ export default class CardView extends cc.Component {
     }
     // 用于临时存一下卡牌,后面用来动画用
     public storeCardNum: number;
+    public delayHighlight: boolean;
     private _bgSf: cc.SpriteFrame = null;
 
     /**

@@ -4,6 +4,7 @@ import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/m
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { AnimateDisplayTypeAction, AnimateDisplayTypeCards, AnimateDisplayTypeRoundBet } from '../../../game/constant/AnimateDisplayType';
 import { ServerMessageActionAll } from '../../../protobuf/holdem/recv_th_action_all_pb';
+import { AutoOperationTypeTexas } from './AutoOpertaionType';
 
 const _plog = createLogger('ServerMessageActionAll');
 
@@ -13,9 +14,20 @@ export function ActionAll(data: ServerMessageActionAll.AsObject, roomID: number,
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     const seatPlayer = roomData.seatsStateManager.getSeatPlayer(data.operatorSeatId);
     seatPlayer.setAction(data.action, AnimateDisplayTypeAction.Done);
+    seatPlayer.roundActioned = true;
     seatPlayer.chip = data.leftChips;
     seatPlayer.setRoundBet(seatPlayer.roundBet + data.amount, AnimateDisplayTypeRoundBet.PutNear);
     seatPlayer.operator = null;
+    if (roomData.mine.seatNo > 0) {
+        // 计算自动操作面板的变动
+        const minePlayer = roomData.mine.player;
+        if (minePlayer.canOpearate) {
+            roomData.mine.caculateValidAutoOperationType(data.roundBet);
+        } else {
+            //不显示
+            roomData.mine.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
+        }
+    }
     if (seatPlayer.mine) {
         seatPlayer.mine.operator = null;
     }
@@ -47,6 +59,7 @@ export function ActionAll(data: ServerMessageActionAll.AsObject, roomID: number,
             }
             if (operator.cardsList.length > 0) {
                 seatData.setCards(operator.cardsList, AnimateDisplayTypeCards.ShowCards);
+                roomData.mine.caculateHandValueTypeAndHighlight();
             }
             seatData.mine.operator = op;
         } else {

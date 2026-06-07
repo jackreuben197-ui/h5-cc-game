@@ -1,7 +1,6 @@
 import { traceClass } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Code } from '../../../protobuf/holdem/code_pb';
-import ProtocolAgency from '../../websocket/ProtocolAgency';
 import { Action } from './Action';
 import { ActionAll } from './ActionAll';
 import { AddOn } from './AddOn';
@@ -75,7 +74,7 @@ export default class TexasMessageHandler {
             //     return;
             // }
             if (!roomDataManager.existRoomData(roomID, matchID)) {
-                this.tracelog.warn('no room data return', roomID, matchID);
+                // this.tracelog.warn('no room data return', roomID, matchID);
                 // ProtocolAgency.Send({
                 //     code: Code.MSG_D_LEAVE,
                 //     roomID: roomID,

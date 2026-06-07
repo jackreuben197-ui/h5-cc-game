@@ -11,14 +11,15 @@ import {
 } from '../../../game/constant/AnimateDisplayType';
 import { Def, PlayerStartInfo } from '../../../protobuf/holdem/define_pb';
 import { ServerMessageStartInfo } from '../../../protobuf/holdem/recv_th_start_info_pb';
+import { AutoOperationTypeTexas } from './AutoOpertaionType';
 
-const _plog = createLogger('ServerMessageStartInfo');
+const _plog = createLogger('ServerMessageStartInfo', 'debug');
 
 // StartInfo 1103
 export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number, matchID: number) {
     let roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
+    roomData.basicInfo.gameStatus = Def.GameStatus.HAND_PREFLOP;
     const defaultHandCards = new Array(roomData.basicInfo.handCardNum).fill(0);
-    _plog.debug(data);
     if (data.handInfo) {
         roomData.basicInfo.handNum = data.handInfo.handNum;
         roomData.potInfo.allPot = data.handInfo.allBet;
@@ -32,6 +33,7 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
     data.playersList.forEach(player => {
         pm.set(player.seatId, player);
     });
+    const myOp = data.nextOperator?.seatId == roomData.mine.seatNo;
     for (let i = 0; i < data.handInfo.dealOrderList.length; i++) {
         const seatData = roomData.seatsStateManager.getSeatPlayer(data.handInfo.dealOrderList[i]);
         const player = pm.get(data.handInfo.dealOrderList[i]);
@@ -42,19 +44,32 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
         seatData.setRoundBet(player.roundBet, AnimateDisplayTypeRoundBet.Static);
         seatData.handBet = 0;
         seatData.roundActioned = false;
-        if (player.cardsList.length == 0) {
-            seatData.setCards([...defaultHandCards], AnimateDisplayTypeCards.Deal, i);
-        } else {
-            //如果是延迟看牌也先不传信息,给服务端修正
-            if (roomData.basicInfo.delaySeeCard) {
+        // 自己
+        if (player.seatId == roomData.mine.seatNo) {
+            //如果是延迟看牌也先不传信息,给服务端修正 (延迟看牌,但是不是我操作)
+            if (!myOp && roomData.basicInfo.delaySeeCard) {
                 seatData.setCards([...defaultHandCards], AnimateDisplayTypeCards.Deal, i);
-            }else{
+            } else {
                 seatData.setCards(player.cardsList, AnimateDisplayTypeCards.Deal, i);
+            }
+        } else {
+            if (player.cardsList.length > 0) {
+                seatData.setCards(player.cardsList, AnimateDisplayTypeCards.Deal, i);
+            } else {
+                seatData.setCards([...defaultHandCards], AnimateDisplayTypeCards.Deal, i);
             }
         }
         seatData.setAction(player.action, AnimateDisplayTypeAction.Static);
         seatData.deposit = player.deposit;
         if (seatData.mine) {
+            // _plog.debug('can operation', seatData.canOpearate, roomData.basicInfo.gameStatus >= Def.GameStatus.HAND_STARTED , roomData.basicInfo.gameStatus < Def.GameStatus.HAND_END);
+            if (seatData.canOpearate) {
+                // 操作面板(不显示)
+                seatData.mine.autoOperationType = AutoOperationTypeTexas.NO;
+                if (!myOp) {
+                    seatData.mine.caculateValidAutoOperationType(data.handInfo.roundBet);
+                }
+            }
             seatData.mine.storeChips = player.storeChips;
         }
     }

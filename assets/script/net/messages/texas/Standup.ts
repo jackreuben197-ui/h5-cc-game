@@ -9,7 +9,7 @@ export function Standup(data: ServerMessageStandup.AsObject, roomID: number, mat
     //@TODO
     seatData.setSeated(false, seatData.mine);
     if (seatData.mine) {
-        seatData.mine.seatNo = 0;
+        seatData.mine.clearData();
     }
     seatData.clearData();
 }

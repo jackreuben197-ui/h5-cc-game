@@ -4,7 +4,6 @@ import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPotInfo from '../../../../data/room/texas/TexasGameRoomDataPotInfo';
 import TexasGameRoomDataSetting from '../../../../data/room/texas/TexasGameRoomDataSetting';
-import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
 import { SidePot } from '../../../../protobuf/holdem/define_pb';
 import UIViewUtil from '../../../util/UIViewUtil';
@@ -14,7 +13,7 @@ const { ccclass, property, menu } = cc._decorator;
 const LN = '[PotsInfo]';
 
 @ccclass
-@menu('CrazyPoker/Room/Texas/PotsInfo')
+@menu('Scene/Room/Texas/PotsInfo')
 export default class PotsInfo extends cc.Component {
     @property(cc.Label)
     private allPotsLabel: cc.Label = null;

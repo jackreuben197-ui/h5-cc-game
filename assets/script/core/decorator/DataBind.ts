@@ -151,10 +151,10 @@ export function bindData() {
         const target = constructor.prototype;
         if (!target.muteEvents) {
             target.muteEvents = function () {
-                this._isMuted = true;
+                this._muteCount = (this._muteCount || 0) + 1;
             };
             target.unmuteEvents = function () {
-                this._isMuted = false;
+                if (this._muteCount > 0) this._muteCount--;
             };
         }
     };
@@ -182,7 +182,7 @@ export function pureEvent(eventName: string, options?: PureEventOptions) {
             // 1. 首先执行原本函数体内手写的逻辑（如你写在 emptySeat 内的数据清空）
             const result = originalMethod.apply(this, args);
             // 2. 检查当前模型是否处于批量控制的静音期
-            if ((this as any)._isMuted) return result;
+            if ((this as any)._muteCount > 0) return result;
             // 3. 如果装饰器注入了 shouldEmit 断言选项
             if (options && typeof options.shouldEmit === 'function') {
                 // 将当前函数执行的上下文环境（this）和入参透喂给 shouldEmit 拦截器
@@ -311,10 +311,10 @@ export function observable(eventName: string, options?: ObservableOptions) {
         };
         if (!target.muteEvents) {
             target.muteEvents = function () {
-                this._isMuted = true;
+                this._muteCount = (this._muteCount || 0) + 1;
             };
             target.unmuteEvents = function () {
-                this._isMuted = false;
+                if (this._muteCount > 0) this._muteCount--;
             };
         }
         Object.defineProperty(target, propertyKey, {
@@ -326,7 +326,7 @@ export function observable(eventName: string, options?: ObservableOptions) {
                 const skipEmit = shouldSkipEmit(oldValue, newValue);
                 this[privateKey] = newValue;
                 if (skipEmit) return;
-                if (this._isMuted) return;
+                if (this._muteCount > 0) return;
                 if (typeof this.emit === 'function') this.emit(evt, newValue);
             },
             enumerable: true,
@@ -338,7 +338,7 @@ export function observable(eventName: string, options?: ObservableOptions) {
                 const skipEmit = shouldSkipEmit(oldValue, newValue, ...args);
                 this[privateKey] = newValue;
                 if (skipEmit) return;
-                if (this._isMuted) return;
+                if (this._muteCount > 0) return;
                 if (typeof this.emit === 'function') this.emit(evt, newValue, ...args);
             };
         }

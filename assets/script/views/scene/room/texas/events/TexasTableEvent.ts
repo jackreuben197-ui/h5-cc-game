@@ -2,7 +2,7 @@ import { traceClass } from '../../../../../core/decorator/LogTrace';
 import TexasGameRoomDataPlayerMine from '../../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import userStore from '../../../../../data/user/UserStore';
 import UserStoreUtils from '../../../../../data/user/UserStoreUtils';
-import { BringInChipsType, BringInMode } from '../../../../../game/constant/BringInChipsType';
+import { BringInMode } from '../../../../../game/constant/BringInMode';
 import { GameType } from '../../../../../game/constant/LogicTypeConf';
 import ProcedureDefine from '../../../../../game/procedure/ProcedureDefine';
 import ProcedureManager from '../../../../../game/procedure/ProcedureManager';
@@ -11,8 +11,7 @@ import { CPErrorCode } from '../../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../../i18n/i18nMgr';
 import { HttpRoomBringInByIDProtocol } from '../../../../../net/https/data/room/HttpRoomBringInByIDProtocol';
 import { HttpRoomBringOutProtocol } from '../../../../../net/https/data/room/HttpRoomBringOutProtocol';
-import { HttpUserInfoProtocol } from '../../../../../net/https/data/user/HttpUserInfoProtocol';
-import { WebUserInfo, WebUserRoom, WebUserRoomBringin, WWW } from '../../../../../net/https/WebRequest';
+import { WebUserRoom, WebUserRoomBringin, WWW } from '../../../../../net/https/WebRequest';
 import ProtocolAgency from '../../../../../net/websocket/ProtocolAgency';
 import { Code } from '../../../../../protobuf/holdem/code_pb';
 import { Def, PotInsuranceBuy, RoomInfo } from '../../../../../protobuf/holdem/define_pb';
@@ -157,7 +156,6 @@ export default class TexasTableEvent {
                     }
                     // 其他都需要弹窗口输入
                     viewManager.openDialog('BringIn', {
-                        OpenType: BringInChipsType.BRING_IN,
                         GameType: GameType.HOLDEM,
                         RoomPlayer: seatData,
                         CommitFn: TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData)
@@ -170,7 +168,6 @@ export default class TexasTableEvent {
                     //     // this.ShowAutoAddChips(data.wallet);
                     // } else {
                     viewManager.openDialog('BringIn', {
-                        OpenType: BringInChipsType.BRING_IN,
                         GameType: GameType.HOLDEM,
                         RoomPlayer: seatData,
                         CommitFn: TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData)
@@ -183,7 +180,6 @@ export default class TexasTableEvent {
                     isFromBringIn: true,
                     bringInAct: () => {
                         viewManager.openDialog('BringIn', {
-                            OpenType: BringInChipsType.BRING_IN,
                             GameType: GameType.HOLDEM,
                             RoomPlayer: seatData,
                             CommitFn: TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData)
@@ -216,7 +212,6 @@ export default class TexasTableEvent {
                 }
                 // 其他都需要弹窗口输入
                 viewManager.openDialog('BringIn', {
-                    OpenType: BringInChipsType.BRING_IN,
                     GameType: GameType.HOLDEM,
                     RoomPlayer: seatData,
                     CommitFn: TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData)
@@ -225,7 +220,6 @@ export default class TexasTableEvent {
             }
             // 不提示安全提示直接带入
             viewManager.openDialog('BringIn', {
-                OpenType: BringInChipsType.BRING_IN,
                 GameType: GameType.HOLDEM,
                 RoomPlayer: seatData,
                 CommitFn: TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData)
@@ -359,7 +353,6 @@ export default class TexasTableEvent {
             if (player.roomData.basicInfo.bringInType == BringInMode.CURRENCY) {
                 userStore.fillWalletInfo([response.data]);
                 viewManager.openDialog('BringIn', {
-                    OpenType: BringInChipsType.BRING_IN,
                     GameType: GameType.HOLDEM,
                     RoomPlayer: player,
                     CommitFn: TexasTableEvent._commitBringInCallback(player, player.roomData.basicInfo.limitBringIn)
@@ -368,7 +361,6 @@ export default class TexasTableEvent {
             }
             // 记分牌 @TODO
             viewManager.openDialog('BringIn', {
-                OpenType: BringInChipsType.BRING_IN,
                 GameType: GameType.HOLDEM,
                 RoomPlayer: player,
                 CommitFn: TexasTableEvent._commitBringInCallback(player, player.roomData.basicInfo.limitBringIn)
@@ -435,6 +427,12 @@ export default class TexasTableEvent {
     * 操作
     */
     public static DoAction(player: TexasGameRoomDataPlayerMine, action: Def.ActionMap[keyof Def.ActionMap], amount: number) {
+        if (action == Def.Action.FOLD) {
+            //不显示牌型了，也不高亮了
+            player.handValueType = '';
+            player.highlightCards([]);
+            player.roomData.publicCards.higlightPublicards([]);
+        }
         ProtocolAgency.Send({
             code: Code.MSG_D_ACTION,
             roomID: player.roomData.roomID,
@@ -460,7 +458,7 @@ export default class TexasTableEvent {
                 room: {
                     roomId: player.roomData.roomID,
                     matchId: player.roomData.matchID
-                },
+                }
             }
         });
     }
@@ -476,7 +474,7 @@ export default class TexasTableEvent {
                     matchId: player.roomData.matchID
                 },
                 keep: false,
-                duration: 0,
+                duration: 0
             }
         });
     }
@@ -492,7 +490,7 @@ export default class TexasTableEvent {
                     matchId: player.roomData.matchID
                 },
                 keep: true,
-                duration: duration,
+                duration: duration
             }
         });
     }

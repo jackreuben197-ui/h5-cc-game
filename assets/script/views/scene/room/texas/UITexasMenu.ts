@@ -2,7 +2,6 @@ import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/dec
 import { traceClass } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
-import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import { SquidMode } from '../../../../game/constant/Squid';
 import h5MessageManager from '../../../../H5MsgMgr';
@@ -11,10 +10,11 @@ import viewManager from '../../../UIViewManager';
 import SwitchNode from '../../../widget/SwitchNode';
 import TexasTableEvent from './events/TexasTableEvent';
 
-const { ccclass, property } = cc._decorator;
+const { ccclass, property, menu } = cc._decorator;
 
 @ccclass
-@traceClass({ level: 'debug' })
+@traceClass()
+@menu('Scene/Room/Texas/UITexasMenu')
 export default class UITexasMenu extends cc.Component {
     //Menu_Buttons: cc.Node = null;
     @property(cc.Button)
@@ -62,7 +62,7 @@ export default class UITexasMenu extends cc.Component {
         this.fadeOut(false);
         this._bindEventsAndRefresh();
     }
-    
+
     protected onEnable(): void {
         this._bindEventsAndRefresh();
     }
@@ -76,8 +76,8 @@ export default class UITexasMenu extends cc.Component {
      */
     private _bindEventsAndRefresh() {
         // 统一激活绑定，注入强类型 tag 推导过滤机制
-        if (!this._roomData ) return;
-        autoBindEvents(this, { mine: this._roomData.mine});
+        if (!this._roomData) return;
+        autoBindEvents(this, { mine: this._roomData.mine });
     }
 
     //(优先于seated执行保证展示正确)
@@ -164,12 +164,12 @@ export default class UITexasMenu extends cc.Component {
             return;
         }
         // 鱿鱼模式下的站起需要额外确认逻辑
-        const mine = this._roomData.seatsStateManager.getSeatPlayer(this._roomData.mine.seatNo);
+        const mine = this._roomData.mine.player;
         if (this._roomData.basicInfo.hasSquid && this._roomData.basicInfo.squidStatusEnabled && mine.squidIn) {
             if (this._roomData.basicInfo.squidMode === SquidMode.NORMAL) {
                 if (mine.keepSeat) {
                     TexasTableEvent.CancelKeepSeat(this._roomData.mine);
-                }else{
+                } else {
                     TexasTableEvent.Standup(this._roomData.mine);
                 }
                 return;
@@ -184,7 +184,7 @@ export default class UITexasMenu extends cc.Component {
                         commit_click: () => {
                             if (mine.keepSeat) {
                                 TexasTableEvent.CancelKeepSeat(this._roomData.mine);
-                            }else{
+                            } else {
                                 TexasTableEvent.Standup(this._roomData.mine);
                             }
                         }
@@ -198,7 +198,7 @@ export default class UITexasMenu extends cc.Component {
                         commit_click: () => {
                             if (mine.keepSeat) {
                                 TexasTableEvent.CancelKeepSeat(this._roomData.mine);
-                            }else{
+                            } else {
                                 TexasTableEvent.Standup(this._roomData.mine);
                             }
                         }

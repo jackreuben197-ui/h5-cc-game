@@ -95,6 +95,7 @@ public buttonChangeEvent(prev: number, cur: number, bat: AnimateDisplayTypeButto
 @bindData()
 this.muteEvents();
 // 这中间的属性设置，或者setXXX方法都不会触发事件
+// 这里保护的都是同步设置值,如果是异步的是不保护的, 比如Promise, async/await, setTimeout, cc.schedule等,不要放里面
 this.unmuteEvents();
 ```
 
@@ -149,4 +150,8 @@ private onUpdateNickname(na: string) {
 @bindEvent('SEATS_CHANGE', {dataSource: 'seats', initPriority: 10})
 private onUpdateSeats(count: number) {
 }
+
+// 直接跳过初始化运行，初始化的时候不会触发此函数 initIgnore
+@bindEvent(TexasGameRoomDataPublicCards.ALL_PUBLICCARDS_RESET, { dataSource: 'publicCards', initIgnore: true })
+public onUpdateResetPublicCards() {}
 ```

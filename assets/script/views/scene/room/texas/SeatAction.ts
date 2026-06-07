@@ -1,7 +1,7 @@
 const { ccclass, property, menu } = cc._decorator;
 
 @ccclass
-@menu('CrazyPoker/Room/Texas/SeatPart/SeatAction')
+@menu('Scene/Room/Texas/SeatPart/SeatAction')
 export default class SeatAction extends cc.Component {
     @property(cc.Label)
     private actionLabel: cc.Label = null;

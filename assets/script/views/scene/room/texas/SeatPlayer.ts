@@ -1,6 +1,6 @@
 import { autoBindEvents, bindEvent, unBindEvents, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
-import { Operator, OperatorMine } from '../../../../data/room/texas/model/Operator';
+import { Operator } from '../../../../data/room/texas/model/Operator';
 import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import { SeatPosition } from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
@@ -14,16 +14,13 @@ import {
 import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
 import { Def } from '../../../../protobuf/holdem/define_pb';
-import viewManager from '../../../UIViewManager';
 import UIViewUtil from '../../../util/UIViewUtil';
 import CardView from '../../../widget/CardView';
 import { DisplayNode } from '../../../widget/DisplayNode';
 import RemoteSprite from '../../../widget/RemoteSprite';
 import ShiningPathTimer from '../../../widget/ShiningPathTimer';
 import TexasTableEvent from './events/TexasTableEvent';
-import Operation from './Operation';
 import SeatAction from './SeatAction';
-
 
 const { ccclass, property, menu } = cc._decorator;
 
@@ -50,7 +47,7 @@ const greenColor = cc.Color.fromHEX(new cc.Color(), '#78E4E4');
 const yellowColor = cc.Color.fromHEX(new cc.Color(), '#F9CA9F');
 
 @ccclass
-@menu('CrazyPoker/Room/Texas/SeatPlayer')
+@menu('Scene/Room/Texas/SeatPlayer')
 @traceClass()
 export default class SeatPlayer extends cc.Component {
     @property(cc.Label)
@@ -96,6 +93,8 @@ export default class SeatPlayer extends cc.Component {
     private canPlayStatusNode: DisplayNode = null;
     @property({ type: cc.Button, displayName: '返回游戏按钮' })
     private returnToGameButton: cc.Button = null!;
+    @property({ type: DisplayNode, displayName: '牌型节点' })
+    private handValueTypeNode: DisplayNode = null!;
     private _seatPlayer: TexasGameRoomDataPlayer = null!;
     private _setting: TexasGameRoomDataSetting = null!;
     private _cardBacks: cc.Node[] = [];
@@ -162,7 +161,8 @@ export default class SeatPlayer extends cc.Component {
 
     //(优先于seated执行保证展示正确)
     @bindEvent(TexasGameRoomDataPlayer.SEATED_CHANGE, { dataSource: 'player', initPriority: 10 })
-    private onUpdateSeated(b: boolean, mine: TexasGameRoomDataPlayer) {
+    @traceMethod({ level: 'debug' })
+    private onUpdateSeated(b: boolean, mine: TexasGameRoomDataPlayerMine) {
         this.userSeat.active = b;
         this.emptySeat.node.active = !b;
         this.emptySeat.interactable = !b;
@@ -202,23 +202,22 @@ export default class SeatPlayer extends cc.Component {
     private onUpdateCanPlayStatus(v: Def.CanPlayStatusMap[keyof Def.CanPlayStatusMap]) {
         this.tracelog.debug(this._seatPlayer.seatNo, this._seatPlayer.cards, this._seatPlayer.status);
         switch (v) {
-        case Def.CanPlayStatus.AGREE_POST:
-        case Def.CanPlayStatus.DISABLE:
-            this.canPlayStatusNode.node.active = true;
-            this.canPlayStatusNode.setText(i18nMgr.Get('adaptation10177'));
-            break;
-        case Def.CanPlayStatus.NEED_POST:
-             this.canPlayStatusNode.node.active = true;
-            if (this._seatPlayer.mine != null) {
-                TexasTableEvent.AgreePost(this._seatPlayer.mine);
-            }
-            this.canPlayStatusNode.setText(i18nMgr.Get('adaptation10177'));
-            break;
-        default:
-            this.canPlayStatusNode.node.active = false;
-            break;
+            case Def.CanPlayStatus.AGREE_POST:
+            case Def.CanPlayStatus.DISABLE:
+                this.canPlayStatusNode.node.active = true;
+                this.canPlayStatusNode.setText(i18nMgr.Get('adaptation10177'));
+                break;
+            case Def.CanPlayStatus.NEED_POST:
+                this.canPlayStatusNode.node.active = true;
+                if (this._seatPlayer.mine != null) {
+                    TexasTableEvent.AgreePost(this._seatPlayer.mine);
+                }
+                this.canPlayStatusNode.setText(i18nMgr.Get('adaptation10177'));
+                break;
+            default:
+                this.canPlayStatusNode.node.active = false;
+                break;
         }
-       
     }
 
     // onUpdatePosition 位置变动导致的动画/位置调整
@@ -335,11 +334,11 @@ export default class SeatPlayer extends cc.Component {
 
     // AnimateDisplayTypeCards.Deal 时候还会有order
     @bindEvent(TexasGameRoomDataPlayer.SHOW_CARDS_CHANGE, 'player', AnimateDisplayTypeCards.Static)
-    @traceMethod({level: 'info'})
+    @traceMethod()
     private onUpdateCards(cards: number[], atc: AnimateDisplayTypeCards, order?: number) {
         const l = cards.length;
         if (this._seatPlayer.mine) {
-            this.tracelog.info('up', cards, this._seatPlayer.cards, this._seatPlayer.roundActioned);
+            this.tracelog.debug('up', cards, this._seatPlayer.cards, this._seatPlayer.roundActioned);
         }
         // reset
         if (l == 0) {
@@ -367,8 +366,14 @@ export default class SeatPlayer extends cc.Component {
                 const node = this._bigCards[i];
                 if (i < l) {
                     node.node.parent.active = true;
+                    node.storeCardNum = cards[i];
                     if (AnimateDisplayTypeCards.ShowCards == atc && cards[i] > 0) {
-                        node.animateFlipToFront(cards[i], 0.6);
+                        node.animateFlipToFront(node.storeCardNum, 0.6, () => {
+                            if (node.delayHighlight) {
+                                node.delayHighlight = false;
+                                node.highlight(true);
+                            }
+                        });
                     } else {
                         node.cardNum = cards[i];
                     }
@@ -416,8 +421,6 @@ export default class SeatPlayer extends cc.Component {
             }
             // 如果是静态就直接展示
             if (atc == AnimateDisplayTypeCards.Static) {
-                // 等后面操作
-                if (!this._seatPlayer.directlyViewCard) return;
                 //动作相关隐藏掉
                 this.seatActionDisplay.node.active = false;
                 // 直接显示
@@ -462,9 +465,16 @@ export default class SeatPlayer extends cc.Component {
                 .to(0.5, { x: endPos.x, y: endPos.y, opacity: 255, scaleX: 1, scaleY: 1 }, { easing: 'cubicOut' })
                 .call(() => {
                     this._dealNode.active = false;
-                    if (this._seatPlayer.delayViewCard) return;
                     animateCards.forEach(nd => {
-                        nd.animateFlipToFront(nd.storeCardNum, 0.6);
+                        // 如果有牌才反转
+                        if (nd.storeCardNum > 0) {
+                            nd.animateFlipToFront(nd.storeCardNum, 0.6, () => {
+                                if (nd.delayHighlight) {
+                                    nd.delayHighlight = false;
+                                    nd.highlight(true);
+                                }
+                            });
+                        }
                     });
                 })
                 .start();
@@ -540,6 +550,7 @@ export default class SeatPlayer extends cc.Component {
                 break;
             default:
                 this.seatActionDisplay.node.active = false;
+                break;
         }
     }
 
@@ -583,32 +594,24 @@ export default class SeatPlayer extends cc.Component {
         });
     }
 
-    @bindEvent(TexasGameRoomDataPlayerMine.HIGHLIGHT_CARDS, { dataSource: 'player', initIgnore: true })
-    private onHighlightCards(cardsNum: number[]) {
-        const mp: Set<number> = new Set();
-        cardsNum.forEach(v => mp.add(v));
-        this._bigCards.forEach(cd => {
-            if (mp.has(cd.cardNum)) {
-                cd.highlight(true);
-            } else {
-                cd.highlight(false);
-            }
-        });
-    }
-
-    private createReturnToGameClick(r: Def.KeepSeatReasonMap[keyof Def.KeepSeatReasonMap]):() => void {
+    private createReturnToGameClick(r: Def.KeepSeatReasonMap[keyof Def.KeepSeatReasonMap]): () => void {
         return () => {
-            switch(r) {
-            case  Def.KeepSeatReason.KSR_NONE: 0;
-                break;
-            case  Def.KeepSeatReason.KSR_TAKE_SEAT: 1;
-            case  Def.KeepSeatReason. KSR_ACTIVE: 2;
-            case  Def.KeepSeatReason.KSR_DELAY_LEAVE: 4;
-                TexasTableEvent.CancelKeepSeat(this._seatPlayer.mine);
-                break;
-            case  Def.KeepSeatReason.KSR_NOCHIP: 3;
-                TexasTableEvent.BringIn(this._seatPlayer.mine);
-                break;
+            switch (r) {
+                case Def.KeepSeatReason.KSR_NONE:
+                    0;
+                    break;
+                case Def.KeepSeatReason.KSR_TAKE_SEAT:
+                    1;
+                case Def.KeepSeatReason.KSR_ACTIVE:
+                    2;
+                case Def.KeepSeatReason.KSR_DELAY_LEAVE:
+                    4;
+                    TexasTableEvent.CancelKeepSeat(this._seatPlayer.mine);
+                    break;
+                case Def.KeepSeatReason.KSR_NOCHIP:
+                    3;
+                    TexasTableEvent.BringIn(this._seatPlayer.mine);
+                    break;
             }
         };
     }
@@ -626,23 +629,23 @@ export default class SeatPlayer extends cc.Component {
             });
             if (this._seatPlayer.mine) {
                 this.returnToGameButton.node.active = false;
-                switch(reason) {
-                case  Def.KeepSeatReason.KSR_NONE:
-                    break;
-                case  Def.KeepSeatReason.KSR_TAKE_SEAT:
-                case  Def.KeepSeatReason. KSR_ACTIVE:
-                case  Def.KeepSeatReason.KSR_DELAY_LEAVE:
-                    this.returnToGameButton.node.active = true;
-                    this.returnToGameButton.node.on('click', ()=> {
-                        TexasTableEvent.CancelKeepSeat(this._seatPlayer.mine);
-                    });
-                    break;
-                case  Def.KeepSeatReason.KSR_NOCHIP:
-                    this.returnToGameButton.node.active = true;
-                    this.returnToGameButton.node.on('click', ()=> {
-                        TexasTableEvent.BringIn(this._seatPlayer.mine);
-                    });
-                    break;
+                switch (reason) {
+                    case Def.KeepSeatReason.KSR_NONE:
+                        break;
+                    case Def.KeepSeatReason.KSR_TAKE_SEAT:
+                    case Def.KeepSeatReason.KSR_ACTIVE:
+                    case Def.KeepSeatReason.KSR_DELAY_LEAVE:
+                        this.returnToGameButton.node.active = true;
+                        this.returnToGameButton.node.on('click', () => {
+                            TexasTableEvent.CancelKeepSeat(this._seatPlayer.mine);
+                        });
+                        break;
+                    case Def.KeepSeatReason.KSR_NOCHIP:
+                        this.returnToGameButton.node.active = true;
+                        this.returnToGameButton.node.on('click', () => {
+                            TexasTableEvent.BringIn(this._seatPlayer.mine);
+                        });
+                        break;
                 }
             }
             return;
@@ -652,8 +655,35 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.STORECHIPS_CHANGE, 'mine')
-    @traceMethod({ level: 'debug' })
     private onStoreChipChange(v: number) {}
+
+    @bindEvent(TexasGameRoomDataPlayerMine.HAND_VALUE_TYPE_CHANGE, 'mine')
+    @traceMethod({ level: 'debug' })
+    private onHadnValueChange(v: string) {
+        if (v != '') {
+            this.handValueTypeNode.node.active = true;
+            this.handValueTypeNode.setText(v);
+            return;
+        }
+        this.handValueTypeNode.node.active = false;
+        this.handValueTypeNode.setText('');
+    }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.HIGHLIGHT_CARDS, { dataSource: 'mine', initIgnore: true })
+    private onHighlightCards(cardsNum: number[]) {
+        const mp: Set<number> = new Set(cardsNum);
+        this._bigCards.forEach(cd => {
+            if (mp.has(cd.storeCardNum)) {
+                if (cd.cardNum == cd.storeCardNum) {
+                    cd.highlight(true);
+                } else {
+                    cd.delayHighlight = true;
+                }
+            } else {
+                cd.highlight(false);
+            }
+        });
+    }
 
     public animateButtonChange(enable: boolean, positionFromNode?: cc.Node) {
         this.buttonIcon.active = enable;

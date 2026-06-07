@@ -283,6 +283,7 @@ async function main() {
         }
     }
     console.log(`Done: ${ok} OK, ${err} failed`);
+    process.exit(0);
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

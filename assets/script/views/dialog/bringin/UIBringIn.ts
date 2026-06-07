@@ -6,7 +6,6 @@ import tradeStore, { TradeStore } from '../../../data/trade/TradeStore';
 import TradeStoreUtils from '../../../data/trade/TradeStoreUtils';
 import userStore, { IWallet } from '../../../data/user/UserStore';
 import UserStoreUtils from '../../../data/user/UserStoreUtils';
-import { BringInChipsType } from '../../../game/constant/BringInChipsType';
 import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import { HttpUSDTApplyProtocol } from '../../../net/https/data/usdt/HttpUSDTApplyProtocol';
@@ -37,7 +36,6 @@ export enum BringInTabType {
 
 // 1. 原来的基础定义保持不变
 export interface UIBringInParamBase<T extends keyof RoomPlayerGC> {
-    OpenType: BringInChipsType;
     GameType: T;
     RoomPlayer: RoomPlayerGC[T];
     CommitFn: BringInCommitFn;
@@ -276,7 +274,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         this.bringInAreaIntroContent.string = endText;
     }
 
-    @traceMethod({level: 'debug'})
+    @traceMethod()
     public _setupBringInSider(minAmount: number, maxAmount: number, stepAmount: number, showTip: boolean, needAutoBringIn: boolean, autoMin?: number) {
         const rangeAmount = maxAmount - minAmount;
         let step = 1;
@@ -287,7 +285,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
                 step = 0;
             }
         }
-        this.tracelog.debug('bring in slider', 'min', minAmount, 'max', maxAmount, 'step', stepAmount, 'mystep',  step, rangeAmount)
+        this.tracelog.debug('bring in slider', 'min', minAmount, 'max', maxAmount, 'step', stepAmount, 'mystep', step, rangeAmount);
         this.autoBringinArea.active = needAutoBringIn;
         this.bringInSlider.step = Math.round(step * 10000) / 10000;
         this.bringInSlider.onValueChanged = (progress: number) => {
