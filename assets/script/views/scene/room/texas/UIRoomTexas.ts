@@ -2,7 +2,6 @@ import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import UIComponentBase from '../../../base/UIComponentBase';
-import UIInsuranceNewPanel from '../../../dialog/insurance/UIInsuranceNewPanel';
 import InsuranceOperation from './InsuranceOperation';
 import Operation from './Operation';
 import PotsInfo from './PotsInfo';

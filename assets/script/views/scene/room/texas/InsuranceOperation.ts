@@ -1,11 +1,6 @@
-import { trace } from 'console';
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
-import { AutoOperationTypeTexas } from '../../../../net/messages/texas/AutoOpertaionType';
-import UIComponentBase from '../../../base/UIComponentBase';
-import ToggleButton from '../../../widget/ToggleButton';
-import TexasGameRoomDataSetting from '../../../../data/room/texas/TexasGameRoomDataSetting';
 import { OperatorMine, OpertionType } from '../../../../data/room/texas/model/Operator';
 import viewManager from '../../../UIViewManager';
 

@@ -1,6 +1,5 @@
 import { bindData, pureEvent } from '../../../core/decorator/DataBind';
 import { AnimateDisplayTypeButton, AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
-import { AutoOperationTypeTexas } from '../../../net/messages/texas/AutoOpertaionType';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';
 

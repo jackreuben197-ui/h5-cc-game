@@ -1,6 +1,5 @@
-import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../core/decorator/DataBind';
-import { traceClass, traceMethod } from '../../../core/decorator/LogTrace';
-import { OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
+import { traceClass } from '../../../core/decorator/LogTrace';
+import { OperatorMine } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataBasic from '../../../data/room/texas/TexasGameRoomDataBasic';
 import TexasGameRoomDataPlayerMine from '../../../data/room/texas/TexasGameRoomDataPlayerMine';
