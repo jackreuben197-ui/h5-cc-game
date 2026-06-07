@@ -1,5 +1,6 @@
 import { bindData, pureEvent } from '../../../core/decorator/DataBind';
 import { AnimateDisplayTypeButton, AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
+import { AutoOperationTypeTexas } from '../../../net/messages/texas/AutoOpertaionType';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';
 
@@ -140,7 +141,6 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
             const player = this._playerMap.get(ss);
             if (ss == s) {
                 this._parentRoomData.mine.seatNo = ss;
-                player.mine = this._parentRoomData.mine;
                 //先坐下再调整位置注意顺序
                 player.setSeated(true, player.mine);
                 player.setPosition(arrage[j], pat);

@@ -1,63 +1,78 @@
-const { ccclass, property } = cc._decorator;
+import { traceClass } from '../../core/decorator/LogTrace';
+
+const { ccclass, property, menu } = cc._decorator;
 
 @ccclass
+@traceClass()
+@menu('Widget/ToggleButton')
 export default class ToggleButton extends cc.Component {
-    @property(cc.Node)
-    bg_node: cc.Node = null;
-    @property(cc.Node)
-    check_node: cc.Node = null;
-    @property(cc.Label)
-    content_label: cc.Label = null;
-    defaultLabel: cc.Node = null;
-    callback: Function = null;
+    @property({ type: cc.Node, displayName: '未选中状态的节点' })
+    private uncheckedNode: cc.Node = null;
+    @property({ type: cc.Label, displayName: '未选中状态的需要修改的文字' })
+    private uncheckedLabel: cc.Label = null;
+    @property({ type: cc.Node, displayName: '选中状态的节点' })
+    private checkNode: cc.Node = null;
+    @property({ type: cc.Label, displayName: '选中状态的需要修改的文字' })
+    private checkedlabel: cc.Label = null;
+    // 开关状态改变时的回调
+    public onToggleCallback: (isOn: boolean) => void = null;
 
     onLoad() {
-        this.defaultLabel = this.node.getChildByName('Label');
-        this.bg_node.on('click', this.bgClick, this);
-        this.check_node.on('click', this.checkClick, this);
+        //this.defaultLabel = this.node.getChildByName('Label');
+        this.uncheckedNode.on('click', this.onChedkNodeClicked, this);
+        this.checkNode.on('click', this.onChedkNodeClicked, this);
+        this.check(false);
     }
 
-    onShow() {
-        this.uncheck();
-    }
-
-    bgClick() {
-        this.check();
-    }
-
-    checkClick() {
-        this.uncheck();
-    }
-
-    check() {
-        this.check_node.active = true;
-        if (this.content_label) {
-            this.defaultLabel.active = false;
-            this.content_label.node.active = true;
+    /**
+     * 供外部调用的初始化方法（比如从服务器读到了玩家关闭了音效）
+     */
+    public check(checked: boolean, triggerCallback: boolean = false) {
+        this._isChecked = checked;
+        this.updateVisual(false);
+        if (triggerCallback && this.onToggleCallback) {
+            this.onToggleCallback(this._isChecked);
         }
-        this.callback?.(true);
     }
 
-    uncheck() {
-        this.check_node.active = false;
-        if (this.content_label) {
-            this.defaultLabel.active = true;
-            this.content_label.node.active = false;
+    public setUncheckText(s: string) {
+        if (this.uncheckedLabel) {
+            this.uncheckedLabel.string = s;
+        } else {
+            this.tracelog.warn('no unchecked label binding', s);
         }
-        this.callback?.(false);
     }
 
-    set content(value: string) {
-        this.content_label.string = '';
-    }
-    set isOn(bool: boolean) {
-        this.check_node.active = bool;
-    }
-    get isOn(): boolean {
-        return this.check_node.active;
+    public setCheckText(s: string) {
+        if (this.checkedlabel) {
+            this.checkedlabel.string = s;
+        } else {
+            this.tracelog.warn('no unchecked label binding', s);
+        }
     }
 
-    onValueChanged(callback: Function) {
-        this.callback = callback;
+    private onChedkNodeClicked() {
+        this._isChecked = !this._isChecked; // 状态反转
+        // 播放丝滑的切换动画
+        this.updateVisual(true);
+        // 通知外部业务逻辑
+        if (this.onToggleCallback) {
+            this.onToggleCallback(this._isChecked);
+        }
+    }
+
+    private updateVisual(anmiate: boolean) {
+        if (this._isChecked) {
+            this.checkNode.active = true;
+            this.uncheckedNode.active = false;
+        } else {
+            this.checkNode.active = false;
+            this.uncheckedNode.active = true;
+        }
+    }
+
+    private _isChecked: boolean = false;
+    public get isChecked(): boolean {
+        return this._isChecked;
     }
 }

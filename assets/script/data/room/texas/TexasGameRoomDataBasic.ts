@@ -80,12 +80,16 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
         switch (this.gameType) {
             case 1:
                 this._handCardNum = 4;
+                break;
             case 2:
                 this._handCardNum = 5;
+                break;
             case 3:
                 this._handCardNum = 6;
+                break;
             default:
                 this._handCardNum = 2;
+                break;
         }
     }
     //加密卡牌

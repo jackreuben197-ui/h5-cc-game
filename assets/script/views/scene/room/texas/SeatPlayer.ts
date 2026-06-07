@@ -47,7 +47,7 @@ const greenColor = cc.Color.fromHEX(new cc.Color(), '#78E4E4');
 const yellowColor = cc.Color.fromHEX(new cc.Color(), '#F9CA9F');
 
 @ccclass
-@menu('CrazyPoker/Room/Texas/SeatPlayer')
+@menu('Scene/Room/Texas/SeatPlayer')
 @traceClass()
 export default class SeatPlayer extends cc.Component {
     @property(cc.Label)
@@ -161,7 +161,8 @@ export default class SeatPlayer extends cc.Component {
 
     //(优先于seated执行保证展示正确)
     @bindEvent(TexasGameRoomDataPlayer.SEATED_CHANGE, { dataSource: 'player', initPriority: 10 })
-    private onUpdateSeated(b: boolean, mine: TexasGameRoomDataPlayer) {
+    @traceMethod({ level: 'debug' })
+    private onUpdateSeated(b: boolean, mine: TexasGameRoomDataPlayerMine) {
         this.userSeat.active = b;
         this.emptySeat.node.active = !b;
         this.emptySeat.interactable = !b;
@@ -549,6 +550,7 @@ export default class SeatPlayer extends cc.Component {
                 break;
             default:
                 this.seatActionDisplay.node.active = false;
+                break;
         }
     }
 

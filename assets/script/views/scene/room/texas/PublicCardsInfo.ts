@@ -10,7 +10,7 @@ const { ccclass, property, menu } = cc._decorator;
 
 @ccclass
 @traceClass()
-@menu('CrazyPoker/Room/Texas/PublicCardsInfo')
+@menu('Scene/Room/Texas/PublicCardsInfo')
 export default class PublicCardsInfo extends cc.Component {
     private _publicCards: CardView[] = [];
     private _secPublicCards: CardView[] = [];
@@ -144,7 +144,6 @@ export default class PublicCardsInfo extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPublicCards.PUBLICCARDS_HIGHLIGHT, { dataSource: 'publicCards', initIgnore: true })
-    @traceMethod({ level: 'debug' })
     private onHighlightPublicCards(cardsNum: number[]) {
         const mp: Set<number> = new Set(cardsNum);
         this._publicCards.forEach(cd => {

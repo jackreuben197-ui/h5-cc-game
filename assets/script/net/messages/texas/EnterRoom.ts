@@ -12,6 +12,7 @@ import {
 import { Def, Player } from '../../../protobuf/holdem/define_pb';
 import { ServerMessageEnterRoom } from '../../../protobuf/holdem/req_th_enter_room_pb';
 import viewManager from '../../../views/UIViewManager';
+import { AutoOperationTypeTexas } from './AutoOpertaionType';
 
 const _plog = createLogger('ServerMessageEnterRoom');
 
@@ -42,6 +43,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         roomData.basicInfo.sbante = { sb: data.roomInfo.smallBlind, ante: data.roomInfo.ante };
         if (data.handInfo) {
             roomData.basicInfo.handNum = data.handInfo.handNum;
+            roomData.roundState.roundBet = data.handInfo.roundBet; // 当前轮Call平的数值
             roomData.potInfo.allPot = data.handInfo.allBet;
             roomData.potInfo.potList = data.handInfo.potsList;
             roomData.potInfo.secPotList = data.handInfo.secondPotsList;
@@ -114,11 +116,20 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
                 }
             } else {
                 seatData.seated = false;
-                seatData.clearData;
+                seatData.clearData();
             }
         }
         if (data.myInfo) {
-            roomData.seatsStateManager.setMySeat(data.myInfo.seatId, AnimateDisplayTypePosition.Static);
+            const player = roomData.seatsStateManager.setMySeat(data.myInfo.seatId, AnimateDisplayTypePosition.Static);
+            if (player) {
+                player.mine.autoOperationType = AutoOperationTypeTexas.NO;
+                //有牌
+                if (player.canOpearate) {
+                    player.mine.caculateValidAutoOperationType(data.handInfo.roundBet);
+                } else {
+                    roomData.mine.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
+                }
+            }
             roomData.mine.storeChips = data.myInfo.storeChips;
             roomData.mine.totalChips = data.myInfo.totalChips;
             roomData.mine.caculateHandValueTypeAndHighlight();

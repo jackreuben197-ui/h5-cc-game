@@ -10,10 +10,11 @@ import viewManager from '../../../UIViewManager';
 import SwitchNode from '../../../widget/SwitchNode';
 import TexasTableEvent from './events/TexasTableEvent';
 
-const { ccclass, property } = cc._decorator;
+const { ccclass, property, menu } = cc._decorator;
 
 @ccclass
-@traceClass({ level: 'debug' })
+@traceClass()
+@menu('Scene/Room/Texas/UITexasMenu')
 export default class UITexasMenu extends cc.Component {
     //Menu_Buttons: cc.Node = null;
     @property(cc.Button)
@@ -163,7 +164,7 @@ export default class UITexasMenu extends cc.Component {
             return;
         }
         // 鱿鱼模式下的站起需要额外确认逻辑
-        const mine = this._roomData.seatsStateManager.getSeatPlayer(this._roomData.mine.seatNo);
+        const mine = this._roomData.mine.player;
         if (this._roomData.basicInfo.hasSquid && this._roomData.basicInfo.squidStatusEnabled && mine.squidIn) {
             if (this._roomData.basicInfo.squidMode === SquidMode.NORMAL) {
                 if (mine.keepSeat) {

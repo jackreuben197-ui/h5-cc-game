@@ -1,8 +1,12 @@
+import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { AnimateDisplayTypeCards, AnimateDisplayTypePublicCards } from '../../../game/constant/AnimateDisplayType';
+import { Def } from '../../../protobuf/holdem/define_pb';
 import { ServerMessagePublicCards } from '../../../protobuf/holdem/recv_th_public_cards_pb';
+
+const _plog = createLogger('ServerMessagePublicCards', 'debug');
 
 // PublicCards 1104
 export function PublicCards(data: ServerMessagePublicCards.AsObject, roomID: number, matchID: number) {
@@ -12,6 +16,20 @@ export function PublicCards(data: ServerMessagePublicCards.AsObject, roomID: num
         roomData.publicCards.addSecondPublicCards(data.publicCardsArray2List, AnimateDisplayTypePublicCards.Deal);
     } else if (data.extPublicCardsArrayList.length > 0) {
         roomData.publicCards.addSecondPublicCards(data.extPublicCardsArrayList, AnimateDisplayTypePublicCards.Deal);
+    }
+    switch (data.rnd) {
+        case Def.Round.FLOP:
+            roomData.basicInfo.gameStatus = Def.GameStatus.HAND_FLOP;
+            break;
+        case Def.Round.TURN:
+            roomData.basicInfo.gameStatus = Def.GameStatus.HAND_TURN;
+            break;
+        case Def.Round.RIVER:
+            roomData.basicInfo.gameStatus = Def.GameStatus.HAND_RIVER;
+            break;
+        default:
+            _plog.warn('unkonwn round', data.rnd);
+            break;
     }
     roomData.seatsStateManager.roundClear();
     data.allinUsersList.forEach(v => {

@@ -13,7 +13,7 @@ const { ccclass, property, menu } = cc._decorator;
 const LN = '[PotsInfo]';
 
 @ccclass
-@menu('CrazyPoker/Room/Texas/PotsInfo')
+@menu('Scene/Room/Texas/PotsInfo')
 export default class PotsInfo extends cc.Component {
     @property(cc.Label)
     private allPotsLabel: cc.Label = null;

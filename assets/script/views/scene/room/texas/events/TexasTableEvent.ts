@@ -2,7 +2,7 @@ import { traceClass } from '../../../../../core/decorator/LogTrace';
 import TexasGameRoomDataPlayerMine from '../../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import userStore from '../../../../../data/user/UserStore';
 import UserStoreUtils from '../../../../../data/user/UserStoreUtils';
-import { BringInChipsType, BringInMode } from '../../../../../game/constant/BringInChipsType';
+import { BringInMode } from '../../../../../game/constant/BringInMode';
 import { GameType } from '../../../../../game/constant/LogicTypeConf';
 import ProcedureDefine from '../../../../../game/procedure/ProcedureDefine';
 import ProcedureManager from '../../../../../game/procedure/ProcedureManager';
@@ -156,7 +156,6 @@ export default class TexasTableEvent {
                     }
                     // 其他都需要弹窗口输入
                     viewManager.openDialog('BringIn', {
-                        OpenType: BringInChipsType.BRING_IN,
                         GameType: GameType.HOLDEM,
                         RoomPlayer: seatData,
                         CommitFn: TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData)
@@ -169,7 +168,6 @@ export default class TexasTableEvent {
                     //     // this.ShowAutoAddChips(data.wallet);
                     // } else {
                     viewManager.openDialog('BringIn', {
-                        OpenType: BringInChipsType.BRING_IN,
                         GameType: GameType.HOLDEM,
                         RoomPlayer: seatData,
                         CommitFn: TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData)
@@ -182,7 +180,6 @@ export default class TexasTableEvent {
                     isFromBringIn: true,
                     bringInAct: () => {
                         viewManager.openDialog('BringIn', {
-                            OpenType: BringInChipsType.BRING_IN,
                             GameType: GameType.HOLDEM,
                             RoomPlayer: seatData,
                             CommitFn: TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData)
@@ -215,7 +212,6 @@ export default class TexasTableEvent {
                 }
                 // 其他都需要弹窗口输入
                 viewManager.openDialog('BringIn', {
-                    OpenType: BringInChipsType.BRING_IN,
                     GameType: GameType.HOLDEM,
                     RoomPlayer: seatData,
                     CommitFn: TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData)
@@ -224,7 +220,6 @@ export default class TexasTableEvent {
             }
             // 不提示安全提示直接带入
             viewManager.openDialog('BringIn', {
-                OpenType: BringInChipsType.BRING_IN,
                 GameType: GameType.HOLDEM,
                 RoomPlayer: seatData,
                 CommitFn: TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData)
@@ -358,7 +353,6 @@ export default class TexasTableEvent {
             if (player.roomData.basicInfo.bringInType == BringInMode.CURRENCY) {
                 userStore.fillWalletInfo([response.data]);
                 viewManager.openDialog('BringIn', {
-                    OpenType: BringInChipsType.BRING_IN,
                     GameType: GameType.HOLDEM,
                     RoomPlayer: player,
                     CommitFn: TexasTableEvent._commitBringInCallback(player, player.roomData.basicInfo.limitBringIn)
@@ -367,7 +361,6 @@ export default class TexasTableEvent {
             }
             // 记分牌 @TODO
             viewManager.openDialog('BringIn', {
-                OpenType: BringInChipsType.BRING_IN,
                 GameType: GameType.HOLDEM,
                 RoomPlayer: player,
                 CommitFn: TexasTableEvent._commitBringInCallback(player, player.roomData.basicInfo.limitBringIn)

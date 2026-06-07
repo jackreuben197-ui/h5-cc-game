@@ -9,7 +9,7 @@ import SeatPlayer from './SeatPlayer';
 const { ccclass, property, menu } = cc._decorator;
 
 @ccclass
-@menu('CrazyPoker/Room/Texas/SeatManager')
+@menu('Scene/Room/Texas/SeatManager')
 @traceClass()
 @bindData()
 export default class SeatManager extends cc.Component {

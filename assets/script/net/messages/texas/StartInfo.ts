@@ -11,14 +11,15 @@ import {
 } from '../../../game/constant/AnimateDisplayType';
 import { Def, PlayerStartInfo } from '../../../protobuf/holdem/define_pb';
 import { ServerMessageStartInfo } from '../../../protobuf/holdem/recv_th_start_info_pb';
+import { AutoOperationTypeTexas } from './AutoOpertaionType';
 
-const _plog = createLogger('ServerMessageStartInfo');
+const _plog = createLogger('ServerMessageStartInfo', 'debug');
 
 // StartInfo 1103
 export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number, matchID: number) {
     let roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
+    roomData.basicInfo.gameStatus = Def.GameStatus.HAND_PREFLOP;
     const defaultHandCards = new Array(roomData.basicInfo.handCardNum).fill(0);
-    _plog.debug(data);
     if (data.handInfo) {
         roomData.basicInfo.handNum = data.handInfo.handNum;
         roomData.potInfo.allPot = data.handInfo.allBet;
@@ -61,6 +62,14 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
         seatData.setAction(player.action, AnimateDisplayTypeAction.Static);
         seatData.deposit = player.deposit;
         if (seatData.mine) {
+            // _plog.debug('can operation', seatData.canOpearate, roomData.basicInfo.gameStatus >= Def.GameStatus.HAND_STARTED , roomData.basicInfo.gameStatus < Def.GameStatus.HAND_END);
+            if (seatData.canOpearate) {
+                // 操作面板(不显示)
+                seatData.mine.autoOperationType = AutoOperationTypeTexas.NO;
+                if (!myOp) {
+                    seatData.mine.caculateValidAutoOperationType(data.handInfo.roundBet);
+                }
+            }
             seatData.mine.storeChips = player.storeChips;
         }
     }

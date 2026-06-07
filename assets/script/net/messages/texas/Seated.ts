@@ -4,13 +4,14 @@ import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import userStore from '../../../data/user/UserStore';
 import UserStoreUtils from '../../../data/user/UserStoreUtils';
 import { AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
-import { BringInMode } from '../../../game/constant/BringInChipsType';
+import { BringInMode } from '../../../game/constant/BringInMode';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import { Def } from '../../../protobuf/holdem/define_pb';
 import { ServerMessageSeated } from '../../../protobuf/holdem/req_th_seated_pb';
 import viewManager from '../../../views/UIViewManager';
+import { AutoOperationTypeTexas } from './AutoOpertaionType';
 
-const _plog = createLogger('ServerMessageSeated', 'debug');
+const _plog = createLogger('ServerMessageSeated');
 
 // Seated 1003
 export function Seated(data: ServerMessageSeated.AsObject, roomID: number, matchID: number) {
@@ -51,6 +52,9 @@ export function Seated(data: ServerMessageSeated.AsObject, roomID: number, match
     mine.storeChips = data.storeChips;
     mine.totalChips = data.chips;
     mine.deposit = data.deposit;
+    // 操作面板(不显示)
+    mine.autoOperationType = AutoOperationTypeTexas.NO;
+    mine.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
     // this.game.mainPlayer.chips = data.chips;
     // this.game.mainPlayer.leavelChips = data.accountChips;
     // // GameCache.Instance.gold = data.accountChips;

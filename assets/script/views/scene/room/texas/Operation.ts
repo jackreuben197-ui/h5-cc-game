@@ -1,6 +1,6 @@
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
-import { traceClass } from '../../../../core/decorator/LogTrace';
-import { OperatorMine } from '../../../../data/room/texas/model/Operator';
+import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
+import { OperatorMine, OpertionType } from '../../../../data/room/texas/model/Operator';
 import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import TexasGameRoomDataSetting from '../../../../data/room/texas/TexasGameRoomDataSetting';
@@ -10,14 +10,19 @@ import { UIComfirmDialogType } from '../../../dialog/confirm/UIConfirmDialog';
 import viewManager from '../../../UIViewManager';
 import ShiningPathTimer from '../../../widget/ShiningPathTimer';
 import StepSlider from '../../../widget/StepSlider';
+import AutoOperation from './operations/AutoOperation';
 import TexasTableEvent from './events/TexasTableEvent';
 import BetButtonsContainer, { caculatePotsBet } from './widget/BetButtonContainer';
+import { AutoOperationTypeTexas } from '../../../../net/messages/texas/AutoOpertaionType';
 
-const { ccclass, property } = cc._decorator;
+const { ccclass, property, menu } = cc._decorator;
 
 @ccclass
 @traceClass()
+@menu('Scene/Room/Texas/Operation')
 export default class Operation extends cc.Component {
+    @property({ type: cc.Node, displayName: '真正根节点,保证根节点永远不会Disable' })
+    rootNode: cc.Node = null;
     @property({ type: ShiningPathTimer, displayName: '倒计时' })
     opTimer: ShiningPathTimer = null;
     @property({ type: cc.Button, displayName: '自由下注背景' })
@@ -54,6 +59,9 @@ export default class Operation extends cc.Component {
     freeBetPercent: cc.Label = null;
     @property({ type: cc.Label, displayName: '自由下注数额' })
     freeBetAmount: cc.Label = null;
+    @property({ type: cc.Node, displayName: '自动操作面板' })
+    private autoOpPannelNode: cc.Node = null!;
+    private _autoOpPanel: AutoOperation = null;
     private _raiseAmount: number = 0;
     private _seatPlayer: TexasGameRoomDataPlayerMine = null;
     private _actionMap: Map<Def.ActionMap[keyof Def.ActionMap], ActionLimit.AsObject> = new Map();
@@ -61,6 +69,8 @@ export default class Operation extends cc.Component {
     protected onLoad(): void {
         this.freeBetContainer.active = false;
         this.freeBetSilder.step = 0;
+        //自动操作面板
+        this._autoOpPanel = this.autoOpPannelNode.children[0].getComponent(AutoOperation);
         this.regiterTouchEvents();
     }
 
@@ -145,23 +155,28 @@ export default class Operation extends cc.Component {
         TexasTableEvent.DoAction(this._seatPlayer, action, this._raiseAmount);
     };
 
-    public startOperation(param: OperatorMine, mine: TexasGameRoomDataPlayerMine): void {
-        this.tracelog.info(param.actionLimitList);
-        const seatPlayer = mine.roomData.seatsStateManager.getSeatPlayer(mine.seatNo);
-        if (!seatPlayer) return;
+    public initData(mine: TexasGameRoomDataPlayerMine) {
         this._seatPlayer = mine;
-        this.opTimer.startTimer({
-            totalTime: param.totalOpDuration,
-            elapsedTime: param.totalOpDuration - param.leftOpDuration,
-            onComplete: () => {
-                this.opTimer.stop();
-            }
-        });
-        this._refreshUI(param.actionLimitList, param.roundBetEqual, seatPlayer);
+        this._autoOpPanel.initData(mine);
         this._bindEventsAndRefresh();
     }
+    // public startOperation(param: OperatorMine, mine: TexasGameRoomDataPlayerMine): void {
+    //     this.tracelog.info(param.actionLimitList);
+    //     const seatPlayer = mine.player;
+    //     if (!seatPlayer) return;
+    //     this._seatPlayer = mine;
+    //     this.opTimer.startTimer({
+    //         totalTime: param.totalOpDuration,
+    //         elapsedTime: param.totalOpDuration - param.leftOpDuration,
+    //         onComplete: () => {
+    //             this.opTimer.stop();
+    //         }
+    //     });
+    //     this._refreshUI(param.actionLimitList, param.roundBetEqual, seatPlayer);
+    //     this._bindEventsAndRefresh();
+    // }
 
-    private _refreshUI(actionsList: ActionLimit.AsObject[], roundBetEqual: number, seatPlayer: TexasGameRoomDataPlayer) {
+    private _refreshUI(roundBetEqual: number) {
         this.btnAllIn.node.active = false;
         this.btnAllIn2.node.active = false;
         this.btnCall.node.active = false;
@@ -169,10 +184,8 @@ export default class Operation extends cc.Component {
         this.btnRaise.node.active = false;
         this.btnCheck.node.active = false;
         this.freeBetContainer.active = false;
-        this._actionMap.clear();
-        actionsList.map(v => this._actionMap.set(v.action, v));
         let minRaise = 0;
-        actionsList.forEach(actionLimit => {
+        this._actionMap.forEach(actionLimit => {
             switch (actionLimit.action) {
                 case Def.Action.CHECK:
                     // 有 call的前提下不显示
@@ -226,13 +239,66 @@ export default class Operation extends cc.Component {
                     break;
             }
         });
-        const btns = caculatePotsBet(roundBetEqual, minRaise, seatPlayer);
-        this.shortCutContainer.refreshAndLayout(btns, seatPlayer.mine.roomData.setting);
+        const btns = caculatePotsBet(roundBetEqual, minRaise, this._seatPlayer.player);
+        this.shortCutContainer.refreshAndLayout(btns, this._seatPlayer.roomData.setting);
     }
 
     @bindEvent(TexasGameRoomDataSetting.SHOW_BB, 'setting')
     public updateShowAmount() {
         this.freeBetAmount.string = this._seatPlayer.roomData.setting.showNumberWithShowBB(this._raiseAmount);
+    }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.PREPARE_OPERATION_MINE, 'mine')
+    @traceMethod({ level: 'debug' })
+    private onPrepareActionMine(oper: OperatorMine) {
+        if (!oper || oper.opType != OpertionType.NORMAL) {
+            this.rootNode.active = false;
+            this.node.stopAllActions();
+            return;
+        }
+        this._actionMap.clear();
+        oper.actionLimitList.map(v => this._actionMap.set(v.action, v));
+        let actionLimit;
+        // 选了自动 则自动操作
+        if (this._seatPlayer.autoOperationType != AutoOperationTypeTexas.NO) {
+            switch (this._seatPlayer.autoOperationType) {
+                case AutoOperationTypeTexas.AUTO_FOLD:
+                    TexasTableEvent.DoAction(this._seatPlayer, Def.Action.FOLD, 0);
+                    break;
+                case AutoOperationTypeTexas.AUTO_CHECK:
+                    TexasTableEvent.DoAction(this._seatPlayer, Def.Action.CHECK, 0);
+                    break;
+                case AutoOperationTypeTexas.AUTO_CALL:
+                    actionLimit = this._actionMap.get(Def.Action.CALL);
+                    if (!actionLimit) {
+                        this.tracelog.error('no auto allin option');
+                        break;
+                    }
+                    TexasTableEvent.DoAction(this._seatPlayer, Def.Action.CALL, actionLimit.min);
+                    break;
+                case AutoOperationTypeTexas.AUTO_ALLIN:
+                    actionLimit = this._actionMap.get(Def.Action.ALLIN);
+                    if (!actionLimit) {
+                        this.tracelog.error('no auto allin option');
+                        break;
+                    }
+                    TexasTableEvent.DoAction(this._seatPlayer, Def.Action.ALLIN, actionLimit.min);
+                    break;
+            }
+            return;
+        }
+        // 手动操作
+        // 先把自动操作面板隐藏
+        this._seatPlayer.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
+        this.rootNode.active = true;
+        this.opTimer.startTimer({
+            totalTime: oper.totalOpDuration,
+            elapsedTime: oper.totalOpDuration - oper.leftOpDuration,
+            onComplete: () => {
+                this.opTimer.stop();
+            }
+        });
+        this._refreshUI(oper.roundBetEqual);
     }
 
     protected onEnable(): void {
@@ -248,6 +314,6 @@ export default class Operation extends cc.Component {
      */
     private _bindEventsAndRefresh() {
         if (this._seatPlayer == null) return;
-        autoBindEvents(this, { setting: this._seatPlayer.roomData.setting });
+        autoBindEvents(this, { mine: this._seatPlayer, setting: this._seatPlayer.roomData.setting });
     }
 }

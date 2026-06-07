@@ -1,11 +1,13 @@
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { AnimateDisplayTypeCards } from '../../../game/constant/AnimateDisplayType';
+import { Def } from '../../../protobuf/holdem/define_pb';
 import { ServerMessageWinner } from '../../../protobuf/holdem/recv_th_winner_pb';
 
 // Winner 1112
 export function Winner(data: ServerMessageWinner.AsObject, roomID: number, matchID: number) {
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
+    roomData.basicInfo.gameStatus = Def.GameStatus.HAND_END;
     data.resultsList.forEach(result => {
         const seatData = roomData.seatsStateManager.getSeatPlayer(result.seatId);
         // 已经站起
