@@ -268,7 +268,7 @@ export default class UIGameplayTableSetting extends UIComponentBaseDialog<UIGame
         const criticalHitEnabled = this._roomData.basicInfo.hasCriticalHit;
         if (this.IsPermitted('room_critical_hit')) {
             if (criticalHitEnabled) {
-                const criticalHitRound = this._roomData.basicInfo.critialHitRounds;
+                const criticalHitRound = this._roomData.basicInfo.criticalHitRounds;
                 const subAnteBB = this._roomData.basicInfo.getCriticalHitAnte(bigBlind);
                 this.FillTipsAndDetailData(
                     'room_critical_hit',

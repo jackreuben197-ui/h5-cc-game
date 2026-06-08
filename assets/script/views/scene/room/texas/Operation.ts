@@ -248,7 +248,7 @@ export default class Operation extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.PREPARE_OPERATION_MINE, 'mine')
-    @traceMethod({ level: 'debug' })
+    @traceMethod()
     private onPrepareActionMine(oper: OperatorMine) {
         if (!oper || oper.opType != OpertionType.NORMAL) {
             this.rootNode.active = false;

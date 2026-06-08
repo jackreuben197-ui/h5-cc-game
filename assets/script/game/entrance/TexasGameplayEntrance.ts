@@ -435,11 +435,11 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         roomData.basicInfo.jackpotConfig = this._roomInfo.jackpotConfig;
         roomData.basicInfo.jackpotMainPool = this._roomInfo.jackpotParentGold;
         //hasBombPot
-        roomData.basicInfo.hasBombPot = this._roomInfo.bombpot == 1;
+        roomData.basicInfo.checkBombPot(this._roomInfo.bombpot, this._roomInfo.rounds, this._roomInfo.subConfigsList);
         //hasCriticalHit
-        roomData.basicInfo.hasCriticalHit = this._roomInfo.criticalHit > 0;
+        roomData.basicInfo.checkCriticalHit(this._roomInfo.criticalHit, this._roomInfo.ante, this._roomInfo.rounds, this._roomInfo.subConfigsList);
         //hasSquid
-        roomData.basicInfo.squidBase = this._roomInfo.squidBase;
+        roomData.basicInfo.checkSquid(this._roomInfo.squidBase, this._roomInfo.rounds, this._roomInfo.subConfigsList);
         roomData.basicInfo.squidMostGet = this._roomInfo.squidMostGet > 0;
         roomData.basicInfo.squidBetGet = this._roomInfo.squidBetGet > 0;
         roomData.basicInfo.squidHead = this._roomInfo.squidHead > 0;

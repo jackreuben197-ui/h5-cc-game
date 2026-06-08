@@ -12,7 +12,7 @@ import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';
 interface TexasGameRoomDataPlayerMine extends IObservableBindings<TexasGameRoomDataPlayerMine> {}
 
 @bindData()
-@traceClass({ level: 'debug' })
+@traceClass()
 class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public static readonly STORECHIPS_CHANGE = 'STORECHIPS_CHANGE';
     public static readonly PREPARE_OPERATION_MINE = 'PREPARE_OPERATION_MINE';

@@ -6,7 +6,7 @@ import { AnimateDisplayTypeCards, AnimateDisplayTypePublicCards } from '../../..
 import { Def } from '../../../protobuf/holdem/define_pb';
 import { ServerMessagePublicCards } from '../../../protobuf/holdem/recv_th_public_cards_pb';
 
-const _plog = createLogger('ServerMessagePublicCards', 'debug');
+const _plog = createLogger('ServerMessagePublicCards');
 
 // PublicCards 1104
 export function PublicCards(data: ServerMessagePublicCards.AsObject, roomID: number, matchID: number) {

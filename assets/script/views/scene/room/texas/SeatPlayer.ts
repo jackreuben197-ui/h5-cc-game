@@ -161,7 +161,7 @@ export default class SeatPlayer extends cc.Component {
 
     //(优先于seated执行保证展示正确)
     @bindEvent(TexasGameRoomDataPlayer.SEATED_CHANGE, { dataSource: 'player', initPriority: 10 })
-    @traceMethod({ level: 'debug' })
+    @traceMethod()
     private onUpdateSeated(b: boolean, mine: TexasGameRoomDataPlayerMine) {
         this.userSeat.active = b;
         this.emptySeat.node.active = !b;
@@ -660,7 +660,7 @@ export default class SeatPlayer extends cc.Component {
     private onStoreChipChange(v: number) {}
 
     @bindEvent(TexasGameRoomDataPlayerMine.HAND_VALUE_TYPE_CHANGE, 'mine')
-    @traceMethod({ level: 'debug' })
+    @traceMethod()
     private onHadnValueChange(v: string) {
         if (v != '') {
             this.handValueTypeNode.node.active = true;

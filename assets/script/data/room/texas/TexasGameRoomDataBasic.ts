@@ -37,6 +37,9 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public betType: number;
     public opDuration: number;
     public isMtt: boolean;
+    public get seatsCount() {
+        return this._roomData.seatsStateManager.seatsCount;
+    }
     private _sunRoomConfig: SubRoomConfig.AsObject[];
     public set subRoomConfig(s: SubRoomConfig.AsObject[]) {
         this._sunRoomConfig = s;
@@ -185,36 +188,102 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public curMaxRate: number;
     // 入池率限制
     public hcPoolRate: number;
+    // 当前玩法已经持续多久,在鱿鱼或者特殊玩法时候和特殊玩法的值一致;
+    public currentConfigContinueRounds: number = 0;
     @observable(TexasGameRoomDataBasic.TABLE_HANDINFO_CHANGE)
     public handNum: number;
     public deposit: number;
     // ================== 以下都是动态玩法 可以一直开启，也可能定数开启, 结合SubConfig 和 NextOptionChange(HandInfo决定)========================
     // ============ BombPot ===================
-    public hasBombPot: boolean;
+    private _hasBombPot: boolean;
+    public get hasBombPot(): boolean {
+        return this._hasBombPot;
+    }
+    private _bombPotRounds: number;
+    public get bombPotRounds() {
+        return this._bombPotRounds;
+    } // 持续几个回合
+    private _bombPotWaitRounds: number;
+    public get bombPotWaitRounds() {
+        return this._bombPotWaitRounds;
+    }
+
+    // 只检查当前房间配置和第一个SUBCONFIG
+    public checkBombPot(roomConfigBombpot: number, rounds: number, subconfigs: SubRoomConfig.AsObject[]) {
+        const hasBombpot = subconfigs.filter(v => v.bombpot > 0);
+        // 优先子配置(问题在于历史原因) @TODO
+        if (hasBombpot.length > 0) {
+            this._hasBombPot = true;
+            this._bombPotRounds = hasBombpot[0].rounds;
+            this._bombPotWaitRounds = rounds;
+        } else if (roomConfigBombpot > 0) {
+            this._hasBombPot = true;
+            this._bombPotRounds = rounds;
+            if (subconfigs.length > 0) {
+                this._bombPotWaitRounds = subconfigs[0].rounds;
+            }
+        }
+    }
+
     @observable(TexasGameRoomDataBasic.BOMBPOT_ENABLED) // 以下都是动态变更
-    public bombpotEnabled: boolean; // 当前是否开启
-    public bombpottRounds: number; // 跑了多少次手了，开启后
+    public bombpotStatusEnabled: boolean; // 当前是否开启
+    public get bombpottStatusRounds(): number {
+        return this.currentConfigContinueRounds;
+    } // 第几轮了
     // ============== 暴击部分 ================
-    public hasCriticalHit: boolean;
+    private _hasCriticalHit: boolean = false;
+    public get hasCriticalHit() {
+        return this._hasCriticalHit;
+    }
+    private _crticalHitAnte: number = 0;
 
     public getCriticalHitAnte(base: number = 1) {
-        //默认只取第一个暴击配置的前注
-        let scfgs = this._sunRoomConfig.filter(v => v.criticalHit > 0);
-        if (scfgs.length > 0) {
-            return scfgs[0].ante / base;
+        return this._crticalHitAnte / base;
+    }
+
+    private _critcalHitRounds: number = 0; // 要跑多少手
+    public get criticalHitRounds() {
+        return this._critcalHitRounds;
+    }
+    private _criticalHitWaitRounds: number = 0; // 等待开启要等带手数
+    public get criticalHitWaitRounds() {
+        return this._criticalHitWaitRounds;
+    }
+
+    // 只检查当前房间配置和第一个SUBCONFIG
+    public checkCriticalHit(roomConfigCirticalHit: number, ante: number, rounds: number, subconfigs: SubRoomConfig.AsObject[]) {
+        const hasCritcalConfigs = subconfigs.filter(v => v.criticalHit > 0);
+        // 优先子配置(问题在于历史原因) @TODO
+        if (hasCritcalConfigs.length > 0) {
+            this._hasCriticalHit = true;
+            this._crticalHitAnte = hasCritcalConfigs[0].ante;
+            this._critcalHitRounds = hasCritcalConfigs[0].rounds;
+            this._criticalHitWaitRounds = rounds;
+        } else if (roomConfigCirticalHit > 0) {
+            this._hasCriticalHit = true;
+            this._crticalHitAnte = ante;
+            this._critcalHitRounds = rounds;
+            if (subconfigs.length > 0) {
+                this._criticalHitWaitRounds = subconfigs[0].rounds;
+            }
         }
-        return 0;
     }
 
     @observable(TexasGameRoomDataBasic.CRITIAL_HIT_ENABLED) // 以下都是动态变更
-    public criticalHitEnabled: boolean; // 当前是否开启
-    public critialHitRounds: number; // 跑了多少手了，开启后
+    public criticalHitStatusEnabled: boolean; // 当前是否开启
+    public get critialHitStatusRounds(): number {
+        return this.currentConfigContinueRounds;
+    } // 跑了多少手了，开启后
     // ============== 鱿鱼部分 ================
-    public get hasSquid() {
-        return this.squidBase > 0;
-    }
     // 鱿鱼玩法（固定配置)
-    public squidBase: number;
+    private _hasSquid: boolean = false;
+    public get hasSquid() {
+        return this._hasSquid;
+    }
+    private _squidBase: number;
+    public get squidBase(): number {
+        return this._squidBase;
+    }
     public squidMax: number; // 玩家鱿鱼个数上限
     public squidMostGet: boolean; // 独揽鱿鱼 1 开 0 关
     public squidBetGet: boolean; // 无动作获胜无鱿鱼 1 开 0 关
@@ -226,10 +295,40 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public squidMode: SquidMode; // 鱿鱼模式：0经典，1血战
     public squidExtraCount: number; // 额外的鱿鱼个数（血战）
     public squidCountRateList: SquidCountRateConfig.AsObject[] = []; // // 血战鱿鱼，鱿鱼个数翻倍
+    private _squidRounds: number = 0;
+    public get squidRounds() {
+        return this._squidRounds;
+    } // 持续回合
+    private _squidWaitRounds: number = 0; // 这一般是手数,等待开启要等带手数
+    public get squidWaitRounds() {
+        return this._squidRounds;
+    }
+
+    public checkSquid(squidBase: number, rounds: number, subconfigs: SubRoomConfig.AsObject[]) {
+        const hasSquidConfig = subconfigs.filter(v => v.squidBase > 0);
+        // 要么第一个配置就有, 要么子配置就有（默认都取第一个配置)
+        // 特殊处理下（这里比较特殊)
+        if (hasSquidConfig.length > 0) {
+            this._hasSquid = true;
+            this._squidBase = hasSquidConfig[0].squidBase;
+            this._squidRounds = hasSquidConfig[0].rounds;
+            this._squidWaitRounds = rounds;
+        } else if (squidBase > 0) {
+            this._hasSquid = true;
+            this._squidBase = squidBase;
+            this._squidRounds = rounds;
+            if (subconfigs.length > 0) {
+                this._squidWaitRounds = subconfigs[0].rounds; //假设是普通的配置
+            }
+        }
+    }
+
     // 鱿鱼玩法以下都开启后计算的配置
     @observable(TexasGameRoomDataBasic.SQUID_ENABLED)
-    public squidStatusEnabled: boolean;
-    public squidStatusRounds: number; // 第几轮了
+    public squidStatusEnabled: boolean = false;
+    public get squidStatusRounds(): number {
+        return this.currentConfigContinueRounds;
+    } // 第几轮了
     // ============== 蘑菇玩法 ==================
     public get hasMushroom() {
         return this.mushroomBase > 0;

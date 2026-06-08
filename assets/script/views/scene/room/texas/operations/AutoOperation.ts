@@ -59,7 +59,7 @@ export default class AutoOperation extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataSetting.SHOW_BB, 'setting')
-    @traceMethod({ level: 'debug' })
+    @traceMethod()
     private updateLabels(bb: boolean) {
         if (this.toggleAutoAllin.node.active) {
             let num = this.toggleAutoAllin.getCheckRelatedInfo<number>();
@@ -78,7 +78,7 @@ export default class AutoOperation extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.VALID_AUTO_OPERATIONS_CHANGE, 'mine')
-    @traceMethod({ level: 'debug' })
+    @traceMethod()
     public onUpdateAutoOperationPanel(rightPanel: AutoOperationTypeTexas, amount: number) {
         this.toggleAutoFold.node.active = true;
         this.toggleAutoCheck.node.active = false;
