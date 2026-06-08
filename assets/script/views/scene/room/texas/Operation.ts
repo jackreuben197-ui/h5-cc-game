@@ -1,19 +1,18 @@
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import { OperatorMine, OpertionType } from '../../../../data/room/texas/model/Operator';
-import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import TexasGameRoomDataSetting from '../../../../data/room/texas/TexasGameRoomDataSetting';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
+import { AutoOperationTypeTexas } from '../../../../net/messages/texas/AutoOpertaionType';
 import { ActionLimit, Def } from '../../../../protobuf/holdem/define_pb';
 import { UIComfirmDialogType } from '../../../dialog/confirm/UIConfirmDialog';
 import viewManager from '../../../UIViewManager';
 import ShiningPathTimer from '../../../widget/ShiningPathTimer';
 import StepSlider from '../../../widget/StepSlider';
-import AutoOperation from './operations/AutoOperation';
 import TexasTableEvent from './events/TexasTableEvent';
+import AutoOperation from './operations/AutoOperation';
 import BetButtonsContainer, { caculatePotsBet } from './widget/BetButtonContainer';
-import { AutoOperationTypeTexas } from '../../../../net/messages/texas/AutoOpertaionType';
 
 const { ccclass, property, menu } = cc._decorator;
 
