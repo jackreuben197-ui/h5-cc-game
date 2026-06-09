@@ -1,4 +1,4 @@
-import { ServerMessageSelfProfitPay } from '../../../protobuf/holdem/recv_g_self_profit_pay_pb';
+import { ServerMessageSelfProfitPay } from '@silenthill/agreement-web';
 
 // SelfProfitPay 130
 export function SelfProfitPay(data: ServerMessageSelfProfitPay.AsObject, roomID: number, matchID: number) {}

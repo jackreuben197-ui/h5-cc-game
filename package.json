@@ -11,8 +11,8 @@
     "commit:prepare": "tsc -p tsconfig.json --noEmit && node scripts/fmt-imports.js && node scripts/fmt-blanklines.js && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@silenthill/agreement-web": "git+ssh://git@github.com:kingofake/agreement-web.git#master",
     "@types/gapi": "^0.0.43",
-    "google-protobuf": "^3.21.0",
     "http-server": "^14.1.1",
     "httpserver": "^0.3.0",
     "ts-md5": "^1.2.11"

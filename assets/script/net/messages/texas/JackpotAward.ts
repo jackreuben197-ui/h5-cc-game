@@ -1,4 +1,4 @@
-import { ServerMessageJackpotAward } from '../../../protobuf/holdem/recv_th_jackpot_award_pb';
+import { ServerMessageJackpotAward } from '@silenthill/agreement-web';
 
 // JackpotAward 1130
 export function JackpotAward(data: ServerMessageJackpotAward.AsObject, roomID: number, matchID: number) {}

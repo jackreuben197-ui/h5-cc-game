@@ -1,3 +1,4 @@
+import { Def, Player, ServerMessageEnterRoom } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
@@ -9,8 +10,6 @@ import {
     AnimateDisplayTypePosition,
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
-import { Def, Player } from '../../../protobuf/holdem/define_pb';
-import { ServerMessageEnterRoom } from '../../../protobuf/holdem/req_th_enter_room_pb';
 import viewManager from '../../../views/UIViewManager';
 import { AutoOperationTypeTexas } from './AutoOpertaionType';
 

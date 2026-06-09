@@ -1,4 +1,4 @@
-import { ServerMessageMjRejectBringIn } from '../../../protobuf/holdem/req_mj_reject_bring_in_pb';
+import { ServerMessageMjRejectBringIn } from '@silenthill/agreement-web';
 
 // MJRejectBringIn 3021
 export function MJRejectBringIn(data: ServerMessageMjRejectBringIn.AsObject, roomID: number, matchID: number) {}

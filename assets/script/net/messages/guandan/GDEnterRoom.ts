@@ -1,4 +1,4 @@
-import { ServerMessageGdEnterRoom } from '../../../protobuf/holdem/req_gd_enter_room_pb';
+import { ServerMessageGdEnterRoom } from '@silenthill/agreement-web';
 
 // GDEnterRoom 4001
 export function GDEnterRoom(data: ServerMessageGdEnterRoom.AsObject, roomID: number, matchID: number) {}

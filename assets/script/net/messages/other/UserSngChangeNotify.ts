@@ -1,4 +1,4 @@
-import { ServerMessageUserSngChangeNotify } from '../../../protobuf/holdem/recv_g_user_sng_change_notify_pb';
+import { ServerMessageUserSngChangeNotify } from '@silenthill/agreement-web';
 
 // UserSngChangeNotify 152
 export function UserSngChangeNotify(data: ServerMessageUserSngChangeNotify.AsObject, roomID: number, matchID: number) {}

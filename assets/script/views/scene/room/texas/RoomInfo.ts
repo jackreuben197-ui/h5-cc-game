@@ -1,3 +1,4 @@
+import { RoomInfo as RoomInfoPb } from '@silenthill/agreement-web';
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
@@ -6,7 +7,6 @@ import TexasGameRoomDataBasic from '../../../../data/room/texas/TexasGameRoomDat
 import { StringHelper } from '../../../../helper/StringHelper';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
-import { RoomInfo as RoomInfoPb } from '../../../../protobuf/holdem/define_pb';
 
 const { ccclass, property, menu } = cc._decorator;
 

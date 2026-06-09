@@ -1,4 +1,4 @@
-import { ServerMessageCbGamePlayEnd } from '../../../protobuf/holdem/recv_cb_game_play_end_pb';
+import { ServerMessageCbGamePlayEnd } from '@silenthill/agreement-web';
 
 // CBGamePlayEnd 2102
 export function CBGamePlayEnd(data: ServerMessageCbGamePlayEnd.AsObject, roomID: number, matchID: number) {}

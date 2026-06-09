@@ -1,4 +1,4 @@
-import { ServerMessageFtVideoMaskChange } from '../../../protobuf/holdem/recv_ft_video_mask_change_pb';
+import { ServerMessageFtVideoMaskChange } from '@silenthill/agreement-web';
 
 // FTVideoMaskChange 1317
 export function FTVideoMaskChange(data: ServerMessageFtVideoMaskChange.AsObject, roomID: number, matchID: number) {}

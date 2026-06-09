@@ -1,4 +1,4 @@
-import { ServerMessageUserBan } from '../../../protobuf/holdem/recv_g_user_ban_pb';
+import { ServerMessageUserBan } from '@silenthill/agreement-web';
 
 // UserBan 102
 export function UserBan(data: ServerMessageUserBan.AsObject, roomID: number, matchID: number) {}

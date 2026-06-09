@@ -1,26 +1,40 @@
-import { Code } from '../../protobuf/holdem/code_pb';
-import { ServerMessageCbChatOthers } from '../../protobuf/holdem/recv_cb_chat_other_pb';
-import { ServerMessageCbEncryptCards } from '../../protobuf/holdem/recv_cb_encrypt_cards_pb';
-import { ServerMessageCbGamePlayEnd } from '../../protobuf/holdem/recv_cb_game_play_end_pb';
-import { ServerMessageCbGamePlayInfo } from '../../protobuf/holdem/recv_cb_game_play_info_pb';
-import { ServerMessageCbGameResult } from '../../protobuf/holdem/recv_cb_game_result_pb';
-import { ServerMessageCbGameStart } from '../../protobuf/holdem/recv_cb_game_start_pb';
-import { ServerMessageCbLeaveNotification } from '../../protobuf/holdem/recv_cb_leave_notification_pb';
-import { ServerMessageCbRoomClose } from '../../protobuf/holdem/recv_cb_room_close_pb';
-import { ServerMessageCbStandupNotification } from '../../protobuf/holdem/recv_cb_standup_notification_pb';
-import { ServerMessageCbWaymapUpdate } from '../../protobuf/holdem/recv_cb_waymap_update_pb';
-import { ClientMessageCbBringIn, ServerMessageCbBringIn } from '../../protobuf/holdem/req_cb_bring_in_pb';
-import { ClientMessageCbCancelPlay, ServerMessageCbCancelPlay } from '../../protobuf/holdem/req_cb_cancel_play_pb';
-import { ClientMessageCbChat, ServerMessageCbChat } from '../../protobuf/holdem/req_cb_chat_pb';
-import { ClientMessageCbEnterRoom, ServerMessageCbEnterRoom } from '../../protobuf/holdem/req_cb_enter_room_pb';
-import { ClientMessageCbLastGames, ServerMessageCbLastGames } from '../../protobuf/holdem/req_cb_last_games_pb';
-import { ClientMessageCbLeave, ServerMessageCbLeave } from '../../protobuf/holdem/req_cb_leave_pb';
-import { ClientMessageCbOnline, ServerMessageCbOnline } from '../../protobuf/holdem/req_cb_online_pb';
-import { ClientMessageCbPlay, ServerMessageCbPlay } from '../../protobuf/holdem/req_cb_play_pb';
-import { ClientMessageCbSyncEnter, ServerMessageCbSyncEnter } from '../../protobuf/holdem/req_cb_sync_enter_pb';
-import { ClientMessageCbTop, ServerMessageCbTop } from '../../protobuf/holdem/req_cb_top_pb';
-import { ClientMessageCbWaymap, ServerMessageCbWaymap } from '../../protobuf/holdem/req_cb_waymap_pb';
-import { ClientMessageCbWaymapSpec, ServerMessageCbWaymapSpec } from '../../protobuf/holdem/req_cb_waymap_spec_pb';
+import {
+    ClientMessageCbBringIn,
+    ClientMessageCbCancelPlay,
+    ClientMessageCbChat,
+    ClientMessageCbEnterRoom,
+    ClientMessageCbLastGames,
+    ClientMessageCbLeave,
+    ClientMessageCbOnline,
+    ClientMessageCbPlay,
+    ClientMessageCbSyncEnter,
+    ClientMessageCbTop,
+    ClientMessageCbWaymap,
+    ClientMessageCbWaymapSpec,
+    Code,
+    ServerMessageCbBringIn,
+    ServerMessageCbCancelPlay,
+    ServerMessageCbChat,
+    ServerMessageCbChatOthers,
+    ServerMessageCbEncryptCards,
+    ServerMessageCbEnterRoom,
+    ServerMessageCbGamePlayEnd,
+    ServerMessageCbGamePlayInfo,
+    ServerMessageCbGameResult,
+    ServerMessageCbGameStart,
+    ServerMessageCbLastGames,
+    ServerMessageCbLeave,
+    ServerMessageCbLeaveNotification,
+    ServerMessageCbOnline,
+    ServerMessageCbPlay,
+    ServerMessageCbRoomClose,
+    ServerMessageCbStandupNotification,
+    ServerMessageCbSyncEnter,
+    ServerMessageCbTop,
+    ServerMessageCbWaymap,
+    ServerMessageCbWaymapSpec,
+    ServerMessageCbWaymapUpdate
+} from '@silenthill/agreement-web';
 
 export const CodeMessageCowboyClientGC = {
     [Code.MSG_D_CB_ENTER_ROOM]: [ClientMessageCbEnterRoom, null! as ClientMessageCbEnterRoom.AsObject],

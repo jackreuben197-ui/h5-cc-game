@@ -1,4 +1,4 @@
-import { ServerMessageGdLeave } from '../../../protobuf/holdem/req_gd_leave_pb';
+import { ServerMessageGdLeave } from '@silenthill/agreement-web';
 
 // GDLeave 4011
 export function GDLeave(data: ServerMessageGdLeave.AsObject, roomID: number, matchID: number) {}

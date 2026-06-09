@@ -1,4 +1,4 @@
-import { ServerMessageMttReadyForApply } from '../../../protobuf/holdem/recv_g_mtt_ready_for_apply_pb';
+import { ServerMessageMttReadyForApply } from '@silenthill/agreement-web';
 
 // MttReadyForApply 105
 export function MttReadyForApply(data: ServerMessageMttReadyForApply.AsObject, roomID: number, matchID: number) {}

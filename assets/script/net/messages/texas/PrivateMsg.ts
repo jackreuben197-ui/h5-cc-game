@@ -1,4 +1,4 @@
-import { ServerMessagePrivateMsg } from '../../../protobuf/holdem/req_th_private_msg_pb';
+import { ServerMessagePrivateMsg } from '@silenthill/agreement-web';
 
 // PrivateMsg 1020
 export function PrivateMsg(data: ServerMessagePrivateMsg.AsObject, roomID: number, matchID: number) {}

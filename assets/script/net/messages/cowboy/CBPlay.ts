@@ -1,4 +1,4 @@
-import { ServerMessageCbPlay } from '../../../protobuf/holdem/req_cb_play_pb';
+import { ServerMessageCbPlay } from '@silenthill/agreement-web';
 
 // CBPlay 2002
 export function CBPlay(data: ServerMessageCbPlay.AsObject, roomID: number, matchID: number) {}

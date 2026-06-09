@@ -1,5 +1,5 @@
 // import { ProtocolCode } from './ProtocolCode';
-import { Code } from '../../protobuf/holdem/code_pb';
+import { Code } from '@silenthill/agreement-web';
 
 export default class OpCodeHelper {
     /**

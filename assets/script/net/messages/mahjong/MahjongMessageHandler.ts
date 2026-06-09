@@ -1,4 +1,4 @@
-import { Code } from '../../../protobuf/holdem/code_pb';
+import { Code } from '@silenthill/agreement-web';
 import { MJAction } from './MJAction';
 import { MJActionAll } from './MJActionAll';
 import { MJActionFail } from './MJActionFail';

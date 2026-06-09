@@ -1,3 +1,4 @@
+import { RoomInfo } from '@silenthill/agreement-web';
 import { autoBindEvents, bindData, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import TexasGameRoomDataBasic, { tableBetInfo } from '../../../../data/room/texas/TexasGameRoomDataBasic';
@@ -6,7 +7,6 @@ import userStore, { ClubWallet, UserStore } from '../../../../data/user/UserStor
 import { StringHelper } from '../../../../helper/StringHelper';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
-import { RoomInfo } from '../../../../protobuf/holdem/define_pb';
 import viewManager from '../../../UIViewManager';
 import UIBringIn, { BringInTabType } from '../UIBringIn';
 import { BringInCommitFn, BringInProvider } from './BringInProvider';

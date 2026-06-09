@@ -1,4 +1,4 @@
-import { ServerMessageUserKickedFromClub } from '../../../protobuf/holdem/recv_g_user_kicked_from_club_pb';
+import { ServerMessageUserKickedFromClub } from '@silenthill/agreement-web';
 
 // UserKickedFromClub 106
 export function UserKickedFromClub(data: ServerMessageUserKickedFromClub.AsObject, roomID: number, matchID: number) {}

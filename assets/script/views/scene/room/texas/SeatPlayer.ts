@@ -1,3 +1,4 @@
+import { Def } from '@silenthill/agreement-web';
 import { autoBindEvents, bindEvent, unBindEvents, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import { Operator } from '../../../../data/room/texas/model/Operator';
@@ -13,7 +14,6 @@ import {
 } from '../../../../game/constant/AnimateDisplayType';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
-import { Def } from '../../../../protobuf/holdem/define_pb';
 import UIViewUtil from '../../../util/UIViewUtil';
 import CardView from '../../../widget/CardView';
 import { DisplayNode } from '../../../widget/DisplayNode';

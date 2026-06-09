@@ -1,3 +1,4 @@
+import { ClientMessageSeated, Code, Def, RoomInfo } from '@silenthill/agreement-web';
 import { traceClass } from '../../../../../core/decorator/LogTrace';
 import TexasGameRoomDataPlayerMine from '../../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import userStore from '../../../../../data/user/UserStore';
@@ -13,9 +14,6 @@ import { HttpRoomBringInByIDProtocol } from '../../../../../net/https/data/room/
 import { HttpRoomBringOutProtocol } from '../../../../../net/https/data/room/HttpRoomBringOutProtocol';
 import { WebUserRoom, WebUserRoomBringin, WWW } from '../../../../../net/https/WebRequest';
 import ProtocolAgency from '../../../../../net/websocket/ProtocolAgency';
-import { Code } from '../../../../../protobuf/holdem/code_pb';
-import { Def, RoomInfo } from '../../../../../protobuf/holdem/define_pb';
-import { ClientMessageSeated } from '../../../../../protobuf/holdem/req_th_seated_pb';
 import { BringInCommitFn } from '../../../../dialog/bringin/provider/BringInProvider';
 import viewManager from '../../../../UIViewManager';
 

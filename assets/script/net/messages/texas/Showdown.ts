@@ -1,4 +1,4 @@
-import { ServerMessageShowdown } from '../../../protobuf/holdem/req_th_showdown_pb';
+import { ServerMessageShowdown } from '@silenthill/agreement-web';
 
 // Showdown 1012
 export function Showdown(data: ServerMessageShowdown.AsObject, roomID: number, matchID: number) {}

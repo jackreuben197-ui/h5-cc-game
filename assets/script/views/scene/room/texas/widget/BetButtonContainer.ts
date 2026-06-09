@@ -1,7 +1,7 @@
+import { Def } from '@silenthill/agreement-web';
 import { traceClass } from '../../../../../core/decorator/LogTrace';
 import TexasGameRoomDataPlayer from '../../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataSetting from '../../../../../data/room/texas/TexasGameRoomDataSetting';
-import { Def } from '../../../../../protobuf/holdem/define_pb';
 import TexasTableEvent from '../events/TexasTableEvent';
 import BetButton from './BetButton'; // 引入按钮脚本
 

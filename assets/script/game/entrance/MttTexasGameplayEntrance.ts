@@ -1,10 +1,7 @@
+import { ClientMessageEnterRoom, Code, Def, ServerMessageMttDetail } from '@silenthill/agreement-web';
 import roomDataManager from '../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../data/room/texas/TexasGameRoomData';
 import ProtocolAgency from '../../net/websocket/ProtocolAgency';
-import { Code } from '../../protobuf/holdem/code_pb';
-import { Def } from '../../protobuf/holdem/define_pb';
-import { ServerMessageMttDetail } from '../../protobuf/holdem/req_rpc_mtt_detail_pb';
-import { ClientMessageEnterRoom } from '../../protobuf/holdem/req_th_enter_room_pb';
 import { AntiCheatType } from '../constant/AntiCheatType';
 import { MttPlayerStatus } from '../constant/Constants';
 import AGameplayEntrance, { LoadIndicator } from './AGameplayEntrance';

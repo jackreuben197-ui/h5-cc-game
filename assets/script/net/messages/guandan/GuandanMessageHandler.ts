@@ -1,4 +1,4 @@
-import { Code } from '../../../protobuf/holdem/code_pb';
+import { Code } from '@silenthill/agreement-web';
 import { GDAction } from './GDAction';
 import { GDActionAll } from './GDActionAll';
 import { GDAddTime } from './GDAddTime';

@@ -1,4 +1,4 @@
-import { ServerMessageMjExchangeTilesComplete } from '../../../protobuf/holdem/recv_mj_exchange_tiles_complete_pb';
+import { ServerMessageMjExchangeTilesComplete } from '@silenthill/agreement-web';
 
 // MJExchangeTilesComplete 3053
 export function MJExchangeTilesComplete(data: ServerMessageMjExchangeTilesComplete.AsObject, roomID: number, matchID: number) {}

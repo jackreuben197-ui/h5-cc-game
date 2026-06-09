@@ -1,3 +1,4 @@
+import { Def, InsuranceOddsForPotsUserCount, RoomJackpotConfig, SquidCountRateConfig, SubRoomConfig } from '@silenthill/agreement-web';
 import { bindData, IObservableBindings, observable } from '../../../core/decorator/DataBind';
 import { AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDisplayType';
 import { ChatType } from '../../../game/constant/ChatType';
@@ -5,7 +6,6 @@ import { MushroomMode } from '../../../game/constant/Mushroom';
 import { SquidLeaveMode, SquidMode } from '../../../game/constant/Squid';
 import { ViewPlayerCardsMode } from '../../../game/constant/ViewPlayerCardsMode';
 import GameplayUtil from '../../../game/util/GameplayUtil';
-import { Def, InsuranceOddsForPotsUserCount, RoomJackpotConfig, SquidCountRateConfig, SubRoomConfig } from '../../../protobuf/holdem/define_pb';
 import TexasGameRoomData from './TexasGameRoomData';
 
 export interface tableBetInfo {

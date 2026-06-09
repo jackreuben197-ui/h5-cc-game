@@ -1,7 +1,6 @@
+import { Def, ServerMessageChipsChange } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
-import { Def } from '../../../protobuf/holdem/define_pb';
-import { ServerMessageChipsChange } from '../../../protobuf/holdem/recv_th_chips_change_pb';
 
 // ChipsChange 1107
 /**

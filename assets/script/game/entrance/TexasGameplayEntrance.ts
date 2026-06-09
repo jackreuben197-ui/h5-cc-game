@@ -1,11 +1,9 @@
+import { ClientMessageEnterRoom, Code, Def } from '@silenthill/agreement-web';
 import { traceClass } from '../../core/decorator/LogTrace';
 import roomDataManager from '../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../data/room/texas/TexasGameRoomData';
 import { i18nMgr } from '../../i18n/i18nMgr';
 import ProtocolAgency from '../../net/websocket/ProtocolAgency';
-import { Code } from '../../protobuf/holdem/code_pb';
-import { Def } from '../../protobuf/holdem/define_pb';
-import { ClientMessageEnterRoom } from '../../protobuf/holdem/req_th_enter_room_pb';
 import viewManager from '../../views/UIViewManager';
 import { AntiCheatType } from '../constant/AntiCheatType';
 import AGameplayEntrance, { LoadIndicator } from './AGameplayEntrance';

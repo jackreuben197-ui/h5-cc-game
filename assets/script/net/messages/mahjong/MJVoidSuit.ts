@@ -1,4 +1,4 @@
-import { ServerMessageMjVoidSuit } from '../../../protobuf/holdem/req_mj_void_suit_pb';
+import { ServerMessageMjVoidSuit } from '@silenthill/agreement-web';
 
 // MJVoidSuit 3005
 export function MJVoidSuit(data: ServerMessageMjVoidSuit.AsObject, roomID: number, matchID: number) {}

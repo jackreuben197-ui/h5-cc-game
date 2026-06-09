@@ -1,4 +1,4 @@
-import { ServerMessageMjEnterRoom } from '../../../protobuf/holdem/req_mj_enter_room_pb';
+import { ServerMessageMjEnterRoom } from '@silenthill/agreement-web';
 
 // MJEnterRoom 3001
 export function MJEnterRoom(data: ServerMessageMjEnterRoom.AsObject, roomID: number, matchID: number) {}

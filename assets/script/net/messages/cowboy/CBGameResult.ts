@@ -1,4 +1,4 @@
-import { ServerMessageCbGameResult } from '../../../protobuf/holdem/recv_cb_game_result_pb';
+import { ServerMessageCbGameResult } from '@silenthill/agreement-web';
 
 // CBGameResult 2103
 export function CBGameResult(data: ServerMessageCbGameResult.AsObject, roomID: number, matchID: number) {}

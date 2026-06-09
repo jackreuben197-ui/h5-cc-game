@@ -1,4 +1,4 @@
-import { Code } from '../../../protobuf/holdem/code_pb';
+import { Code } from '@silenthill/agreement-web';
 import { AdminRoomUserLeave } from './AdminRoomUserLeave';
 import { AdminRoomUserStandup } from './AdminRoomUserStandup';
 import { AntiCheatRoomVideo } from './AntiCheatRoomVideo';

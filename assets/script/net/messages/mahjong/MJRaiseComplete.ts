@@ -1,4 +1,4 @@
-import { ServerMessageMjRaiseComplete } from '../../../protobuf/holdem/recv_mj_raise_complete_pb';
+import { ServerMessageMjRaiseComplete } from '@silenthill/agreement-web';
 
 // MJRaiseComplete 3069
 export function MJRaiseComplete(data: ServerMessageMjRaiseComplete.AsObject, roomID: number, matchID: number) {}

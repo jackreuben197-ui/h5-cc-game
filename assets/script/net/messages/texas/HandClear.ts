@@ -1,6 +1,6 @@
+import { ServerMessageHandClear } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
-import { ServerMessageHandClear } from '../../../protobuf/holdem/recv_th_hand_clear_pb';
 
 // HandClear 1119
 export function HandClear(data: ServerMessageHandClear.AsObject, roomID: number, matchID: number) {

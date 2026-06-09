@@ -1,3 +1,4 @@
+import { Def, ServerMessageSeated } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
@@ -6,8 +7,6 @@ import UserStoreUtils from '../../../data/user/UserStoreUtils';
 import { AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
 import { BringInMode } from '../../../game/constant/BringInMode';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
-import { Def } from '../../../protobuf/holdem/define_pb';
-import { ServerMessageSeated } from '../../../protobuf/holdem/req_th_seated_pb';
 import viewManager from '../../../views/UIViewManager';
 import { AutoOperationTypeTexas } from './AutoOpertaionType';
 

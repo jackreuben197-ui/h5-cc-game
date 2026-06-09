@@ -1,3 +1,4 @@
+import { Def, ServerMessageLeaveNotification } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
@@ -6,8 +7,6 @@ import ProcedureDefine from '../../../game/procedure/ProcedureDefine';
 import ProcedureManager from '../../../game/procedure/ProcedureManager';
 import { ProcedureReturnNavigateParam } from '../../../game/procedure/ProcedureReturn';
 import { i18nMgr } from '../../../i18n/i18nMgr';
-import { Def } from '../../../protobuf/holdem/define_pb';
-import { ServerMessageLeaveNotification } from '../../../protobuf/holdem/recv_th_leave_notification_pb';
 import viewManager from '../../../views/UIViewManager';
 
 const _glog = createLogger('LeaveNotification');

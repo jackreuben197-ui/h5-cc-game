@@ -1,4 +1,4 @@
-import { ServerMessageGetMessage } from '../../../protobuf/holdem/recv_g_get_message_pb';
+import { ServerMessageGetMessage } from '@silenthill/agreement-web';
 
 // GetMessage 109
 export function GetMessage(data: ServerMessageGetMessage.AsObject, roomID: number, matchID: number) {}

@@ -1,4 +1,4 @@
-import { ServerMessageMjBroadcastMsg } from '../../../protobuf/holdem/req_mj_broadcast_msg_pb';
+import { ServerMessageMjBroadcastMsg } from '@silenthill/agreement-web';
 
 // MJBroadcastMsg 3012
 export function MJBroadcastMsg(data: ServerMessageMjBroadcastMsg.AsObject, roomID: number, matchID: number) {}

@@ -1,4 +1,4 @@
-import { Code } from '../../../protobuf/holdem/code_pb';
+import { Code } from '@silenthill/agreement-web';
 import { CBBringIn } from './CBBringIn';
 import { CBCancelPlay } from './CBCancelPlay';
 import { CBChat } from './CBChat';

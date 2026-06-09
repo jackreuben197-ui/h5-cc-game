@@ -1,10 +1,10 @@
+import { Def } from '@silenthill/agreement-web';
 import { bindData, IObservableBindings, observable, pureEvent } from '../../../core/decorator/DataBind';
 import { traceClass } from '../../../core/decorator/LogTrace';
 import { handValueTypeToString } from '../../../core/poker/PoerkCard';
 import { getMaxHandValueByPokeType } from '../../../core/poker/PokerUtil';
 import { VideoModel } from '../../../game/constant/VideoModel';
 import { AutoOperationTypeTexas } from '../../../net/messages/texas/AutoOpertaionType';
-import { Def } from '../../../protobuf/holdem/define_pb';
 import { OperatorMine } from './model/Operator';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';

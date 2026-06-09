@@ -1,4 +1,4 @@
-import { ServerMessageFtObservers } from '../../../protobuf/holdem/req_ft_observers_pb';
+import { ServerMessageFtObservers } from '@silenthill/agreement-web';
 
 // FTObservers 1217
 export function FTObservers(data: ServerMessageFtObservers.AsObject, roomID: number, matchID: number) {}

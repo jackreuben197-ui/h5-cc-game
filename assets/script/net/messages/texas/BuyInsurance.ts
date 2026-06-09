@@ -1,4 +1,4 @@
-import { ServerMessageBuyInsurance } from '../../../protobuf/holdem/recv_th_buy_insurance_pb';
+import { ServerMessageBuyInsurance } from '@silenthill/agreement-web';
 
 // BuyInsurance 1116
 export function BuyInsurance(data: ServerMessageBuyInsurance.AsObject, roomID: number, matchID: number) {}
