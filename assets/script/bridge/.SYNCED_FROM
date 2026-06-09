@@ -1,0 +1,6 @@
+repo: https://github.com/soolary/h5-cc-bridge.git
+ref: main
+commit: 00a8fc2bee7a8db810ef2ae9d7708c910c59d50d
+syncedAt: 2026-06-09T08:27:55.115Z
+
+# 不要手动编辑 bridge/ 下任何文件，所有改动到 h5-cc-bridge 仓库后跑 npm run sync:bridge。
