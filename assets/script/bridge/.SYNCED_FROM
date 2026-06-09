@@ -1,0 +1,11 @@
+repo: https://github.com/soolary/h5-cc-bridge.git
+ref: main
+commit: b2c9383ec5dbad6564b2376dfd589c04856f483e
+syncedAt: 2026-06-09T00:00:00.000Z
+
+# 这个目录是从 h5-cc-bridge 仓库的 src/ 同步过来的「协议合同」。
+# 不要手动编辑里面任何 .ts 文件，所有改动到 h5-cc-bridge 仓库后跑：
+#   npm run sync:bridge
+# 重新拉取并覆盖。
+#
+# 如果 commit/SHA 与你想要的版本不符，要么手动改 BRIDGE_REF 后再 sync，要么直接编辑此文件后被 sync 覆盖。
