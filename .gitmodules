@@ -1,10 +1,6 @@
 [submodule "deps/h5-game"]
 	path = deps/h5-game
 	url = git@github.com:soolary/h5-game.git
-[submodule "deps/agreement-web"]
-	path = deps/agreement-web
-	url = git@github.com:kingofake/agreement-web.git
-	branch = master
 [submodule "deps/h5-cc-bridge"]
 	path = deps/h5-cc-bridge
 	url = git@github.com:soolary/h5-cc-bridge.git
