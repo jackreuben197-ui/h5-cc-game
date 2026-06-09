@@ -41,14 +41,6 @@ function captureRun(command, cwd) {
 }
 
 function ensureRepo() {
-    if (!fs.existsSync(depsDir)) {
-        console.log('\n[1/4] 首次克隆 h5-cc-bridge ...');
-        const parent = path.dirname(depsDir);
-        fs.mkdirSync(parent, { recursive: true });
-        run(`git clone --depth 1 -b ${BRIDGE_REF} ${REPO_URL} ${path.basename(depsDir)}`, parent);
-        return;
-    }
-
     console.log('\n[1/4] 更新 h5-cc-bridge 到', BRIDGE_REF, '...');
     run('git fetch --all --tags', depsDir);
     run(`git reset --hard origin/${BRIDGE_REF}`, depsDir);
