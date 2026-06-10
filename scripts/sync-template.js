@@ -17,13 +17,6 @@ const PREVIEW_DIR = path.join(ROOT, 'preview-templates')
 const BUILD_HTML = path.join(BUILD_DIR, 'index.html')
 const PREVIEW_HTML = path.join(PREVIEW_DIR, 'index.html')
 
-const PROTOBUF_SRC = [
-  path.join(ROOT, 'deps', 'h5-game', 'node_modules', 'google-protobuf', 'google-protobuf.js'),
-  path.join(ROOT, '..', 'h5-game', 'node_modules', 'google-protobuf', 'google-protobuf.js'),
-  path.join(ROOT, 'node_modules', 'google-protobuf', 'google-protobuf.js'),
-].find(p => fs.existsSync(p)) || null
-const PROTOBUF_PREVIEW_DEST = path.join(PREVIEW_DIR, 'assets', 'vendor', 'google-protobuf.js')
-
 // --- 工具函数 ---
 function copyDirSync(src, dest) {
   if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true })
@@ -89,18 +82,6 @@ if (fs.existsSync(buildAssets)) {
   console.log('同步 assets: build-templates/web-mobile/assets/ → preview-templates/assets/')
   copyDirSync(buildAssets, previewAssets)
   console.log('  ✓ assets 已同步')
-}
-
-// --- 步骤 2.5：同步 protobuf runtime 到 preview-templates ---
-if (PROTOBUF_SRC) {
-  copyFileSync(PROTOBUF_SRC, PROTOBUF_PREVIEW_DEST)
-  console.log('同步 protobuf runtime:', PROTOBUF_SRC, '→ preview-templates/assets/vendor/google-protobuf.js')
-  console.log('  ✓ protobuf runtime 已同步')
-} else {
-  console.warn('⚠ 未找到 protobuf runtime，已尝试路径:')
-  console.warn('    deps/h5-game/node_modules/google-protobuf/')
-  console.warn('    ../h5-game/node_modules/google-protobuf/')
-  console.warn('    node_modules/google-protobuf/')
 }
 
 // --- 步骤 2.6：同步 build-templates 根目录的运行时脚本到 preview-templates ---
@@ -275,150 +256,6 @@ const I18N_REQUEST_PATCH = `    <!-- CC 编辑器预览：拦截 H5 的 i18n 请
   })()
   </script>`
 
-const PREVIEW_PROTOBUF_FALLBACK = `
-  <!-- CC 编辑器预览：补充 google-protobuf 运行时，并为 quick-compile require 提供回退 -->
-  <script>
-    (function () {
-      function hasJspb() {
-        return !!(window.jspb && window.jspb.Message)
-      }
-
-      function ensureGoogCompat(jspbObj) {
-        var jspb = jspbObj || window.jspb || {}
-
-        if (!jspb.object) {
-          jspb.object = {}
-        }
-        if (typeof jspb.object.extend !== 'function') {
-          jspb.object.extend = function (target, source) {
-            if (!target || !source) return target
-            for (var key in source) {
-              if (Object.prototype.hasOwnProperty.call(source, key)) {
-                target[key] = source[key]
-              }
-            }
-            return target
-          }
-        }
-
-        if (typeof jspb.inherits !== 'function') {
-          jspb.inherits = function (childCtor, parentCtor) {
-            if (!childCtor || !parentCtor) return
-            childCtor.superClass_ = parentCtor.prototype
-            childCtor.prototype = Object.create(parentCtor.prototype)
-            childCtor.prototype.constructor = childCtor
-          }
-        }
-
-        if (typeof jspb.exportSymbol !== 'function') {
-          jspb.exportSymbol = function (publicPath, object, target) {
-            var root = target || window
-            var parts = String(publicPath || '').split('.')
-            for (var i = 0; i < parts.length - 1; i++) {
-              var part = parts[i]
-              if (!root[part]) root[part] = {}
-              root = root[part]
-            }
-            var last = parts[parts.length - 1]
-            if (typeof object === 'undefined' || object === null) {
-              if (!root[last]) root[last] = {}
-            } else {
-              root[last] = object
-            }
-          }
-        }
-
-        if (typeof window.jspb === 'undefined') {
-          window.jspb = jspb
-        }
-        return jspb
-      }
-
-      function loadScript(src, cb) {
-        var s = document.createElement('script')
-        s.src = src
-        s.async = false
-        s.onload = function () { cb(true) }
-        s.onerror = function () { cb(false) }
-        document.head.appendChild(s)
-      }
-
-      function ensureProtobufRuntime(done) {
-        if (hasJspb()) {
-          ensureGoogCompat(window.jspb)
-          done()
-          return
-        }
-
-        var candidates = [
-          './assets/vendor/google-protobuf.js',
-          './deps/h5-game/node_modules/google-protobuf/google-protobuf.js'
-        ]
-
-        var idx = 0
-        ;(function next() {
-          if (idx >= candidates.length) {
-            done()
-            return
-          }
-          loadScript(candidates[idx++], function (ok) {
-            if (ok && hasJspb()) {
-              ensureGoogCompat(window.jspb)
-              done()
-              return
-            }
-            next()
-          })
-        })()
-      }
-
-      function patchQuickCompileRequire() {
-        if (!window.__quick_compile_project__ || window.__quick_compile_project__.__protobufFallbackPatched__) {
-          return false
-        }
-
-        var project = window.__quick_compile_project__
-        var originalRequire = project.require
-        if (typeof originalRequire !== 'function') {
-          return false
-        }
-
-        project.require = function (request, path) {
-          if (request === 'google-protobuf') {
-            // Let __quick_compile__'s dep table resolve the bundled module first
-            var _r = originalRequire.call(this, request, path)
-            if (_r) return _r
-            return ensureGoogCompat(window.jspb)
-          }
-
-          var result = originalRequire.call(this, request, path)
-
-          return result
-        }
-
-        project.__protobufFallbackPatched__ = true
-        return true
-      }
-
-      ensureProtobufRuntime(function () {
-        patchQuickCompileRequire()
-      })
-
-      var retry = 0
-      var timer = setInterval(function () {
-        retry++
-        if (patchQuickCompileRequire() || retry > 200) {
-          clearInterval(timer)
-        }
-      }, 50)
-
-      window.addEventListener('beforeunload', function () {
-        clearInterval(timer)
-      })
-    })()
-  </script>
-`
-
 const PREVIEW_TOOLBAR = `
   <!-- ========================================== -->
   <!-- 编辑器工具栏（boot.js 直接引用这些 DOM 元素） -->
@@ -495,121 +332,11 @@ const PREVIEW_COCOS_DOM = `
   <input id="OpenImageFile" type="file" accept=".png,.jpg,.jpeg" style="visibility: hidden" />
 `
 
-const PREVIEW_PROTOBUF_REQUIRE_PATCH = `
-  <!-- CC 编辑器预览：在 quick-compile 执行前为 google-protobuf require 提供回退 -->
-  <script>
-    (function () {
-      function ensureGoogCompat(jspbObj) {
-        var jspb = jspbObj || window.jspb || {}
-
-        if (!jspb.object) {
-          jspb.object = {}
-        }
-        if (typeof jspb.object.extend !== 'function') {
-          jspb.object.extend = function (target, source) {
-            if (!target || !source) return target
-            for (var key in source) {
-              if (Object.prototype.hasOwnProperty.call(source, key)) {
-                target[key] = source[key]
-              }
-            }
-            return target
-          }
-        }
-
-        if (typeof jspb.inherits !== 'function') {
-          jspb.inherits = function (childCtor, parentCtor) {
-            if (!childCtor || !parentCtor) return
-            childCtor.superClass_ = parentCtor.prototype
-            childCtor.prototype = Object.create(parentCtor.prototype)
-            childCtor.prototype.constructor = childCtor
-          }
-        }
-
-        if (typeof jspb.exportSymbol !== 'function') {
-          jspb.exportSymbol = function (publicPath, object, target) {
-            var root = target || window
-            var parts = String(publicPath || '').split('.')
-            for (var i = 0; i < parts.length - 1; i++) {
-              var part = parts[i]
-              if (!root[part]) root[part] = {}
-              root = root[part]
-            }
-            var last = parts[parts.length - 1]
-            if (typeof object === 'undefined' || object === null) {
-              if (!root[last]) root[last] = {}
-            } else {
-              root[last] = object
-            }
-          }
-        }
-
-        if (typeof window.jspb === 'undefined') {
-          window.jspb = jspb
-        }
-        return jspb
-      }
-
-      function patchProject(project) {
-        if (!project || project.__protobufFallbackPatched__) {
-          return
-        }
-
-        var originalRequire = project.require
-        if (typeof originalRequire !== 'function') {
-          return
-        }
-
-        project.require = function (request, path) {
-          if (request === 'google-protobuf') {
-            return ensureGoogCompat(window.jspb)
-          }
-          return originalRequire.call(this, request, path)
-        }
-        project.__protobufFallbackPatched__ = true
-      }
-
-      var currentProject = window.__quick_compile_project__
-      try {
-        Object.defineProperty(window, '__quick_compile_project__', {
-          configurable: true,
-          get: function () {
-            return currentProject
-          },
-          set: function (value) {
-            currentProject = value
-            patchProject(value)
-          }
-        })
-      } catch (error) {
-        // Some embedded WebViews may reject redefining globals; the retry below still covers them.
-      }
-
-      patchProject(currentProject)
-
-      var retry = 0
-      var timer = setInterval(function () {
-        retry++
-        patchProject(window.__quick_compile_project__)
-        if ((window.__quick_compile_project__ && window.__quick_compile_project__.__protobufFallbackPatched__) || retry > 200) {
-          clearInterval(timer)
-        }
-      }, 50)
-
-      window.addEventListener('beforeunload', function () {
-        clearInterval(timer)
-      })
-    })()
-  </script>
-`
-
 const PREVIEW_COCOS_BOOT = `
   <!-- ================================================== -->
   <!-- Cocos 引擎脚本：严格对齐官方 index.jade 加载顺序 -->
   <!-- ================================================== -->
   <script src="settings.js" charset="utf-8"></script>
-  <script src="./assets/vendor/google-protobuf.js" charset="utf-8"></script>
-  ${PREVIEW_PROTOBUF_REQUIRE_PATCH}
   <script src="preview-scripts/__quick_compile__.js" charset="utf-8"></script>
   <script src="app/editor/static/preview-templates/boot.js" charset="utf-8"></script>
   <script src="/socket.io/socket.io.js"></script>
@@ -697,10 +424,6 @@ if (BUILD_COCOS_BOOT_RE.test(out)) {
 
 if (!out.includes('__previewNullGuardPatched__')) {
   out = insertBefore(out, '</body>', PREVIEW_CCVIEW_NULL_GUARD)
-}
-
-if (!out.includes('__protobufFallbackPatched__')) {
-  out = insertBefore(out, '</body>', PREVIEW_PROTOBUF_FALLBACK)
 }
 
 if (!out.includes('id="recompiling"')) {

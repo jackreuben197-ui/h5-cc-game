@@ -76,11 +76,6 @@ export default class PublicHelper {
         let b = color_value & 0xff;
         return [r / 255, g / 255, b / 255, opacity / 255];
     }
-
-    //base64 to json
-    public static Base64ToJsonString(str: string): string {
-        return Buffer.from(str, 'base64').toString();
-    }
 }
 
 (window as any).PublicHelper = PublicHelper;

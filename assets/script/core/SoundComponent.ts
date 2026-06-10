@@ -1,7 +1,7 @@
 import storageManager from '../data/LocalStorage';
 import StorageKey from '../data/StorageKey';
 import { AssetCollectionType } from '../views/loader/AssetLoader';
-import AsssetManager from '../views/loader/AssetManager';
+import AssetManager from '../views/loader/AssetManager';
 import { traceClass } from './decorator/LogTrace';
 
 //声音
@@ -30,7 +30,7 @@ export default class SoundComponent {
     Play(name: string, loop: boolean = false) {
         if (this.soundOn) {
             // let soundClip: cc.AudioClip = AssetContext.getAsset<cc.AudioClip>(name, AssetFold.sound_all);
-            const soundClip = AsssetManager.getAsset(AssetCollectionType.AudioSourceSound, name);
+            const soundClip = AssetManager.getAsset(AssetCollectionType.AudioSourceSound, name);
             soundClip && cc.audioEngine.playEffect(soundClip, loop);
         }
     }
