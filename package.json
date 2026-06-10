@@ -9,9 +9,9 @@
     "commit:prepare": "tsc -p tsconfig.json --noEmit && node scripts/fmt-imports.js && node scripts/fmt-blanklines.js && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@silenthill/agreement-web": "git+ssh://git@github.com:kingofake/agreement-web.git#master",
-    "@silenthill/h5-cc-bridge": "git+ssh://git@github.com:soolary/h5-cc-bridge.git#main",
-    "@silenthill/h5-cc-i18n": "git+ssh://git@github.com:guysoup027/h5-cc-i18n#main",
+    "@silenthill/agreement-web": "git+ssh://git@github.com/kingofake/agreement-web.git#master",
+    "@silenthill/h5-cc-bridge": "git+ssh://git@github.com/soolary/h5-cc-bridge.git#main",
+    "@silenthill/h5-cc-i18n": "git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#main",
     "@types/gapi": "^0.0.43",
     "http-server": "^14.1.1",
     "httpserver": "^0.3.0",

@@ -9,8 +9,7 @@
     "rootDir": "./assets/script",
     "forceConsistentCasingInFileNames": true,
     "strictNullChecks": false,
-    "ignoreDeprecations": "6.0",
-    "types": ["node"]
+    "ignoreDeprecations": "6.0"
   },
   "exclude": [
     "back_script",
