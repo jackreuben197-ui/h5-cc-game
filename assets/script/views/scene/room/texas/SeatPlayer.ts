@@ -143,6 +143,7 @@ export default class SeatPlayer extends cc.Component {
         };
         this.emptySeat.node.on('click', this._clickEmptySeat, this);
         this._hideInsuranceCountdownBubble();
+        this.returnToGameButton.node.on('click', this._clickReturnToGame, this)
     }
 
     protected onEnable(): void {
@@ -684,27 +685,43 @@ export default class SeatPlayer extends cc.Component {
         });
     }
 
+    private _clickReturnToGame() {
+        if (this._onReturnGameCallback) {
+            this._onReturnGameCallback();
+        }
+    };
+
+    private _onReturnGameCallback: () => void = null!;
+
+    @traceMethod({level: 'debug'})
     private createReturnToGameClick(r: Def.KeepSeatReasonMap[keyof Def.KeepSeatReasonMap]): () => void {
+        if (r == Def.KeepSeatReason.KSR_NONE) {
+            this.returnToGameButton.node.active = false;
+        }else{
+            this.returnToGameButton.node.active = true
+        }
+        this.tracelog.debug('ksr', r)
         return () => {
             switch (r) {
                 case Def.KeepSeatReason.KSR_NONE:
-                    0;
                     break;
                 case Def.KeepSeatReason.KSR_TAKE_SEAT:
-                    1;
                 case Def.KeepSeatReason.KSR_ACTIVE:
-                    2;
                 case Def.KeepSeatReason.KSR_DELAY_LEAVE:
-                    4;
-                    TexasTableEvent.CancelKeepSeat(this._seatPlayer.mine);
+                    if (this._seatPlayer.chip > 0) {
+                        TexasTableEvent.CancelKeepSeat(this._seatPlayer.mine);
+                        break;
+                    }
+                    TexasTableEvent.BringIn(this._seatPlayer.mine);
                     break;
                 case Def.KeepSeatReason.KSR_NOCHIP:
-                    3;
                     TexasTableEvent.BringIn(this._seatPlayer.mine);
                     break;
             }
         };
     }
+
+
 
     @bindEvent(TexasGameRoomDataPlayer.KEEPSEAT_CHANGE, 'player')
     private onKeepSeatStart(b: boolean, deadline: number, reason: Def.KeepSeatReasonMap[keyof Def.KeepSeatReasonMap]) {
@@ -722,25 +739,7 @@ export default class SeatPlayer extends cc.Component {
                 this.keepSeatTimer.stop();
             }
             if (this._seatPlayer.mine) {
-                this.returnToGameButton.node.active = false;
-                switch (reason) {
-                    case Def.KeepSeatReason.KSR_NONE:
-                        break;
-                    case Def.KeepSeatReason.KSR_TAKE_SEAT:
-                    case Def.KeepSeatReason.KSR_ACTIVE:
-                    case Def.KeepSeatReason.KSR_DELAY_LEAVE:
-                        this.returnToGameButton.node.active = true;
-                        this.returnToGameButton.node.on('click', () => {
-                            TexasTableEvent.CancelKeepSeat(this._seatPlayer.mine);
-                        });
-                        break;
-                    case Def.KeepSeatReason.KSR_NOCHIP:
-                        this.returnToGameButton.node.active = true;
-                        this.returnToGameButton.node.on('click', () => {
-                            TexasTableEvent.BringIn(this._seatPlayer.mine);
-                        });
-                        break;
-                }
+                this._onReturnGameCallback = this.createReturnToGameClick(reason);
             }
             return;
         }

@@ -193,6 +193,9 @@ export default class ShiningPathTimer extends cc.Component {
         this._isCounting = false;
         this.handle.active = false;
         this.progressBar.node.active = false;
+        if (this.countdownLabel) {
+            this.countdownLabel.string = '';
+        }
     }
 
     public pause(): void {
