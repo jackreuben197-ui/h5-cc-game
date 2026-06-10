@@ -8,7 +8,7 @@ import TexasGameRoomDataSeatsStateManager from '../../../data/room/texas/TexasGa
 import GameplayUtil from '../../../game/util/GameplayUtil';
 import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
-import { Def, InsurancePotLimit, OutsCard, PotInsuranceBuy } from '../../../protobuf/holdem/define_pb';
+import { Def, InsurancePotLimit, OutsCard, PotInsuranceBuy } from '@silenthill/agreement-web';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import { AssetCollectionType } from '../../loader/AssetLoader';
 import AssetManager from '../../loader/AssetManager';
