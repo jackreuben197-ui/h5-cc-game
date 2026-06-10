@@ -1,4 +1,4 @@
-import { ServerMessageChatMembers } from '../../../protobuf/holdem/req_th_chat_members_pb';
+import { ServerMessageChatMembers } from '@silenthill/agreement-web';
 
 // ChatMembers 1028
 export function ChatMembers(data: ServerMessageChatMembers.AsObject, roomID: number, matchID: number) {}

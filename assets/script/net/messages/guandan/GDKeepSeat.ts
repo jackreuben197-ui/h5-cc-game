@@ -1,4 +1,4 @@
-import { ServerMessageGdKeepSeat } from '../../../protobuf/holdem/recv_gd_keep_seat_pb';
+import { ServerMessageGdKeepSeat } from '@silenthill/agreement-web';
 
 // GDKeepSeat 4110
 export function GDKeepSeat(data: ServerMessageGdKeepSeat.AsObject, roomID: number, matchID: number) {}

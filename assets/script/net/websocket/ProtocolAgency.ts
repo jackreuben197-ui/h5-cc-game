@@ -1,8 +1,7 @@
+import { Code, CodeMap, GPS, PotInsuranceBuy, Room } from '@silenthill/agreement-web';
 import h5MessageManager from '../../H5MsgMgr';
 import { traceClass } from '../../core/decorator/LogTrace';
 import userStore from '../../data/user/UserStore';
-import { Code, CodeMap } from '../../protobuf/holdem/code_pb';
-import { GPS, PotInsuranceBuy, Room } from '../../protobuf/holdem/define_pb';
 import MessageHandler from '../messages/MessageHandler';
 import { CodeMessageCowboyClientGC, CodeMessageCowboyServerGC } from './CodeMessageCowboyGC';
 import { CodeMessageFantasyClientGC, CodeMessageFantasyServerGC } from './CodeMessageFantasyGC';
@@ -140,7 +139,7 @@ export default class ProtocolAgency extends cc.Component {
     private static _serializeBody(code: number, body: any, classDic?: Record<string, { new (): any }>): Uint8Array | null {
         const msg = this._cachedClientClass(code);
         if (!msg) {
-            this.tracelog.warn('no client message class for code', code, ProtocolAgency.getCodeName(code));
+            this.tracelog.error('no client message class for code', code, ProtocolAgency.getCodeName(code));
             return null;
         }
         let inClassDic: Record<string, any>;

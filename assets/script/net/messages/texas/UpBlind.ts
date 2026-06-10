@@ -1,4 +1,4 @@
-import { ServerMessageUpBlind } from '../../../protobuf/holdem/recv_th_up_blind_pb';
+import { ServerMessageUpBlind } from '@silenthill/agreement-web';
 
 // UpBlind 1120
 export function UpBlind(data: ServerMessageUpBlind.AsObject, roomID: number, matchID: number) {}

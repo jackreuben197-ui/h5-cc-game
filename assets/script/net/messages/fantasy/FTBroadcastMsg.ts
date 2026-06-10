@@ -1,4 +1,4 @@
-import { ServerMessageFtBroadcastMsg } from '../../../protobuf/holdem/req_ft_broadcast_msg_pb';
+import { ServerMessageFtBroadcastMsg } from '@silenthill/agreement-web';
 
 // FTBroadcastMsg 1212
 export function FTBroadcastMsg(data: ServerMessageFtBroadcastMsg.AsObject, roomID: number, matchID: number) {}

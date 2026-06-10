@@ -1,4 +1,4 @@
-import { ServerMessageUserClubRoleChange } from '../../../protobuf/holdem/recv_g_user_club_role_change_pb';
+import { ServerMessageUserClubRoleChange } from '@silenthill/agreement-web';
 
 // UserClubRoleChange 150
 export function UserClubRoleChange(data: ServerMessageUserClubRoleChange.AsObject, roomID: number, matchID: number) {}

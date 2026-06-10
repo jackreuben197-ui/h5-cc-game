@@ -1,4 +1,4 @@
-import { ServerMessageGdSyncEnter } from '../../../protobuf/holdem/req_gd_sync_enter_pb';
+import { ServerMessageGdSyncEnter } from '@silenthill/agreement-web';
 
 // GDSyncEnter 4019
 export function GDSyncEnter(data: ServerMessageGdSyncEnter.AsObject, roomID: number, matchID: number) {}

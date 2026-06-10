@@ -9,7 +9,7 @@ import { createLogger } from './core/decorator/LogTrace';
 import userStore from './data/user/UserStore';
 import ProcedureDefine from './game/procedure/ProcedureDefine';
 import ProcedureManager from './game/procedure/ProcedureManager';
-import h5MessageManager from './H5MsgMgr';
+import h5MessageManager, { EnterMttMatchInfo, EnterTableRoomInfo, SyncUserClubResponse, SyncUserInfo } from './H5MsgMgr';
 import AgoraManager from './net/agora/AgoraManager';
 import ProtocolAgency from './net/websocket/ProtocolAgency';
 
@@ -132,7 +132,10 @@ export async function registerH5Listeners(): Promise<void> {
     // initH5BridgeDependencies();
     h5MessageManager.on('enterTable', async payload => {
         _ploger.info('[H5Bridge] 收到 enterTable:', payload);
-        const { token, websocketPort, roomId, roomInfo: roomData } = payload;
+        // bridge 协议 roomInfo 为 unknown（兼容 H5 端较宽松的 RoomRecord），
+        // 这里断言为 EnterTableRoomInfo 后读字段；运行时数据由 H5 保证字段齐全。
+        const { token, websocketPort, roomId } = payload;
+        const roomData = payload.roomInfo as EnterTableRoomInfo;
         // === 1. H5 消息基本字段校验 ===
         const missing: string[] = [];
         if (!token) missing.push('token');
@@ -209,7 +212,10 @@ export async function registerH5Listeners(): Promise<void> {
     });
     h5MessageManager.on('syncUser', payload => {
         _ploger.info('[H5Bridge] 同步用户信息:', payload);
-        const userInfo = payload?.raw?.user;
+        // bridge 协议里 raw 是 unknown（兼容 H5 端 ApiResponse 等宽松实参），
+        // 这里断言为 { user?: SyncUserInfo } 后再访问。
+        const raw = payload?.raw as { user?: SyncUserInfo } | undefined;
+        const userInfo = raw?.user;
         if (!userInfo) {
             _ploger.error('[H5Bridge] syncUser 数据异常：缺少 payload.raw.user');
             return;
@@ -238,8 +244,9 @@ export async function registerH5Listeners(): Promise<void> {
     });
     h5MessageManager.on('syncUserClub', payload => {
         _ploger.info('[H5Bridge] 同步俱乐部信息:', payload);
-        // data 已类型化为 ClubInfo[]，无需 Array.isArray 校验
-        const clubList = payload?.response?.data;
+        // bridge 协议 response 为 unknown，断言为 SyncUserClubResponse 后再读 data。
+        const response = payload?.response as SyncUserClubResponse | undefined;
+        const clubList = response?.data;
         if (!clubList) {
             _ploger.error('[H5Bridge] syncUserClub 数据异常：缺少 payload.response.data');
             return;
@@ -337,7 +344,8 @@ export async function registerH5Listeners(): Promise<void> {
     function registerTexasMtt(): void {
         h5MessageManager.on('enterMtt', async payload => {
             _ploger.info('[H5Bridge] enterMtt:', payload);
-            const matchInfo = payload?.matchInfo;
+            // matchInfo 在 bridge 中是 unknown，CC 侧按 EnterMttMatchInfo 断言。
+            const matchInfo = payload?.matchInfo as EnterMttMatchInfo | undefined;
             if (!matchInfo) {
                 _ploger.error('[H5Bridge] enterMtt 数据异常：缺少 payload.matchInfo');
                 return;

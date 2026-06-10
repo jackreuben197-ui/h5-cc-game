@@ -1,4 +1,4 @@
-import { ServerMessageSystemMessage } from '../../../protobuf/holdem/recv_g_system_message_pb';
+import { ServerMessageSystemMessage } from '@silenthill/agreement-web';
 
 // SystemMessage 108
 export function SystemMessage(data: ServerMessageSystemMessage.AsObject, roomID: number, matchID: number) {}

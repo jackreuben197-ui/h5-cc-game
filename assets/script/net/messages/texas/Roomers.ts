@@ -1,4 +1,4 @@
-import { ServerMessageRoomers } from '../../../protobuf/holdem/req_th_roomers_pb';
+import { ServerMessageRoomers } from '@silenthill/agreement-web';
 
 // Roomers 1021
 export function Roomers(data: ServerMessageRoomers.AsObject, roomID: number, matchID: number) {}

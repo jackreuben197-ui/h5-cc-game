@@ -1,5 +1,5 @@
+import { SidePot } from '@silenthill/agreement-web';
 import { bindData, observable } from '../../../core/decorator/DataBind';
-import { SidePot } from '../../../protobuf/holdem/define_pb';
 
 @bindData()
 export default class TexasGameRoomDataPotInfo extends cc.EventTarget {

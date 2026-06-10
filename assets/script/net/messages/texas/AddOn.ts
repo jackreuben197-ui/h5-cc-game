@@ -1,4 +1,4 @@
-import { ServerMessageAddOn } from '../../../protobuf/holdem/req_th_add_on_pb';
+import { ServerMessageAddOn } from '@silenthill/agreement-web';
 
 // AddOn 1004
 export function AddOn(data: ServerMessageAddOn.AsObject, roomID: number, matchID: number) {}

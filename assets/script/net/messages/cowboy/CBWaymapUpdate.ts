@@ -1,4 +1,4 @@
-import { ServerMessageCbWaymapUpdate } from '../../../protobuf/holdem/recv_cb_waymap_update_pb';
+import { ServerMessageCbWaymapUpdate } from '@silenthill/agreement-web';
 
 // CBWaymapUpdate 2104
 export function CBWaymapUpdate(data: ServerMessageCbWaymapUpdate.AsObject, roomID: number, matchID: number) {}

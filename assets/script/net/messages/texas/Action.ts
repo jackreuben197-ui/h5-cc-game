@@ -1,6 +1,6 @@
+import { ServerMessageAction } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
-import { ServerMessageAction } from '../../../protobuf/holdem/req_th_action_pb';
 import viewManager from '../../../views/UIViewManager';
 
 const _plog = createLogger('ServerMessageAction');

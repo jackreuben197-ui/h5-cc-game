@@ -1,3 +1,4 @@
+import { Def, Player, ServerMessageEnterRoom } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
@@ -9,8 +10,6 @@ import {
     AnimateDisplayTypePosition,
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
-import { Def, Player } from '../../../protobuf/holdem/define_pb';
-import { ServerMessageEnterRoom } from '../../../protobuf/holdem/req_th_enter_room_pb';
 import viewManager from '../../../views/UIViewManager';
 import { AutoOperationTypeTexas } from './AutoOpertaionType';
 
@@ -50,6 +49,25 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             roomData.seatsStateManager.setButtonPosition(data.handInfo.buSeatId, AnimateDisplayTypeButton.Static);
             roomData.publicCards.publicCards = data.handInfo.publicCardsList;
             roomData.publicCards.secondPublicCards = data.handInfo.secondPublicCardsList;
+            roomData.basicInfo.currentConfigContinueRounds = data.handInfo.conRounds;
+            //Critial
+            if (data.handInfo.criticalHitOpen) {
+                roomData.basicInfo.criticalHitStatusEnabled = true;
+            } else {
+                roomData.basicInfo.criticalHitStatusEnabled = false;
+            }
+            //Squid
+            if (data.handInfo.inSquid) {
+                roomData.basicInfo.squidStatusEnabled = true; //开启鱿鱼
+            } else {
+                roomData.basicInfo.squidStatusEnabled = false; //关闭鱿鱼
+            }
+            //BombPot
+            if (data.roomInfo.ignorePreflop && data.roomInfo.isAlwaysSecondPcs) {
+                roomData.basicInfo.bombpotStatusEnabled = true; //开启BombPot
+            } else {
+                roomData.basicInfo.bombpotStatusEnabled = false; //关闭
+            }
         }
         const playerMap: Map<number, Player.AsObject> = new Map();
         data.playersList.map(v => playerMap.set(v.seatId, v));

@@ -1,4 +1,4 @@
-import { ServerMessageSetAutoOnTable } from '../../../protobuf/holdem/req_th_set_auto_on_table_pb';
+import { ServerMessageSetAutoOnTable } from '@silenthill/agreement-web';
 
 // SetAutoOnTable 1008
 export function SetAutoOnTable(data: ServerMessageSetAutoOnTable.AsObject, roomID: number, matchID: number) {}

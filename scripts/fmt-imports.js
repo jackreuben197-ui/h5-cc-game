@@ -34,30 +34,33 @@ function collectTs(dir) {
 const files = collectTs(ROOT);
 console.log(`Found ${files.length} .ts files to process`);
 
-const scriptSnapshots = new Map();
-const scriptVersions = new Map();
+    const scriptSnapshots = new Map();
+    const scriptVersions = new Map();
+    const norm = (p) => path.normalize(p);
 
-function readFile(fileName) {
-    if (!scriptSnapshots.has(fileName)) {
-        if (!fs.existsSync(fileName)) return undefined;
-        scriptSnapshots.set(fileName, fs.readFileSync(fileName, 'utf8'));
-        scriptVersions.set(fileName, 0);
+    function readFile(fileName) {
+        const n = norm(fileName);
+        if (!scriptSnapshots.has(n)) {
+            if (!fs.existsSync(fileName)) return undefined;
+            scriptSnapshots.set(n, fs.readFileSync(fileName, 'utf8'));
+            scriptVersions.set(n, 0);
+        }
+        const content = scriptSnapshots.get(n);
+        return ts.ScriptSnapshot.fromString(content);
     }
-    const content = scriptSnapshots.get(fileName);
-    return ts.ScriptSnapshot.fromString(content);
-}
 
 const serviceHost = {
     getScriptFileNames: () => files,
-    getScriptVersion: (fileName) => String(scriptVersions.get(fileName) || 0),
+    getScriptVersion: (fileName) => String(scriptVersions.get(norm(fileName)) || 0),
     getScriptSnapshot: (fileName) => {
-        if (scriptSnapshots.has(fileName)) {
-            return ts.ScriptSnapshot.fromString(scriptSnapshots.get(fileName));
+        const n = norm(fileName);
+        if (scriptSnapshots.has(n)) {
+            return ts.ScriptSnapshot.fromString(scriptSnapshots.get(n));
         }
         if (!fs.existsSync(fileName)) return undefined;
         const content = fs.readFileSync(fileName, 'utf8');
-        scriptSnapshots.set(fileName, content);
-        scriptVersions.set(fileName, 0);
+        scriptSnapshots.set(n, content);
+        scriptVersions.set(n, 0);
         return ts.ScriptSnapshot.fromString(content);
     },
     getCurrentDirectory: () => ROOT,
@@ -82,15 +85,15 @@ async function main() {
     for (const file of files) {
         try {
             const content = fs.readFileSync(file, 'utf8');
-            scriptSnapshots.set(file, content);
-            scriptVersions.set(file, (scriptVersions.get(file) || 0) + 1);
+            scriptSnapshots.set(norm(file), content);
+            scriptVersions.set(norm(file), (scriptVersions.get(norm(file)) || 0) + 1);
 
             const changes = service.organizeImports(
                 { type: 'file', fileName: file },
                 {},
                 {}
             );
-            const fileChanges = changes.find(c => c.fileName === file);
+            const fileChanges = changes.find(c => norm(c.fileName) === file);
             if (fileChanges && fileChanges.textChanges.length > 0) {
                 let result = content;
                 for (let i = fileChanges.textChanges.length - 1; i >= 0; i--) {
@@ -105,7 +108,7 @@ async function main() {
                 }
                 if (result !== content) {
                     fs.writeFileSync(file, result, 'utf8');
-                    scriptSnapshots.set(file, result);
+                    scriptSnapshots.set(norm(file), result);
                     updated++;
                 }
             }

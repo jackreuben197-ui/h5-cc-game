@@ -1,4 +1,4 @@
-import { ServerMessageMjStandupActive } from '../../../protobuf/holdem/req_mj_stand_up_active_pb';
+import { ServerMessageMjStandupActive } from '@silenthill/agreement-web';
 
 // MJStandupActive 3008
 export function MJStandupActive(data: ServerMessageMjStandupActive.AsObject, roomID: number, matchID: number) {}

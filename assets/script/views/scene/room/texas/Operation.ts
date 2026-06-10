@@ -1,3 +1,4 @@
+import { ActionLimit, Def } from '@silenthill/agreement-web';
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import { OperatorMine, OpertionType } from '../../../../data/room/texas/model/Operator';
@@ -5,7 +6,6 @@ import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRo
 import TexasGameRoomDataSetting from '../../../../data/room/texas/TexasGameRoomDataSetting';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
 import { AutoOperationTypeTexas } from '../../../../net/messages/texas/AutoOpertaionType';
-import { ActionLimit, Def } from '../../../../protobuf/holdem/define_pb';
 import { UIComfirmDialogType } from '../../../dialog/confirm/UIConfirmDialog';
 import viewManager from '../../../UIViewManager';
 import ShiningPathTimer from '../../../widget/ShiningPathTimer';
@@ -248,7 +248,7 @@ export default class Operation extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.PREPARE_OPERATION_MINE, 'mine')
-    @traceMethod({ level: 'debug' })
+    @traceMethod()
     private onPrepareActionMine(oper: OperatorMine) {
         if (!oper || oper.opType != OpertionType.NORMAL) {
             this.rootNode.active = false;

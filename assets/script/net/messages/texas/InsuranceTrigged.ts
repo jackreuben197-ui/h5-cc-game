@@ -2,7 +2,7 @@ import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
-import { ServerMessageInsuranceTrigged } from '../../../protobuf/holdem/recv_th_insurance_trigged_pb';
+import { ServerMessageInsuranceTrigged } from '@silenthill/agreement-web';
 
 const _glog = createLogger('ServerMessageInsuranceTrigged');
 

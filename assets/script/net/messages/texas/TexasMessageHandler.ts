@@ -1,6 +1,6 @@
+import { Code } from '@silenthill/agreement-web';
 import { traceClass } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
-import { Code } from '../../../protobuf/holdem/code_pb';
 import { Action } from './Action';
 import { ActionAll } from './ActionAll';
 import { AddOn } from './AddOn';

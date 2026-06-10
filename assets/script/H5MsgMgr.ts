@@ -30,383 +30,71 @@ import UserStoreUtils from './data/user/UserStoreUtils';
 
 /** 握手超时时间（毫秒） */
 const HANDSHAKE_TIMEOUT = 10000;
-// ─── CC → H5 Payload 类型定义 ──────────────────────────────────────────────
-// 与 h5-game/src/bridge/protocol/cocosToH5.ts 保持同步，如需新增 action，两端同步更新。
-/** Cocos → H5：连接 websocket 请求。*/
-export interface WsConnectPayload {
-    /** 优先使用完整 URL。*/
-    url?: string;
-    /** 或者传端口，H5 根据模板拼接（如 wss://host{0}）。*/
-    port?: number;
-    /** 当前房间/比赛 ID（随连接请求一并下发，供 H5 日志参考）。*/
-    roomId?: number;
-    matchId?: number;
-    /** Cocos 主动要求强制重连：复位 attempt/timer，立即重连一次。*/
-    force?: boolean;
+// ─── Bridge 协议类型 ──────────────────────────────────────────────────────
+// 单一来源：@silenthill/h5-cc-bridge npm 包的 cc-side 入口（纯类型，TS 编译后被擦除，运行时不依赖该模块）。
+// 包通过 tsconfig.paths 解析到 node_modules/@silenthill/h5-cc-bridge/dist/cc-side.d.ts。
+// 不要在这里重新声明协议字段；要改协议先去 @silenthill/h5-cc-bridge 仓库发版，CC 端 `npm install` 即取最新类型。
+// 注意：CC 端绝对不能引入 bridge 的 runtime 值（如 BRIDGE_ACTION.X 常量、createBridgeMessage 等函数），
+// 否则那条 import 不会被擦除，Cocos 运行时会找不到该模块。
+import type { H5NavigatePayload, H5ToCocosPayloadMap, CocosToH5PayloadMap as SharedCocosToH5PayloadMap } from '@silenthill/h5-cc-bridge/cc-side';
+
+// CC 侧 sendToH5 接受原始 Uint8Array/ArrayBuffer，内部包装为 binary envelope；
+// 共享 map 的 wsSend 是包装后的 envelope 形态（H5 接收端视角），本地覆盖一下。
+export interface CocosToH5PayloadMap extends Omit<SharedCocosToH5PayloadMap, 'wsSend'> {
+    wsSend: Uint8Array | ArrayBuffer;
 }
 
-/** Cocos → H5：关闭 websocket 请求。*/
-export interface WsClosePayload {
-    code?: number;
-    reason?: string;
-}
+export type { H5ToCocosPayloadMap };
 
-/** Cocos → H5：全局 toast 提示。*/
-export interface CocosToastPayload {
-    /** success: 成功提示；danger: 失败/风险提示。*/
-    type: 'success' | 'danger';
-    message: string;
-    /** 可选显示时长（毫秒）。*/
-    duration?: number;
-}
-
-/** Cocos → H5：显示通用业务弹窗。*/
-export interface CocosDialogPayload {
-    title?: string;
-    message: string;
-    showCancelButton?: boolean;
-    showConfirmButton?: boolean;
-    cancelButtonText?: string;
-    confirmButtonText?: string;
-    /** 点击遮罩是否允许关闭，默认 false。*/
-    closeOnClickOverlay?: boolean;
-    /** 是否在展示前确保 H5 可见，默认 false。*/
-    ensureVisible?: boolean;
-}
-
-/** Cocos → H5：显示面板。*/
-export interface CocosPanelPayload {
-    panelType: string;
-    title?: string;
-    /** 自定义面板渲染参数，交由对应 panelType 的组件解释。*/
-    props?: Record<string, unknown>;
-    /** 点击遮罩是否允许关闭，默认 true。*/
-    closeOnClickOverlay?: boolean;
-    ensureVisible?: boolean;
-    showH5Bg?: boolean;
-}
-
-/** Cocos → H5：关闭面板。*/
-export interface ClosePanelPayload {
-    requestId?: string;
-    panelType?: string;
-}
-
-/** Cocos → H5：控制 H5 根节点显隐。*/
-export interface H5VisibilityPayload {
-    /** 可选附加原因，仅用于日志。*/
-    reason?: string;
-}
-
-/** Cocos → H5：路由跳转控制（与 h5-game 的 H5NavigatePayload 对齐）。*/
-export interface H5NavigatePayload {
-    /** 二选一：path 或 name 至少传一个。*/
-    path?: string;
-    name?: string;
-    /** 路由参数（按 Vue Router 规范透传）。*/
-    params?: Record<string, unknown>;
-    query?: Record<string, unknown>;
-    hash?: string;
-    /** true: replace；false/undefined: push。*/
-    replace?: boolean;
-    /** 可选：跳转前先显示 H5 层。*/
-    ensureVisible?: boolean;
-}
+// 把协议层 payload 类型透传出去，老调用点 `import { H5NavigatePayload } from './H5MsgMgr'` 不需要改。
+export type {
+    CcIndexedDBOpPayload,
+    CcLocalStorageOpPayload,
+    CcStorageOpPayload,
+    CcStorageResultPayload,
+    CcStorageSnapshotPayload,
+    ClosePanelPayload,
+    ClubInfo,
+    CocosDialogPayload,
+    CocosPanelPayload,
+    CocosToastPayload,
+    DialogResultPayload,
+    EnterMttMatchInfo,
+    EnterMttPayload,
+    EnterTablePayload,
+    EnterTableRoomInfo,
+    H5NavigatePayload,
+    H5ReadyPayload,
+    H5VisibilityPayload,
+    PanelEventPayload,
+    SafeArea,
+    SetHeartbeatModePayload,
+    SyncDiamondConfigPayload,
+    SyncGlobalConfigPayload,
+    SyncLanguagePayload,
+    SyncRoomsListPayload,
+    SyncUserClubPayload,
+    SyncUserClubResponse,
+    SyncUserInfo,
+    SyncUserPayload,
+    WsClosedPayload,
+    WsClosePayload,
+    WsConnectPayload,
+    WsErrorPayload,
+    WsMessageBinaryPayload,
+    WsMessagePayload,
+    WsMessageTextPayload,
+    WsOpenPayload,
+    WsReconnectedPayload,
+    WsReconnectFailedPayload,
+    WsReconnectingPayload
+} from '@silenthill/h5-cc-bridge/cc-side';
 
 /**
  * @deprecated 请使用 H5NavigatePayload
  * 保留此别名以兼容存量 ProcedureReturn / LeaveNotification 引用。
  */
 export type H5RouteData = H5NavigatePayload;
-
-/**
- * Cocos → H5：通知 H5 切换 WebSocket 心跳频率，对齐 HeartbeatComponent 的 normal/in-gameplay 区分。
- *   normal      —— 牌桌外，5s/次
- *   in-gameplay —— 牌桌内，1s/次
- */
-export interface SetHeartbeatModePayload {
-    mode: 'normal' | 'in-gameplay';
-}
-// ─── CC → H5 Payload 映射表 ────────────────────────────────────────────────
-// sendToH5<T>(action, msgtype, payload) 通过 T 自动推导 payload 的精确类型。
-// 如需新增 action，同步更新：h5-game/src/bridge/protocol/cocosToH5.ts → CocosToH5PayloadMap
-export interface CocosToH5PayloadMap {
-    // 握手（无 payload）
-    ccReady: undefined;
-    ccAck: undefined;
-    // WebSocket 代理（wsSend 走 msgtype=0；其余走 msgtype=1）
-    wsConnect: WsConnectPayload;
-    /**
-     * 传入 Uint8Array 或 ArrayBuffer，sendToH5 内部自动包装为
-     * { dataType:'binary', data: Uint8Array } 后发送给 H5。
-     */
-    wsSend: Uint8Array | ArrayBuffer;
-    wsClose: WsClosePayload;
-    // UI 控制
-    showToast: CocosToastPayload;
-    showDialog: CocosDialogPayload;
-    showPanel: CocosPanelPayload;
-    closePanel: ClosePanelPayload;
-    // H5 显隐
-    h5Hide: H5VisibilityPayload | undefined;
-    h5Show: H5VisibilityPayload | undefined;
-    // 路由跳转
-    h5Navigate: H5NavigatePayload;
-    // 心跳频率切换（对齐 HeartbeatComponent.SendIntervalNormal/InGameplay）
-    setHeartbeatMode: SetHeartbeatModePayload;
-}
-// ─── H5 → CC Payload 类型定义 ──────────────────────────────────────────────
-// 与 h5-game/src/bridge/protocol/h5ToCocos.ts 保持同步，如需新增 action，两端同步更新。
-/** H5 → CC：websocket 已连接。*/
-export interface WsOpenPayload {
-    url: string;
-}
-
-/** H5 → CC：websocket 收到二进制数据。*/
-export interface WsMessageBinaryPayload {
-    dataType: 'binary';
-    /** structured clone 传递，到 CC 层时为 ArrayBuffer 或 Uint8Array。*/
-    data?: ArrayBuffer | Uint8Array;
-}
-
-/** H5 → CC：websocket 收到文本数据。*/
-export interface WsMessageTextPayload {
-    dataType: 'text';
-    text?: string;
-}
-
-export type WsMessagePayload = WsMessageBinaryPayload | WsMessageTextPayload;
-
-/** H5 → CC：websocket 发生错误。*/
-export interface WsErrorPayload {
-    message: string;
-}
-
-/** H5 → CC：websocket 已关闭。*/
-export interface WsClosedPayload {
-    code?: number;
-    reason?: string;
-    wasClean?: boolean;
-}
-
-/** H5 → CC：已安排一次重连尝试。 */
-export interface WsReconnectingPayload {
-    attempt: number;
-    delayMs: number;
-    /** close=连接关闭, heartbeat=心跳超时, visibility=切回前台, online=网络恢复, force=Cocos 主动触发。*/
-    reason: 'close' | 'heartbeat' | 'visibility' | 'online' | 'force';
-}
-
-/** H5 → CC：重连成功（已 onopen 并完成 REGISTER 发送）。 */
-export interface WsReconnectedPayload {
-    url: string;
-    attempt: number;
-    /** 从首次失败到本次成功的总耗时（毫秒）。 */
-    durationMs: number;
-}
-
-/** H5 → CC：放弃重连（命中次数上限/整体超时/鉴权失败）。 */
-export interface WsReconnectFailedPayload {
-    reason: 'max-attempts' | 'overall-timeout' | 'auth-invalid';
-    attempts: number;
-    durationMs: number;
-}
-
-/** H5 → CC：对话框操作结果。*/
-export interface DialogResultPayload {
-    dialogRequestId: string;
-    action: 'confirm' | 'cancel' | 'close';
-}
-
-/** H5 → CC：面板内部事件。*/
-export interface PanelEventPayload {
-    panelRequestId: string;
-    event: string;
-    payload?: unknown;
-}
-
-/** 进入普通牌桌的房间详情（来自 H5 roomInfo 字段，对应后端 API 结构）。*/
-export interface EnterTableRoomInfo {
-    rid: number;
-    name?: string;
-    room_type: number;
-    game_type: number;
-    poker_type: number;
-    limit_bet_type?: number;
-    seat_count: number;
-    service_id?: string | number;
-    straddle_on?: number;
-    insurance_on?: number;
-    muck_on?: number;
-    origin_type?: number;
-    share_table?: number;
-    gold_type?: number;
-    club_id?: number;
-    club_random_id?: number;
-    tribe_id?: number;
-    limit_bring_in?: number;
-    anti_cheat_type?: number;
-    jackpot_id?: number | string;
-}
-
-/** H5 → CC：进入普通牌桌。*/
-export interface EnterTablePayload {
-    token: string;
-    websocketPort: number;
-    from?: string;
-    clubId?: number;
-    clubRandomId?: number;
-    roomId?: string;
-    roomName?: string;
-    roomInfo: EnterTableRoomInfo;
-}
-
-/** MTT 比赛详情（来自 H5 matchInfo 字段）。*/
-export interface EnterMttMatchInfo {
-    match_id: number;
-    type: number;
-}
-
-/** H5 → CC：进入 MTT 牌桌。*/
-export interface EnterMttPayload {
-    token?: string;
-    websocketPort: number;
-    from?: string;
-    matchId?: number;
-    matchName?: string;
-    roomId?: number;
-    isLookOn?: boolean;
-    matchInfo: EnterMttMatchInfo;
-}
-
-/** 用户信息（来自服务端 raw user 字段）。*/
-export interface SyncUserInfo {
-    un_id: number | string;
-    p_u_id?: number | string;
-    phone?: string;
-    sex?: number;
-    nickname?: string;
-    avatar?: string;
-    ut?: number;
-    club_id?: number;
-}
-
-/** H5 → CC：同步用户信息。*/
-export interface SyncUserPayload {
-    uid?: string;
-    nickname?: string;
-    avatar?: string;
-    raw?: {
-        user?: SyncUserInfo;
-    };
-}
-
-/**
- * 俱乐部数据项 — 仅列出 ClubCache 实际通过 getter 读取的字段。
- * 完整服务端结构见 h5-game/src/api/models/org.ts → OrgClubData。
- */
-export interface ClubInfo {
-    club_id: number;
-    club_name: string;
-    logo?: string;
-    random_id?: number;
-    upper_limit?: number;
-    club_members?: number;
-    area_id?: string;
-    club_type?: number;
-    create_time?: string;
-    is_official?: number;
-    club_status?: number;
-    desc?: string;
-    contact_info?: unknown;
-    member_type?: number;
-    more_contact?: string;
-    level?: number;
-    search_switch?: number;
-    auto_audit_switch?: number;
-    show_contact_switch?: number;
-    club_creator_random_id?: number;
-    club_creator_avatar?: string;
-    club_creator_nickname?: string;
-    tribe_name?: string;
-    tribe_id?: number;
-    tribe_logo?: string;
-    tribe_random_id?: number;
-    user_level?: number;
-    players?: number;
-    tables?: number;
-    show_notice_switch?: number;
-    gold_to_usdt_rate?: number;
-    usdt_to_gold_rate?: number;
-    digital_wallet_switch?: number;
-    digital_wallet_erc?: string;
-    digital_wallet_trc?: string;
-}
-
-/** H5 → CC：同步俱乐部列表（response 对齐服务端 /user/club/list 响应结构）。*/
-export interface SyncUserClubPayload {
-    response?: {
-        code?: number;
-        message?: string;
-        data?: ClubInfo[];
-    };
-}
-
-/** H5 → CC：同步房间列表。*/
-export interface SyncRoomsListPayload {
-    request?: unknown;
-    response?: unknown;
-}
-
-/** H5 → CC：同步当前语言。*/
-export interface SyncLanguagePayload {
-    locale: string;
-}
-
-/**
- * H5 → CC：同步全局配置。
- * raw 为 key → 值映射；值可以是数字、字符串或复杂对象（如 anti_cheat_video_config 为 JSON 字符串）。
- * Cocos 侧按需判断类型后读取（如 typeof val === 'string' ? JSON.parse(val) : val）。
- */
-export interface SyncGlobalConfigPayload {
-    raw?: Record<string, unknown>;
-}
-
-/** H5 → CC：同步钻石配置（key 为 configType 数字）。*/
-export interface SyncDiamondConfigPayload {
-    raw?: Record<number, unknown>;
-}
-// ─── H5 → CC Payload 映射表 ────────────────────────────────────────────────
-// on<T>(action, callback) 通过 T 自动推导回调 payload 的精确类型。
-// 如需新增 action，同步更新：h5-game/src/bridge/protocol/h5ToCocos.ts
-export interface H5ToCocosPayloadMap {
-    // 握手
-    h5Ready: undefined;
-    h5Ack: undefined;
-    // WebSocket 生命周期（H5 代理后上报）
-    wsOpen: WsOpenPayload;
-    wsMessage: WsMessagePayload;
-    wsError: WsErrorPayload;
-    wsClosed: WsClosedPayload;
-    // 重连流程（H5 代理后通知 Cocos 显示遮罩/恢复玩法）
-    wsReconnecting: WsReconnectingPayload;
-    wsReconnected: WsReconnectedPayload;
-    wsReconnectFailed: WsReconnectFailedPayload;
-    // UI 回调
-    dialogResult: DialogResultPayload;
-    panelEvent: PanelEventPayload;
-    // 进桌
-    enterTable: EnterTablePayload;
-    enterMtt: EnterMttPayload;
-    exitTable: unknown;
-    // 数据同步
-    syncUser: SyncUserPayload;
-    syncUserClub: SyncUserClubPayload;
-    syncRoomsList: SyncRoomsListPayload;
-    syncLanguage: SyncLanguagePayload;
-    syncGlobalConfig: SyncGlobalConfigPayload;
-    syncDiamondConfig: SyncDiamondConfigPayload;
-}
 // ─── 内部类型 ───────────────────────────────────────────────────────────────
 /** wsSend 包装后的二进制信封（仅在 _post 路径内使用）。*/
 interface WsSendBinaryEnvelope {

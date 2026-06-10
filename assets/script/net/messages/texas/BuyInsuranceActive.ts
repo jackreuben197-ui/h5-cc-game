@@ -2,7 +2,7 @@ import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
-import { ServerMessageBuyInsuranceActive } from '../../../protobuf/holdem/req_th_buy_insurance_active_pb';
+import { ServerMessageBuyInsuranceActive } from '@silenthill/agreement-web';
 import viewManager from '../../../views/UIViewManager';
 
 const _glog = createLogger('ServerMessageBuyInsuranceActive');

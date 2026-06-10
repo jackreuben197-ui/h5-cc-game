@@ -1,3 +1,4 @@
+import { Def, PlayerStartInfo, ServerMessageStartInfo } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
@@ -9,11 +10,9 @@ import {
     AnimateDisplayTypePublicCards,
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
-import { Def, PlayerStartInfo } from '../../../protobuf/holdem/define_pb';
-import { ServerMessageStartInfo } from '../../../protobuf/holdem/recv_th_start_info_pb';
 import { AutoOperationTypeTexas } from './AutoOpertaionType';
 
-const _plog = createLogger('ServerMessageStartInfo', 'debug');
+const _plog = createLogger('ServerMessageStartInfo');
 
 // StartInfo 1103
 export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number, matchID: number) {

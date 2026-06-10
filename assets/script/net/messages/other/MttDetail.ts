@@ -1,4 +1,4 @@
-import { ServerMessageMttDetail } from '../../../protobuf/holdem/req_rpc_mtt_detail_pb';
+import { ServerMessageMttDetail } from '@silenthill/agreement-web';
 
 // MttDetail 204
 export function MttDetail(data: ServerMessageMttDetail.AsObject, roomID: number, matchID: number) {}

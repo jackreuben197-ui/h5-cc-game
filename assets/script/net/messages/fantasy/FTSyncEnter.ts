@@ -1,4 +1,4 @@
-import { ServerMessageFtSyncEnter } from '../../../protobuf/holdem/req_ft_sync_enter_pb';
+import { ServerMessageFtSyncEnter } from '@silenthill/agreement-web';
 
 // FTSyncEnter 1218
 export function FTSyncEnter(data: ServerMessageFtSyncEnter.AsObject, roomID: number, matchID: number) {}

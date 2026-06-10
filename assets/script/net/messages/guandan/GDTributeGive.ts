@@ -1,4 +1,4 @@
-import { ServerMessageGdTributeGive } from '../../../protobuf/holdem/req_gd_tribute_give_pb';
+import { ServerMessageGdTributeGive } from '@silenthill/agreement-web';
 
 // GDTributeGive 4006
 export function GDTributeGive(data: ServerMessageGdTributeGive.AsObject, roomID: number, matchID: number) {}

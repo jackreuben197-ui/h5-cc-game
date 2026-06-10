@@ -1,7 +1,7 @@
 import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
-import { ServerMessageBuyInsurance } from '../../../protobuf/holdem/recv_th_buy_insurance_pb';
+import { ServerMessageBuyInsurance } from '@silenthill/agreement-web';
 
 const _glog = createLogger('ServerMessageBuyInsurance');
 

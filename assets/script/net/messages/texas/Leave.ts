@@ -1,7 +1,7 @@
+import { ServerMessageLeave } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
 import ProcedureDefine from '../../../game/procedure/ProcedureDefine';
 import ProcedureManager from '../../../game/procedure/ProcedureManager';
-import { ServerMessageLeave } from '../../../protobuf/holdem/req_th_leave_pb';
 
 const _glog = createLogger('ServerMessageLeave');
 

@@ -1,11 +1,9 @@
+import { ClientMessageEnterRoom, Code, Def } from '@silenthill/agreement-web';
 import { traceClass } from '../../core/decorator/LogTrace';
 import roomDataManager from '../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../data/room/texas/TexasGameRoomData';
 import { i18nMgr } from '../../i18n/i18nMgr';
 import ProtocolAgency from '../../net/websocket/ProtocolAgency';
-import { Code } from '../../protobuf/holdem/code_pb';
-import { Def } from '../../protobuf/holdem/define_pb';
-import { ClientMessageEnterRoom } from '../../protobuf/holdem/req_th_enter_room_pb';
 import viewManager from '../../views/UIViewManager';
 import { AntiCheatType } from '../constant/AntiCheatType';
 import AGameplayEntrance, { LoadIndicator } from './AGameplayEntrance';
@@ -435,11 +433,11 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         roomData.basicInfo.jackpotConfig = this._roomInfo.jackpotConfig;
         roomData.basicInfo.jackpotMainPool = this._roomInfo.jackpotParentGold;
         //hasBombPot
-        roomData.basicInfo.hasBombPot = this._roomInfo.bombpot == 1;
+        roomData.basicInfo.checkBombPot(this._roomInfo.bombpot, this._roomInfo.rounds, this._roomInfo.subConfigsList);
         //hasCriticalHit
-        roomData.basicInfo.hasCriticalHit = this._roomInfo.criticalHit > 0;
+        roomData.basicInfo.checkCriticalHit(this._roomInfo.criticalHit, this._roomInfo.ante, this._roomInfo.rounds, this._roomInfo.subConfigsList);
         //hasSquid
-        roomData.basicInfo.squidBase = this._roomInfo.squidBase;
+        roomData.basicInfo.checkSquid(this._roomInfo.squidBase, this._roomInfo.rounds, this._roomInfo.subConfigsList);
         roomData.basicInfo.squidMostGet = this._roomInfo.squidMostGet > 0;
         roomData.basicInfo.squidBetGet = this._roomInfo.squidBetGet > 0;
         roomData.basicInfo.squidHead = this._roomInfo.squidHead > 0;

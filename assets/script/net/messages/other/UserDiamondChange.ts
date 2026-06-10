@@ -1,4 +1,4 @@
-import { ServerMessageUserDiamondChange } from '../../../protobuf/holdem/recv_g_user_diamond_change_pb';
+import { ServerMessageUserDiamondChange } from '@silenthill/agreement-web';
 
 // UserDiamondChange 138
 export function UserDiamondChange(data: ServerMessageUserDiamondChange.AsObject, roomID: number, matchID: number) {}

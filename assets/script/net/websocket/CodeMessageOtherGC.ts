@@ -1,67 +1,77 @@
-import { Code } from '../../protobuf/holdem/code_pb';
-import { ServerMessageAdminRoomUserLeave } from '../../protobuf/holdem/recv_g_admin_room_user_leave_pb';
-import { ServerMessageAdminRoomUserStandup } from '../../protobuf/holdem/recv_g_admin_room_user_standup_pb';
-import { ServerMessageCacheDataUpdate } from '../../protobuf/holdem/recv_g_cache_data_update_pb';
-import { ServerMessageClubRoomBringInApplyAudit } from '../../protobuf/holdem/recv_g_club_room_bring_in_apply_audit_pb';
-import { ServerMessageClubRoomBringInApplyToAdmin } from '../../protobuf/holdem/recv_g_club_room_bring_in_apply_to_admin_pb';
-import { ServerMessageClubRoomBringInApplyToUser } from '../../protobuf/holdem/recv_g_club_room_bring_in_apply_to_user_pb';
-import { ServerMessageClubRoomDelayApplyAudit } from '../../protobuf/holdem/recv_g_club_room_delay_apply_audit_pb';
-import { ServerMessageClubRoomMttSettleNotify } from '../../protobuf/holdem/recv_g_club_room_mtt_settle_notify_pb';
-import { ServerMessageClubUserIsBlocked } from '../../protobuf/holdem/recv_g_club_user_is_blocked_pb';
-import { ServerMessageError } from '../../protobuf/holdem/recv_g_error_pb';
-import { ServerMessageFriendRoomBringInApplyToAdmin } from '../../protobuf/holdem/recv_g_friend_room_bring_in_apply_to_admin_pb';
-import { ServerMessageFriendRoomBringInApplyToUser } from '../../protobuf/holdem/recv_g_friend_room_bring_in_apply_to_user_pb';
-import { ServerMessageFriendRoomCreatorSettle } from '../../protobuf/holdem/recv_g_friend_room_creator_settle_pb';
-import { ServerMessageGetMessage } from '../../protobuf/holdem/recv_g_get_message_pb';
-import { ServerMessageJackpotMarquee } from '../../protobuf/holdem/recv_g_jackpot_marquee_pb';
-import { ServerMessageLimitHandNumber } from '../../protobuf/holdem/recv_g_limit_hand_pb';
-import { ServerMessageMatchingResult } from '../../protobuf/holdem/recv_g_matching_result_pb';
-import { ServerMessageMttAwardNotify } from '../../protobuf/holdem/recv_g_mtt_award_notify_pb';
-import { ServerMessageMttReadyForApply } from '../../protobuf/holdem/recv_g_mtt_ready_for_apply_pb';
-import { ServerMessageMttSeriesNotify } from '../../protobuf/holdem/recv_g_mtt_series_notify_pb';
-import { ServerMessageNotificationMttWillStart } from '../../protobuf/holdem/recv_g_notification_mtt_will_start_pb';
-import { ServerMessageNotificationRoomReady } from '../../protobuf/holdem/recv_g_notification_room_ready_pb';
-import { ServerMessageNotificationSystemMaintain } from '../../protobuf/holdem/recv_g_notification_system_maintain_pb';
-import { ServerMessageOfflineTickets } from '../../protobuf/holdem/recv_g_offline_tickets_pb';
-import { ServerMessageRoomChangeNotify } from '../../protobuf/holdem/recv_g_room_change_notify_pb';
-import { ServerMessageRoomDelayApplyToAdmin } from '../../protobuf/holdem/recv_g_room_delay_apply_to_admin_pb';
-import { ServerMessageRoomMttSettleNotify } from '../../protobuf/holdem/recv_g_room_mtt_settle_notify_pb';
-import { ServerMessageRoomReadyForEnter } from '../../protobuf/holdem/recv_g_room_ready_for_enter_pb';
-import { ServerMessageRoomUserSendDiamond } from '../../protobuf/holdem/recv_g_room_user_send_diamond_pb';
-import { ServerMessageSelfProfitPay } from '../../protobuf/holdem/recv_g_self_profit_pay_pb';
-import { ServerMessageSnatchTreasureHrl } from '../../protobuf/holdem/recv_g_snatch_treasure_hrl_pb';
-import { ServerMessageSnatchTreasureWinPopup } from '../../protobuf/holdem/recv_g_snatch_treasure_win_popup_pb';
-import { ServerMessageSupportMessage } from '../../protobuf/holdem/recv_g_support_message_pb';
-import { ServerMessageSystemMessage } from '../../protobuf/holdem/recv_g_system_message_pb';
-import { ServerMessageTodoList } from '../../protobuf/holdem/recv_g_todo_list_pb';
-import { ServerMessageTribeBlackUserMtt } from '../../protobuf/holdem/recv_g_tribe_black_user_mtt_pb';
-import { ServerMessageTribeBlackUser } from '../../protobuf/holdem/recv_g_tribe_black_user_pb';
-import { ServerMessageUserBan } from '../../protobuf/holdem/recv_g_user_ban_pb';
-import { ServerMessageUserClubRoleChange } from '../../protobuf/holdem/recv_g_user_club_role_change_pb';
-import { ServerMessageUserDeviceIsBlocked } from '../../protobuf/holdem/recv_g_user_device_is_blocked_pb';
-import { ServerMessageUserDiamondChange } from '../../protobuf/holdem/recv_g_user_diamond_change_pb';
-import { ServerMessageUserGameWatch } from '../../protobuf/holdem/recv_g_user_game_watch_pb';
-import { ServerMessageUserGoldChange } from '../../protobuf/holdem/recv_g_user_gold_change_pb';
-import { ServerMessageUserIsBlocked } from '../../protobuf/holdem/recv_g_user_is_blocked_pb';
-import { ServerMessageUserIsMute } from '../../protobuf/holdem/recv_g_user_is_mute_pb';
-import { ServerMessageUserJoinClub } from '../../protobuf/holdem/recv_g_user_join_club_pb';
-import { ServerMessageUserKickedFromClub } from '../../protobuf/holdem/recv_g_user_kicked_from_club_pb';
-import { ServerMessageUserMttChangeNotify } from '../../protobuf/holdem/recv_g_user_mtt_change_notify_pb';
-import { ServerMessageUserOrderAudit } from '../../protobuf/holdem/recv_g_user_order_audit_pb';
-import { ServerMessageUserSngChangeNotify } from '../../protobuf/holdem/recv_g_user_sng_change_notify_pb';
-import { ServerMessageUserTraderOrderNotify } from '../../protobuf/holdem/recv_g_user_trader_order_notify_pb';
-import { ServerMessageUserUsdtOrderNotify } from '../../protobuf/holdem/recv_g_user_usdt_order_notify_pb';
-import { ServerMessageUserWheelHandNum } from '../../protobuf/holdem/recv_g_user_wheel_hand_num_pb';
-import { ServerMessageUtilAntiCheatRoomVideo } from '../../protobuf/holdem/recv_util_anti_cheat_room_video_pb';
-import { ServerMessageUtilFaceRecognize } from '../../protobuf/holdem/recv_util_face_recognize_pb';
-import { ClientMessageHeartbeat, ServerMessageHeartbeat } from '../../protobuf/holdem/req_g_heartbeat_pb';
-import { ClientMessageRegister, ServerMessageRegister } from '../../protobuf/holdem/req_g_register_pb';
-import { ClientMessageUserPlaying, ServerMessageUserPlaying } from '../../protobuf/holdem/req_g_user_playing_pb';
-import { ClientMessageJoinMatching, ServerMessageJoinMatching } from '../../protobuf/holdem/req_rpc_join_matching_pb';
-import { ClientMessageMttDetail, ServerMessageMttDetail } from '../../protobuf/holdem/req_rpc_mtt_detail_pb';
-import { ClientMessageQuickJoin, ServerMessageQuickJoin } from '../../protobuf/holdem/req_rpc_quick_join_pb';
-import { ClientMessageRooms, ServerMessageRooms } from '../../protobuf/holdem/req_rpc_rooms_pb';
-import { ClientMessageRoomsSimple, ServerMessageRoomsSimple } from '../../protobuf/holdem/req_rpc_rooms_simple_pb';
+import {
+    ClientMessageHeartbeat,
+    ClientMessageJoinMatching,
+    ClientMessageMttDetail,
+    ClientMessageQuickJoin,
+    ClientMessageRegister,
+    ClientMessageRooms,
+    ClientMessageRoomsSimple,
+    ClientMessageUserPlaying,
+    Code,
+    ServerMessageAdminRoomUserLeave,
+    ServerMessageAdminRoomUserStandup,
+    ServerMessageCacheDataUpdate,
+    ServerMessageClubRoomBringInApplyAudit,
+    ServerMessageClubRoomBringInApplyToAdmin,
+    ServerMessageClubRoomBringInApplyToUser,
+    ServerMessageClubRoomDelayApplyAudit,
+    ServerMessageClubRoomMttSettleNotify,
+    ServerMessageClubUserIsBlocked,
+    ServerMessageError,
+    ServerMessageFriendRoomBringInApplyToAdmin,
+    ServerMessageFriendRoomBringInApplyToUser,
+    ServerMessageFriendRoomCreatorSettle,
+    ServerMessageGetMessage,
+    ServerMessageHeartbeat,
+    ServerMessageJackpotMarquee,
+    ServerMessageJoinMatching,
+    ServerMessageLimitHandNumber,
+    ServerMessageMatchingResult,
+    ServerMessageMttAwardNotify,
+    ServerMessageMttDetail,
+    ServerMessageMttReadyForApply,
+    ServerMessageMttSeriesNotify,
+    ServerMessageNotificationMttWillStart,
+    ServerMessageNotificationRoomReady,
+    ServerMessageNotificationSystemMaintain,
+    ServerMessageOfflineTickets,
+    ServerMessageQuickJoin,
+    ServerMessageRegister,
+    ServerMessageRoomChangeNotify,
+    ServerMessageRoomDelayApplyToAdmin,
+    ServerMessageRoomMttSettleNotify,
+    ServerMessageRoomReadyForEnter,
+    ServerMessageRooms,
+    ServerMessageRoomsSimple,
+    ServerMessageRoomUserSendDiamond,
+    ServerMessageSelfProfitPay,
+    ServerMessageSnatchTreasureHrl,
+    ServerMessageSnatchTreasureWinPopup,
+    ServerMessageSupportMessage,
+    ServerMessageSystemMessage,
+    ServerMessageTodoList,
+    ServerMessageTribeBlackUser,
+    ServerMessageTribeBlackUserMtt,
+    ServerMessageUserBan,
+    ServerMessageUserClubRoleChange,
+    ServerMessageUserDeviceIsBlocked,
+    ServerMessageUserDiamondChange,
+    ServerMessageUserGameWatch,
+    ServerMessageUserGoldChange,
+    ServerMessageUserIsBlocked,
+    ServerMessageUserIsMute,
+    ServerMessageUserJoinClub,
+    ServerMessageUserKickedFromClub,
+    ServerMessageUserMttChangeNotify,
+    ServerMessageUserOrderAudit,
+    ServerMessageUserPlaying,
+    ServerMessageUserSngChangeNotify,
+    ServerMessageUserTraderOrderNotify,
+    ServerMessageUserUsdtOrderNotify,
+    ServerMessageUserWheelHandNum,
+    ServerMessageUtilAntiCheatRoomVideo,
+    ServerMessageUtilFaceRecognize
+} from '@silenthill/agreement-web';
 
 export const CodeMessageOtherClientGC = {
     [Code.MSG_D_REGISTER]: [ClientMessageRegister, null! as ClientMessageRegister.AsObject],

@@ -1,4 +1,4 @@
-import { ServerMessageMttSeriesNotify } from '../../../protobuf/holdem/recv_g_mtt_series_notify_pb';
+import { ServerMessageMttSeriesNotify } from '@silenthill/agreement-web';
 
 // MttSeriesNotify 153
 export function MttSeriesNotify(data: ServerMessageMttSeriesNotify.AsObject, roomID: number, matchID: number) {}

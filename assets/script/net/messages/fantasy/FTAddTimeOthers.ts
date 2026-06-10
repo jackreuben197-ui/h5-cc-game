@@ -1,4 +1,4 @@
-import { ServerMessageFtAddTimeOthers } from '../../../protobuf/holdem/recv_ft_add_time_others_pb';
+import { ServerMessageFtAddTimeOthers } from '@silenthill/agreement-web';
 
 // FTAddTimeOthers 1310
 export function FTAddTimeOthers(data: ServerMessageFtAddTimeOthers.AsObject, roomID: number, matchID: number) {}

@@ -1,4 +1,4 @@
-import { ServerMessageMjAddTimeOthers } from '../../../protobuf/holdem/recv_mj_add_time_others_pb';
+import { ServerMessageMjAddTimeOthers } from '@silenthill/agreement-web';
 
 // MJAddTimeOthers 3061
 export function MJAddTimeOthers(data: ServerMessageMjAddTimeOthers.AsObject, roomID: number, matchID: number) {}

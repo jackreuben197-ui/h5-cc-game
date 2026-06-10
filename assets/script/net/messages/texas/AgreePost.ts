@@ -1,9 +1,8 @@
+import { Def, ServerMessageAgreePost } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
-import { Def } from '../../../protobuf/holdem/define_pb';
-import { ServerMessageAgreePost } from '../../../protobuf/holdem/req_th_agree_post_pb';
 import viewManager from '../../../views/UIViewManager';
 
 const _plog = createLogger('ServerMessageAgreePost');

@@ -1,4 +1,4 @@
-import { ServerMessageNotificationRoomReady } from '../../../protobuf/holdem/recv_g_notification_room_ready_pb';
+import { ServerMessageNotificationRoomReady } from '@silenthill/agreement-web';
 
 // NotificationRoomReady 101
 export function NotificationRoomReady(data: ServerMessageNotificationRoomReady.AsObject, roomID: number, matchID: number) {}

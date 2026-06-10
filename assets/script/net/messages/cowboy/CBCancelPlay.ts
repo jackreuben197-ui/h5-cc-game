@@ -1,4 +1,4 @@
-import { ServerMessageCbCancelPlay } from '../../../protobuf/holdem/req_cb_cancel_play_pb';
+import { ServerMessageCbCancelPlay } from '@silenthill/agreement-web';
 
 // CBCancelPlay 2003
 export function CBCancelPlay(data: ServerMessageCbCancelPlay.AsObject, roomID: number, matchID: number) {}

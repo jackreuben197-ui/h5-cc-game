@@ -1,4 +1,4 @@
-import { ServerMessageGdRoomers } from '../../../protobuf/holdem/req_gd_roomers_pb';
+import { ServerMessageGdRoomers } from '@silenthill/agreement-web';
 
 // GDRoomers 4016
 export function GDRoomers(data: ServerMessageGdRoomers.AsObject, roomID: number, matchID: number) {}

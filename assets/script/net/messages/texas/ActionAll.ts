@@ -1,9 +1,9 @@
+import { ServerMessageActionAll } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { AnimateDisplayTypeAction, AnimateDisplayTypeCards, AnimateDisplayTypeRoundBet } from '../../../game/constant/AnimateDisplayType';
-import { ServerMessageActionAll } from '../../../protobuf/holdem/recv_th_action_all_pb';
 import { AutoOperationTypeTexas } from './AutoOpertaionType';
 
 const _plog = createLogger('ServerMessageActionAll');

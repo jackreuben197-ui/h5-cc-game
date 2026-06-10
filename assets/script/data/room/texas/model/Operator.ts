@@ -12,7 +12,7 @@
 //   repeated int32 cards = 11;                                 // 底牌完整数组 自己操作时能看到,配合delayViewCard
 //   repeated PlayerCards player_cards = 12;                    // 所有用户底牌（非当前操作者看不到，包含已弃牌玩家的，低水保险模式才返回）
 // }
-import { ActionLimit, Def, InsurancePotInvalid, InsurancePotLimit, PlayerCards } from '../../../../protobuf/holdem/define_pb';
+import { ActionLimit,Def, InsurancePotInvalid, InsurancePotLimit, PlayerCards } from '@silenthill/agreement-web';
 
 export enum OpertionType {
     NORMAL = 1,

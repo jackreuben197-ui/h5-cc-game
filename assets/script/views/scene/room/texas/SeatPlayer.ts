@@ -1,3 +1,4 @@
+import { Def } from '@silenthill/agreement-web';
 import { autoBindEvents, bindEvent, unBindEvents, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import { Operator } from '../../../../data/room/texas/model/Operator';
@@ -13,7 +14,6 @@ import {
 } from '../../../../game/constant/AnimateDisplayType';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
-import { Def } from '../../../../protobuf/holdem/define_pb';
 import UIViewUtil from '../../../util/UIViewUtil';
 import CardView from '../../../widget/CardView';
 import { DisplayNode } from '../../../widget/DisplayNode';
@@ -161,7 +161,7 @@ export default class SeatPlayer extends cc.Component {
 
     //(优先于seated执行保证展示正确)
     @bindEvent(TexasGameRoomDataPlayer.SEATED_CHANGE, { dataSource: 'player', initPriority: 10 })
-    @traceMethod({ level: 'debug' })
+    @traceMethod()
     private onUpdateSeated(b: boolean, mine: TexasGameRoomDataPlayerMine) {
         this.userSeat.active = b;
         this.emptySeat.node.active = !b;
@@ -660,7 +660,7 @@ export default class SeatPlayer extends cc.Component {
     private onStoreChipChange(v: number) {}
 
     @bindEvent(TexasGameRoomDataPlayerMine.HAND_VALUE_TYPE_CHANGE, 'mine')
-    @traceMethod({ level: 'debug' })
+    @traceMethod()
     private onHadnValueChange(v: string) {
         if (v != '') {
             this.handValueTypeNode.node.active = true;

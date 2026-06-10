@@ -1,3 +1,4 @@
+import { Def } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { GameType, PokerType } from '../../../game/constant/LogicTypeConf';
@@ -5,7 +6,6 @@ import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import { APIOrgTribeRoomPermissions, APIOrgUserNewLabelRead, APIOrgUserNewLabelReadNum, WebConfigGlobalConfig } from '../../../net/https/WebRequest';
 import { WWW } from '../../../net/https/WebRequestBase';
-import { Def } from '../../../protobuf/holdem/define_pb';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 
 export type UIGameplayTableSettingParam = {
@@ -268,7 +268,7 @@ export default class UIGameplayTableSetting extends UIComponentBaseDialog<UIGame
         const criticalHitEnabled = this._roomData.basicInfo.hasCriticalHit;
         if (this.IsPermitted('room_critical_hit')) {
             if (criticalHitEnabled) {
-                const criticalHitRound = this._roomData.basicInfo.critialHitRounds;
+                const criticalHitRound = this._roomData.basicInfo.criticalHitRounds;
                 const subAnteBB = this._roomData.basicInfo.getCriticalHitAnte(bigBlind);
                 this.FillTipsAndDetailData(
                     'room_critical_hit',

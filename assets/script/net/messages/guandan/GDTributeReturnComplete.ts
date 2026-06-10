@@ -1,4 +1,4 @@
-import { ServerMessageGdTributeReturnComplete } from '../../../protobuf/holdem/recv_gd_tribute_return_complete_pb';
+import { ServerMessageGdTributeReturnComplete } from '@silenthill/agreement-web';
 
 // GDTributeReturnComplete 4105
 export function GDTributeReturnComplete(data: ServerMessageGdTributeReturnComplete.AsObject, roomID: number, matchID: number) {}

@@ -1,3 +1,4 @@
+import { SidePot } from '@silenthill/agreement-web';
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceMethod } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
@@ -5,7 +6,6 @@ import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPotInfo from '../../../../data/room/texas/TexasGameRoomDataPotInfo';
 import TexasGameRoomDataSetting from '../../../../data/room/texas/TexasGameRoomDataSetting';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
-import { SidePot } from '../../../../protobuf/holdem/define_pb';
 import UIViewUtil from '../../../util/UIViewUtil';
 
 const { ccclass, property, menu } = cc._decorator;

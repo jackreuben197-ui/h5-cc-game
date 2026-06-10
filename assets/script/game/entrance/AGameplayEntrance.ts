@@ -1,5 +1,5 @@
+import { RoomRecord } from '@silenthill/agreement-web';
 import { traceClass } from '../../core/decorator/LogTrace';
-import { RoomRecord } from '../../protobuf/holdem/define_pb';
 
 /**
  * @description 加载指示器

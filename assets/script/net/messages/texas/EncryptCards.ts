@@ -1,4 +1,4 @@
-import { ServerMessageEncryptCards } from '../../../protobuf/holdem/recv_th_entrypt_cards_pb';
+import { ServerMessageEncryptCards } from '@silenthill/agreement-web';
 
 // EncryptCards 1128
 export function EncryptCards(data: ServerMessageEncryptCards.AsObject, roomID: number, matchID: number) {}
