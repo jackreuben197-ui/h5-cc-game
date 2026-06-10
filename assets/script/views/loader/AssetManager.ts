@@ -75,7 +75,7 @@ export default class AssetManager {
         });
     }
 
-    public static async assetForeach(assets: cc.Asset[], bundleName: string) {
+    public static assetForeach(assets: cc.Asset[], bundleName: string) {
         assets.forEach(item => {
             if (item instanceof cc.Prefab) {
                 if (!item.data) return;
@@ -90,12 +90,12 @@ export default class AssetManager {
                         let sprite = item.getComponent(cc.Sprite);
                         if (sprite) {
                             const key = `${ac.collection}|${item.name}`;
-                            this._map.set(key, sprite.spriteFrame);
+                            AssetManager._map.set(key, sprite.spriteFrame);
                         }
                         let sound = item.getComponent(cc.AudioSource);
                         if (sound) {
                             const key = `${ac.collection}|${item.name}`;
-                            this._map.set(key, sound.clip);
+                            AssetManager._map.set(key, sound.clip);
                         }
                     });
                 }
