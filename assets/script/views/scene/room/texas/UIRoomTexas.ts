@@ -2,6 +2,7 @@ import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import UIComponentBase from '../../../base/UIComponentBase';
+import InsuranceOperation from './InsuranceOperation';
 import Operation from './Operation';
 import PotsInfo from './PotsInfo';
 import PublicCardsInfo from './PublicCardsInfo';
@@ -36,6 +37,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     @property({ type: cc.Node, displayName: '操作面板' })
     private opPannelNode: cc.Node = null!;
     private _opPannel: Operation = null!;
+    @property({ type: InsuranceOperation, displayName: '保险弹窗触发器' })
+    private insuranceOperation: InsuranceOperation = null!;
     //数据绑定
     private _mine: TexasGameRoomDataPlayerMine = null;
 
@@ -59,5 +62,6 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this.publicCardsInfo.initData(param.roomID, param.matchID);
         this._sideMenuTexasMenu.initData(param.roomID, param.matchID);
         this._opPannel.initData(this._mine);
+        this.insuranceOperation.initData(this._mine);
     }
 }

@@ -12,7 +12,7 @@
 //   repeated int32 cards = 11;                                 // 底牌完整数组 自己操作时能看到,配合delayViewCard
 //   repeated PlayerCards player_cards = 12;                    // 所有用户底牌（非当前操作者看不到，包含已弃牌玩家的，低水保险模式才返回）
 // }
-import { ActionLimit, InsurancePotInvalid, InsurancePotLimit, PlayerCards } from '@silenthill/agreement-web';
+import { ActionLimit,Def, InsurancePotInvalid, InsurancePotLimit, PlayerCards } from '@silenthill/agreement-web';
 
 export enum OpertionType {
     NORMAL = 1,
@@ -31,6 +31,34 @@ export class Operator {
     public roundBetEqual: number; // 本轮CALL平的RoundBet
 }
 
+export type OperatorTimeUpdate = {
+    duration: number;
+    times: number;
+    deadline: number;
+};
+
+function cloneOperator<T extends Operator>(oper: T): T {
+    const next = oper instanceof OperatorMine ? new OperatorMine() : new Operator();
+    Object.assign(next, oper);
+    return next as T;
+}
+
+export function updateOperatorAfterAddTime<T extends Operator>(oper: T, payload: OperatorTimeUpdate): T {
+    const next = cloneOperator(oper);
+    const now = Date.now() / 1000;
+    const duration = Math.max(0, payload.duration || 0);
+    const currentEndTime =
+        next.deadlineTImestamp > 0 ? next.deadlineTImestamp : now + Math.max(0, next.leftOpDuration || 0);
+    const nextEndTime = payload.deadline > 0 ? payload.deadline : Math.max(currentEndTime, now) + duration;
+    const leftTime = Math.max(0, nextEndTime - now);
+    const currentTotal = Math.max(1, next.totalOpDuration || 0, next.leftOpDuration || 0);
+    next.alreadyDelayTImes = payload.times;
+    next.deadlineTImestamp = nextEndTime;
+    next.leftOpDuration = leftTime;
+    next.totalOpDuration = Math.max(1, currentTotal + duration, leftTime);
+    return next;
+}
+
 export class OperatorMine extends Operator {
     // 正常
     public actionLimitList?: ActionLimit.AsObject[];
@@ -38,4 +66,6 @@ export class OperatorMine extends Operator {
     public insurancePotLimitList?: InsurancePotLimit.AsObject[];
     public insurancePotInvalidList?: InsurancePotInvalid.AsObject[];
     public playerCardsList: PlayerCards.AsObject[];
+    // 保险触发的轮次（FLOP 时配合 basicInfo.insuranceForceBuyRatio 用作强制保险判断）
+    public round?: Def.RoundMap[keyof Def.RoundMap];
 }

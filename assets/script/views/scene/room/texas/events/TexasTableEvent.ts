@@ -1,4 +1,4 @@
-import { ClientMessageSeated, Code, Def, RoomInfo } from '@silenthill/agreement-web';
+import { ClientMessageSeated, PotInsuranceBuy, Code, Def, RoomInfo } from '@silenthill/agreement-web';
 import { traceClass } from '../../../../../core/decorator/LogTrace';
 import TexasGameRoomDataPlayerMine from '../../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import userStore from '../../../../../data/user/UserStore';
@@ -397,6 +397,25 @@ export default class TexasTableEvent {
             ProcedureManager.StartProcedure(ProcedureDefine.Return); // 直接离开 不做处理
             return;
         }
+    }
+
+    /**
+     * 提交"主动保险购买"。
+     * 当多池存在时，前面的池调用 confirm=false 仅缓存到服务端；最后一池或超时/放弃时 confirm=true。
+     * 服务端会以 BuyInsuranceActive(失败) 或 BuyInsurance(成功) 形式回执，由消息层负责清 operator。
+     */
+    public static CommitBuyInsurance(player: TexasGameRoomDataPlayerMine, buyList: PotInsuranceBuy.AsObject[], confirm: boolean): void {
+        ProtocolAgency.Send({
+            code: Code.MSG_D_BUY_INSURANCE_ACTIVE,
+            roomID: player.roomData.roomID,
+            matchID: player.roomData.matchID,
+            body: {
+                room: { roomId: player.roomData.roomID, matchId: player.roomData.matchID },
+                buyList,
+                confirm,
+                step: true
+            }
+        });
     }
 
     /**
