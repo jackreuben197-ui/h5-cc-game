@@ -32,10 +32,10 @@ const typesSC = {
     AudioSourceSound: cc.AudioSource
 };
 
-export default class AsssetManager {
-    static _map: Map<string, cc.SpriteFrame | cc.AudioClip> = new Map();
+class AsssetManager {
+    private _map: Map<string, cc.SpriteFrame | cc.AudioClip> = new Map();
 
-    static async getOrLoad<T extends cc.Asset>(bundleName: string, assetPath: string): Promise<T> {
+    public async getOrLoad<T extends cc.Asset>(bundleName: string, assetPath: string): Promise<T> {
         let bundle = bundleName == BUNDLE_RESOURCES || bundleName == null ? cc.resources : cc.assetManager.getBundle(bundleName);
         // check it is loaded
         if (!bundle) {
@@ -73,7 +73,7 @@ export default class AsssetManager {
         });
     }
 
-    public static assetForeach(assets: cc.Asset[], bundleName: string) {
+    public async assetForeach(assets: cc.Asset[], bundleName: string) {
         assets.forEach(item => {
             if (item instanceof cc.Prefab) {
                 let ac = item.data?.getComponent(AssetLoader);
@@ -95,7 +95,7 @@ export default class AsssetManager {
         });
     }
 
-    public static getAsset<T extends AssetCollectionType>(collection: T, name: string): AssetTypeMapping[T] {
+    public getAsset<T extends AssetCollectionType>(collection: T, name: string): AssetTypeMapping[T] {
         const key = `${collection}|${name}`;
         if (this._map.has(key)) {
             return this._map.get(key) as AssetTypeMapping[T];
@@ -103,3 +103,7 @@ export default class AsssetManager {
         throw new Error(`[AssetManager] Asset not found for key: ${key}. Did you forget to preload it?`);
     }
 }
+
+const assetManager = new AsssetManager();
+
+export default assetManager;

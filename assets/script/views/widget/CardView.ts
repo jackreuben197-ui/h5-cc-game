@@ -1,6 +1,6 @@
 import GameplayUtil from '../../game/util/GameplayUtil';
 import { AssetCollectionType } from '../loader/AssetLoader';
-import AsssetManager from '../loader/AssetManager';
+import asssetManager from '../loader/AssetManager';
 
 const { ccclass, property, menu, executeInEditMode } = cc._decorator;
 // const PokerMap: Record<number, { res: number; show: string }> = {
@@ -93,7 +93,7 @@ export default class CardView extends cc.Component {
         let node = this.getComponent(cc.Sprite);
         if (!node) console.error('[CardView]', 'no ccSprite on this node');
         this.cardSprite = node;
-        this._bgSf = AsssetManager.getAsset(AssetCollectionType.SpriteFrameCard, GameplayUtil.CardNoToLocalResource(0));
+        this._bgSf = asssetManager.getAsset(AssetCollectionType.SpriteFrameCard, GameplayUtil.CardNoToLocalResource(0));
         this.refreshCardView();
     }
 
@@ -109,7 +109,7 @@ export default class CardView extends cc.Component {
     private refreshCardView(): void {
         let sf = this._bgSf;
         if (this._cardNum != 0) {
-            sf = AsssetManager.getAsset(AssetCollectionType.SpriteFrameCard, GameplayUtil.CardNoToLocalResource(this._cardNum));
+            sf = asssetManager.getAsset(AssetCollectionType.SpriteFrameCard, GameplayUtil.CardNoToLocalResource(this._cardNum));
         }
         if (sf) {
             if (this.cardSprite) {
