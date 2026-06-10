@@ -147,6 +147,8 @@ export default class ShiningPathTimer extends cc.Component {
     public startTimer(options: ITimerOptions): void {
         if (this._realPoints.length < 2) return;
         if (this._isCounting) this.stop();
+        this.progressBar.node.active = true;
+        this.handle.active = true;
         const totalTime = options.totalTime;
         const elapsedTime = options.elapsedTime !== undefined ? options.elapsedTime : 0;
         const stepInterval = options.stepInterval !== undefined ? options.stepInterval : 0;
@@ -189,6 +191,8 @@ export default class ShiningPathTimer extends cc.Component {
 
     public stop(): void {
         this._isCounting = false;
+        this.handle.active = false;
+        this.progressBar.node.active = false;
     }
 
     public pause(): void {

@@ -622,13 +622,17 @@ export default class SeatPlayer extends cc.Component {
     private onKeepSeatStart(b: boolean, deadline: number, reason: Def.KeepSeatReasonMap[keyof Def.KeepSeatReasonMap]) {
         if (b) {
             this.keepSeatTimer.node.active = true;
-            this.keepSeatTimer.startTimer({
-                totalTime: Math.ceil(deadline - Date.now() / 1000),
-                onComplete: () => {
-                    this.keepSeatTimer.stop();
-                    this.keepSeatTimer.node.active = false;
-                }
-            });
+            if (deadline > Date.now()/1000) {
+                this.keepSeatTimer.startTimer({
+                    totalTime: Math.ceil(deadline - Date.now() / 1000),
+                    onComplete: () => {
+                        this.keepSeatTimer.stop();
+                        this.keepSeatTimer.node.active = false;
+                    }
+                });
+            }else{
+                this.keepSeatTimer.stop();
+            }
             if (this._seatPlayer.mine) {
                 this.returnToGameButton.node.active = false;
                 switch (reason) {
