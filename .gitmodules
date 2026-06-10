@@ -1,6 +1,3 @@
 [submodule "deps/h5-game"]
 	path = deps/h5-game
 	url = git@github.com:soolary/h5-game.git
-[submodule "deps/h5-cc-bridge"]
-	path = deps/h5-cc-bridge
-	url = git@github.com:soolary/h5-cc-bridge.git
