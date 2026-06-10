@@ -103,6 +103,29 @@ if (PROTOBUF_SRC) {
   console.warn('    node_modules/google-protobuf/')
 }
 
+// --- 步骤 2.6：同步 build-templates 根目录的运行时脚本到 preview-templates ---
+// build-templates/web-mobile/ 根目录下 H5 Vite 用的运行时（h5-cc-i18n.min.js / libs/holdem-pb.js）
+// index.html 里已用 <script src> 引用，但步骤 2 的 copyDirSync 只搬 assets/ 子目录，
+// 顶层文件得在这里显式拷贝，否则 Cocos preview 跑起来会 404。
+const ROOT_RUNTIME_FILES = [
+  'h5-cc-i18n.min.js',
+  path.join('libs', 'holdem-pb.js'),
+]
+let runtimeSynced = 0
+for (const rel of ROOT_RUNTIME_FILES) {
+  const src = path.join(BUILD_DIR, rel)
+  if (!fs.existsSync(src)) {
+    console.warn(`⚠ 未找到根目录运行时文件: ${rel}（跳过）`)
+    continue
+  }
+  copyFileSync(src, path.join(PREVIEW_DIR, rel))
+  runtimeSynced++
+}
+if (runtimeSynced) {
+  console.log(`同步根目录运行时: build-templates/web-mobile/ → preview-templates/ (${runtimeSynced} 个文件)`)
+  console.log('  ✓ 根目录运行时已同步')
+}
+
 // --- 步骤 3：读取并提取 build index.html 资源 ---
 const src = fs.readFileSync(BUILD_HTML, 'utf-8')
 

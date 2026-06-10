@@ -31,10 +31,10 @@ import UserStoreUtils from './data/user/UserStoreUtils';
 /** 握手超时时间（毫秒） */
 const HANDSHAKE_TIMEOUT = 10000;
 // ─── Bridge 协议类型 ──────────────────────────────────────────────────────
-// 单一来源：h5-cc-bridge 仓库。
-// 本地维护脚本：`npm run sync:bridge` 把 deps/h5-cc-bridge/src/* 复制到 ./bridge。
+// 单一来源：h5-cc-bridge 仓库的 cc-side 入口（只含 action 常量 + payload 类型，不含 envelope 运行时）。
+// 本地维护脚本：`npm run sync:bridge` 把 cc-side 白名单源码复制到 ./bridge。
 // 不要在这里重新声明协议字段；要改协议先去 h5-cc-bridge 仓库。
-import { H5NavigatePayload, H5ToCocosPayloadMap, CocosToH5PayloadMap as SharedCocosToH5PayloadMap } from './bridge/index';
+import { H5NavigatePayload, H5ToCocosPayloadMap, CocosToH5PayloadMap as SharedCocosToH5PayloadMap } from './bridge/cc-side';
 
 // CC 侧 sendToH5 接受原始 Uint8Array/ArrayBuffer，内部包装为 binary envelope；
 // 共享 map 的 wsSend 是包装后的 envelope 形态（H5 接收端视角），本地覆盖一下。
@@ -86,7 +86,7 @@ export type {
     WsReconnectedPayload,
     WsReconnectFailedPayload,
     WsReconnectingPayload
-} from './bridge/index';
+} from './bridge/cc-side';
 
 /**
  * @deprecated 请使用 H5NavigatePayload
