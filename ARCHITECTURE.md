@@ -738,14 +738,15 @@ H5 → CC：
 
 ```
 @silenthill/h5-cc-bridge npm 包（git 依赖）
-   └─ dist/cc-side.{js,d.ts}    ← action 常量 + 双向 payload 类型（无 envelope 运行时）
-   └─ dist/h5-side.{js,d.ts}    ← cc-side 全套 + envelope 函数（h5-game 用）
+   ├─ dist/cc-side.{js,d.ts}    ← action 常量 + 双向 payload 类型（无 envelope 运行时）
+   ├─ dist/h5-side.{js,d.ts}    ← cc-side 全套 + envelope 函数（h5-game 用）
+   └─ cc-side/package.json      ← 子目录代理：main → ../dist/cc-side.js，types → ../dist/cc-side.d.ts
                     │
                     │ npm install
                     ▼
-node_modules/@silenthill/h5-cc-bridge/dist/cc-side.d.ts
+node_modules/@silenthill/h5-cc-bridge/cc-side/package.json
                     │
-                    │ tsconfig.paths: "@silenthill/h5-cc-bridge/*" -> ./node_modules/@silenthill/h5-cc-bridge/dist/*
+                    │ 经典 node 解析：发现 cc-side/ 目录 → 读其 package.json → main/types
                     ▼
 H5MsgMgr.ts ──import type──▶ '@silenthill/h5-cc-bridge/cc-side'
                     │
@@ -771,23 +772,12 @@ CC 端从 bridge 只拿**类型**（`H5NavigatePayload`、`CocosToH5PayloadMap` 
 
 如果哪天需要在 CC 端共享 envelope 序列化逻辑，需要切换到"UMD 注入 + window 全局"那套（参考 holdem-pb / h5-cc-i18n 的接入方式）。
 
-#### 配置三件套
+#### 配置（仅两件，零 tsconfig 改动）
 
 ```jsonc
-// package.json（依赖入口；版本 ref 跟 h5-game 保持一致）
+// package.json（唯一需要配置的地方）
 "dependencies": {
   "@silenthill/h5-cc-bridge": "git+ssh://git@github.com:soolary/h5-cc-bridge.git#main"
-}
-```
-
-```jsonc
-// tsconfig.json（让 TSC 找到 .d.ts；默认 moduleResolution=node 不读 exports）
-"compilerOptions": {
-  "baseUrl": ".",
-  "paths": {
-    "@silenthill/h5-cc-bridge": ["./node_modules/@silenthill/h5-cc-bridge/dist/index"],
-    "@silenthill/h5-cc-bridge/*": ["./node_modules/@silenthill/h5-cc-bridge/dist/*"]
-  }
 }
 ```
 
@@ -799,6 +789,8 @@ import type {
   H5NavigatePayload,
 } from '@silenthill/h5-cc-bridge/cc-side';
 ```
+
+`tsconfig.json` 不用加 `paths` / `baseUrl`——bridge 包自己在仓库根目录提供 `cc-side/` / `h5-side/` / `envelope/` 三个**子目录代理 `package.json`**，每个把 `main`/`types` 指回 `../dist/...`，任何 moduleResolution（包括 Cocos Creator 默认的经典 node）都能直接找到 `.d.ts`。
 
 升级 bridge 版本就是改 `package.json` 里的 `#main` 改成 tag / commit SHA，然后 `npm install`——不再需要 sync 脚本。
 
