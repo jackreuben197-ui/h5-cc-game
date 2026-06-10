@@ -31,10 +31,12 @@ import UserStoreUtils from './data/user/UserStoreUtils';
 /** 握手超时时间（毫秒） */
 const HANDSHAKE_TIMEOUT = 10000;
 // ─── Bridge 协议类型 ──────────────────────────────────────────────────────
-// 单一来源：h5-cc-bridge 仓库。
-// 本地维护脚本：`npm run sync:bridge` 把 deps/h5-cc-bridge/src/* 复制到 ./bridge。
-// 不要在这里重新声明协议字段；要改协议先去 h5-cc-bridge 仓库。
-import { H5NavigatePayload, H5ToCocosPayloadMap, CocosToH5PayloadMap as SharedCocosToH5PayloadMap } from './bridge/index';
+// 单一来源：@silenthill/h5-cc-bridge npm 包的 cc-side 入口（纯类型，TS 编译后被擦除，运行时不依赖该模块）。
+// 包通过 tsconfig.paths 解析到 node_modules/@silenthill/h5-cc-bridge/dist/cc-side.d.ts。
+// 不要在这里重新声明协议字段；要改协议先去 @silenthill/h5-cc-bridge 仓库发版，CC 端 `npm install` 即取最新类型。
+// 注意：CC 端绝对不能引入 bridge 的 runtime 值（如 BRIDGE_ACTION.X 常量、createBridgeMessage 等函数），
+// 否则那条 import 不会被擦除，Cocos 运行时会找不到该模块。
+import type { H5NavigatePayload, H5ToCocosPayloadMap, CocosToH5PayloadMap as SharedCocosToH5PayloadMap } from '@silenthill/h5-cc-bridge/cc-side';
 
 // CC 侧 sendToH5 接受原始 Uint8Array/ArrayBuffer，内部包装为 binary envelope；
 // 共享 map 的 wsSend 是包装后的 envelope 形态（H5 接收端视角），本地覆盖一下。
@@ -86,7 +88,7 @@ export type {
     WsReconnectedPayload,
     WsReconnectFailedPayload,
     WsReconnectingPayload
-} from './bridge/index';
+} from '@silenthill/h5-cc-bridge/cc-side';
 
 /**
  * @deprecated 请使用 H5NavigatePayload

@@ -17,9 +17,8 @@ npm run commit:prepare
 npm run sync:h5-game #pnpm run sync:h5-game
 # protocol sync (pb)
 npm run sync:proto
-# H5↔Cocos 桥接协议同步 (拉 h5-cc-bridge 仓库的 src 到 assets/script/bridge/)
-# 详见 ARCHITECTURE.md §8.5；切换版本：BRIDGE_REF=v0.1.0 npm run sync:bridge
-npm run sync:bridge
+# H5↔Cocos 桥接协议 = npm 包 @silenthill/h5-cc-bridge（cc-side 入口）
+# 升级版本：改 package.json 里的 #ref，跑 `npm install` 即可（详见 ARCHITECTURE.md §8.5）
 ```
 
 ## 格式化代码
