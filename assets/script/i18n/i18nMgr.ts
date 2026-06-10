@@ -1,7 +1,8 @@
 import storageManager from '../data/LocalStorage';
 import StorageKey from '../data/StorageKey';
 import * as i18nLabel from './i18nLabel';
-import * as i18nSprite from './i18nSprite';
+// import * as i18nSprite from './i18nSprite';
+import i18n from '@silenthill/h5-cc-i18n';
 
 //var CSV = require("CSV");
 //上来先处理数据 当前的语言 0简中 1繁中 2英文 3葡语  let type = ["cn","zh","en","pt"]
@@ -32,21 +33,22 @@ var excelAdd = {
 export class i18nMgr {
     public static language = ''; // 当前语言
     private static labelArr: i18nLabel.i18nLabel[] = []; // i18nLabel 列表
-    private static LanguageObject: { [key: string]: string } = {}; // 文字配置
-    private static spriteArr: i18nSprite.i18nSprite[] = []; // i18nSprite 列表
+    // private static LanguageObject: { [key: string]: string } = {}; // 文字配置
+    // private static spriteArr: i18nSprite.i18nSprite[] = []; // i18nSprite 列表
     // private static LanMap = {
     //     cn: "sl_bnftN7UY",
     //     pt: "sl_ptyyPutao",
     //     en: "sl_K8cPNvxU",
     // }
     public static isCN() {
-        return this.language == 'cn';
+        return i18n.currentLocale == i18n.LANG_ZH_CN;
     }
 
     public static initLanguage() {
+        i18n.setLocale(i18n.LANG_ZH_CN);
         // 强制简体中文，忽略本地缓存
-        this.language = 'cn';
-        this.LanguageObject = LanguageAllObject[this.language];
+        // this.language = 'cn';
+        // this.LanguageObject = LanguageAllObject[this.language];
     }
 
     /**
@@ -58,10 +60,9 @@ export class i18nMgr {
         }
         this.language = language;
         storageManager.setItem(StorageKey.LANGUAGE, this.language);
-        this.LanguageObject = LanguageAllObject[this.language];
         this.refreshAllLabel();
-        this.reloadSprite();
-        this.resetRemoteSprite();
+        // this.reloadSprite();
+        //this.resetRemoteSprite();
     }
 
     // 观察所有与多语言有关的图片 重新调用服务器接口
@@ -98,31 +99,30 @@ export class i18nMgr {
 
     //从表格获取内容
     public static Get(opt: string): string {
-        return this.LanguageObject?.[opt] || opt;
+        return i18n.get(opt);
+        //return this.LanguageObject?.[opt] || opt;
     }
-
     /**
      * 添加或移除 i18nSprite
      */
-    public static _addOrDelSprite(sprite: i18nSprite.i18nSprite, isAdd: boolean) {
-        if (isAdd) {
-            this.spriteArr.push(sprite);
-        } else {
-            let index = this.spriteArr.indexOf(sprite);
-            if (index !== -1) {
-                this.spriteArr.splice(index, 1);
-            }
-        }
-    }
-
-    public static _getSprite(path: string, cb: (spriteFrame: cc.SpriteFrame) => void) {
-        cc.resources.load('main/i18n/sprite/' + this.language + '/' + path, cc.SpriteFrame, (err, spriteFrame: cc.SpriteFrame) => {
-            if (err) {
-                return cb(null);
-            }
-            cb(spriteFrame);
-        });
-    }
+    // public static _addOrDelSprite(sprite: i18nSprite.i18nSprite, isAdd: boolean) {
+    //     if (isAdd) {
+    //         this.spriteArr.push(sprite);
+    //     } else {
+    //         let index = this.spriteArr.indexOf(sprite);
+    //         if (index !== -1) {
+    //             this.spriteArr.splice(index, 1);
+    //         }
+    //     }
+    // }
+    // public static _getSprite(path: string, cb: (spriteFrame: cc.SpriteFrame) => void) {
+    //     cc.resources.load('main/i18n/sprite/' + this.language + '/' + path, cc.SpriteFrame, (err, spriteFrame: cc.SpriteFrame) => {
+    //         if (err) {
+    //             return cb(null);
+    //         }
+    //         cb(spriteFrame);
+    //     });
+    // }
 
     /**
      * @description: 此方法读取Language里面的数据 再根据语言类型分配相应的字符串
@@ -156,44 +156,40 @@ export class i18nMgr {
      * 走 Cocos 资源管道，自动享受 md5Cache 缓存刷新。
      */
     public static async loadAndRefreshConfig(): Promise<void> {
-        const tasks = [
-            this._loadConfig('en', 'config/USER_EN'),
-            this._loadConfig('pt', 'config/USER_PT'),
-            this._loadConfig('zh', 'config/USER_TW'),
-            this._loadConfig('cn', 'config/USER_ZH')
-        ];
-        await Promise.all(tasks);
-        this.LanguageObject = LanguageAllObject[this.language];
-        this.refreshAllLabel();
+        // const tasks = [
+        //     this._loadConfig('en', 'config/USER_EN'),
+        //     this._loadConfig('pt', 'config/USER_PT'),
+        //     this._loadConfig('zh', 'config/USER_TW'),
+        //     this._loadConfig('cn', 'config/USER_ZH')
+        // ];
+        // await Promise.all(tasks);
+        // this.LanguageObject = LanguageAllObject[this.language];
+        // this.refreshAllLabel();
     }
 
-    private static _loadConfig(language: string, path: string): Promise<void> {
-        return new Promise(resolve => {
-            cc.resources.load(path, cc.TextAsset, (err, asset: cc.TextAsset) => {
-                if (!err && asset) {
-                    i18nMgr._praseConfig(language, asset);
-                }
-                resolve();
-            });
-        });
+    private static async _loadConfig(language: string, path: string): Promise<void> {
+        // return new Promise(resolve => {
+        //     cc.resources.load(path, cc.TextAsset, (err, asset: cc.TextAsset) => {
+        //         if (!err && asset) {
+        //             i18nMgr._praseConfig(language, asset);
+        //         }
+        //         resolve();
+        //     });
+        // });
     }
-
-    public static get LanguageAllObject() {
-        return LanguageAllObject;
-    }
-
-    private static reloadSprite() {
-        for (let one of this.spriteArr) {
-            one._resetValue();
-        }
-    }
+    // public static get LanguageAllObject() {
+    //     return LanguageAllObject;
+    // }
+    // private static reloadSprite() {
+    //     for (let one of this.spriteArr) {
+    //         one._resetValue();
+    //     }
+    // }
 }
-
-//@ts-ignore
-window.i18nMgr = i18nMgr;
-
-//@ts-ignore
-window.LanguageAllObject = LanguageAllObject;
+// //@ts-ignore
+// window.i18nMgr = i18nMgr;
+// //@ts-ignore
+// window.LanguageAllObject = LanguageAllObject;
 /**
  * 读取语言配置文件_csv格式
  */
