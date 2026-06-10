@@ -5,7 +5,6 @@
     "sync:template": "node scripts/sync-template.js",
     "merge:i18n": "node scripts/merge-i18n.js",
     "sync:h5-game": "node scripts/sync-h5-game.js",
-    "sync:bridge": "node scripts/sync-bridge.js",
     "release:web-mobile": "node scripts/release-web-mobile.js",
     "commit:format": "node scripts/fmt-imports.js && node scripts/fmt-blanklines.js",
     "commit:prepare": "tsc -p tsconfig.json --noEmit && node scripts/fmt-imports.js && node scripts/fmt-blanklines.js && tsc -p tsconfig.json --noEmit"
@@ -13,6 +12,7 @@
   "dependencies": {
     "@silenthill/agreement-web": "git+ssh://git@github.com:kingofake/agreement-web.git#master",
     "@silenthill/h5-cc-i18n": "github:guysoup027/h5-cc-i18n",
+    "@silenthill/h5-cc-bridge": "git+ssh://git@github.com:soolary/h5-cc-bridge.git#main",
     "@types/gapi": "^0.0.43",
     "http-server": "^14.1.1",
     "httpserver": "^0.3.0",

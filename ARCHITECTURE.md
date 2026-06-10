@@ -732,47 +732,75 @@ H5 → CC：
 - `ProcedureReturn.lateEnter` 处理"回到 H5"：有 routeData 走 `h5Navigate`，否则单纯 `h5Show`。
 - `UITexasMenu.click_rule_tips / click_insurance` 把规则/保险面板交给 H5（`sendToH5('showPanel', 1, ...)`），Cocos 不再实现这些纯展示界面。
 
-### 8.5 协议来源：共享包 h5-cc-bridge
+### 8.5 协议来源：npm 包 @silenthill/h5-cc-bridge
 
-所有 payload 类型、`BRIDGE_ACTION` 常量、`BridgeMessage` 信封解析都不在 `H5MsgMgr.ts` 内联，而是从 [h5-cc-bridge](https://github.com/soolary/h5-cc-bridge) 仓库同步过来，与 h5-game 共用一份"协议合同"，避免双端字段漂移。
+所有 payload 类型、`BRIDGE_ACTION` 常量定义都不在 `H5MsgMgr.ts` 内联，而是直接 import 自 [@silenthill/h5-cc-bridge](https://github.com/soolary/h5-cc-bridge) npm 包的 `cc-side` 入口，与 h5-game 共用一份"协议合同"，避免双端字段漂移。
 
 ```
-h5-cc-bridge 仓库 (远程)
-   └─ src/{actions,cocosToH5,h5ToCocos,message,index}.ts
+@silenthill/h5-cc-bridge npm 包（git 依赖）
+   └─ dist/cc-side.{js,d.ts}    ← action 常量 + 双向 payload 类型（无 envelope 运行时）
+   └─ dist/h5-side.{js,d.ts}    ← cc-side 全套 + envelope 函数（h5-game 用）
                     │
-                    │ npm run sync:bridge
+                    │ npm install
                     ▼
-本仓库 deps/h5-cc-bridge/   ← git clone --depth 1 -b $BRIDGE_REF（已 gitignore）
+node_modules/@silenthill/h5-cc-bridge/dist/cc-side.d.ts
                     │
-                    │ cp src/*.ts
+                    │ tsconfig.paths: "@silenthill/h5-cc-bridge/*" -> ./node_modules/@silenthill/h5-cc-bridge/dist/*
                     ▼
-assets/script/bridge/        ← 提交进 git，Cocos Creator 编辑期可用
-   └─ {actions,cocosToH5,h5ToCocos,message,index}.ts
-   └─ .SYNCED_FROM            ← 记录 commit SHA + 同步时间
-
-H5MsgMgr.ts ──import──▶ ./bridge
+H5MsgMgr.ts ──import type──▶ '@silenthill/h5-cc-bridge/cc-side'
+                    │
+                    │ TS 编译：import type 整条擦除
+                    ▼
+编译产物里没有任何 require('@silenthill/h5-cc-bridge') 引用
+                    │
+                    ▼
+Cocos 运行时不去解析 node_modules，零负担
 ```
 
-#### 文件分工
+#### 为什么 CC 端可以走纯 npm 依赖（不像 i18n / agreement-web 那样要 UMD 注入）
 
-| 路径 | 是否进 git | 谁来填 | 编辑权限 |
-|------|---|---|---|
-| `deps/h5-cc-bridge/` | ❌ gitignore | `npm run sync:bridge` 自动 git clone | 只读（直接改不会保留）|
-| `assets/script/bridge/*.ts` | ✅ 提交 | `npm run sync:bridge` 自动覆盖 | **不要手动改**，所有改动应回到 h5-cc-bridge 仓库 |
-| `assets/script/bridge/.SYNCED_FROM` | ✅ 提交 | sync 自动写入 commit SHA + ISO 时间戳 | 不要手动改 |
-| `H5MsgMgr.ts` 内联 payload | — | — | 已删；本地仅保留 `H5RouteData` 别名 + `wsSend` 覆盖（因为 CC 端 sendToH5 接受原始字节，内部包装成 envelope，与 H5 接收形态不同）|
+CC 端从 bridge 只拿**类型**（`H5NavigatePayload`、`CocosToH5PayloadMap` 等 interface），所有 action 字符串都是手写字面量（`'wsConnect'`、`'showPanel'`），而不是 `BRIDGE_ACTION.WS_CONNECT`。TS 在编译时把 type-only 的 import 整条擦掉——编译后的 JS 里压根没有 `require('@silenthill/h5-cc-bridge/cc-side')`，运行时根本不去 node_modules 找，所以 Cocos 引擎"不解析 node_modules"这条限制不会触发。
 
-#### `npm run sync:bridge`
+#### 硬性约束
 
-`scripts/sync-bridge.js` 行为：
-1. 首次：`git clone --depth 1 -b $BRIDGE_REF https://github.com/soolary/h5-cc-bridge.git deps/h5-cc-bridge`
-2. 已存在：`git fetch --all --tags` + `git reset --hard origin/$BRIDGE_REF`
-3. 删除 `assets/script/bridge/` 后重新复制 `deps/h5-cc-bridge/src/*.ts`
-4. 写 `assets/script/bridge/.SYNCED_FROM` 记录 commit SHA / ref / 时间
+**CC 端绝对不能 import bridge 的 runtime 值**（`BRIDGE_ACTION.X` 常量、`createBridgeMessage` 等函数）。一旦碰了，那条 import 不会被擦除，Cocos 运行时找不到 `@silenthill/h5-cc-bridge` 模块就崩溃。落地三条戒律：
 
-`BRIDGE_REF` 环境变量控制版本：
-- 本地开发：默认 `main`
-- 上线发布：临时改成 tag（如 `BRIDGE_REF=v0.1.0 npm run sync:bridge`），或 commit SHA
+1. 所有 action 用字符串字面量：`this.sendToH5('wsConnect', 1, payload)`，不要 `BRIDGE_ACTION.WS_CONNECT`。
+2. 所有 import 加 `import type` 关键字（明确告诉 TS 这是类型）。
+3. 不要 import `'@silenthill/h5-cc-bridge/h5-side'` 或 `'@silenthill/h5-cc-bridge/envelope'`，CC 端只用 `'@silenthill/h5-cc-bridge/cc-side'`。
+
+如果哪天需要在 CC 端共享 envelope 序列化逻辑，需要切换到"UMD 注入 + window 全局"那套（参考 holdem-pb / h5-cc-i18n 的接入方式）。
+
+#### 配置三件套
+
+```jsonc
+// package.json（依赖入口；版本 ref 跟 h5-game 保持一致）
+"dependencies": {
+  "@silenthill/h5-cc-bridge": "git+ssh://git@github.com:soolary/h5-cc-bridge.git#main"
+}
+```
+
+```jsonc
+// tsconfig.json（让 TSC 找到 .d.ts；默认 moduleResolution=node 不读 exports）
+"compilerOptions": {
+  "baseUrl": ".",
+  "paths": {
+    "@silenthill/h5-cc-bridge": ["./node_modules/@silenthill/h5-cc-bridge/dist/index"],
+    "@silenthill/h5-cc-bridge/*": ["./node_modules/@silenthill/h5-cc-bridge/dist/*"]
+  }
+}
+```
+
+```ts
+// H5MsgMgr.ts（唯一的协议入口）
+import type {
+  CocosToH5PayloadMap as SharedCocosToH5PayloadMap,
+  H5ToCocosPayloadMap,
+  H5NavigatePayload,
+} from '@silenthill/h5-cc-bridge/cc-side';
+```
+
+升级 bridge 版本就是改 `package.json` 里的 `#main` 改成 tag / commit SHA，然后 `npm install`——不再需要 sync 脚本。
 
 #### 类型差异处理（`wsSend`）
 
@@ -780,7 +808,7 @@ H5MsgMgr.ts ──import──▶ ./bridge
 
 #### h5-game 那边的对应
 
-h5-game 走 npm git 依赖（`"h5-cc-bridge": "git+https://github.com/..."`）+ Vite alias 切换，详见 `h5-game/src/bridge/README.md §0`。两端的协议来源最终都是 h5-cc-bridge 仓库的 `src/`。
+h5-game 也走 npm git 依赖，但 import 自 `@silenthill/h5-cc-bridge/h5-side` 入口（含 envelope 运行时函数）+ Vite alias `@bridge-protocol` 一层封装，详见 `h5-game/src/bridge/README.md §0`。两端的协议来源最终都是 @silenthill/h5-cc-bridge 仓库的 `dist/`。
 
 ---
 
@@ -958,10 +986,7 @@ h5-cc-game/assets/script/
 │       └── events/TexasTableEvent.ts            # 牌桌业务入口（Sitdown/Standup/BringIn/LeaveRoom）
 ├── i18n/i18nMgr.ts / CPErrorCode.ts
 ├── helper/StringHelper.ts / TimeHelper.ts
-├── H5MsgMgr.ts                                  # H5↔Cocos 桥接（握手 + WS 代理 + UI 控制）
-├── bridge/                                      # 协议合同同步副本（来自 h5-cc-bridge，npm run sync:bridge 维护，详见 §8.5）
-│   ├── actions.ts / cocosToH5.ts / h5ToCocos.ts / message.ts / index.ts
-│   └── .SYNCED_FROM                             # 记录 commit SHA + 同步时间
+├── H5MsgMgr.ts                                  # H5↔Cocos 桥接（握手 + WS 代理 + UI 控制），import type 自 @silenthill/h5-cc-bridge/cc-side（详见 §8.5）
 ├── Main.ts / MainUtils.ts
 └── protobuf/                                    # pb 自动生成
 ```
@@ -1038,14 +1063,13 @@ private onNewStateChange(value: number, animType: AnimateDisplayTypeNew) {
 
 ### 场景 D：与 H5 新增一种数据/控制消息
 
-协议层已经抽到独立仓库 [h5-cc-bridge](https://github.com/soolary/h5-cc-bridge)，h5-game 和 h5-cc-game 共用同一份类型。新增 action 不要直接改 `H5MsgMgr.ts`。
+协议层已经抽到独立仓库 [@silenthill/h5-cc-bridge](https://github.com/soolary/h5-cc-bridge)，h5-game 和 h5-cc-game 共用同一份类型。新增 action 不要直接改 `H5MsgMgr.ts`。
 
-1. 去 `h5-cc-bridge` 仓库 `src/actions.ts` 加 `BRIDGE_ACTION.XXX`；payload 类型加进 `src/cocosToH5.ts` 或 `src/h5ToCocos.ts`，并补进对应的 `CocosToH5PayloadMap` / `H5ToCocosPayloadMap`。
-2. `cd h5-cc-bridge && npm run build && git commit && git push` 推到 main（或者打 tag 上线）。
-3. 本仓库 `npm run sync:bridge` 把新版本同步到 `assets/script/bridge/`（详见 §8.5）。
-4. h5-game 那边 `pnpm install` 拉到最新包就拿到了同样的类型。
-5. CC → H5：`h5MessageManager.sendToH5<'xxx'>('xxx', 1, payload)`。
-6. H5 → CC：`h5MessageManager.on<'xxx'>('xxx', payload => { ... })`。
+1. 去 `@silenthill/h5-cc-bridge` 仓库 `src/actions.ts` 把动作加进 `CC_TO_H5_ACTIONS` 或 `H5_TO_CC_ACTIONS`；payload 类型加进 `src/cocosToH5.ts` 或 `src/h5ToCocos.ts`，并补进对应的 `CocosToH5PayloadMap` / `H5ToCocosPayloadMap`。
+2. `cd @silenthill/h5-cc-bridge && npm run build && git commit && git push` 推到 main（或者打 tag 上线）。
+3. 本仓库和 h5-game 都 `npm install`（pnpm 用户：`pnpm install`）拉到最新 git ref 的包就能拿到同样的类型。如果 ref 已经写死成 tag/SHA，把 `package.json` 里的 `#<ref>` 换成新版本再 install。
+4. CC → H5：`h5MessageManager.sendToH5<'xxx'>('xxx', 1, payload)`——action 用**字符串字面量**，不要用 `BRIDGE_ACTION.XXX`（详见 §8.5 硬性约束）。
+5. H5 → CC：`h5MessageManager.on<'xxx'>('xxx', payload => { ... })`。
 
 ---
 
