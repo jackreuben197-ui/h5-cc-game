@@ -1,5 +1,5 @@
 import { traceClass } from '../../../core/decorator/LogTrace';
-import { OperatorMine } from '../../../data/room/texas/model/Operator';
+import { OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataBasic from '../../../data/room/texas/TexasGameRoomDataBasic';
 import TexasGameRoomDataPlayerMine from '../../../data/room/texas/TexasGameRoomDataPlayerMine';
@@ -8,7 +8,8 @@ import TexasGameRoomDataSeatsStateManager from '../../../data/room/texas/TexasGa
 import GameplayUtil from '../../../game/util/GameplayUtil';
 import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
-import { Def, InsurancePotLimit, OutsCard, PotInsuranceBuy } from '@silenthill/agreement-web';
+import { Code, Def, InsurancePotLimit, OutsCard, PotInsuranceBuy } from '@silenthill/agreement-web';
+import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import { AssetCollectionType } from '../../loader/AssetLoader';
 import AssetManager from '../../loader/AssetManager';
@@ -150,6 +151,8 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
     private insuranceCardsSplitContent: cc.Node = null;
     private insuranceCardOverTemplate: cc.Node = null;
     private insuranceCardSplitTemplate: cc.Node = null;
+    private sortNumToggle: cc.Toggle = null;
+    private sortGraToggle: cc.Toggle = null;
     private textPot: cc.Label = null;
     private textMainPut: cc.Label = null;
     private textInsuranceValue: cc.Label = null;
@@ -176,10 +179,13 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
     private _currentPool: PoolType = PoolType.THIRD;
     // 当前池里的"反超 outs"对应投保额（分），下次提交时取整
     private _overOutsPayValue: number = 0;
+    private _sortByGraphics: boolean = false;
     // 倒计时
     private _countDownEnd: number = 0;
     private _countDownTotal: number = 0;
     private _isCounting: boolean = false;
+    private _clickedDelayTimes: number = 0;
+    private _isCommitting: boolean = false;
     // ============================================================
     // 生命周期
     // ============================================================
@@ -198,6 +204,8 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
         this._cachedBuyList.length = 0;
         this._currentPotIndex = 0;
         this._currentPool = PoolType.THIRD;
+        this._clickedDelayTimes = 0;
+        this._isCommitting = false;
         // 倒计时
         this._countDownTotal = Math.max(1, op.totalOpDuration || this._basic.insuranceOpduration || 30);
         const now = Date.now() / 1000;
@@ -210,6 +218,7 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
         // 当前池
         this._refreshCurrentPot();
         this._publicCardsChange();
+        this._refreshDelayButton(op.alreadyDelayTImes || 0);
         // 显示
         this._setVisible(true);
     }
@@ -222,7 +231,7 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
         this._setVisible(false);
     }
 
-    protected onEnable(): void {}
+    protected onEnable(): void { }
 
     protected onDisable(): void {
         // unBindEventsAll(this);
@@ -239,8 +248,7 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
             // 倒计时归零：把已缓存内容一次性提交并 confirm。
             // 之后服务端会清 mine.operator，组件自己监听到后会切到隐藏态。
             TexasTableEvent.CommitBuyInsurance(this._player, this._cachedBuyList.slice(), true);
-            // 父类关闭窗口
-            super.close();
+            this._finishInsuranceOperation();
         }
     }
     // ============================================================
@@ -258,8 +266,8 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
         this.textPot = cc.find('Header/Text_Pot_title/Text_Pot', dialog)?.getComponent(cc.Label) || null;
         this.multiPoolToggles = cc.find('Header/MultiPoolToggles', dialog);
         this.multiPoolToggleTemplate = this.multiPoolToggles?.getChildByName('MultiPoolToggle') || null;
-        this.playerMineNode = cc.find('Header/Player_Mine', dialog);
-        this.playersContent = cc.find('Header/Players/view/Players_Content', dialog) || cc.find('Header/Players/view/players_Content', dialog);
+        this.playerMineNode = cc.find('Header/players_Content/Player_Mine', dialog);
+        this.playersContent = cc.find('Header/players_Content/Players/view/players_Content', dialog);
         this.playersNext = cc.find('ScrollViewRoot/Viewport/InsuranceCards/Players_Next', dialog);
         this.playerTemplate = this.playersContent?.children.find(c => c.name === 'Player') || null;
         const publicCards = cc.find('Header/PublicCardContent/PublicCards', dialog);
@@ -275,6 +283,8 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
         this.insuranceCardSplitTemplate = this.insuranceCardsSplitContent?.getChildByName('Image_InsuranceCard') || null;
         this.textOddsOver = cc.find('Label/Text_Odds_Over', this.insuranceCardsOver)?.getComponent(cc.Label) || null;
         this.textOddsSplit = cc.find('Label/Text_Odds_Split', this.insuranceCardsSplit)?.getComponent(cc.Label) || null;
+        this.sortNumToggle = cc.find('ScrollViewRoot/Viewport/InsuranceCards/SortToggle/NumToggle', dialog)?.getComponent(cc.Toggle) || null;
+        this.sortGraToggle = cc.find('ScrollViewRoot/Viewport/InsuranceCards/SortToggle/GraToggle', dialog)?.getComponent(cc.Toggle) || null;
         this.textMainPut = cc.find('ContentPar/Text_MainPut', dialog)?.getComponent(cc.Label) || null;
         this.textInsuranceValue = cc.find('ContentPar/Text_InsuranceValue', dialog)?.getComponent(cc.Label) || null;
         this.textPayValue = cc.find('ContentPar/Text_PayValue', dialog)?.getComponent(cc.Label) || null;
@@ -322,6 +332,12 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
         if (this.buttonCancel) this.buttonCancel.on('click', this._onClickCancel, this);
         if (this.buttonDelay) this.buttonDelay.on('click', this._onClickDelay, this);
         this.poolButtons.forEach(pb => pb.node.on('click', () => this._onClickPool(pb.type), this));
+        if (this.sortNumToggle) {
+            this.sortNumToggle.node.on('toggle', () => this.sortNumToggle.isChecked && this._onClickSort(false), this);
+        }
+        if (this.sortGraToggle) {
+            this.sortGraToggle.node.on('toggle', () => this.sortGraToggle.isChecked && this._onClickSort(true), this);
+        }
     }
 
     /**
@@ -475,6 +491,8 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
     private _renderOuts(pot: InsurancePotLimit.AsObject): void {
         this._destroyOutsItems();
         const { overOuts, equalOuts } = this._splitOuts(pot);
+        this._sortCards(overOuts);
+        this._sortCards(equalOuts);
         if (this.insuranceCardsOver) this.insuranceCardsOver.active = overOuts.length > 0;
         if (this.insuranceCardsSplit) this.insuranceCardsSplit.active = equalOuts.length > 0;
         const overOdd = this._oddsFor(pot, overOuts.length);
@@ -552,8 +570,7 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
                 break;
         }
         this.poolButtons.forEach(pb => {
-            const realPay = Math.floor(this._realPayAmount(pot, pb.type) * 100);
-            if (realPay > pot.max) this._setPoolBtnEnabled(pb, false);
+            if (!this._canPayFromPoolType(pot, pb.type)) this._setPoolBtnEnabled(pb, false);
         });
         const order = [PoolType.ALL, PoolType.HALF, PoolType.THIRD, PoolType.FIFTH, PoolType.EIGHTH, PoolType.MIN_MONEY];
         const found = order.find(t => {
@@ -641,13 +658,21 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
     }
 
     private _onClickBuy(): void {
+        if (this._isCommitting) return;
         const pot = this._currentPot();
         if (!pot) return;
-        if (!this._cacheCurrentPotBuy(pot, false)) return;
+        if (!this._cacheCurrentPotBuy(pot, false)) {
+            this.tracelog?.warn('buy insurance ignored: no valid over outs or pay value', {
+                potId: pot.potId,
+                overOutsPayValue: this._overOutsPayValue
+            });
+            return;
+        }
         this._advanceOrCommit();
     }
 
     private _onClickCancel(): void {
+        if (this._isCommitting) return;
         const pot = this._currentPot();
         if (!pot) return;
         const ratio = this._basic.insuranceForceBuyRatio || 0;
@@ -657,8 +682,41 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
     }
 
     private _onClickDelay(): void {
-        // 加时按钮：当前重构暂不接入钻石折扣 UI，留待后续完善
-        // 服务端协议在 AddTime.ts 已经实现，需要时通过 ProtocolAgency.Send(MSG_D_ADD_TIME, ...) 走一次
+        if (this._isCommitting) return;
+        if (!this._player?.roomData) return;
+        const op = this._currentOperator();
+        const delayCount = op?.alreadyDelayTImes || 0;
+        if (this._clickedDelayTimes > 1 || delayCount >= 2) {
+            this._refreshDelayButton(delayCount);
+            return;
+        }
+        const consume = this._nextDelayConsumeType(delayCount);
+        ProtocolAgency.Send({
+            code: Code.MSG_D_ADD_TIME,
+            roomID: this._player.roomData.roomID,
+            matchID: this._player.roomData.matchID,
+            body: {
+                room: {
+                    roomId: this._player.roomData.roomID,
+                    matchId: this._player.roomData.matchID
+                },
+                consume,
+                directConsume: false
+            }
+        });
+        const now = Date.now() / 1000;
+        const addSeconds = delayCount === 0 ? 30 : 20;
+        this._countDownEnd = Math.max(this._countDownEnd, now) + addSeconds;
+        this._countDownTotal += addSeconds;
+        if (op) op.alreadyDelayTImes = (op.alreadyDelayTImes || 0) + 1;
+        this._clickedDelayTimes += 1;
+        this._refreshDelayButton(op?.alreadyDelayTImes || delayCount + 1);
+    }
+
+    private _onClickSort(byGraphics: boolean): void {
+        this._sortByGraphics = byGraphics;
+        const pot = this._currentPot();
+        if (pot) this._renderOuts(pot);
     }
     /** 点击半透明背景：等同于放弃整体保险。 */
     // private _onClickBackdrop(): void {
@@ -669,13 +727,14 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
     //     this._setVisible(false);
     // }
     public override close(): void {
-        TexasTableEvent.CommitBuyInsurance(this._player, this._cachedBuyList.slice(), true);
-        this._isCounting = false;
-        // 调用父类关闭
-        super.close();
+        if (!this._isCommitting && this._player) {
+            TexasTableEvent.CommitBuyInsurance(this._player, this._cachedBuyList.slice(), true);
+        }
+        this._finishInsuranceOperation();
     }
 
     private _advanceOrCommit(): void {
+        if (this._isCommitting) return;
         const operator = this._currentOperator();
         const pots = operator?.insurancePotLimitList || [];
         if (this._currentPotIndex < pots.length - 1) {
@@ -689,10 +748,11 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
             }
             return;
         }
-        // 最后一池：确认提交。隐藏不在这里做 ——
-        // 等服务端清掉 mine.operator 后，onOperatorChange 会自动隐藏面板。
+        // 最后一池：确认提交后先本地关闭，服务端回包再更新 operator/成交明细。
+        this._isCommitting = true;
+        this._setActionButtonsEnabled(false);
         TexasTableEvent.CommitBuyInsurance(this._player, this._cachedBuyList.slice(), true);
-        this._isCounting = false;
+        this._finishInsuranceOperation();
     }
     // ============================================================
     // 数值计算（对齐老版逻辑：先按池档算赔付目标，再反推保费）
@@ -808,6 +868,7 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
     // ============================================================
     private _cacheCurrentPotBuy(pot: InsurancePotLimit.AsObject, useMinAsActiveAmount: boolean): boolean {
         const { overOuts } = this._splitOuts(pot);
+        this._sortCards(overOuts);
         if (!useMinAsActiveAmount && (!overOuts.length || this._overOutsPayValue <= 0)) {
             return false;
         }
@@ -848,10 +909,14 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
     private _clearTransientState(): void {
         this._cachedBuyList.length = 0;
         this._currentPotIndex = 0;
+        this._overOutsPayValue = 0;
+        this._clickedDelayTimes = 0;
+        this._isCommitting = false;
         this._destroyArray(this._multiToggleNodes);
         this._destroyArray(this._playerClones);
         this._destroyOutsItems();
         if (this.playersNext) this.playersNext.active = false;
+        this._setActionButtonsEnabled(true);
     }
 
     private _destroyArray(nodes: cc.Node[]): void {
@@ -867,6 +932,62 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
 
     private _formatOdds(odd: number): string {
         return `1:${Number.isFinite(odd) && odd > 0 ? odd : 0}`;
+    }
+
+    private _sortCards(cards: number[]): void {
+        cards.sort((a, b) => {
+            const ar = a % 15;
+            const br = b % 15;
+            if (!this._sortByGraphics) return ar - br;
+            const as = Math.floor(a / 15);
+            const bs = Math.floor(b / 15);
+            return as === bs ? ar - br : as - bs;
+        });
+    }
+
+    private _nextDelayConsumeType(delayCount: number): Def.ConsumeTypeMap[keyof Def.ConsumeTypeMap] {
+        return (delayCount === 0 ? Def.ConsumeType.CT_DELAY_2 : Def.ConsumeType.CT_DELAY_3) as Def.ConsumeTypeMap[keyof Def.ConsumeTypeMap];
+    }
+
+    private _setDelayButtonEnabled(enabled: boolean): void {
+        const btn = this.buttonDelay?.getComponent(cc.Button);
+        if (btn) btn.interactable = enabled;
+        if (this.buttonDelay) this.buttonDelay.opacity = enabled ? 255 : 178;
+        if (!enabled && this.textDelayBean) this.textDelayBean.string = '0';
+    }
+
+    private _refreshDelayButton(delayCount: number): void {
+        const enabled = this._clickedDelayTimes <= 1 && delayCount < 2 && !this._isCommitting;
+        this._setDelayButtonEnabled(enabled);
+        if (this.textDelayBean) {
+            this.textDelayBean.string = enabled ? `${2 * Math.pow(2, delayCount)}` : '0';
+        }
+    }
+
+    private _setActionButtonsEnabled(enabled: boolean): void {
+        [this.buttonBuy, this.buttonCancel].forEach(node => {
+            const btn = node?.getComponent(cc.Button);
+            if (btn) btn.interactable = enabled;
+            if (node) node.opacity = enabled ? 255 : 178;
+        });
+        if (!enabled) this._setDelayButtonEnabled(false);
+    }
+
+    private _finishInsuranceOperation(): void {
+        this._isCounting = false;
+        if (this._player?.player?.operator?.opType === OpertionType.INSURANCE) {
+            this._player.player.operator = null;
+        }
+        if (this._player?.operator) {
+            this._player.operator = null;
+        }
+        super.close();
+    }
+
+    private _canPayFromPoolType(pot: InsurancePotLimit.AsObject, type: PoolType): boolean {
+        const realPay = Math.floor(this._realPayAmount(pot, type) * 100);
+        if (realPay <= 0) return false;
+        return realPay <= pot.max;
     }
 
     private _floorTrim(value: number): string {

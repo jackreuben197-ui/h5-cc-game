@@ -17,4 +17,7 @@ export function BuyInsuranceActive(data: ServerMessageBuyInsuranceActive.AsObjec
     if (roomData?.mine?.operator?.opType === 2) {
         roomData.mine.operator = null;
     }
+    if (roomData?.mine?.player?.operator?.opType === 2) {
+        roomData.mine.player.operator = null;
+    }
 }

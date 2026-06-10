@@ -31,6 +31,34 @@ export class Operator {
     public roundBetEqual: number; // 本轮CALL平的RoundBet
 }
 
+export type OperatorTimeUpdate = {
+    duration: number;
+    times: number;
+    deadline: number;
+};
+
+function cloneOperator<T extends Operator>(oper: T): T {
+    const next = oper instanceof OperatorMine ? new OperatorMine() : new Operator();
+    Object.assign(next, oper);
+    return next as T;
+}
+
+export function updateOperatorAfterAddTime<T extends Operator>(oper: T, payload: OperatorTimeUpdate): T {
+    const next = cloneOperator(oper);
+    const now = Date.now() / 1000;
+    const duration = Math.max(0, payload.duration || 0);
+    const currentEndTime =
+        next.deadlineTImestamp > 0 ? next.deadlineTImestamp : now + Math.max(0, next.leftOpDuration || 0);
+    const nextEndTime = payload.deadline > 0 ? payload.deadline : Math.max(currentEndTime, now) + duration;
+    const leftTime = Math.max(0, nextEndTime - now);
+    const currentTotal = Math.max(1, next.totalOpDuration || 0, next.leftOpDuration || 0);
+    next.alreadyDelayTImes = payload.times;
+    next.deadlineTImestamp = nextEndTime;
+    next.leftOpDuration = leftTime;
+    next.totalOpDuration = Math.max(1, currentTotal + duration, leftTime);
+    return next;
+}
+
 export class OperatorMine extends Operator {
     // 正常
     public actionLimitList?: ActionLimit.AsObject[];

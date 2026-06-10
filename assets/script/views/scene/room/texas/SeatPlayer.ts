@@ -1,7 +1,7 @@
 import { Def } from '@silenthill/agreement-web';
 import { autoBindEvents, bindEvent, unBindEvents, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
-import { Operator } from '../../../../data/room/texas/model/Operator';
+import { Operator, OpertionType } from '../../../../data/room/texas/model/Operator';
 import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import { SeatPosition } from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
@@ -13,6 +13,7 @@ import {
     AnimateDisplayTypeRoundBet
 } from '../../../../game/constant/AnimateDisplayType';
 import { StringHelper } from '../../../../helper/StringHelper';
+import { CPErrorCode } from '../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
 import UIViewUtil from '../../../util/UIViewUtil';
 import CardView from '../../../widget/CardView';
@@ -95,6 +96,11 @@ export default class SeatPlayer extends cc.Component {
     private returnToGameButton: cc.Button = null!;
     @property({ type: DisplayNode, displayName: '牌型节点' })
     private handValueTypeNode: DisplayNode = null!;
+    @property({ type: cc.Node, displayName: '保险购买中气泡' })
+    private insuranceCountdownBubble: cc.Node = null!;
+    @property({ type: cc.Label, displayName: '保险购买中气泡文本' })
+    private insuranceCountdownLabel: cc.Label = null!;
+    private _insuranceCountdownEndTime = 0;
     private _seatPlayer: TexasGameRoomDataPlayer = null!;
     private _setting: TexasGameRoomDataSetting = null!;
     private _cardBacks: cc.Node[] = [];
@@ -132,6 +138,7 @@ export default class SeatPlayer extends cc.Component {
             TexasTableEvent.Sitdown(this._seatPlayer.roomData.mine, this._seatPlayer.seatNo);
         };
         this.emptySeat.node.on('click', this._clickEmptySeat, this);
+        this._hideInsuranceCountdownBubble();
     }
 
     protected onEnable(): void {
@@ -140,6 +147,7 @@ export default class SeatPlayer extends cc.Component {
     }
 
     protected onDisable(): void {
+        this._hideInsuranceCountdownBubble();
         unBindEventsAll(this);
     }
 
@@ -170,6 +178,9 @@ export default class SeatPlayer extends cc.Component {
         if (b && mine) {
             autoBindEvents(this, { mine: mine });
             return;
+        }
+        if (!b) {
+            this._hideInsuranceCountdownBubble();
         }
         //解绑(自己站起)
         if (mine) {
@@ -562,7 +573,13 @@ export default class SeatPlayer extends cc.Component {
         if (!oper) {
             this.otherPersonActionCountdown.stop();
             this.otherPersonActionCountdown.node.active = false;
+            this._hideInsuranceCountdownBubble();
             return;
+        }
+        if (oper.opType === OpertionType.INSURANCE) {
+            this._showInsuranceCountdownBubble(oper);
+        } else {
+            this._hideInsuranceCountdownBubble();
         }
         this.otherPersonActionCountdown.node.active = true;
         this.otherPersonActionCountdown.startTimer({
@@ -571,9 +588,42 @@ export default class SeatPlayer extends cc.Component {
             onComplete: () => {
                 this.otherPersonActionCountdown.stop();
                 this.otherPersonActionCountdown.node.active = false;
+                this._hideInsuranceCountdownBubble();
             }
         });
     }
+
+    private _showInsuranceCountdownBubble(oper: Operator) {
+        if (!this.insuranceCountdownBubble || this._seatPlayer.mine) {
+            this._hideInsuranceCountdownBubble();
+            return;
+        }
+        const now = Date.now() / 1000;
+        this._insuranceCountdownEndTime = oper.deadlineTImestamp > 0 ? oper.deadlineTImestamp : now + Math.max(0, oper.leftOpDuration || 0);
+        this.insuranceCountdownBubble.active = true;
+        this._updateInsuranceCountdownBubble();
+        this.unschedule(this._updateInsuranceCountdownBubble);
+        this.schedule(this._updateInsuranceCountdownBubble, 0.25);
+    }
+
+    private _hideInsuranceCountdownBubble() {
+        this.unschedule(this._updateInsuranceCountdownBubble);
+        this._insuranceCountdownEndTime = 0;
+        if (this.insuranceCountdownBubble) {
+            this.insuranceCountdownBubble.active = false;
+        }
+    }
+
+    private _updateInsuranceCountdownBubble = () => {
+        if (!this.insuranceCountdownBubble || !this.insuranceCountdownBubble.active) return;
+        const leftTime = Math.max(0, Math.ceil(this._insuranceCountdownEndTime - Date.now() / 1000));
+        if (this.insuranceCountdownLabel) {
+            this.insuranceCountdownLabel.string = CPErrorCode.LanguageDescription(20062, [leftTime]);
+        }
+        if (leftTime <= 0) {
+            this._hideInsuranceCountdownBubble();
+        }
+    };
 
     @bindEvent(TexasGameRoomDataPlayer.WINNER, { dataSource: 'player', initIgnore: true })
     private onWin() {
