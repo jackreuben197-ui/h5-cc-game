@@ -10,14 +10,7 @@
     "forceConsistentCasingInFileNames": true,
     "strictNullChecks": false,
     "ignoreDeprecations": "6.0",
-    "types": ["node"],
-    "baseUrl": ".",
-    "paths": {
-      // @silenthill/h5-cc-bridge 走 npm 依赖，仅作类型来源（CC 端只 import 类型，运行时被擦除）。
-      // 默认 moduleResolution=node（classic），不会读包的 exports 字段，所以手动 paths 映射到 dist。
-      "@silenthill/h5-cc-bridge": ["./node_modules/@silenthill/h5-cc-bridge/dist/index"],
-      "@silenthill/h5-cc-bridge/*": ["./node_modules/@silenthill/h5-cc-bridge/dist/*"]
-    }
+    "types": ["node"]
   },
   "exclude": [
     "back_script",
