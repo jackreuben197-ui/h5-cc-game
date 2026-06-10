@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@silenthill/agreement-web": "git+ssh://git@github.com:kingofake/agreement-web.git#master",
-    "@silenthill/h5-cc-i18n": "github:guysoup027/h5-cc-i18n",
+    "@silenthill/h5-cc-i18n": "git+ssh://git@github.com:guysoup027/h5-cc-i18n",
     "@types/gapi": "^0.0.43",
     "http-server": "^14.1.1",
     "httpserver": "^0.3.0",
