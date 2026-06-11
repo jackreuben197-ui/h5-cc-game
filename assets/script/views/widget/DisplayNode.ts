@@ -17,13 +17,11 @@ export class DisplayNode extends cc.Component {
         displayName: '拖入多个Label节点'
     })
     labels: cc.Label[] = [];
-    
     @property({
         type: [cc.Sprite],
         displayName: '可能要操作的多个图片精灵'
     })
     sprites: cc.Sprite[] = [];
-
     @property({
         type: [cc.Node],
         displayName: '可能要操作的多个节点'
@@ -46,7 +44,6 @@ export class DisplayNode extends cc.Component {
         return sp;
     }
 
-    
     /** 获取某个节点 */
     public getOpNode(index: number): cc.Node {
         const sp = this.innerNodes[index];

@@ -54,7 +54,7 @@ export default class UIRechargeDiamond extends UIComponentBaseDialog {
             durationSeconds: 900,
             onComplete() {
                 viewManager.showToast(i18nMgr.Get('roomError148_2'));
-            },
+            }
         });
     }
 

@@ -17,12 +17,12 @@ import { CPErrorCode } from '../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
 import UIViewUtil from '../../../util/UIViewUtil';
 import CardView from '../../../widget/CardView';
+import CountDownLabel, { CountDownFormat } from '../../../widget/CountDownLabel';
 import { DisplayNode } from '../../../widget/DisplayNode';
 import RemoteSprite from '../../../widget/RemoteSprite';
 import ShiningPathTimer from '../../../widget/ShiningPathTimer';
 import TexasTableEvent from './events/TexasTableEvent';
 import SeatAction from './SeatAction';
-import CountDownLabel, { CountDownFormat } from '../../../widget/CountDownLabel';
 
 const { ccclass, property, menu } = cc._decorator;
 
@@ -62,11 +62,11 @@ export default class SeatPlayer extends cc.Component {
     private chips: cc.Label = null!;
     @property(cc.Button)
     private emptySeat: cc.Button = null!;
-    @property({type:cc.Node, displayName: '真实用户根节点'})
+    @property({ type: cc.Node, displayName: '真实用户根节点' })
     private userSeat: cc.Node = null!;
-    @property({type:cc.Node, displayName: '庄家图标'})
+    @property({ type: cc.Node, displayName: '庄家图标' })
     public buttonIcon: cc.Node = null!; // 无奈放开吧
-    @property({type:cc.Node, displayName: '小牌显示的容器'})
+    @property({ type: cc.Node, displayName: '小牌显示的容器' })
     private smallCardsContainer: cc.Node = null!;
     // round bet related
     @property(cc.Node)
@@ -75,17 +75,17 @@ export default class SeatPlayer extends cc.Component {
     private roundBetLabel: cc.Label = null!;
     @property(cc.Node)
     private roudBetIcon: cc.Node = null!;
-    @property({type:cc.Node, displayName: '大牌显示的容器,包括我的'})
+    @property({ type: cc.Node, displayName: '大牌显示的容器,包括我的' })
     private bigCardsContainer: cc.Node = null!;
     @property(cc.Node)
     private animatingChips: cc.Node = null!;
     @property(SeatAction)
     private seatActionDisplay: SeatAction = null!;
-    @property({type:ShiningPathTimer, displayName: '其他人的倒计时圆圈'})
+    @property({ type: ShiningPathTimer, displayName: '其他人的倒计时圆圈' })
     private otherPersonActionCountdown: ShiningPathTimer = null!;
     @property(sp.Skeleton)
     private winAnimation: sp.Skeleton = null!;
-   @property({type:ShiningPathTimer, displayName: '留坐的倒计时圆圈'})
+    @property({ type: ShiningPathTimer, displayName: '留坐的倒计时圆圈' })
     private keepSeatTimer: ShiningPathTimer = null;
     @property({ type: DisplayNode, displayName: '胜率节点' })
     private winPercentNode: DisplayNode = null;
@@ -141,7 +141,7 @@ export default class SeatPlayer extends cc.Component {
         };
         this.emptySeat.node.on('click', this._clickEmptySeat, this);
         this.insuranceCountdownBubble.node.active = false;
-        this.returnToGameButton.node.on('click', this._clickReturnToGame, this)
+        this.returnToGameButton.node.on('click', this._clickReturnToGame, this);
     }
 
     protected onEnable(): void {
@@ -240,7 +240,7 @@ export default class SeatPlayer extends cc.Component {
     private onSquidCount(b: number) {
         if (b > 0) {
             this.squidNode.node.active = true;
-            this.squidNode.setText(b+'');
+            this.squidNode.setText(b + '');
             return;
         }
         this.squidNode.node.active = false;
@@ -250,7 +250,6 @@ export default class SeatPlayer extends cc.Component {
     private onSquidEscaped(b: boolean) {
         this.squidMaskNode.active = b;
     }
-
     // =================== 鱿鱼 （END） ====================
 
     // onUpdatePosition 位置变动导致的动画/位置调整
@@ -617,14 +616,14 @@ export default class SeatPlayer extends cc.Component {
         if (oper.opType === OpertionType.INSURANCE) {
             this.insuranceCountdownBubble.node.active = true;
             this.insuranceCountdownBubble.startCountDown({
-                durationSeconds: oper.leftOpDuration, 
-                format: CountDownFormat.PURE_SEC, 
+                durationSeconds: oper.leftOpDuration,
+                format: CountDownFormat.PURE_SEC,
                 prefix: CPErrorCode.LanguageDescription(20062),
                 onComplete: () => {
                     this.insuranceCountdownBubble.stop();
                     this.insuranceCountdownBubble.node.active = false;
-                },
-            })
+                }
+            });
         }
         this.otherPersonActionCountdown.node.active = true;
         this.otherPersonActionCountdown.startTimer({
@@ -633,7 +632,6 @@ export default class SeatPlayer extends cc.Component {
             onComplete: () => {
                 this.otherPersonActionCountdown.stop();
                 this.otherPersonActionCountdown.node.active = false;
-                
             }
         });
     }
@@ -663,18 +661,18 @@ export default class SeatPlayer extends cc.Component {
         if (this._onReturnGameCallback) {
             this._onReturnGameCallback();
         }
-    };
+    }
 
     private _onReturnGameCallback: () => void = null!;
 
-    @traceMethod({level: 'debug'})
+    @traceMethod({ level: 'debug' })
     private createReturnToGameClick(r: Def.KeepSeatReasonMap[keyof Def.KeepSeatReasonMap]): () => void {
         if (r == Def.KeepSeatReason.KSR_NONE) {
             this.returnToGameButton.node.active = false;
-        }else{
-            this.returnToGameButton.node.active = true
+        } else {
+            this.returnToGameButton.node.active = true;
         }
-        this.tracelog.debug('ksr', r)
+        this.tracelog.debug('ksr', r);
         return () => {
             switch (r) {
                 case Def.KeepSeatReason.KSR_NONE:
@@ -695,14 +693,12 @@ export default class SeatPlayer extends cc.Component {
         };
     }
 
-
-
     @bindEvent(TexasGameRoomDataPlayer.KEEPSEAT_CHANGE, 'player')
-    @traceMethod({level:'debug'})
+    @traceMethod({ level: 'debug' })
     private onKeepSeatStart(b: boolean, deadline: number, reason: Def.KeepSeatReasonMap[keyof Def.KeepSeatReasonMap]) {
         if (b) {
             this.keepSeatTimer.node.active = true;
-            if (deadline > Date.now()/1000) {
+            if (deadline > Date.now() / 1000) {
                 this.keepSeatTimer.startTimer({
                     totalTime: Math.ceil(deadline - Date.now() / 1000),
                     onComplete: () => {
@@ -710,7 +706,7 @@ export default class SeatPlayer extends cc.Component {
                         this.keepSeatTimer.node.active = false;
                     }
                 });
-            }else{
+            } else {
                 this.keepSeatTimer.stop();
             }
             this.tracelog.debug(this._seatPlayer.seatNo, this._seatPlayer.mine);

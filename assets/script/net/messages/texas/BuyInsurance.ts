@@ -1,10 +1,10 @@
+import { ServerMessageBuyInsurance } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import viewManager from '../../../views/UIViewManager';
-import { ServerMessageBuyInsurance } from '@silenthill/agreement-web';
 
 const _glog = createLogger('ServerMessageBuyInsurance');
 

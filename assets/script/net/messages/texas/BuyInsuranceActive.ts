@@ -1,8 +1,8 @@
+import { ServerMessageBuyInsuranceActive } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
-import { ServerMessageBuyInsuranceActive } from '@silenthill/agreement-web';
 import viewManager from '../../../views/UIViewManager';
 
 const _glog = createLogger('ServerMessageBuyInsuranceActive');

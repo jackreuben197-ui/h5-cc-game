@@ -1,3 +1,4 @@
+import { Code, Def, InsurancePotLimit, OutsCard, PotInsuranceBuy } from '@silenthill/agreement-web';
 import { traceClass } from '../../../core/decorator/LogTrace';
 import { OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
@@ -8,7 +9,6 @@ import TexasGameRoomDataSeatsStateManager from '../../../data/room/texas/TexasGa
 import GameplayUtil from '../../../game/util/GameplayUtil';
 import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
-import { Code, Def, InsurancePotLimit, OutsCard, PotInsuranceBuy } from '@silenthill/agreement-web';
 import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import { AssetCollectionType } from '../../loader/AssetLoader';
@@ -231,7 +231,7 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
         this._setVisible(false);
     }
 
-    protected onEnable(): void { }
+    protected onEnable(): void {}
 
     protected onDisable(): void {
         // unBindEventsAll(this);

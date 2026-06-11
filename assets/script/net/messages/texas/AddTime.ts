@@ -1,6 +1,6 @@
 import { ServerMessageAddTime } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
-import { OpertionType, OperatorTimeUpdate, updateOperatorAfterAddTime } from '../../../data/room/texas/model/Operator';
+import { OperatorTimeUpdate, OpertionType, updateOperatorAfterAddTime } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayer from '../../../data/room/texas/TexasGameRoomDataPlayer';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';

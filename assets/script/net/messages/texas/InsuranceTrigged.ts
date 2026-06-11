@@ -1,10 +1,10 @@
+import { Def, InsurancePotInvalid, ServerMessageInsuranceTrigged } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import viewManager from '../../../views/UIViewManager';
-import { Def, InsurancePotInvalid, ServerMessageInsuranceTrigged } from '@silenthill/agreement-web';
 
 const _glog = createLogger('ServerMessageInsuranceTrigged');
 

@@ -11,8 +11,8 @@ import {
     AnimateDisplayTypePosition,
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
-import viewManager from '../../../views/UIViewManager';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
+import viewManager from '../../../views/UIViewManager';
 
 const _plog = createLogger('ServerMessageEnterRoom');
 

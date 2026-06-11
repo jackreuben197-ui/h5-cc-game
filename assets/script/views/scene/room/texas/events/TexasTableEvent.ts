@@ -1,4 +1,4 @@
-import { ClientMessageSeated, PotInsuranceBuy, Code, Def, RoomInfo } from '@silenthill/agreement-web';
+import { ClientMessageSeated, Code, Def, PotInsuranceBuy, RoomInfo } from '@silenthill/agreement-web';
 import { traceClass } from '../../../../../core/decorator/LogTrace';
 import TexasGameRoomDataPlayerMine from '../../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import userStore from '../../../../../data/user/UserStore';
@@ -500,7 +500,7 @@ export default class TexasTableEvent {
                     roomId: player.roomData.roomID,
                     matchId: player.roomData.matchID
                 },
-                enable: true,
+                enable: true
             }
         });
     }

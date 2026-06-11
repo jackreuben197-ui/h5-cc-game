@@ -3,8 +3,8 @@ import { bindData, IObservableBindings, observable, pureEvent } from '../../../c
 import { traceClass } from '../../../core/decorator/LogTrace';
 import { handValueTypeToString } from '../../../core/poker/PoerkCard';
 import { getMaxHandValueByPokeType } from '../../../core/poker/PokerUtil';
-import { VideoModel } from '../../../game/constant/VideoModel';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
+import { VideoModel } from '../../../game/constant/VideoModel';
 import { OperatorMine } from './model/Operator';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';
@@ -110,7 +110,7 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     private setRightAutoOpPannelEmit(rightAutoOpType: AutoOperationTypeTexas, amount: number) {}
 
     @observable(TexasGameRoomDataPlayerMine.SHOW_SQUID_IN)
-    public showSquidInButton:boolean = false;
+    public showSquidInButton: boolean = false;
 
     /** 计算当前能带入的上下限 */
     public caculateCanBringMinMax() {

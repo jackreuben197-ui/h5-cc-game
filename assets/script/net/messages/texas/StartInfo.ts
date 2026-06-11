@@ -73,10 +73,10 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
             }
             seatData.mine.storeChips = player.storeChips;
         }
-    } 
+    }
     // 如果我坐着,则处理下我的加入按钮
     if (roomData.mine.seatNo > 0) {
-         if (roomData.basicInfo.squidStatusEnabled) {
+        if (roomData.basicInfo.squidStatusEnabled && !roomData.mine.player.isKeepSeat) {
             roomData.mine.showSquidInButton = roomData.mine.player.squidIn;
         }
     }

@@ -42,7 +42,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public static readonly KEEPSEAT_CHANGE = 'KEEPSEAT_CHANGE';
     public static readonly ALLIN_WIN_PERCENT = 'ALLIN_WIN_PERCENT';
     public static readonly WINNER = 'WINNER';
-    public static readonly SQUID_COUNT= 'SQUID_COUNT';
+    public static readonly SQUID_COUNT = 'SQUID_COUNT';
     public static readonly SQUID_ESCAPED = 'SQUID_ESCAPED';
     public static readonly MUSHROOM_COUNT = 'MUSHROOM_COUNT';
     private _parentRoomData: TexasGameRoomData;
@@ -76,10 +76,10 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public buyInsuranceList: Array<PotInsuranceBuy.AsObject> = [];
     //留坐
     private _keepSeatDeadline: number = 0;
-    public get keepSeatDeadline() {
-        return this._keepSeatDeadline;
-    }
     private _keepSeatReason: Def.KeepSeatReasonMap[keyof Def.KeepSeatReasonMap] = Def.KeepSeatReason.KSR_NONE;
+    public get isKeepSeat() {
+        return this._keepSeatDeadline > 0 || this._keepSeatReason != Def.KeepSeatReason.KSR_NONE;
+    }
 
     @pureEvent(TexasGameRoomDataPlayer.KEEPSEAT_CHANGE, {
         initParams() {
@@ -128,7 +128,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     // =========================================================================
     @observable(TexasGameRoomDataPlayer.ACTION_CHANGE)
     public action: Def.ActionMap[keyof Def.ActionMap] = Def.Action.NONE;
-    @observable(TexasGameRoomDataPlayer.SEAT_POSITION_CHANGE, {forceEmit: true})
+    @observable(TexasGameRoomDataPlayer.SEAT_POSITION_CHANGE, { forceEmit: true })
     public position: SeatPosition = SeatPosition.Default;
     @observable(TexasGameRoomDataPlayer.SHOW_CARDS_CHANGE)
     public cards: number[] = [];

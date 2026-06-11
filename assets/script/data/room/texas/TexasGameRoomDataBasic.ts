@@ -293,7 +293,9 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public squidForceShowCard: boolean; // 获得鱿鱼强制亮牌 1 开 0 关
     public squidLeaveMode: SquidLeaveMode; // 鱿鱼轮离开模式 1 可以离开 2 不可以离开（一轮结束才可以离开，如果筹码不足没补充就走模式1）
     private _squidPlayerCountLimit: number = 0;
-    public get squidPlayerCountLimit(): number{return this._squidPlayerCountLimit}; // 鱿鱼轮开启的人数限制
+    public get squidPlayerCountLimit(): number {
+        return this._squidPlayerCountLimit;
+    } // 鱿鱼轮开启的人数限制
     public squidMode: SquidMode; // 鱿鱼模式：0经典，1血战
     public squidExtraCount: number; // 额外的鱿鱼个数（血战）
     public squidCountRateList: SquidCountRateConfig.AsObject[] = []; // // 血战鱿鱼，鱿鱼个数翻倍
