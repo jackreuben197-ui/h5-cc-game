@@ -50,7 +50,7 @@ const yellowColor = cc.Color.fromHEX(new cc.Color(), '#F9CA9F');
 
 @ccclass
 @menu('Scene/Room/Texas/SeatPlayer')
-@traceClass()
+@traceClass({level:'debug'})
 export default class SeatPlayer extends cc.Component {
     @property(cc.Label)
     private nickName: cc.Label = null!;
@@ -628,7 +628,7 @@ export default class SeatPlayer extends cc.Component {
         this.otherPersonActionCountdown.node.active = true;
         this.otherPersonActionCountdown.startTimer({
             totalTime: oper.totalOpDuration,
-            elapsedTime: oper.totalOpDuration - oper.leftOpDuration,
+            elapsedTime: oper.elapsedTime,
             onComplete: () => {
                 this.otherPersonActionCountdown.stop();
                 this.otherPersonActionCountdown.node.active = false;

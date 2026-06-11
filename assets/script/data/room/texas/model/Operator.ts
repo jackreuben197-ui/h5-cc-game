@@ -33,6 +33,9 @@ export class Operator {
         const endTime = this.deadlineTImestamp > 0 ? this.deadlineTImestamp : now + Math.max(0, this._leftOpDuration || 0);
         return Math.max(0, Math.ceil(endTime - Date.now() / 1000));
     }
+    public get elapsedTime() {
+        return Math.max(0, this.totalOpDuration - this.leftOpDuration);
+    }
     public alreadyDelayTImes: number;
     public deadlineTImestamp: number;
     public totalOpDuration: number; // 房间配置
