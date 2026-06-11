@@ -6,8 +6,12 @@ import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 export function KeepSeat(data: ServerMessageKeepSeat.AsObject, roomID: number, matchID: number) {
     let roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     const seatPlayer = roomData.seatsStateManager.getSeatPlayer(data.seatId);
+    let deadline = data.deadline;
+    if (data.leftTime == 0) {
+        deadline = 0;
+    }
     if (data.keep) {
-        seatPlayer.keepSeat(true, data.deadline, data.keepSeatReason);
+        seatPlayer.keepSeat(true, deadline, data.keepSeatReason);
     } else {
         seatPlayer.keepSeat(false, 0, 0);
     }

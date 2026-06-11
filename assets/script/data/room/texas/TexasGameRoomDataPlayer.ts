@@ -128,7 +128,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     // =========================================================================
     @observable(TexasGameRoomDataPlayer.ACTION_CHANGE)
     public action: Def.ActionMap[keyof Def.ActionMap] = Def.Action.NONE;
-    @observable(TexasGameRoomDataPlayer.SEAT_POSITION_CHANGE)
+    @observable(TexasGameRoomDataPlayer.SEAT_POSITION_CHANGE, {forceEmit: true})
     public position: SeatPosition = SeatPosition.Default;
     @observable(TexasGameRoomDataPlayer.SHOW_CARDS_CHANGE)
     public cards: number[] = [];

@@ -50,10 +50,12 @@ export default class UIRechargeDiamond extends UIComponentBaseDialog {
         this.amountLabel.string = param.amount.toString();
         this.icon.url = param.qrcode;
         this.introText.string = i18nMgr.Get('UIMineMallUSDTShopPayDialogCopyAddress') + '\n' + param.addressType + ': ' + param.address;
-        this.countdownLabel.startCountDown(900); // 启动倒计时
-        this.countdownLabel.onTimeUpCallback = () => {
-            viewManager.showToast(i18nMgr.Get('roomError148_2'));
-        };
+        this.countdownLabel.startCountDown({
+            durationSeconds: 900,
+            onComplete() {
+                viewManager.showToast(i18nMgr.Get('roomError148_2'));
+            },
+        });
     }
 
     private onCloseClicked() {

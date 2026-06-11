@@ -22,6 +22,7 @@ import RemoteSprite from '../../../widget/RemoteSprite';
 import ShiningPathTimer from '../../../widget/ShiningPathTimer';
 import TexasTableEvent from './events/TexasTableEvent';
 import SeatAction from './SeatAction';
+import CountDownLabel, { CountDownFormat } from '../../../widget/CountDownLabel';
 
 const { ccclass, property, menu } = cc._decorator;
 
@@ -61,11 +62,11 @@ export default class SeatPlayer extends cc.Component {
     private chips: cc.Label = null!;
     @property(cc.Button)
     private emptySeat: cc.Button = null!;
-    @property(cc.Node)
+    @property({type:cc.Node, displayName: '真实用户根节点'})
     private userSeat: cc.Node = null!;
-    @property(cc.Node)
+    @property({type:cc.Node, displayName: '庄家图标'})
     public buttonIcon: cc.Node = null!; // 无奈放开吧
-    @property(cc.Node)
+    @property({type:cc.Node, displayName: '小牌显示的容器'})
     private smallCardsContainer: cc.Node = null!;
     // round bet related
     @property(cc.Node)
@@ -74,17 +75,17 @@ export default class SeatPlayer extends cc.Component {
     private roundBetLabel: cc.Label = null!;
     @property(cc.Node)
     private roudBetIcon: cc.Node = null!;
-    @property(cc.Node)
+    @property({type:cc.Node, displayName: '大牌显示的容器,包括我的'})
     private bigCardsContainer: cc.Node = null!;
     @property(cc.Node)
     private animatingChips: cc.Node = null!;
     @property(SeatAction)
     private seatActionDisplay: SeatAction = null!;
-    @property(ShiningPathTimer)
+    @property({type:ShiningPathTimer, displayName: '其他人的倒计时圆圈'})
     private otherPersonActionCountdown: ShiningPathTimer = null!;
     @property(sp.Skeleton)
     private winAnimation: sp.Skeleton = null!;
-    @property(ShiningPathTimer)
+   @property({type:ShiningPathTimer, displayName: '留坐的倒计时圆圈'})
     private keepSeatTimer: ShiningPathTimer = null;
     @property({ type: DisplayNode, displayName: '胜率节点' })
     private winPercentNode: DisplayNode = null;
@@ -94,11 +95,8 @@ export default class SeatPlayer extends cc.Component {
     private returnToGameButton: cc.Button = null!;
     @property({ type: DisplayNode, displayName: '牌型节点' })
     private handValueTypeNode: DisplayNode = null!;
-    @property({ type: cc.Node, displayName: '保险购买中气泡' })
-    private insuranceCountdownBubble: cc.Node = null!;
-    @property({ type: cc.Label, displayName: '保险购买中气泡文本' })
-    private insuranceCountdownLabel: cc.Label = null!;
-    private _insuranceCountdownEndTime = 0;
+    @property({ type: CountDownLabel, displayName: '保险购买中气泡' })
+    private insuranceCountdownBubble: CountDownLabel = null!;
     @property({ type: DisplayNode, displayName: '蘑菇节点' })
     private mushroomNode: DisplayNode = null;
     @property({ type: DisplayNode, displayName: '鱿鱼节点' })
@@ -142,7 +140,7 @@ export default class SeatPlayer extends cc.Component {
             TexasTableEvent.Sitdown(this._seatPlayer.roomData.mine, this._seatPlayer.seatNo);
         };
         this.emptySeat.node.on('click', this._clickEmptySeat, this);
-        this._hideInsuranceCountdownBubble();
+        this.insuranceCountdownBubble.node.active = false;
         this.returnToGameButton.node.on('click', this._clickReturnToGame, this)
     }
 
@@ -152,7 +150,7 @@ export default class SeatPlayer extends cc.Component {
     }
 
     protected onDisable(): void {
-        this._hideInsuranceCountdownBubble();
+        this.insuranceCountdownBubble.node.active = false;
         unBindEventsAll(this);
     }
 
@@ -185,7 +183,7 @@ export default class SeatPlayer extends cc.Component {
             return;
         }
         if (!b) {
-            this._hideInsuranceCountdownBubble();
+            this.insuranceCountdownBubble.node.active = false;
         }
         //解绑(自己站起)
         if (mine) {
@@ -612,13 +610,21 @@ export default class SeatPlayer extends cc.Component {
         if (!oper) {
             this.otherPersonActionCountdown.stop();
             this.otherPersonActionCountdown.node.active = false;
-            this._hideInsuranceCountdownBubble();
+            this.insuranceCountdownBubble.stop();
+            this.insuranceCountdownBubble.node.active = false;
             return;
         }
         if (oper.opType === OpertionType.INSURANCE) {
-            this._showInsuranceCountdownBubble(oper);
-        } else {
-            this._hideInsuranceCountdownBubble();
+            this.insuranceCountdownBubble.node.active = true;
+            this.insuranceCountdownBubble.startCountDown({
+                durationSeconds: oper.leftOpDuration, 
+                format: CountDownFormat.PURE_SEC, 
+                prefix: CPErrorCode.LanguageDescription(20062),
+                onComplete: () => {
+                    this.insuranceCountdownBubble.stop();
+                    this.insuranceCountdownBubble.node.active = false;
+                },
+            })
         }
         this.otherPersonActionCountdown.node.active = true;
         this.otherPersonActionCountdown.startTimer({
@@ -627,42 +633,10 @@ export default class SeatPlayer extends cc.Component {
             onComplete: () => {
                 this.otherPersonActionCountdown.stop();
                 this.otherPersonActionCountdown.node.active = false;
-                this._hideInsuranceCountdownBubble();
+                
             }
         });
     }
-
-    private _showInsuranceCountdownBubble(oper: Operator) {
-        if (!this.insuranceCountdownBubble || this._seatPlayer.mine) {
-            this._hideInsuranceCountdownBubble();
-            return;
-        }
-        const now = Date.now() / 1000;
-        this._insuranceCountdownEndTime = oper.deadlineTImestamp > 0 ? oper.deadlineTImestamp : now + Math.max(0, oper.leftOpDuration || 0);
-        this.insuranceCountdownBubble.active = true;
-        this._updateInsuranceCountdownBubble();
-        this.unschedule(this._updateInsuranceCountdownBubble);
-        this.schedule(this._updateInsuranceCountdownBubble, 0.25);
-    }
-
-    private _hideInsuranceCountdownBubble() {
-        this.unschedule(this._updateInsuranceCountdownBubble);
-        this._insuranceCountdownEndTime = 0;
-        if (this.insuranceCountdownBubble) {
-            this.insuranceCountdownBubble.active = false;
-        }
-    }
-
-    private _updateInsuranceCountdownBubble = () => {
-        if (!this.insuranceCountdownBubble || !this.insuranceCountdownBubble.active) return;
-        const leftTime = Math.max(0, Math.ceil(this._insuranceCountdownEndTime - Date.now() / 1000));
-        if (this.insuranceCountdownLabel) {
-            this.insuranceCountdownLabel.string = CPErrorCode.LanguageDescription(20062, [leftTime]);
-        }
-        if (leftTime <= 0) {
-            this._hideInsuranceCountdownBubble();
-        }
-    };
 
     @bindEvent(TexasGameRoomDataPlayer.WINNER, { dataSource: 'player', initIgnore: true })
     private onWin() {
@@ -724,6 +698,7 @@ export default class SeatPlayer extends cc.Component {
 
 
     @bindEvent(TexasGameRoomDataPlayer.KEEPSEAT_CHANGE, 'player')
+    @traceMethod({level:'debug'})
     private onKeepSeatStart(b: boolean, deadline: number, reason: Def.KeepSeatReasonMap[keyof Def.KeepSeatReasonMap]) {
         if (b) {
             this.keepSeatTimer.node.active = true;
@@ -738,6 +713,7 @@ export default class SeatPlayer extends cc.Component {
             }else{
                 this.keepSeatTimer.stop();
             }
+            this.tracelog.debug(this._seatPlayer.seatNo, this._seatPlayer.mine);
             if (this._seatPlayer.mine) {
                 this._onReturnGameCallback = this.createReturnToGameClick(reason);
             }

@@ -23,7 +23,16 @@ export enum OpertionType {
 export class Operator {
     /** 1: NORMAL 2: INSURANCE 3: AGREESECPUB  */
     public opType: OpertionType;
-    public leftOpDuration: number;
+    private _leftOpDuration:number = 0;
+    public set leftOpDuration(s: number) {
+        this._leftOpDuration = s;
+    }
+    public get leftOpDuration() {
+        if (this._leftOpDuration == 0) return 0;
+        const now = Date.now() / 1000;
+        const endTime = this.deadlineTImestamp > 0 ? this.deadlineTImestamp : now + Math.max(0, this._leftOpDuration || 0);
+        return Math.max(0, Math.ceil(endTime - Date.now() / 1000));
+    };
     public alreadyDelayTImes: number;
     public deadlineTImestamp: number;
     public totalOpDuration: number; // 房间配置

@@ -71,10 +71,13 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
                     seatData.mine.caculateValidAutoOperationType(data.handInfo.roundBet);
                 }
             }
-            if (roomData.basicInfo.squidStatusEnabled) {
-                seatData.mine.showSquidInButton = !seatData.squidIn;
-            }
             seatData.mine.storeChips = player.storeChips;
+        }
+    } 
+    // 如果我坐着,则处理下我的加入按钮
+    if (roomData.mine.seatNo > 0) {
+         if (roomData.basicInfo.squidStatusEnabled) {
+            roomData.mine.showSquidInButton = roomData.mine.player.squidIn;
         }
     }
     if (data.nextOperator) {

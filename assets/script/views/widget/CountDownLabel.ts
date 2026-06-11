@@ -1,74 +1,153 @@
-const { ccclass, property, menu } = cc._decorator;
+const { property, ccclass, menu } = cc._decorator;
+
+export enum CountDownFormat {
+    MM_SS,     // 02:30
+    PURE_SEC,  // 150s
+}
+
+export interface ICountDownOptions {
+    /** 倒计时秒数 */
+    durationSeconds: number;
+
+    /** 显示格式 */
+    format?: CountDownFormat;
+
+    /** 文本前缀 */
+    prefix?: string;
+
+    /** 倒计时结束回调 */
+    onComplete?: () => void;
+}
 
 @ccclass
-@menu('CrazyPoker/Common/CountDownLabel')
+@menu('Widget/CountDownLabel')
 export default class CountDownLabel extends cc.Component {
-    // 倒计时结束时的强类型回调
-    public onTimeUpCallback: () => void = null;
-    private _label: cc.Label = null;
-    private _totalSeconds: number = 0; // 剩余总秒数
+    private _onTimeUpCallback: () => void = null;
+
+    @property({type: cc.Label, displayName: '显示的Label,包含显示前缀'})
+    public label: cc.Label = null!;
+
+    /** 剩余秒数 */
+    private _remainSeconds = 0;
+
+    /** 是否正在倒计时 */
+    private _running = false;
+
+    /** 累积 dt */
+    private _elapsed = 0;
+
+    /** 显示格式 */
+    private _format = CountDownFormat.MM_SS;
+
+    /** 文本前缀 */
+    private _prefix = '';
 
     onLoad() {
-        this._label = this.getComponent(cc.Label);
-        if (!this._label) {
-            this._label = this.addComponent(cc.Label);
+        this.label = this.getComponent(cc.Label);
+
+        if (!this.label) {
+            this.label = this.addComponent(cc.Label);
         }
     }
 
     /**
-     * 启动倒计时
-     * @param durationSeconds 倒计时秒数，默认 900 秒（15 分钟）
+     * 开始倒计时
      */
-    public startCountDown(durationSeconds: number = 900) {
-        // 1. 计算总秒数
-        this._totalSeconds = durationSeconds;
-        // 2. 先手动刷新一下初始视觉，防止闪烁默认文本
+    public startCountDown(options: ICountDownOptions) {
+        const {
+            durationSeconds,
+            format = CountDownFormat.MM_SS,
+            prefix = '',
+            onComplete,
+        } = options;
+        this._remainSeconds = Math.max(0, Math.floor(durationSeconds));
+        this._format = format;
+        this._prefix = prefix;
+        this._onTimeUpCallback = onComplete ?? null;
+        this._elapsed = 0;
+        this._running = true;
+
         this.updateLabelString();
-        // 3. 安全防御：先取消之前可能存在的定时器，防止叠加
-        this.unschedule(this.countDownTicker);
-        // 4. 开启定时器：每 1 秒执行一次，不停循环
-        this.schedule(this.countDownTicker, 1);
     }
 
     /**
-     * 停止倒计时（比如玩家提前完成了支付、或者中途关闭了弹窗）
+     * 停止倒计时
      */
-    public stopCountDown() {
-        this.unschedule(this.countDownTicker);
+    public stop() {
+        this._running = false;
     }
 
     /**
-     * 每秒执行的核心计时器
+     * 重置剩余时间
      */
-    private countDownTicker() {
-        if (this._totalSeconds <= 0) {
-            this.stopCountDown();
-            // 触发时间到了的回调（比如自动关闭订单、或者弹窗提示超时）
-            if (this.onTimeUpCallback) {
-                this.onTimeUpCallback();
-            }
+    public setRemainSeconds(seconds: number) {
+        this._remainSeconds = Math.max(0, Math.floor(seconds));
+        this.updateLabelString();
+    }
+
+    update(dt: number) {
+        if (!this._running) {
             return;
         }
-        this._totalSeconds--;
+
+        this._elapsed += dt;
+
+        if (this._elapsed < 1) {
+            return;
+        }
+
+        const passedSeconds = Math.floor(this._elapsed);
+
+        this._elapsed -= passedSeconds;
+        this._remainSeconds -= passedSeconds;
+
+        if (this._remainSeconds <= 0) {
+            this._remainSeconds = 0;
+
+            this.updateLabelString();
+
+            this.stop();
+
+            this._onTimeUpCallback?.();
+
+            return;
+        }
+
         this.updateLabelString();
     }
 
-    /**
-     * 将秒数格式化为 00:00 并刷新 Label
-     */
     private updateLabelString() {
-        if (!this._label) return;
-        let minutes = Math.floor(this._totalSeconds / 60);
-        let seconds = this._totalSeconds % 60;
-        // 补零算法：保证永远是 "15:00", "09:05" 这种规整格式
-        let minStr = minutes < 10 ? `0${minutes}` : `${minutes}`;
-        let secStr = seconds < 10 ? `0${seconds}` : `${seconds}`;
-        this._label.string = `${minStr}:${secStr}`;
+        if (!this.label) {
+            return;
+        }
+
+        let text = '';
+
+        switch (this._format) {
+            case CountDownFormat.PURE_SEC:
+                text = `${this._remainSeconds}s`;
+                break;
+
+            case CountDownFormat.MM_SS:
+            default: {
+                const minutes = Math.floor(this._remainSeconds / 60);
+                const seconds = this._remainSeconds % 60;
+
+                const minStr =
+                    minutes < 10 ? `0${minutes}` : `${minutes}`;
+                const secStr =
+                    seconds < 10 ? `0${seconds}` : `${seconds}`;
+
+                text = `${minStr}:${secStr}`;
+                break;
+            }
+        }
+
+        this.label.string = this._prefix + text;
     }
 
-    // 严密防御：节点被销毁时自动清理定时器，防止垃圾回收泄露
     onDestroy() {
-        this.unschedule(this.countDownTicker);
-        this.onTimeUpCallback = null;
+        this._running = false;
+        this._onTimeUpCallback = null;
     }
 }

@@ -167,7 +167,7 @@ export default class UITexasMenu extends cc.Component {
         const mine = this._roomData.mine.player;
         if (this._roomData.basicInfo.hasSquid && this._roomData.basicInfo.squidStatusEnabled && mine.squidIn) {
             if (this._roomData.basicInfo.squidMode === SquidMode.NORMAL) {
-                if (mine.keepSeat) {
+                if (mine.keepSeatDeadline > 0) {
                     TexasTableEvent.CancelKeepSeat(this._roomData.mine);
                 } else {
                     TexasTableEvent.Standup(this._roomData.mine);
@@ -182,7 +182,7 @@ export default class UITexasMenu extends cc.Component {
                         commit: i18nMgr.Get('adaptation10012'),
                         cancel: i18nMgr.Get('adaptation10013'),
                         commit_click: () => {
-                            if (mine.keepSeat) {
+                            if (mine.keepSeatDeadline > 0) {
                                 TexasTableEvent.CancelKeepSeat(this._roomData.mine);
                             } else {
                                 TexasTableEvent.Standup(this._roomData.mine);
@@ -196,7 +196,7 @@ export default class UITexasMenu extends cc.Component {
                         commit: i18nMgr.Get('UILeave'),
                         cancel: i18nMgr.Get('UIPause_sdXLZk7S'),
                         commit_click: () => {
-                            if (mine.keepSeat) {
+                            if (mine.keepSeatDeadline > 0) {
                                 TexasTableEvent.CancelKeepSeat(this._roomData.mine);
                             } else {
                                 TexasTableEvent.Standup(this._roomData.mine);
