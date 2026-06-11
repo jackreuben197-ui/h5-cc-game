@@ -4,7 +4,7 @@ import { traceClass } from '../../../core/decorator/LogTrace';
 import { handValueTypeToString } from '../../../core/poker/PoerkCard';
 import { getMaxHandValueByPokeType } from '../../../core/poker/PokerUtil';
 import { VideoModel } from '../../../game/constant/VideoModel';
-import { AutoOperationTypeTexas } from '../../../net/messages/texas/AutoOpertaionType';
+import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
 import { OperatorMine } from './model/Operator';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';
@@ -23,6 +23,7 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public static readonly HAND_VALUE_TYPE_CHANGE = 'HAND_VALUE_TYPE_CHANGE';
     public static readonly AUTO_OPERATION_TYPE_CHANGE = 'AUTO_OPERATION_TYPE_CHANGE';
     public static readonly VALID_AUTO_OPERATIONS_CHANGE = 'VALID_AUTO_OPERATIONS_CHANGE';
+    public static readonly SHOW_SQUID_IN = 'SHOW_SQUID_IN';
     private _roomData: TexasGameRoomData;
     public get roomData() {
         return this._roomData;
@@ -107,6 +108,9 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
         }
     })
     private setRightAutoOpPannelEmit(rightAutoOpType: AutoOperationTypeTexas, amount: number) {}
+
+    @observable(TexasGameRoomDataPlayerMine.SHOW_SQUID_IN)
+    public showSquidInButton:boolean = false;
 
     /** 计算当前能带入的上下限 */
     public caculateCanBringMinMax() {

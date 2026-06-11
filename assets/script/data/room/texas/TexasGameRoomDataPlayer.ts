@@ -42,6 +42,9 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public static readonly KEEPSEAT_CHANGE = 'KEEPSEAT_CHANGE';
     public static readonly ALLIN_WIN_PERCENT = 'ALLIN_WIN_PERCENT';
     public static readonly WINNER = 'WINNER';
+    public static readonly SQUID_COUNT= 'SQUID_COUNT';
+    public static readonly SQUID_ESCAPED = 'SQUID_ESCAPED';
+    public static readonly MUSHROOM_COUNT = 'MUSHROOM_COUNT';
     private _parentRoomData: TexasGameRoomData;
     public get roomData() {
         return this._parentRoomData;
@@ -65,7 +68,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     //Mushroom
     public inMushroom: boolean = false;
     public costMushroom: number = 0;
-    //Suqid
+    //Status
     @observable(TexasGameRoomDataPlayer.CANPLAYSTATUS_CHANGE)
     public status: Def.CanPlayStatusMap[keyof Def.CanPlayStatusMap] = Def.CanPlayStatus.NORMAL;
     //保险
@@ -97,7 +100,9 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public squidIn: boolean = false; // 是否加入鱿鱼
     public squidTotalLimit: number = 0; // 鱿鱼上限
     public squidRoundSeated: boolean = false; // 鱿鱼轮是否已经坐下
+    @observable(TexasGameRoomDataPlayer.SQUID_ESCAPED)
     public squidEscaped: boolean = false; // 鱿鱼是否已经标记
+    @observable(TexasGameRoomDataPlayer.SQUID_COUNT)
     public squidCount: number = 0;
     //videoMaskId
     public videoMaskId: number = 0;

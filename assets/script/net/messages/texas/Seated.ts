@@ -8,7 +8,7 @@ import { AnimateDisplayTypePosition } from '../../../game/constant/AnimateDispla
 import { BringInMode } from '../../../game/constant/BringInMode';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import viewManager from '../../../views/UIViewManager';
-import { AutoOperationTypeTexas } from './AutoOpertaionType';
+import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
 
 const _plog = createLogger('ServerMessageSeated');
 
@@ -40,6 +40,9 @@ export function Seated(data: ServerMessageSeated.AsObject, roomID: number, match
     seatData.deposit = data.deposit;
     // 鱿鱼部分
     seatData.squidIn = data.squidIn;
+    if (roomData.basicInfo.squidStatusEnabled) {
+        mine.showSquidInButton = !data.squidIn
+    }
     seatData.squidTotalLimit = data.squidTotalLimit;
     seatData.squidRoundSeated = data.squidRoundSeated;
     // 会员

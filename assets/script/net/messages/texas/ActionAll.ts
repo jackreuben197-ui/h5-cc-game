@@ -4,7 +4,7 @@ import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { AnimateDisplayTypeAction, AnimateDisplayTypeCards, AnimateDisplayTypeRoundBet } from '../../../game/constant/AnimateDisplayType';
-import { AutoOperationTypeTexas } from './AutoOpertaionType';
+import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
 
 const _plog = createLogger('ServerMessageActionAll');
 

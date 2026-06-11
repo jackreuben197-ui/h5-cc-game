@@ -242,8 +242,6 @@ export default class MttTexasGameplayEntrance extends AGameplayEntrance {
         // 没法取到的数据(enterRoom后获取把)
         // roomData.basicInfo.sbante = { sb: this._mttDetails.mtt.sb, ante: this._mttDetails.mtt.ante };
         roomData.basicInfo.clubID = this._mttDetails.mtt.clubId;
-        roomData.basicInfo.squidStatusEnabled = false;
-        roomData.basicInfo.mushroomEnabled = false;
         roomData.basicInfo.goldType = this._mttDetails.mtt.goldType;
         roomData.basicInfo.normalAntiCheatOrderType = this._mttDetails.mtt.antiCheatOrderType;
         roomData.basicInfo.normalAntiCheatOrderMicType = this._mttDetails.mtt.antiCheatOrderMicType;

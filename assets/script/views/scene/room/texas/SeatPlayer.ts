@@ -86,10 +86,8 @@ export default class SeatPlayer extends cc.Component {
     private winAnimation: sp.Skeleton = null!;
     @property(ShiningPathTimer)
     private keepSeatTimer: ShiningPathTimer = null;
-    @property(cc.Node)
-    private winPercent: cc.Node = null!;
-    @property(cc.Label)
-    private winPercentLabel: cc.Label = null!;
+    @property({ type: DisplayNode, displayName: '胜率节点' })
+    private winPercentNode: DisplayNode = null;
     @property({ type: DisplayNode, displayName: '游戏状态CanPlayStatus' })
     private canPlayStatusNode: DisplayNode = null;
     @property({ type: cc.Button, displayName: '返回游戏按钮' })
@@ -101,6 +99,12 @@ export default class SeatPlayer extends cc.Component {
     @property({ type: cc.Label, displayName: '保险购买中气泡文本' })
     private insuranceCountdownLabel: cc.Label = null!;
     private _insuranceCountdownEndTime = 0;
+    @property({ type: DisplayNode, displayName: '蘑菇节点' })
+    private mushroomNode: DisplayNode = null;
+    @property({ type: DisplayNode, displayName: '鱿鱼节点' })
+    private squidNode: DisplayNode = null;
+    @property({ type: cc.Node, displayName: '鱿鱼标记(图标)' })
+    private squidMaskNode: cc.Node = null;
     private _seatPlayer: TexasGameRoomDataPlayer = null!;
     private _setting: TexasGameRoomDataSetting = null!;
     private _cardBacks: cc.Node[] = [];
@@ -162,8 +166,8 @@ export default class SeatPlayer extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayer.ALLIN_WIN_PERCENT, 'player')
     private updateWinPercentLabel(v: number) {
         if (this._seatPlayer.mine != null) {
-            this.winPercent.active = v >= 0;
-            this.winPercentLabel.string = v >= 0 ? StringHelper.GetLongString(v) + '%' : '';
+            this.winPercentNode.node.active = v >= 0;
+            this.winPercentNode.setText(v >= 0 ? StringHelper.GetLongString(v) + '%' : '');
         }
     }
 
@@ -231,6 +235,25 @@ export default class SeatPlayer extends cc.Component {
         }
     }
 
+    // =============== 鱿鱼（BEGIN）===========================
+
+    @bindEvent(TexasGameRoomDataPlayer.SQUID_COUNT, 'player')
+    private onSquidCount(b: number) {
+        if (b > 0) {
+            this.squidNode.node.active = true;
+            this.squidNode.setText(b+'');
+            return;
+        }
+        this.squidNode.node.active = false;
+    }
+
+    @bindEvent(TexasGameRoomDataPlayer.SQUID_ESCAPED, 'player')
+    private onSquidEscaped(b: boolean) {
+        this.squidMaskNode.active = b;
+    }
+
+    // =================== 鱿鱼 （END） ====================
+
     // onUpdatePosition 位置变动导致的动画/位置调整
     @bindEvent(TexasGameRoomDataPlayer.SEAT_POSITION_CHANGE, 'player', AnimateDisplayTypePosition.Static)
     private onUpdatePosition(pos: SeatPosition, pat: AnimateDisplayTypePosition) {
@@ -240,16 +263,15 @@ export default class SeatPlayer extends cc.Component {
                     this.buttonIcon.setPosition(-320, -30);
                     // 筹码位置
                     this.roudBetIcon.setPosition(-25, 0);
-                    this.roundBetNode.setPosition(175, 345);
+                    this.roundBetNode.setPosition(175, 355);
                     // 大牌的显示位置调整,并隐藏
-                    this.bigCardsContainer.setPosition(0, 220);
+                    this.bigCardsContainer.setPosition(0, 230);
                     this.bigCardsContainer.setScale(1, 1);
                     this._bigCards.forEach(v => (v.node.parent.active = false));
                     //隐藏名字
                     this.nickName.node.active = false;
                     this.nickNameSplash.active = false;
                 } else {
-                    this.winPercent.active = false;
                     this.buttonIcon.setPosition(-160, -120);
                     // 筹码位置
                     this.roudBetIcon.setPosition(-25, 0);
@@ -263,7 +285,9 @@ export default class SeatPlayer extends cc.Component {
                     this.nickNameSplash.active = true;
                 }
                 this.smallCardsContainer.setPosition(-160, 5);
-                this.winPercent.active = false;
+                this.winPercentNode.node.active = false;
+                this.mushroomNode.node.setPosition(75, 65);
+                this.squidNode.node.setPosition(75, 65);
                 break;
             case SeatPosition.BottomLeft:
             case SeatPosition.MiddleLeft:
@@ -275,7 +299,9 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.winPercent.active = false;
+                this.mushroomNode.node.setPosition(75, 65);
+                this.squidNode.node.setPosition(75, 65);
+                this.winPercentNode.node.active = false;
                 break;
             case SeatPosition.TopLeft1:
                 this.buttonIcon.setPosition(65, -220);
@@ -284,7 +310,9 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.winPercent.active = false;
+                this.mushroomNode.node.setPosition(75, 65);
+                this.squidNode.node.setPosition(75, 65);
+                this.winPercentNode.node.active = false;
                 break;
             case SeatPosition.TopMiddle:
             case SeatPosition.TopRight1:
@@ -294,7 +322,12 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.winPercent.active = false;
+                this.mushroomNode.node.setPosition(-75, 65);
+                this.mushroomNode.node.scaleX = -1; // 先反转
+                this.mushroomNode.getOpNode(0).scaleX = -1; // 文本再转回去
+                this.squidNode.node.setPosition(-75, 65);
+                this.squidNode.getSpriteNode(0).node.scaleX = -1;
+                this.winPercentNode.node.active = false;
                 break;
             case SeatPosition.TopRight:
             case SeatPosition.MiddleRight:
@@ -306,7 +339,12 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.winPercent.active = false;
+                this.mushroomNode.node.setPosition(-75, 65);
+                this.mushroomNode.node.scaleX = -1; // 先反转
+                this.mushroomNode.getOpNode(0).scaleX = -1; // 文本再转回去
+                this.squidNode.node.setPosition(-75, 65);
+                this.squidNode.getSpriteNode(0).node.scaleX = -1;
+                this.winPercentNode.node.active = false;
                 break;
         }
         const realPos = seatArrange[pos];

@@ -2,7 +2,7 @@ import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../../core/
 import { traceClass, traceMethod } from '../../../../../core/decorator/LogTrace';
 import TexasGameRoomDataPlayerMine from '../../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import TexasGameRoomDataSetting from '../../../../../data/room/texas/TexasGameRoomDataSetting';
-import { AutoOperationTypeTexas } from '../../../../../net/messages/texas/AutoOpertaionType';
+import { AutoOperationTypeTexas } from '../../../../../game/constant/AutoOpertaionType';
 import ToggleButton from '../../../../widget/ToggleButton';
 
 export type AutoOperationData = {

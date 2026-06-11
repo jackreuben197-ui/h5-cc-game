@@ -423,8 +423,6 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         roomData.basicInfo.callTimeWinline = this._roomInfo.calltimeWinLine;
         roomData.basicInfo.callTimeLimit = this._roomInfo.calltimeLimit;
         roomData.basicInfo.handNum = this._roomInfo.handNum;
-        roomData.basicInfo.squidStatusEnabled = this._roomInfo.squidBase > 0;
-        roomData.basicInfo.mushroomEnabled = this._roomInfo.mushroomBase > 0;
         roomData.basicInfo.goldType = this._roomInfo.goldType;
         //jackpot
         roomData.basicInfo.jackpot = this._roomInfo.jackpot == 1;
@@ -437,7 +435,7 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         //hasCriticalHit
         roomData.basicInfo.checkCriticalHit(this._roomInfo.criticalHit, this._roomInfo.ante, this._roomInfo.rounds, this._roomInfo.subConfigsList);
         //hasSquid
-        roomData.basicInfo.checkSquid(this._roomInfo.squidBase, this._roomInfo.rounds, this._roomInfo.subConfigsList);
+        roomData.basicInfo.checkSquid(this._roomInfo.squidBase, this._roomInfo.rounds, this._roomInfo.squidPlayerCount, this._roomInfo.subConfigsList);
         roomData.basicInfo.squidMostGet = this._roomInfo.squidMostGet > 0;
         roomData.basicInfo.squidBetGet = this._roomInfo.squidBetGet > 0;
         roomData.basicInfo.squidHead = this._roomInfo.squidHead > 0;
@@ -446,7 +444,6 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         roomData.basicInfo.squidMode = this._roomInfo.squidMode; // 鱿鱼模式：0经典，1血战
         roomData.basicInfo.squidExtraCount = this._roomInfo.squidExtraCount; // 额外的鱿鱼个数（血战）
         roomData.basicInfo.squidLeaveMode = this._roomInfo.squidLeaveMode; // 鱿鱼轮离开模式 1 可以离开 2 不可以离开（一轮结束才可以离开，如果筹码不足没补充就走模式1）
-        roomData.basicInfo.squidPlayerCountLimit = this._roomInfo.squidPlayerCount; // 鱿鱼轮开启的人数限制
         roomData.basicInfo.squidCountRateList = this._roomInfo.squidCountRateList;
         // 带入必须申请
         roomData.basicInfo.limitBringIn = this._roomInfo.limitBringIn > 0;

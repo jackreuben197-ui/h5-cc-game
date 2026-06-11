@@ -5,7 +5,7 @@ import { OperatorMine, OpertionType } from '../../../../data/room/texas/model/Op
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import TexasGameRoomDataSetting from '../../../../data/room/texas/TexasGameRoomDataSetting';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
-import { AutoOperationTypeTexas } from '../../../../net/messages/texas/AutoOpertaionType';
+import { AutoOperationTypeTexas } from '../../../../game/constant/AutoOpertaionType';
 import { UIComfirmDialogType } from '../../../dialog/confirm/UIConfirmDialog';
 import viewManager from '../../../UIViewManager';
 import ShiningPathTimer from '../../../widget/ShiningPathTimer';

@@ -7,10 +7,11 @@ import {
     AnimateDisplayTypeAction,
     AnimateDisplayTypeButton,
     AnimateDisplayTypeCards,
+    AnimateDisplayTypePlayType,
     AnimateDisplayTypePublicCards,
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
-import { AutoOperationTypeTexas } from './AutoOpertaionType';
+import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
 
 const _plog = createLogger('ServerMessageStartInfo');
 
@@ -21,6 +22,7 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
     const defaultHandCards = new Array(roomData.basicInfo.handCardNum).fill(0);
     if (data.handInfo) {
         roomData.basicInfo.handNum = data.handInfo.handNum;
+        roomData.basicInfo.setSquidStatusEnabled(data.handInfo.inSquid, AnimateDisplayTypePlayType.Start);
         roomData.potInfo.allPot = data.handInfo.allBet;
         roomData.potInfo.potList = data.handInfo.potsList;
         roomData.potInfo.secPotList = data.handInfo.secondPotsList;
@@ -68,6 +70,9 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
                 if (!myOp) {
                     seatData.mine.caculateValidAutoOperationType(data.handInfo.roundBet);
                 }
+            }
+            if (roomData.basicInfo.squidStatusEnabled) {
+                seatData.mine.showSquidInButton = !seatData.squidIn;
             }
             seatData.mine.storeChips = player.storeChips;
         }

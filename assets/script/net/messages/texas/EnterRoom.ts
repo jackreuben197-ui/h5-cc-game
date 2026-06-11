@@ -7,11 +7,12 @@ import {
     AnimateDisplayTypeAction,
     AnimateDisplayTypeButton,
     AnimateDisplayTypeCards,
+    AnimateDisplayTypePlayType,
     AnimateDisplayTypePosition,
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
 import viewManager from '../../../views/UIViewManager';
-import { AutoOperationTypeTexas } from './AutoOpertaionType';
+import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
 
 const _plog = createLogger('ServerMessageEnterRoom');
 
@@ -51,22 +52,15 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             roomData.publicCards.secondPublicCards = data.handInfo.secondPublicCardsList;
             roomData.basicInfo.currentConfigContinueRounds = data.handInfo.conRounds;
             //Critial
-            if (data.handInfo.criticalHitOpen) {
-                roomData.basicInfo.criticalHitStatusEnabled = true;
-            } else {
-                roomData.basicInfo.criticalHitStatusEnabled = false;
-            }
+            roomData.basicInfo.setCriticalHitStatusEnabled(data.handInfo.criticalHitOpen, AnimateDisplayTypePlayType.Staic);
             //Squid
-            if (data.handInfo.inSquid) {
-                roomData.basicInfo.squidStatusEnabled = true; //开启鱿鱼
-            } else {
-                roomData.basicInfo.squidStatusEnabled = false; //关闭鱿鱼
-            }
+            roomData.basicInfo.setSquidStatusEnabled(data.handInfo.inSquid, AnimateDisplayTypePlayType.Staic);
             //BombPot
+            roomData.basicInfo.setSquidStatusEnabled(data.handInfo.inSquid, AnimateDisplayTypePlayType.Staic);
             if (data.roomInfo.ignorePreflop && data.roomInfo.isAlwaysSecondPcs) {
-                roomData.basicInfo.bombpotStatusEnabled = true; //开启BombPot
+                roomData.basicInfo.setBombpotStatusEnabled(true, AnimateDisplayTypePlayType.Staic);
             } else {
-                roomData.basicInfo.bombpotStatusEnabled = false; //关闭
+                roomData.basicInfo.setBombpotStatusEnabled(true, AnimateDisplayTypePlayType.Staic);
             }
         }
         const playerMap: Map<number, Player.AsObject> = new Map();
@@ -147,6 +141,9 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
                     player.mine.caculateValidAutoOperationType(data.handInfo.roundBet);
                 } else {
                     roomData.mine.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
+                }
+                if (roomData.basicInfo.squidStatusEnabled) {
+                    roomData.mine.showSquidInButton = !player.squidIn;
                 }
             }
             roomData.mine.storeChips = data.myInfo.storeChips;

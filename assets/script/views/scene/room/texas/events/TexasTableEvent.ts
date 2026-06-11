@@ -489,4 +489,19 @@ export default class TexasTableEvent {
             }
         });
     }
+
+    public static JoinSquid(player: TexasGameRoomDataPlayerMine) {
+        ProtocolAgency.Send({
+            code: Code.MSG_D_SQUID_IN_ACTIVE,
+            roomID: player.roomData.roomID,
+            matchID: player.roomData.matchID,
+            body: {
+                room: {
+                    roomId: player.roomData.roomID,
+                    matchId: player.roomData.matchID
+                },
+                enable: true,
+            }
+        });
+    }
 }

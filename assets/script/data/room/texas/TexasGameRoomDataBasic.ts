@@ -14,9 +14,10 @@ export interface tableBetInfo {
 }
 
 type DataBaiscBindings = {
-    critialHitEnabled: [AnimateDisplayTypePlayType];
-    squidEnabled: [AnimateDisplayTypePlayType];
-    mushroomEnabled: [AnimateDisplayTypePlayType];
+    criticalHitStatusEnabled: [AnimateDisplayTypePlayType];
+    squidStatusEnabled: [AnimateDisplayTypePlayType];
+    mushroomStatusEnabled: [AnimateDisplayTypePlayType];
+    bombpotStatusEnabled: [AnimateDisplayTypePlayType];
 };
 
 interface TexasGameRoomDataBasic extends IObservableBindings<TexasGameRoomDataBasic, DataBaiscBindings> {}
@@ -291,7 +292,8 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public squidTail: boolean; // 尾鱿鱼 1 开 0 关
     public squidForceShowCard: boolean; // 获得鱿鱼强制亮牌 1 开 0 关
     public squidLeaveMode: SquidLeaveMode; // 鱿鱼轮离开模式 1 可以离开 2 不可以离开（一轮结束才可以离开，如果筹码不足没补充就走模式1）
-    public squidPlayerCountLimit: number; // 鱿鱼轮开启的人数限制
+    private _squidPlayerCountLimit: number = 0;
+    public get squidPlayerCountLimit(): number{return this._squidPlayerCountLimit}; // 鱿鱼轮开启的人数限制
     public squidMode: SquidMode; // 鱿鱼模式：0经典，1血战
     public squidExtraCount: number; // 额外的鱿鱼个数（血战）
     public squidCountRateList: SquidCountRateConfig.AsObject[] = []; // // 血战鱿鱼，鱿鱼个数翻倍
@@ -304,7 +306,14 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
         return this._squidRounds;
     }
 
-    public checkSquid(squidBase: number, rounds: number, subconfigs: SubRoomConfig.AsObject[]) {
+    /**
+     * 配置鱿鱼信息
+     * @param squidBase 一个鱿鱼的价值
+     * @param rounds 持续回合数
+     * @param playerCount 开启的人数限制
+     * @param subconfigs 子配置
+     */
+    public checkSquid(squidBase: number, rounds: number, playerCount: number, subconfigs: SubRoomConfig.AsObject[]) {
         const hasSquidConfig = subconfigs.filter(v => v.squidBase > 0);
         // 要么第一个配置就有, 要么子配置就有（默认都取第一个配置)
         // 特殊处理下（这里比较特殊)
@@ -313,10 +322,12 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
             this._squidBase = hasSquidConfig[0].squidBase;
             this._squidRounds = hasSquidConfig[0].rounds;
             this._squidWaitRounds = rounds;
+            this._squidPlayerCountLimit = hasSquidConfig[0].playingPlayerCountLimit;
         } else if (squidBase > 0) {
             this._hasSquid = true;
             this._squidBase = squidBase;
             this._squidRounds = rounds;
+            this._squidPlayerCountLimit = playerCount;
             if (subconfigs.length > 0) {
                 this._squidWaitRounds = subconfigs[0].rounds; //假设是普通的配置
             }

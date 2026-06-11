@@ -8,6 +8,7 @@ import PotsInfo from './PotsInfo';
 import PublicCardsInfo from './PublicCardsInfo';
 import RoomInfo from './RoomInfo';
 import SeatManager from './SeatManager';
+import SquidInfo from './SquidInfo';
 import UITexasMenu from './UITexasMenu';
 
 export interface UIRoomTexasEnterParam {
@@ -39,6 +40,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private _opPannel: Operation = null!;
     @property({ type: InsuranceOperation, displayName: '保险弹窗触发器' })
     private insuranceOperation: InsuranceOperation = null!;
+    @property({ type: SquidInfo, displayName: '鱿鱼操作' })
+    private squidInfo: SquidInfo = null;
     //数据绑定
     private _mine: TexasGameRoomDataPlayerMine = null;
 
@@ -63,5 +66,6 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this._sideMenuTexasMenu.initData(param.roomID, param.matchID);
         this._opPannel.initData(this._mine);
         this.insuranceOperation.initData(this._mine);
+        this.squidInfo.initData(this._mine);
     }
 }
