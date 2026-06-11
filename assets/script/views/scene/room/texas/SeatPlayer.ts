@@ -285,7 +285,11 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.winPercentNode.node.active = false;
                 this.mushroomNode.node.setPosition(75, 65);
+                this.mushroomNode.node.scaleX = 1;
+                this.mushroomNode.getOpNode(0).scaleX = 1;
                 this.squidNode.node.setPosition(75, 65);
+                this.squidNode.node.scaleX = 1;
+                this.squidNode.getOpNode(0).scaleX = 1;
                 break;
             case SeatPosition.BottomLeft:
             case SeatPosition.MiddleLeft:
@@ -298,7 +302,11 @@ export default class SeatPlayer extends cc.Component {
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
                 this.mushroomNode.node.setPosition(75, 65);
+                this.mushroomNode.node.scaleX = 1;
+                this.mushroomNode.getOpNode(0).scaleX = 1;
                 this.squidNode.node.setPosition(75, 65);
+                this.squidNode.node.scaleX = 1;
+                this.squidNode.getOpNode(0).scaleX = 1;
                 this.winPercentNode.node.active = false;
                 break;
             case SeatPosition.TopLeft1:
@@ -309,7 +317,11 @@ export default class SeatPlayer extends cc.Component {
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
                 this.mushroomNode.node.setPosition(75, 65);
+                this.mushroomNode.node.scaleX = 1;
+                this.mushroomNode.getOpNode(0).scaleX = 1;
                 this.squidNode.node.setPosition(75, 65);
+                this.squidNode.node.scaleX = 1;
+                this.squidNode.getOpNode(0).scaleX = 1;
                 this.winPercentNode.node.active = false;
                 break;
             case SeatPosition.TopMiddle:
@@ -324,7 +336,8 @@ export default class SeatPlayer extends cc.Component {
                 this.mushroomNode.node.scaleX = -1; // 先反转
                 this.mushroomNode.getOpNode(0).scaleX = -1; // 文本再转回去
                 this.squidNode.node.setPosition(-75, 65);
-                this.squidNode.getSpriteNode(0).node.scaleX = -1;
+                this.squidNode.node.scaleX = -1; // 先反转
+                this.squidNode.getOpNode(0).scaleX = -1; // 文本再转回去
                 this.winPercentNode.node.active = false;
                 break;
             case SeatPosition.TopRight:
@@ -341,7 +354,8 @@ export default class SeatPlayer extends cc.Component {
                 this.mushroomNode.node.scaleX = -1; // 先反转
                 this.mushroomNode.getOpNode(0).scaleX = -1; // 文本再转回去
                 this.squidNode.node.setPosition(-75, 65);
-                this.squidNode.getSpriteNode(0).node.scaleX = -1;
+                this.squidNode.node.scaleX = -1; // 先反转
+                this.squidNode.getOpNode(0).scaleX = -1; // 文本再转回去
                 this.winPercentNode.node.active = false;
                 break;
         }

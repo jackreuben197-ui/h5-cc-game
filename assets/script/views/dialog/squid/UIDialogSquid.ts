@@ -10,7 +10,7 @@ export type UIDialogSquidParam = {
     squidHead: boolean;
     squidTail: boolean;
     squidExtraCount: number;
-    squidCountRates?: { count: number; rate: number }[];
+    squidCountRates: { count: number; rate: number }[];
     seatCount: number;
     noAnimation: boolean;
 };

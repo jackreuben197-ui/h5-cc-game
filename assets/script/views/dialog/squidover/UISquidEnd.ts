@@ -28,7 +28,7 @@ export default class UISquidEnd extends UIComponentBaseDialog<UISquidEndShowData
     }
 
     public initialize(param: UISquidEndShowData): void {
-        this.StartShowRows(param?.rows || []);
+        this.StartShowRows(param.rows);
         this.StartAutoCloseTimer();
     }
 

@@ -6,6 +6,7 @@ import UIInsuranceNewPanel from './dialog/insurance/UIInsuranceNewPanel';
 import UIRechargeDiamond from './dialog/rechargediamond/UIRechargeDiamond';
 import UIGameplaySecuritySetting from './dialog/security/UIGameplaySecuritySetting';
 import UIDialogSquid from './dialog/squid/UIDialogSquid';
+import UISquidEnd from './dialog/squidover/UISquidEnd';
 import UIGameplayTableSetting from './dialog/texassettings/UIGameplayTableSetting';
 import { BUNDLE_RESOURCES } from './loader/AssetManager';
 import UIRoomTexas from './scene/room/texas/UIRoomTexas';
@@ -25,6 +26,12 @@ export const UIPrefabDialog = {
         Name: '鱿鱼介绍窗口',
         Bundle: BUNDLE_RESOURCES,
         Path: 'rc/dialog/squid/UIDialogSquid'
+    },
+    SquidOver: {
+        UIType: UISquidEnd,
+        Name: '鱿鱼结算',
+        Bundle: BUNDLE_RESOURCES,
+        Path: 'rc/dialog/squidover/UISquidOver'
     },
     ConfirmOrNotice: {
         UIType: UIConfirmDialog,

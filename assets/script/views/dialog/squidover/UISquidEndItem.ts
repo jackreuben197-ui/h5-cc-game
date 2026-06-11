@@ -1,3 +1,4 @@
+import { traceClass, traceMethod } from '../../../core/decorator/LogTrace';
 import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import RemoteSprite from '../../widget/RemoteSprite';
@@ -15,6 +16,7 @@ export interface UISquidEndItemShowData {
 const { property, menu, ccclass } = cc._decorator;
 
 @ccclass
+@traceClass()
 export default class UISquidEndItem extends cc.Component {
     @property({ type: RemoteSprite, displayName: '头像' })
     private memberIcon: RemoteSprite = null;
@@ -31,6 +33,7 @@ export default class UISquidEndItem extends cc.Component {
     @property({ type: cc.Node, displayName: '倍率' })
     private rateLabel: cc.RichText = null;
 
+    @traceMethod({ level: 'debug' })
     public Refresh(data: UISquidEndItemShowData): void {
         if (this.memberNameTxt) {
             this.memberNameTxt.string = StringHelper.LengthNick(data.nick || '-');
@@ -46,7 +49,6 @@ export default class UISquidEndItem extends cc.Component {
             this.squidLose.active = (data.money || 0) < 0;
         }
         const showRate = !data.isPunish && (data.rate || 0) > 0;
-        console.log(666, showRate, data.rate, data.isPunish);
         if (this.rewardBg) {
             this.rewardBg.active = showRate;
         }

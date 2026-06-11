@@ -1,11 +1,12 @@
 import { Def, InsuranceOddsForPotsUserCount, RoomJackpotConfig, SquidCountRateConfig, SubRoomConfig } from '@silenthill/agreement-web';
-import { bindData, IObservableBindings, observable } from '../../../core/decorator/DataBind';
+import { bindData, IObservableBindings, observable, pureEvent } from '../../../core/decorator/DataBind';
 import { AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDisplayType';
 import { ChatType } from '../../../game/constant/ChatType';
 import { MushroomMode } from '../../../game/constant/Mushroom';
 import { SquidLeaveMode, SquidMode } from '../../../game/constant/Squid';
 import { ViewPlayerCardsMode } from '../../../game/constant/ViewPlayerCardsMode';
 import GameplayUtil from '../../../game/util/GameplayUtil';
+import { UISquidEndItemShowData } from '../../../views/dialog/squidover/UISquidEndItem';
 import TexasGameRoomData from './TexasGameRoomData';
 
 export interface tableBetInfo {
@@ -29,6 +30,7 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public static readonly BOMBPOT_ENABLED = 'BOMBPOT_ENABLED';
     public static readonly CRITIAL_HIT_ENABLED = 'CRITIAL_HIT_ENABLED';
     public static readonly SQUID_ENABLED = 'SQUID_ENABLED';
+    public static readonly SQUID_RESULTS = 'SQUID_RESULTS';
     public static readonly MUSHROOM_ENABLED = 'MUSHROOM_ENABLED';
     // 不变的信息
     // 基础信息
@@ -299,6 +301,21 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public squidMode: SquidMode; // 鱿鱼模式：0经典，1血战
     public squidExtraCount: number; // 额外的鱿鱼个数（血战）
     public squidCountRateList: SquidCountRateConfig.AsObject[] = []; // // 血战鱿鱼，鱿鱼个数翻倍
+
+    // 找到鱿鱼对应的倍率
+    public getSquidCountRate(count: number) {
+        if (this.squidCountRateList.length == 0) {
+            return 0;
+        }
+        let rate = 0;
+        this.squidCountRateList.forEach(cfg => {
+            if (count >= cfg.count) {
+                rate = cfg.rate;
+            }
+        });
+        return Math.max(0, rate);
+    }
+
     private _squidRounds: number = 0;
     public get squidRounds() {
         return this._squidRounds;
@@ -342,6 +359,10 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public get squidStatusRounds(): number {
         return this.currentConfigContinueRounds;
     } // 第几轮了
+
+    @pureEvent(TexasGameRoomDataBasic.SQUID_RESULTS)
+    public squiedResultsEmit(rows: UISquidEndItemShowData[]) {}
+
     // ============== 蘑菇玩法 ==================
     public get hasMushroom() {
         return this.mushroomBase > 0;

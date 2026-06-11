@@ -79,6 +79,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
             squidTail: roomData.basicInfo.squidTail,
             squidExtraCount: roomData.basicInfo.squidExtraCount,
             seatCount: roomData.seatsStateManager.seatsCount,
+            squidCountRates: roomData.basicInfo.squidCountRateList,
             noAnimation: true
         });
     }
