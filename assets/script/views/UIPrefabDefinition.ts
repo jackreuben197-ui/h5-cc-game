@@ -5,6 +5,7 @@ import UIConfirmDialog from './dialog/confirm/UIConfirmDialog';
 import UIInsuranceNewPanel from './dialog/insurance/UIInsuranceNewPanel';
 import UIRechargeDiamond from './dialog/rechargediamond/UIRechargeDiamond';
 import UIGameplaySecuritySetting from './dialog/security/UIGameplaySecuritySetting';
+import UIDialogSquid from './dialog/squid/UIDialogSquid';
 import UIGameplayTableSetting from './dialog/texassettings/UIGameplayTableSetting';
 import { BUNDLE_RESOURCES } from './loader/AssetManager';
 import UIRoomTexas from './scene/room/texas/UIRoomTexas';
@@ -19,6 +20,12 @@ import UIPromptComponent from './scene/UIPromptComponent';
 // }
 // export type UIPrefabType = 'BringInDialog';
 export const UIPrefabDialog = {
+    SquidIntroduction: {
+        UIType: UIDialogSquid,
+        Name: '鱿鱼介绍窗口',
+        Bundle: BUNDLE_RESOURCES,
+        Path: 'rc/dialog/squid/UIDialogSquid'
+    },
     ConfirmOrNotice: {
         UIType: UIConfirmDialog,
         Name: '确认或者提示',

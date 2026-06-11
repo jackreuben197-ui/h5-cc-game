@@ -163,6 +163,8 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
         this.name = '';
         this.cards = [];
         this.status = undefined;
+        this.squidCount = 0;
+        this.squidEscaped = false;
         this.unmuteEvents();
         // this.emit(TexasGameRoomDataPlayer.EMPTY_SEAT);
     }

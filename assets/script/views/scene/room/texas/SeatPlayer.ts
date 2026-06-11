@@ -50,7 +50,7 @@ const yellowColor = cc.Color.fromHEX(new cc.Color(), '#F9CA9F');
 
 @ccclass
 @menu('Scene/Room/Texas/SeatPlayer')
-@traceClass({level:'debug'})
+@traceClass()
 export default class SeatPlayer extends cc.Component {
     @property(cc.Label)
     private nickName: cc.Label = null!;
@@ -694,7 +694,7 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.KEEPSEAT_CHANGE, 'player')
-    @traceMethod({ level: 'debug' })
+    @traceMethod()
     private onKeepSeatStart(b: boolean, deadline: number, reason: Def.KeepSeatReasonMap[keyof Def.KeepSeatReasonMap]) {
         if (b) {
             this.keepSeatTimer.node.active = true;

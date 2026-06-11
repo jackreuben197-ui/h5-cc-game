@@ -1,4 +1,5 @@
 import CCTools from '../tools/CCTools';
+import StorageKey from './StorageKey';
 
 class LocalStoreManager {
     private static _instance: LocalStoreManager = null;
@@ -51,6 +52,25 @@ class LocalStoreManager {
     private decodeData(value: string) {
         value = JSON.parse(value);
         return value;
+    }
+
+    public get canShowSquidIntroDialog(): boolean {
+        const lastUploadTimeStr = this.getItem(StorageKey.SHOW_SQULD_INTRO_DIALOG) || '';
+        if (!lastUploadTimeStr) {
+            return true;
+        }
+        const lastUploadTime = new Date(lastUploadTimeStr);
+        if (Number.isNaN(lastUploadTime.getTime())) {
+            return true;
+        }
+        return Date.now() - lastUploadTime.getTime() >= 24 * 60 * 60 * 1000;
+    }
+    public set canShowSquidIntroDialog(b: boolean) {
+        if (b) {
+            this.setItem(StorageKey.SHOW_SQULD_INTRO_DIALOG, new Date().toISOString());
+        } else {
+            this.setItem(StorageKey.SHOW_SQULD_INTRO_DIALOG, '');
+        }
     }
 }
 

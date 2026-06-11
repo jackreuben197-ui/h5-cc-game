@@ -299,7 +299,7 @@ export default class Operation extends cc.Component {
         this.rootNode.active = true;
         this.opTimer.startTimer({
             totalTime: oper.totalOpDuration,
-            elapsedTime: oper.totalOpDuration - oper.leftOpDuration,
+            elapsedTime: oper.elapsedTime,
             onComplete: () => {
                 this.opTimer.stop();
             }

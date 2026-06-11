@@ -1,7 +1,9 @@
+import storageManager from '../../../../data/LocalStorage';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import UIComponentBase from '../../../base/UIComponentBase';
+import viewManager from '../../../UIViewManager';
 import InsuranceOperation from './InsuranceOperation';
 import Operation from './Operation';
 import PotsInfo from './PotsInfo';
@@ -67,5 +69,17 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this._opPannel.initData(this._mine);
         this.insuranceOperation.initData(this._mine);
         this.squidInfo.initData(this._mine);
+        //squid
+        if (!roomData.basicInfo.hasSquid) return;
+        if (!storageManager.canShowSquidIntroDialog) return;
+        viewManager.openDialog('SquidIntroduction', {
+            squidMode: roomData.basicInfo.squidMode,
+            squidBase: roomData.basicInfo.squidBase,
+            squidHead: roomData.basicInfo.squidHead,
+            squidTail: roomData.basicInfo.squidTail,
+            squidExtraCount: roomData.basicInfo.squidExtraCount,
+            seatCount: roomData.seatsStateManager.seatsCount,
+            noAnimation: true
+        });
     }
 }

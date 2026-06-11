@@ -19,7 +19,7 @@ export default class SoundComponent {
     private _cache: Map<string, cc.AudioClip> = new Map();
 
     initSound() {
-        let soundIsOpen = storageManager.getItem(StorageKey.soundIsOpen);
+        let soundIsOpen = storageManager.getItem(StorageKey.SOUND_IS_OPEN);
         if (soundIsOpen == null || +soundIsOpen == 1) {
             this.soundOn = true;
         } else {

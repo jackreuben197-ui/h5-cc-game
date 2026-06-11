@@ -22,7 +22,12 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
     const defaultHandCards = new Array(roomData.basicInfo.handCardNum).fill(0);
     if (data.handInfo) {
         roomData.basicInfo.handNum = data.handInfo.handNum;
+        roomData.basicInfo.currentConfigContinueRounds = data.handInfo.conRounds;
+        // 是否再鱿鱼轮
         roomData.basicInfo.setSquidStatusEnabled(data.handInfo.inSquid, AnimateDisplayTypePlayType.Start);
+        // 暴击
+        roomData.basicInfo.setCriticalHitStatusEnabled(data.handInfo.criticalHitOpen, AnimateDisplayTypePlayType.Start);
+        // 基础信息
         roomData.potInfo.allPot = data.handInfo.allBet;
         roomData.potInfo.potList = data.handInfo.potsList;
         roomData.potInfo.secPotList = data.handInfo.secondPotsList;
@@ -73,11 +78,15 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
             }
             seatData.mine.storeChips = player.storeChips;
         }
+        //Squid
+        seatData.squidIn = player.inSquid;
+        seatData.squidCount = player.squidCount;
+        seatData.squidEscaped = player.squidEscaped;
     }
     // 如果我坐着,则处理下我的加入按钮
     if (roomData.mine.seatNo > 0) {
         if (roomData.basicInfo.squidStatusEnabled && !roomData.mine.player.isKeepSeat) {
-            roomData.mine.showSquidInButton = roomData.mine.player.squidIn;
+            roomData.mine.showSquidInButton = !roomData.mine.player.squidIn;
         }
     }
     if (data.nextOperator) {

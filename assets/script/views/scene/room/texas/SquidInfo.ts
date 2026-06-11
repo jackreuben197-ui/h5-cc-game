@@ -1,5 +1,5 @@
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
-import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
+import { traceClass } from '../../../../core/decorator/LogTrace';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import TexasTableEvent from './events/TexasTableEvent';
 
@@ -47,7 +47,6 @@ export default class SquidInfo extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.SHOW_SQUID_IN, 'mine')
-    @traceMethod({ level: 'debug' })
     private onShowButton(b: boolean) {
         this.joinButton.node.active = b;
     }
