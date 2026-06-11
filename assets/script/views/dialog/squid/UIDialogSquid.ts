@@ -13,12 +13,13 @@ export type UIDialogSquidParam = {
     squidCountRates: { count: number; rate: number }[];
     seatCount: number;
     noAnimation: boolean;
+    closeAction?: () => void;
 };
 
 const { property, menu, ccclass } = cc._decorator;
 
 @ccclass
-@traceClass({ level: 'debug' })
+@traceClass()
 export default class UIDialogSquid extends UIComponentBaseDialog<UIDialogSquidParam> {
     @property({ type: cc.Button, displayName: '左按钮' })
     private LeftButton: cc.Button = null;
@@ -58,8 +59,11 @@ export default class UIDialogSquid extends UIComponentBaseDialog<UIDialogSquidPa
         this.ButtonCommit.node.on('click', this.OnClickCommit, this);
     }
 
+    private _onCLoseAction: () => void = null!;
+
     public initialize(param: UIDialogSquidParam): void {
         const data = param;
+        this._onCLoseAction = data.closeAction;
         this.squidMode = data.squidMode;
         this.squidBase = data.squidBase;
         this.squidHead = data.squidHead;
@@ -83,6 +87,9 @@ export default class UIDialogSquid extends UIComponentBaseDialog<UIDialogSquidPa
 
     public override close(): void {
         this.StopAutoLoop();
+        if (this._onCLoseAction) {
+            this._onCLoseAction();
+        }
         super.close();
     }
 
@@ -107,7 +114,7 @@ export default class UIDialogSquid extends UIComponentBaseDialog<UIDialogSquidPa
     }
 
     private OnClickCommit(): void {
-        storageManager.canShowSquidIntroDialog = this.NoToggle.isChecked;
+        storageManager.canShowSquidIntroDialog = !this.NoToggle.isChecked;
         this.close();
     }
 

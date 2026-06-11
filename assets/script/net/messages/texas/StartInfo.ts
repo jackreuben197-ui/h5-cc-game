@@ -7,6 +7,7 @@ import {
     AnimateDisplayTypeAction,
     AnimateDisplayTypeButton,
     AnimateDisplayTypeCards,
+    AnimateDisplayTypeMushroomPool,
     AnimateDisplayTypePlayType,
     AnimateDisplayTypePublicCards,
     AnimateDisplayTypeRoundBet
@@ -21,6 +22,13 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
     roomData.basicInfo.gameStatus = Def.GameStatus.HAND_PREFLOP;
     const defaultHandCards = new Array(roomData.basicInfo.handCardNum).fill(0);
     if (data.handInfo) {
+        if (data.handInfo.pools) {
+            roomData.basicInfo.mushroomStatusPool = data.handInfo.pools.mushroomPool;
+            if (roomData.basicInfo.mushroomStatusPool > 0) {
+                roomData.basicInfo.setMushroomStatusEnabled(true, AnimateDisplayTypePlayType.Start);
+                roomData.seatsStateManager.setMushroomPoolChange(data.handInfo.buSeatId, data.handInfo.pools.mushroomPool, AnimateDisplayTypeMushroomPool.Next);
+            }
+        }
         roomData.basicInfo.handNum = data.handInfo.handNum;
         roomData.basicInfo.currentConfigContinueRounds = data.handInfo.conRounds;
         // 是否再鱿鱼轮

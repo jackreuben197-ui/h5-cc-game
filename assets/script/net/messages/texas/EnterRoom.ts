@@ -7,6 +7,7 @@ import {
     AnimateDisplayTypeAction,
     AnimateDisplayTypeButton,
     AnimateDisplayTypeCards,
+    AnimateDisplayTypeMushroomPool,
     AnimateDisplayTypePlayType,
     AnimateDisplayTypePosition,
     AnimateDisplayTypeRoundBet
@@ -42,6 +43,17 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         roomData.basicInfo.opDuration = data.roomInfo.opDuration;
         roomData.basicInfo.sbante = { sb: data.roomInfo.smallBlind, ante: data.roomInfo.ante };
         if (data.handInfo) {
+            if (data.handInfo.pools) {
+                roomData.basicInfo.mushroomStatusPool = data.handInfo.pools.mushroomPool;
+                if (roomData.basicInfo.mushroomStatusPool > 0) {
+                    roomData.basicInfo.setMushroomStatusEnabled(true, AnimateDisplayTypePlayType.Staic);
+                    roomData.seatsStateManager.setMushroomPoolChange(
+                        data.handInfo.buSeatId,
+                        data.handInfo.pools.mushroomPool,
+                        AnimateDisplayTypeMushroomPool.Static
+                    );
+                }
+            }
             roomData.basicInfo.handNum = data.handInfo.handNum;
             roomData.roundState.roundBet = data.handInfo.roundBet; // 当前轮Call平的数值
             roomData.potInfo.allPot = data.handInfo.allBet;

@@ -55,7 +55,26 @@ class LocalStoreManager {
     }
 
     public get canShowSquidIntroDialog(): boolean {
-        const lastUploadTimeStr = this.getItem(StorageKey.SHOW_SQULD_INTRO_DIALOG) || '';
+        return this._getInTImeOrNot(StorageKey.SHOW_SQULD_INTRO_DIALOG);
+    }
+    public set canShowSquidIntroDialog(b: boolean) {
+        this._setInTImeKey(StorageKey.SHOW_SQULD_INTRO_DIALOG, b);
+    }
+    public get canShowMushroomIntroDialog(): boolean {
+        return this._getInTImeOrNot(StorageKey.SHOW_MUSHROOM_INTRO_DIALOG);
+    }
+    public set canShowMushroomIntroDialog(b: boolean) {
+        this._setInTImeKey(StorageKey.SHOW_MUSHROOM_INTRO_DIALOG, b);
+    }
+    public get canSHowCriticalHitIntroDialog(): boolean {
+        return this._getInTImeOrNot(StorageKey.SHOW_CRITICALHIT_INTRO_DIALOG);
+    }
+    public set canSHowCriticalHitIntroDialog(b: boolean) {
+        this._setInTImeKey(StorageKey.SHOW_CRITICALHIT_INTRO_DIALOG, b);
+    }
+
+    private _getInTImeOrNot(key: string): boolean {
+        const lastUploadTimeStr = this.getItem(key) || '';
         if (!lastUploadTimeStr) {
             return true;
         }
@@ -65,11 +84,12 @@ class LocalStoreManager {
         }
         return Date.now() - lastUploadTime.getTime() >= 24 * 60 * 60 * 1000;
     }
-    public set canShowSquidIntroDialog(b: boolean) {
-        if (b) {
-            this.setItem(StorageKey.SHOW_SQULD_INTRO_DIALOG, new Date().toISOString());
+
+    private _setInTImeKey(key: string, b: boolean) {
+        if (!b) {
+            this.setItem(key, new Date().toISOString());
         } else {
-            this.setItem(StorageKey.SHOW_SQULD_INTRO_DIALOG, '');
+            this.setItem(key, '');
         }
     }
 }

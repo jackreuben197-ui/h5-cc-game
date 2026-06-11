@@ -3,6 +3,7 @@ import UIBringIn from './dialog/bringin/UIBringIn';
 import UIBringOut from './dialog/bringout/UIBringInOut';
 import UIConfirmDialog from './dialog/confirm/UIConfirmDialog';
 import UIInsuranceNewPanel from './dialog/insurance/UIInsuranceNewPanel';
+import UIGuideDialog from './dialog/mushroomandcriticalhit/UIGuideDialog';
 import UIRechargeDiamond from './dialog/rechargediamond/UIRechargeDiamond';
 import UIGameplaySecuritySetting from './dialog/security/UIGameplaySecuritySetting';
 import UIDialogSquid from './dialog/squid/UIDialogSquid';
@@ -21,6 +22,18 @@ import UIPromptComponent from './scene/UIPromptComponent';
 // }
 // export type UIPrefabType = 'BringInDialog';
 export const UIPrefabDialog = {
+    MushroomIntroduction: {
+        UIType: UIGuideDialog,
+        Name: '蘑菇介绍',
+        Bundle: BUNDLE_RESOURCES,
+        Path: 'rc/dialog/mushroomandcriticalhit/UIGuideDialog'
+    },
+    CriticalHitIntroduction: {
+        UIType: UIGuideDialog,
+        Name: '暴击介绍',
+        Bundle: BUNDLE_RESOURCES,
+        Path: 'rc/dialog/mushroomandcriticalhit/UIGuideDialog'
+    },
     SquidIntroduction: {
         UIType: UIDialogSquid,
         Name: '鱿鱼介绍窗口',

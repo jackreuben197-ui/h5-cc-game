@@ -33,7 +33,7 @@ export default class UISquidEndItem extends cc.Component {
     @property({ type: cc.Node, displayName: '倍率' })
     private rateLabel: cc.RichText = null;
 
-    @traceMethod({ level: 'debug' })
+    @traceMethod()
     public Refresh(data: UISquidEndItemShowData): void {
         if (this.memberNameTxt) {
             this.memberNameTxt.string = StringHelper.LengthNick(data.nick || '-');

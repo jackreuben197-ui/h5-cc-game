@@ -1,5 +1,5 @@
 import { bindData, pureEvent } from '../../../core/decorator/DataBind';
-import { AnimateDisplayTypeButton, AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
+import { AnimateDisplayTypeButton, AnimateDisplayTypeMushroomPool, AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';
 
@@ -66,6 +66,7 @@ const SeatsArrange: Record<number, SeatPosition[]> = {
 export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     public static readonly BUTTON_CHANGE = 'BUTTON_CHANGE';
     public static readonly SEATS_CHANGE = 'SEATS_CHANGE';
+    public static readonly MUSHROOM_POOL_CHANGE = 'MUSHROOM_POOL_CHANGE';
     private _parentRoomData: TexasGameRoomData;
 
     constructor(p: TexasGameRoomData) {
@@ -78,6 +79,24 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     public get buttonPosition() {
         return this._buttonPosition;
     }
+    private _prevMushroomBtn: number = 0;
+
+    public setMushroomPoolChange(btnSeatNo: number, pool: number, bat: AnimateDisplayTypeMushroomPool) {
+        if (pool == 0) return;
+        // 绝对发送
+        const prev = this._prevMushroomBtn;
+        this._prevMushroomBtn = btnSeatNo;
+        const cnt = Math.floor(Math.round((pool * 1000) / this._parentRoomData.basicInfo.mushroomBase) / 1000);
+        this.mushroomPoolChangeEmit(prev, this._prevMushroomBtn, cnt, pool, bat);
+    }
+
+    @pureEvent(TexasGameRoomDataSeatsStateManager.MUSHROOM_POOL_CHANGE, {
+        initParams() {
+            const cnt = Math.floor(Math.round((this._parentRoomData.basicInfo.mushroomStatusPool * 1000) / this._parentRoomData.basicInfo.mushroomBase) / 1000);
+            return [0, this._prevMushroomBtn, cnt, this._parentRoomData.basicInfo.mushroomStatusPool, AnimateDisplayTypeMushroomPool.Static];
+        }
+    })
+    public mushroomPoolChangeEmit(prev: number, cur: number, count: number, pool: number, bat: AnimateDisplayTypeMushroomPool) {}
 
     public setButtonPosition(c: number, bat: AnimateDisplayTypeButton) {
         if (c == this._buttonPosition) return;

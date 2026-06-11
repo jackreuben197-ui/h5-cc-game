@@ -345,7 +345,7 @@ export default class UIGameplayTableSetting extends UIComponentBaseDialog<UIGame
                 this.FillDataByLanguageOpen('UISquidTailDouble', true);
             }
         }
-        const mushroomEnabled = !!this._roomData.basicInfo.mushroomEnabled;
+        const mushroomEnabled = !!this._roomData.basicInfo.hasMushroom;
         this.FillDataByLanguageOpen('UITableSetting_mushRoom', mushroomEnabled);
         if (mushroomEnabled) {
             const mushroomBase = Number(this._roomData.basicInfo.mushroomBase || 0);

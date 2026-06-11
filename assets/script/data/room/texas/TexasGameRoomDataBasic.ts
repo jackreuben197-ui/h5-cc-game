@@ -371,7 +371,8 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public mushroomBase: number; // 蘑菇基数(1个蘑菇筹码)
     public mushroomStatic: number; // 蘑菇固定(如果是固定上桌限制的筹码要求)
     @observable(TexasGameRoomDataBasic.MUSHROOM_ENABLED)
-    public mushroomEnabled: boolean;
+    public mushroomStatusEnabled: boolean;
+    public mushroomStatusPool: number;
     public get shouldShowBringInSecuritySetting(): boolean {
         if (this._roomData.matchID != 0) return false;
         switch (this.gameType) {

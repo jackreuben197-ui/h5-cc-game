@@ -14,6 +14,11 @@ export enum AnimateDisplayTypeButton {
     Next = 1 // 从上一个过来
 }
 
+export enum AnimateDisplayTypeMushroomPool {
+    Static = 0, // 纯静态变化
+    Next = 1 // 从上一个过来
+}
+
 export enum AnimateDisplayTypeWin {
     Static = 0,
     Play = 1 // 展示动画

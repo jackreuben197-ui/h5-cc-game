@@ -48,6 +48,40 @@ export default class SeatManager extends cc.Component {
         autoBindEvents(this, { seats: this._seatManager });
     }
 
+    @bindEvent(TexasGameRoomDataSeatsStateManager.MUSHROOM_POOL_CHANGE, 'seats')
+    @traceMethod()
+    private onUpdateMushroomPool(prevSeat: number, currentSeat: number, cnt: number, pool: number, bat: AnimateDisplayTypeButton) {
+        this._seatNodesMap.forEach(v => {
+            v.animateMushroomChange(false, 0, 0);
+        });
+        if (bat == AnimateDisplayTypeButton.Static) {
+            if (prevSeat > 0) {
+                const ps = this._seatNodesMap.get(prevSeat);
+                ps.animateMushroomChange(false, 0, 0);
+            }
+            if (currentSeat > 0) {
+                const cps = this._seatNodesMap.get(currentSeat);
+                this.tracelog.debug(currentSeat, cps, this._seatNodesMap.size);
+                cps.animateMushroomChange(true, cnt, pool);
+            }
+            return;
+        }
+        if (prevSeat > 0) {
+            const ps = this._seatNodesMap.get(prevSeat);
+            ps.animateMushroomChange(false, 0, 0);
+            if (currentSeat > 0) {
+                const cps = this._seatNodesMap.get(currentSeat);
+                cps.animateMushroomChange(true, cnt, pool, ps.mushroomNode);
+            }
+            return;
+        }
+        if (currentSeat > 0) {
+            const cps = this._seatNodesMap.get(currentSeat);
+            this.tracelog.debug(currentSeat, cps, this._seatNodesMap.size);
+            cps.animateMushroomChange(true, cnt, pool);
+        }
+    }
+
     @bindEvent(TexasGameRoomDataSeatsStateManager.BUTTON_CHANGE, 'seats')
     private onUpdateButton(prevSeat: number, currentSeat: number, bat: AnimateDisplayTypeButton) {
         this._seatNodesMap.forEach(v => {

@@ -10,6 +10,10 @@
 export default class StorageKey {
     // 是否保存SQUID介绍窗口
     static readonly SHOW_SQULD_INTRO_DIALOG = 'SHOW_SQULD_INTRO_DIALOG';
+    // 是否保存MUSHROOM介绍窗口
+    static readonly SHOW_MUSHROOM_INTRO_DIALOG = 'SHOW_MUSHROOM_INTRO_DIALOG';
+    // 是否保存CRITICALHIT介绍窗口
+    static readonly SHOW_CRITICALHIT_INTRO_DIALOG = 'SHOW_CRITICALHIT_INTRO_DIALOG';
     // //清理所有记录的标记
     // static CLEAN_ALL_FLAG: string = 'CLEAN_ALL_FLAG';
     // //登录数据

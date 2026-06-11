@@ -97,8 +97,8 @@ export default class SeatPlayer extends cc.Component {
     private handValueTypeNode: DisplayNode = null!;
     @property({ type: CountDownLabel, displayName: '保险购买中气泡' })
     private insuranceCountdownBubble: CountDownLabel = null!;
-    @property({ type: DisplayNode, displayName: '蘑菇节点' })
-    private mushroomNode: DisplayNode = null;
+    @property({ type: DisplayNode, displayName: '蘑菇节点(文本1：数量，文本2：总数）' })
+    public mushroomNode: DisplayNode = null;
     @property({ type: DisplayNode, displayName: '鱿鱼节点' })
     private squidNode: DisplayNode = null;
     @property({ type: cc.Node, displayName: '鱿鱼标记(图标)' })
@@ -287,6 +287,7 @@ export default class SeatPlayer extends cc.Component {
                 this.mushroomNode.node.setPosition(75, 65);
                 this.mushroomNode.node.scaleX = 1;
                 this.mushroomNode.getOpNode(0).scaleX = 1;
+                this.mushroomNode.getOpNode(1).scaleX = 1;
                 this.squidNode.node.setPosition(75, 65);
                 this.squidNode.node.scaleX = 1;
                 this.squidNode.getOpNode(0).scaleX = 1;
@@ -304,6 +305,7 @@ export default class SeatPlayer extends cc.Component {
                 this.mushroomNode.node.setPosition(75, 65);
                 this.mushroomNode.node.scaleX = 1;
                 this.mushroomNode.getOpNode(0).scaleX = 1;
+                this.mushroomNode.getOpNode(1).scaleX = 1;
                 this.squidNode.node.setPosition(75, 65);
                 this.squidNode.node.scaleX = 1;
                 this.squidNode.getOpNode(0).scaleX = 1;
@@ -319,6 +321,7 @@ export default class SeatPlayer extends cc.Component {
                 this.mushroomNode.node.setPosition(75, 65);
                 this.mushroomNode.node.scaleX = 1;
                 this.mushroomNode.getOpNode(0).scaleX = 1;
+                this.mushroomNode.getOpNode(1).scaleX = 1;
                 this.squidNode.node.setPosition(75, 65);
                 this.squidNode.node.scaleX = 1;
                 this.squidNode.getOpNode(0).scaleX = 1;
@@ -335,6 +338,7 @@ export default class SeatPlayer extends cc.Component {
                 this.mushroomNode.node.setPosition(-75, 65);
                 this.mushroomNode.node.scaleX = -1; // 先反转
                 this.mushroomNode.getOpNode(0).scaleX = -1; // 文本再转回去
+                this.mushroomNode.getOpNode(1).scaleX = -1; // 文本再转回去
                 this.squidNode.node.setPosition(-75, 65);
                 this.squidNode.node.scaleX = -1; // 先反转
                 this.squidNode.getOpNode(0).scaleX = -1; // 文本再转回去
@@ -353,6 +357,7 @@ export default class SeatPlayer extends cc.Component {
                 this.mushroomNode.node.setPosition(-75, 65);
                 this.mushroomNode.node.scaleX = -1; // 先反转
                 this.mushroomNode.getOpNode(0).scaleX = -1; // 文本再转回去
+                this.mushroomNode.getOpNode(1).scaleX = -1; // 文本再转回去
                 this.squidNode.node.setPosition(-75, 65);
                 this.squidNode.node.scaleX = -1; // 先反转
                 this.squidNode.getOpNode(0).scaleX = -1; // 文本再转回去
@@ -679,7 +684,7 @@ export default class SeatPlayer extends cc.Component {
 
     private _onReturnGameCallback: () => void = null!;
 
-    @traceMethod({ level: 'debug' })
+    @traceMethod()
     private createReturnToGameClick(r: Def.KeepSeatReasonMap[keyof Def.KeepSeatReasonMap]): () => void {
         if (r == Def.KeepSeatReason.KSR_NONE) {
             this.returnToGameButton.node.active = false;
@@ -771,6 +776,30 @@ export default class SeatPlayer extends cc.Component {
             const endPos = this.buttonIcon.position;
             this.buttonIcon.setPosition(startPos);
             cc.tween(this.buttonIcon).to(0.6, { x: endPos.x, y: endPos.y }, { easing: 'cubicOut' }).start();
+        }
+    }
+
+    public animateMushroomChange(enable: boolean, mushroomCount: number, amount: number, positionFromNode?: DisplayNode) {
+        this.mushroomNode.node.active = enable;
+        if (enable && positionFromNode) {
+            const startPos = UIViewUtil.caculatePostion(this.mushroomNode.node, positionFromNode.node);
+            const startScaleX = positionFromNode.node.scaleX;
+            const endPos = this.mushroomNode.node.position;
+            const endScaleX = this.mushroomNode.node.scaleX;
+            this.mushroomNode.node.setPosition(startPos);
+            this.mushroomNode.node.setScale(startScaleX, 1);
+            this.mushroomNode.getOpNode(0).opacity = 0;
+            this.mushroomNode.getOpNode(1).opacity = 0;
+            this.mushroomNode.setText(mushroomCount + '', StringHelper.GetLongString(amount));
+            cc.tween(this.mushroomNode.node)
+                .to(0.6, { x: endPos.x, y: endPos.y, scaleX: endScaleX, scaleY: 1 }, { easing: 'cubicOut' })
+                .call(() => {
+                    this.mushroomNode.getOpNode(0).opacity = 255;
+                    this.mushroomNode.getOpNode(1).opacity = 255;
+                })
+                .start();
+        } else if (enable) {
+            this.mushroomNode.setText(mushroomCount + '', StringHelper.GetLongString(amount));
         }
     }
 }
