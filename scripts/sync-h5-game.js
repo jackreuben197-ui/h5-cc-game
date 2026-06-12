@@ -31,7 +31,7 @@ console.log('--- 开始自动化构建任务 ---');
 // [1/4] Git 操作
 console.log('\n[1/4] 更新子模块代码...');
 runCommand('git fetch --all', h5GameDir);
-runCommand('git reset --hard origin/master', h5GameDir);
+runCommand('git reset --hard origin/main', h5GameDir);
 
 // [2/4] Build h5-game
 console.log('\n[2/4] 开始构建 h5-game...');
