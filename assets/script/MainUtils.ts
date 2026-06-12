@@ -9,6 +9,7 @@ import { createLogger } from './core/decorator/LogTrace';
 import userStore from './data/user/UserStore';
 import ProcedureDefine from './game/procedure/ProcedureDefine';
 import ProcedureManager from './game/procedure/ProcedureManager';
+import roomReconnectManager from './game/RoomReconnectManager';
 import h5MessageManager, { EnterMttMatchInfo, EnterTableRoomInfo, SyncUserClubResponse, SyncUserInfo } from './H5MsgMgr';
 import AgoraManager from './net/agora/AgoraManager';
 import ProtocolAgency from './net/websocket/ProtocolAgency';
@@ -198,6 +199,13 @@ export async function registerH5Listeners(): Promise<void> {
         // gc.jackPot_id = jackpotId;
         // === 6. 启动进入牌桌流程 ===
         // → ProtocolAgency.Send(ClientMessageEnterRoom) → WebSocket 发送
+        roomReconnectManager.setCurrentContext({
+            roomID: roomData.rid,
+            matchID: 0,
+            roomType: roomData.room_type,
+            websocketPort: Number(websocketPort),
+            observer: false
+        });
         await ProcedureManager.StartProcedure(ProcedureDefine.EnterRoom, {
             roomID: roomData.rid,
             matchID: 0,
@@ -208,6 +216,7 @@ export async function registerH5Listeners(): Promise<void> {
     registerTexasMtt();
     h5MessageManager.on('exitTable', payload => {
         _ploger.info('[H5Bridge] 离开牌桌:', payload);
+        roomReconnectManager.clearCurrentContext();
         // TODO: 调用离开牌桌的逻辑
     });
     h5MessageManager.on('syncUser', payload => {
@@ -361,6 +370,13 @@ export async function registerH5Listeners(): Promise<void> {
             // GameCache.Instance.enter_param = enterPram;
             // GameCache.Instance.serviceId = String(payload.websocketPort);
             // === 6. 启动进入牌桌流程，同时后台加载资源 ===
+            roomReconnectManager.setCurrentContext({
+                roomID: 0,
+                matchID: matchInfo.match_id,
+                roomType: matchInfo.type,
+                websocketPort: Number(payload.websocketPort),
+                observer: false
+            });
             await ProcedureManager.StartProcedure(ProcedureDefine.EnterRoom, {
                 roomID: 0,
                 matchID: matchInfo.match_id,
@@ -417,5 +433,24 @@ export async function registerH5Listeners(): Promise<void> {
      */
     h5MessageManager.on('wsError', payload => {
         _ploger.warn('[H5Bridge] wsError:', payload);
+    });
+    h5MessageManager.on('wsReconnecting', payload => {
+        _ploger.warn('[H5Bridge] wsReconnecting:', payload);
+        roomReconnectManager.markReconnecting();
+    });
+    h5MessageManager.on('wsReconnected', payload => {
+        _ploger.info('[H5Bridge] wsReconnected:', payload);
+        roomReconnectManager.requestReconnect();
+    });
+    h5MessageManager.on('wsReconnectFailed', payload => {
+        _ploger.error('[H5Bridge] wsReconnectFailed:', payload);
+        roomReconnectManager.failReconnect(String(payload?.reason || 'unknown'));
+        if (payload?.reason === 'auth-invalid') return;
+        h5MessageManager.sendToH5('h5Navigate', 1, {
+            name: 'guest-home',
+            replace: true,
+            ensureVisible: true,
+            openLoginModal: true
+        });
     });
 }

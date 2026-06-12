@@ -13,6 +13,7 @@ import {
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
+import roomReconnectManager from '../../../game/RoomReconnectManager';
 import viewManager from '../../../views/UIViewManager';
 
 const _plog = createLogger('ServerMessageEnterRoom');
@@ -38,6 +39,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
     const defaultHandCards = new Array(roomData.basicInfo.handCardNum).fill(0);
     if (data.status == 0) {
         roomData.basicInfo.sbante = { sb: data.roomInfo.smallBlind, ante: data.roomInfo.ante };
+        roomData.basicInfo.roomUniqueID = data.roomInfo.uniqueId || '';
         roomData.basicInfo.gameStatus = data.gameStatus;
         roomData.basicInfo.deposit = data.roomInfo.deposit;
         roomData.basicInfo.opDuration = data.roomInfo.opDuration;
@@ -208,5 +210,6 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             roomID: roomData.roomID,
             matchID: roomData.matchID
         });
+        roomReconnectManager.consumeReconnectFlag(roomData.roomID, roomData.matchID);
     }
 }
