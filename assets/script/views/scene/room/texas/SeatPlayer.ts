@@ -83,8 +83,12 @@ export default class SeatPlayer extends cc.Component {
     private seatActionDisplay: SeatAction = null!;
     @property({ type: ShiningPathTimer, displayName: '其他人的倒计时圆圈' })
     private otherPersonActionCountdown: ShiningPathTimer = null!;
-    @property(sp.Skeleton)
+    @property({ type: sp.Skeleton, displayName: '获胜动画' })
     private winAnimation: sp.Skeleton = null!;
+    @property({ type: sp.Skeleton, displayName: 'ALLIN动画' })
+    private allInAnimation: sp.Skeleton = null!;
+    @property({ type: sp.Skeleton, displayName: 'ALLIN(other)动画' })
+    private allInOtherAnimation: sp.Skeleton = null!;
     @property({ type: ShiningPathTimer, displayName: '留坐的倒计时圆圈' })
     private keepSeatTimer: ShiningPathTimer = null;
     @property({ type: DisplayNode, displayName: '胜率节点' })
@@ -261,9 +265,9 @@ export default class SeatPlayer extends cc.Component {
                     this.buttonIcon.setPosition(-320, -30);
                     // 筹码位置
                     this.roudBetIcon.setPosition(-25, 0);
-                    this.roundBetNode.setPosition(175, 355);
+                    this.roundBetNode.setPosition(175, 360);
                     // 大牌的显示位置调整,并隐藏
-                    this.bigCardsContainer.setPosition(0, 230);
+                    this.bigCardsContainer.setPosition(0, 235);
                     this.bigCardsContainer.setScale(1, 1);
                     this._bigCards.forEach(v => (v.node.parent.active = false));
                     //隐藏名字
@@ -284,11 +288,11 @@ export default class SeatPlayer extends cc.Component {
                 }
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.winPercentNode.node.active = false;
-                this.mushroomNode.node.setPosition(75, 65);
+                this.mushroomNode.node.setPosition(75, 72);
                 this.mushroomNode.node.scaleX = 1;
                 this.mushroomNode.getOpNode(0).scaleX = 1;
                 this.mushroomNode.getOpNode(1).scaleX = 1;
-                this.squidNode.node.setPosition(75, 65);
+                this.squidNode.node.setPosition(75, 70);
                 this.squidNode.node.scaleX = 1;
                 this.squidNode.getOpNode(0).scaleX = 1;
                 break;
@@ -302,11 +306,11 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.mushroomNode.node.setPosition(75, 65);
+                this.mushroomNode.node.setPosition(75, 72);
                 this.mushroomNode.node.scaleX = 1;
                 this.mushroomNode.getOpNode(0).scaleX = 1;
                 this.mushroomNode.getOpNode(1).scaleX = 1;
-                this.squidNode.node.setPosition(75, 65);
+                this.squidNode.node.setPosition(75, 70);
                 this.squidNode.node.scaleX = 1;
                 this.squidNode.getOpNode(0).scaleX = 1;
                 this.winPercentNode.node.active = false;
@@ -318,11 +322,11 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.mushroomNode.node.setPosition(75, 65);
+                this.mushroomNode.node.setPosition(75, 72);
                 this.mushroomNode.node.scaleX = 1;
                 this.mushroomNode.getOpNode(0).scaleX = 1;
                 this.mushroomNode.getOpNode(1).scaleX = 1;
-                this.squidNode.node.setPosition(75, 65);
+                this.squidNode.node.setPosition(75, 70);
                 this.squidNode.node.scaleX = 1;
                 this.squidNode.getOpNode(0).scaleX = 1;
                 this.winPercentNode.node.active = false;
@@ -335,11 +339,11 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.mushroomNode.node.setPosition(-75, 65);
+                this.mushroomNode.node.setPosition(-75, 72);
                 this.mushroomNode.node.scaleX = -1; // 先反转
                 this.mushroomNode.getOpNode(0).scaleX = -1; // 文本再转回去
                 this.mushroomNode.getOpNode(1).scaleX = -1; // 文本再转回去
-                this.squidNode.node.setPosition(-75, 65);
+                this.squidNode.node.setPosition(-75, 70);
                 this.squidNode.node.scaleX = -1; // 先反转
                 this.squidNode.getOpNode(0).scaleX = -1; // 文本再转回去
                 this.winPercentNode.node.active = false;
@@ -354,11 +358,11 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.mushroomNode.node.setPosition(-75, 65);
+                this.mushroomNode.node.setPosition(-75, 72);
                 this.mushroomNode.node.scaleX = -1; // 先反转
                 this.mushroomNode.getOpNode(0).scaleX = -1; // 文本再转回去
                 this.mushroomNode.getOpNode(1).scaleX = -1; // 文本再转回去
-                this.squidNode.node.setPosition(-75, 65);
+                this.squidNode.node.setPosition(-75, 70);
                 this.squidNode.node.scaleX = -1; // 先反转
                 this.squidNode.getOpNode(0).scaleX = -1; // 文本再转回去
                 this.winPercentNode.node.active = false;
@@ -549,9 +553,9 @@ export default class SeatPlayer extends cc.Component {
 
     @bindEvent(TexasGameRoomDataPlayer.ACTION_CHANGE, 'player', AnimateDisplayTypeAction.Static)
     private onUpdateAction(action: Def.ActionMap[keyof Def.ActionMap], aat: AnimateDisplayTypeAction) {
-        if (this._seatPlayer.mine) {
-            this.tracelog.debug(action, aat, this._seatPlayer.seatNo);
-        }
+        // if (this._seatPlayer.mine) {
+        //     this.tracelog.debug(action, aat, this._seatPlayer.seatNo);
+        // }
         // 操作结束直接不倒计时
         if (aat == AnimateDisplayTypeAction.Done) {
             this.otherPersonActionCountdown.stop();
@@ -608,6 +612,28 @@ export default class SeatPlayer extends cc.Component {
                 this.seatActionDisplay.showAction(i18nMgr.Get('adaptation10045'), greenColor);
                 break;
             case Def.Action.ALLIN:
+                if (aat == AnimateDisplayTypeAction.Done) {
+                    if (this._seatPlayer.mine) {
+                        this.allInAnimation.node.active = true;
+                        this.allInAnimation.setAnimation(0, 'animation', false);
+                        this.allInAnimation.setCompleteListener(() => {
+                            //cc.log("动画结束");
+                            this.allInAnimation.node.active = false;
+                            this.seatActionDisplay.node.active = true;
+                            this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), redColor);
+                        });
+                        break;
+                    }
+                    this.allInOtherAnimation.node.active = true;
+                    this.allInOtherAnimation.setAnimation(0, 'animation', false);
+                    this.allInOtherAnimation.setCompleteListener(() => {
+                        //cc.log("动画结束");
+                        this.allInOtherAnimation.node.active = false;
+                        this.seatActionDisplay.node.active = true;
+                        this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), redColor);
+                    });
+                    break;
+                }
                 this.seatActionDisplay.node.active = true;
                 this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), redColor);
                 break;
