@@ -1,3 +1,4 @@
+import soundManager, { SoundMusicKey } from '../../core/SoundManager';
 import { AGameplayEntranceProvider } from '../entrance/AGamelayEntranceProvider';
 import AGameplayEntrance from '../entrance/AGameplayEntrance';
 import ProcedureBase from './ProcedureBase';
@@ -20,6 +21,7 @@ export default class ProcedureEnterRoom extends ProcedureBase {
 
     override lateEnter(param: ProcedureEnterRoomParam) {
         super.lateEnter(param);
+        soundManager.playMusic(SoundMusicKey.BgmGame, true, 0.3);
         // 创建德州玩法入口
         const entrance = AGameplayEntranceProvider.createEntrance(param.roomType, param.matchID, param.roomID, param.observer ?? false);
         this._entrance = entrance;

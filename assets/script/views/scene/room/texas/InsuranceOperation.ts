@@ -1,3 +1,4 @@
+import soundManager, { SoundEffectKey } from '../../../../core/SoundManager';
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
@@ -33,6 +34,7 @@ export default class InsuranceOperation extends cc.Component {
         if (!oper || oper.opType != OpertionType.INSURANCE) {
             return;
         }
+        soundManager.playEffect(SoundEffectKey.MyTurn);
         viewManager.openDialog('BuyInsurance', {
             Operator: oper,
             Player: this._mineData

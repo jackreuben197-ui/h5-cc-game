@@ -41,7 +41,6 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         roomData.basicInfo.gameStatus = data.gameStatus;
         roomData.basicInfo.deposit = data.roomInfo.deposit;
         roomData.basicInfo.opDuration = data.roomInfo.opDuration;
-        roomData.basicInfo.sbante = { sb: data.roomInfo.smallBlind, ante: data.roomInfo.ante };
         if (data.handInfo) {
             if (data.handInfo.pools) {
                 roomData.basicInfo.mushroomStatusPool = data.handInfo.pools.mushroomPool;

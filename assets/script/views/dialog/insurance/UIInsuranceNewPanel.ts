@@ -1,5 +1,6 @@
 import { Code, Def, InsurancePotLimit, OutsCard, PotInsuranceBuy } from '@silenthill/agreement-web';
 import { traceClass } from '../../../core/decorator/LogTrace';
+import soundManager, { SoundEffectKey } from '../../../core/SoundManager';
 import { OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataBasic from '../../../data/room/texas/TexasGameRoomDataBasic';
@@ -242,6 +243,12 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
         if (!this._isCounting) return;
         const now = Date.now() / 1000;
         const remain = Math.max(0, this._countDownEnd - now);
+        if (remain == Math.floor(this._countDownTotal / 3)) {
+            soundManager.playEffect(SoundEffectKey.ActionAlert);
+        }
+        if (remain == 3) {
+            soundManager.playEffect(SoundEffectKey.CD3S);
+        }
         this._refreshCountDownProgress(remain);
         if (remain <= 0) {
             this._isCounting = false;
