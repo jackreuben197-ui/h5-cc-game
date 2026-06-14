@@ -20,6 +20,8 @@ const _plog = createLogger('ServerMessageStartInfo');
 export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number, matchID: number) {
     let roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     roomData.basicInfo.gameStatus = Def.GameStatus.HAND_PREFLOP;
+    // 战绩面板：第一次 StartInfo 时补写开桌时间（对应 Unity TexasSituationController.OnStartInfo）
+    roomData.report.applyStartInfo();
     const defaultHandCards = new Array(roomData.basicInfo.handCardNum).fill(0);
     if (data.handInfo) {
         if (data.handInfo.pools) {

@@ -5,6 +5,8 @@ import UIConfirmDialog from './dialog/confirm/UIConfirmDialog';
 import UIInsuranceNewPanel from './dialog/insurance/UIInsuranceNewPanel';
 import UIGuideDialog from './dialog/mushroomandcriticalhit/UIGuideDialog';
 import UIRechargeDiamond from './dialog/rechargediamond/UIRechargeDiamond';
+import UITexasReport from './dialog/report/UITexasReport';
+import UITexasReportPlayerInfo from './dialog/report/UITexasReportPlayerInfo';
 import UIGameplaySecuritySetting from './dialog/security/UIGameplaySecuritySetting';
 import UIDialogSquid from './dialog/squid/UIDialogSquid';
 import UISquidEnd from './dialog/squidover/UISquidEnd';
@@ -87,6 +89,18 @@ export const UIPrefabDialog = {
         Name: '扫码充钻石',
         Bundle: BUNDLE_RESOURCES,
         Path: 'rc/dialog/rechargediamond/UIRechargeDiamond'
+    },
+    TexasReport: {
+        UIType: UITexasReport,
+        Name: '牌桌战绩',
+        Bundle: BUNDLE_RESOURCES,
+        Path: 'rc/scene/room/texas/UITexasReport'
+    },
+    TexasReportPlayerInfo: {
+        UIType: UITexasReportPlayerInfo,
+        Name: '战绩玩家详情',
+        Bundle: BUNDLE_RESOURCES,
+        Path: 'rc/scene/room/texas/UITexasReportPlayerInfo'
     }
 } as const;
 

@@ -18,6 +18,10 @@ export function ChipsChange(data: ServerMessageChipsChange.AsObject, roomID: num
     let roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     data.changesList.forEach(changeData => {
         let seatData = roomData.seatsStateManager.getSeatPlayer(changeData.seatId);
+        // 战绩面板：CC_NONE 视为净新增带入，按 Unity TexasSituationController.ChipChange 累加
+        if (changeData.reason === Def.ChipChangeReason.CC_NONE && seatData.userID > 0 && changeData.change > 0) {
+            roomData.report.applyChipChange(seatData.userID, changeData.change, seatData.name, seatData.avatar);
+        }
         switch (changeData.reason) {
             case Def.ChipChangeReason.CC_STORE_CHIP:
             case Def.ChipChangeReason.CC_AUTO_ON_TABLE:

@@ -39,6 +39,8 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public pokerType: number;
     public betType: number;
     public opDuration: number;
+    // 房间存续期（秒）；0 表示无限。战绩面板用它配合 summary.startTime 算剩余时间。
+    public playDuration: number = 0;
     public isMtt: boolean;
     public get seatsCount() {
         return this._roomData.seatsStateManager.seatsCount;

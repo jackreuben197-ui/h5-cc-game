@@ -1,3 +1,4 @@
+import { Code } from '@silenthill/agreement-web';
 import { traceClass } from '../../../../core/decorator/LogTrace';
 import storageManager from '../../../../data/LocalStorage';
 import roomDataManager from '../../../../data/room/RoomDataManager';
@@ -5,6 +6,7 @@ import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
+import ProtocolAgency from '../../../../net/websocket/ProtocolAgency';
 import UIComponentBase from '../../../base/UIComponentBase';
 import { UIGuideDialogType } from '../../../dialog/mushroomandcriticalhit/UIGuideDialog';
 import viewManager from '../../../UIViewManager';
@@ -42,6 +44,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private sideMenuNode: cc.Node = null;
     private _sideMenuTexasMenu: UITexasMenu = null;
     private _onSideMenuClicked: () => void = null!;
+    @property({ type: cc.Button, displayName: '战绩按钮 (side_btns/main_menu/btn_report)' })
+    private btnReport: cc.Button = null!;
     @property({ type: cc.Node, displayName: '操作面板' })
     private opPannelNode: cc.Node = null!;
     private _opPannel: Operation = null!;
@@ -61,7 +65,17 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this._sideMenuTexasMenu = this.sideMenuNode.getComponent(UITexasMenu);
         //操作面板
         this._opPannel = this.opPannelNode.children[0].getComponent(Operation);
+        //战绩按钮
+        if (this.btnReport) this.btnReport.node.on('click', this._onClickReport, this);
     }
+
+    private _onClickReport = () => {
+        if (!this._mine) return;
+        viewManager.openDialog('TexasReport', {
+            roomID: this._mine.roomData.roomID,
+            matchID: this._mine.roomData.matchID
+        });
+    };
 
     async initialize(param: UIRoomTexasEnterParam) {
         const roomData = roomDataManager.getRoomData<TexasGameRoomData>(param.roomID, param.matchID);
@@ -74,10 +88,28 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this._opPannel.initData(this._mine);
         this.insuranceOperation.initData(this._mine);
         this.squidInfo.initData(this._mine);
+        // 入桌即拉一次 Roomers 填战绩缓存：后续 Seated/Standup/ChipsChange/Winner 在消息层做增量。
+        // 对应 pokerqueen UITexas.requestRoomersForCache（history=true 包含已离桌玩家）。
+        this._prefetchReportRoomers(param.roomID, param.matchID);
         //展示介绍对话框
         await this._showSquidIntroDialog(roomData);
         await this._showMushroomIntroDialog(roomData);
         await this._showCriticalHitIntroDialog(roomData);
+    }
+
+    private _prefetchReportRoomers(roomID: number, matchID: number): void {
+        if (!roomID) return;
+        ProtocolAgency.Send({
+            code: Code.MSG_D_ROOMERS,
+            roomID,
+            matchID,
+            body: {
+                room: { roomId: roomID, matchId: matchID },
+                history: true,
+                historyOffset: 0,
+                historyLimit: 1000
+            }
+        });
     }
 
     private async _showSquidIntroDialog(roomData: TexasGameRoomData): Promise<boolean> {
