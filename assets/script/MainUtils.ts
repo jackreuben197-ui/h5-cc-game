@@ -199,13 +199,6 @@ export async function registerH5Listeners(): Promise<void> {
         // gc.jackPot_id = jackpotId;
         // === 6. 启动进入牌桌流程 ===
         // → ProtocolAgency.Send(ClientMessageEnterRoom) → WebSocket 发送
-        roomReconnectManager.setCurrentContext({
-            roomID: roomData.rid,
-            matchID: 0,
-            roomType: roomData.room_type,
-            websocketPort: Number(websocketPort),
-            observer: false
-        });
         await ProcedureManager.StartProcedure(ProcedureDefine.EnterRoom, {
             roomID: roomData.rid,
             matchID: 0,
@@ -216,7 +209,7 @@ export async function registerH5Listeners(): Promise<void> {
     registerTexasMtt();
     h5MessageManager.on('exitTable', payload => {
         _ploger.info('[H5Bridge] 离开牌桌:', payload);
-        roomReconnectManager.clearCurrentContext();
+        // 重连 context 由 ProcedureReturn 离桌时统一清理，覆盖主动离桌和被踢两条路径
         // TODO: 调用离开牌桌的逻辑
     });
     h5MessageManager.on('syncUser', payload => {
@@ -370,13 +363,6 @@ export async function registerH5Listeners(): Promise<void> {
             // GameCache.Instance.enter_param = enterPram;
             // GameCache.Instance.serviceId = String(payload.websocketPort);
             // === 6. 启动进入牌桌流程，同时后台加载资源 ===
-            roomReconnectManager.setCurrentContext({
-                roomID: 0,
-                matchID: matchInfo.match_id,
-                roomType: matchInfo.type,
-                websocketPort: Number(payload.websocketPort),
-                observer: false
-            });
             await ProcedureManager.StartProcedure(ProcedureDefine.EnterRoom, {
                 roomID: 0,
                 matchID: matchInfo.match_id,

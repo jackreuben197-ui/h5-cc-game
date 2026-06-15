@@ -261,11 +261,7 @@ export default class MttTexasGameplayEntrance extends AGameplayEntrance {
         roomDataManager.setRoomData(this._roomId, this.matchId, roomData);
         roomReconnectManager.setCurrentContext({
             roomID: this._roomId,
-            matchID: this.matchId,
-            roomType: this._roomType,
-            observer: this._isObserver,
-            mttPartialBringIn: this._partialBringIn,
-            wantSeat: Def.WantSeatType.WST_NO
+            matchID: this.matchId
         });
         const body: ClientMessageEnterRoom.AsObject = {
             room: { roomId: this._roomId, matchId: this.matchId },

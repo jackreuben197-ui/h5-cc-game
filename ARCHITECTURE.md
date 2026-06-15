@@ -32,7 +32,8 @@
 │  · 请求房间信息(MSG_R_ROOMS) → 反作弊/鉴权校验                  │
 │  · new TexasGameRoomData 并注册到 roomDataManager               │
 │  · 写入静态房间配置（玩法、保险、鱿鱼、蘑菇…）                  │
-│  · 发送 MSG_D_ENTER_ROOM                                        │
+│  · 首次进桌发 MSG_D_ENTER_ROOM；断线重连由                      │
+│    RoomReconnectManager 改发 MSG_D_SYNC_ENTER（见 §9.3）        │
 └──────────────────────────┬─────────────────────────────────────┘
                            │ WS 回调
 ┌──────────────────────────▼─────────────────────────────────────┐
@@ -859,9 +860,67 @@ MSG_S_LEAVE_NOTIFICATION → LeaveNotification.ts
     ├─ 按 reason 构造 routeData（如 path:'/tableGameEnd' + 房间信息 query）
     └─ ProcedureManager.StartProcedure(Return, { routeData })
             └─ ProcedureReturn.lateEnter
+                  ├─ roomReconnectManager.clearCurrentContext()  // 主动/被动离桌都收口在此
                   ├─ viewManager.showPreloadingLayer()
                   └─ sendToH5('h5Navigate', 1, routeData)  // 通知 H5 跳到结算页
 ```
+
+### 9.3 断线重连链路
+
+重连的核心理念：**不重新进桌，只拉房间最新快照**。Cocos 自己不连 WS，H5 负责检测断线和重连 WS，CC 仅在 WS 恢复后请求一次房间同步。整条链路三个关键设计：
+
+1. **协议复用，但走 SyncEnter (1025) 而非 EnterRoom (1002)** —— 服务端把这次当成"刷新已在桌玩家的快照"而不是"重新入桌"，避免触发坐下等副作用。
+2. **守卫 procedure** —— `RoomReconnectManager` 只有当 `ProcedureManager.currProcedure?.id === ProcedureDefine.EnterRoom` 时才会响应 H5 推送的重连事件；不在桌就一切跳过。
+3. **消息层零感知**：`SyncEnter.ts` handler 只调用共享的 `applyRoomSnapshot()` 写数据。重连完成的信号通过 `roomData.basicInfo` 的 `SNAPSHOT_APPLIED` 事件传递给 `RoomReconnectManager`，handler 本身不持有任何 reconnect 状态机引用。
+
+```
+H5: WebSocket close
+    │
+    │ wsReconnecting ───────────────────────────────────────────────▶
+    │                  RoomReconnectManager.markReconnecting()
+    │                    ├─ Procedure 不在 EnterRoom → 直接 return
+    │                    └─ 否则 _reconnecting=true + showPrompting()
+    │
+H5: WS 重连成功
+    │ wsReconnected ────────────────────────────────────────────────▶
+    │                  RoomReconnectManager.requestReconnect()
+    │                    ├─ Procedure 守卫
+    │                    ├─ context / roomData 守卫（拿不到 → hidePrompting）
+    │                    ├─ basicInfo.once(SNAPSHOT_APPLIED, consume) ← 订阅完成事件
+    │                    └─ ProtocolAgency.Send(MSG_D_SYNC_ENTER, { room })
+    │
+服务端返回 MSG_D_SYNC_ENTER (1025)
+    │
+    ▼
+SyncEnter.ts (纯写数据)
+    └─ applyRoomSnapshot(roomData, data)
+            ├─ 就地覆盖 basicInfo / handInfo / playersList / myInfo / operatorList
+            │     （每个 @observable setter 自动 emit，对应字段 UI 差量刷新）
+            └─ basicInfo.emit('SNAPSHOT_APPLIED')
+                    │
+                    ▼
+            RoomReconnectManager._consumeReconnectFlag()
+                    └─ _reconnecting=false + hidePrompting()
+```
+
+**和首次进桌的差异**：
+
+| 步骤 | 首次进桌 (EnterRoom 1002) | 断线重连 (SyncEnter 1025) |
+|------|---------------------------|---------------------------|
+| 入口 | `TexasGameplayEntrance.requestEnterAsync` | `RoomReconnectManager.requestReconnect` |
+| roomData 创建 | `new TexasGameRoomData(...)` | 复用已有实例 |
+| MTT roomID 迁移 | `EnterRoom.ts:24-31` 做 (0,m)→(r,m) 搬家 | 已是真 roomID，不会触发 |
+| 数据写入 | `applyRoomSnapshot()` | `applyRoomSnapshot()`（同一个 helper） |
+| UI 同步方式 | `viewManager.switchScene('TexasRoom')` → 组件 `autoBindEvents` **首屏回放** | 场景已存在，依赖 `@observable` setter **逐字段 emit** 差量刷新 |
+| 完成信号 | `await switchScene` 完成 | `basicInfo.emit('SNAPSHOT_APPLIED')` |
+
+**失败/清理路径**：
+
+- H5 退出 WS 重连退避 → `wsReconnectFailed` → `failReconnect(reason)` → 拔掉 `once` 订阅 + `hidePrompting()`
+- 玩家主动离桌 / 被服务端踢出 → 都收口到 `ProcedureReturn.lateEnter` → `clearCurrentContext()`，context 清空、`once` 订阅也一并拔掉
+- 切场景之后若再收到延迟到的 1025 包，`SyncEnter.ts` 会因 `getRoomData` 取不到而 early return（受 §4.1 离桌锁保护），不会污染已切走的场景
+
+**关键设计动机**：`RoomReconnectManager` 通过 `SNAPSHOT_APPLIED` 事件订阅来感知"sync 完成"，而不是让 `SyncEnter.ts` 直接调它的方法。这样 `SyncEnter` handler 保持"消息函数 = 纯数据写入"的契约（§4.2），将来若服务端引入"每 N 手主动 sync"或"切桌回前台 sync"等场景（参见 Unity 端 `_isEnableRtsEnterRoomMsg` 设计），同一个 handler 不需要任何改动。
 
 ---
 
@@ -1079,7 +1138,8 @@ private onNewStateChange(value: number, animType: AnimateDisplayTypeNew) {
 | UI 事件注册 | 手写 `_bindEventsAndRefresh`（逐一 on + 逐一回调） | `@bindEvent` 声明 + `autoBindEvents` 一键完成 + 首屏回放 |
 | 多数据源协同 | 难（不同状态分散在多个 manager） | 同一组件 `autoBindEvents({ player, setting, mine, ... })`，自动重绑保护 |
 | 解绑 | 手写 `targetOff` | `unBindEvents(...keys)` / `unBindEventsAll(component)` |
-| 进房 / 断线重连 | 需要特殊处理两套逻辑 | `autoBindEvents` 统一处理，回放当前数据即可 |
+| 进房 | 需要特殊处理 | 切场景 → `autoBindEvents` 首屏回放当前数据 |
+| 断线重连 | 需要特殊处理 | 不切场景；`SyncEnter` 写入 `roomData`，`@observable` setter 逐字段 emit，UI 差量刷新（§9.3） |
 | 动画触发 | 硬编码在消息处理逻辑内 | AnimateDisplayType 枚举解耦，消息层声明意图，视图层执行 |
 | 离开房间 | 直接处理，僵尸消息易导致 UI 错乱 | `RoomDataManager.startInternalLeaveLock` + 消息层闸门 |
 | 对话框/场景管理 | 散落各处 | `UIViewManager` + `UIPrefabDefinition` 注册表 |
