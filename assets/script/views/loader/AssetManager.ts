@@ -18,7 +18,7 @@ export const PreloadDefinitionGame: PreloadDefinition = {
 export const PreloadDefinitionSound: PreloadDefinition = {
     bundle: BUNDLE_RESOURCES,
     dir: 'sound',
-    collection: false
+    collection: true
 };
 // AssetCollectionType 加载素材的时候会把一些spriteframe, sound打包到一个prefab里，然后用于快速索引
 // 应该每一个Prefab对应一个enum索引,这样保证不会重复
@@ -33,9 +33,15 @@ const typesSC = {
     AudioSourceSound: cc.AudioSource
 };
 
-@traceClass()
+@traceClass({ level: 'debug' })
 export default class AssetManager {
     private static _map: Map<string, cc.SpriteFrame | cc.AudioClip> = new Map();
+
+    public static _debugAllKeys() {
+        AssetManager._map.forEach((v, k) => {
+            AssetManager.tracelog.debug('assset Loaed:', k);
+        });
+    }
 
     public static async getOrLoad<T extends cc.Asset>(bundleName: string, assetPath: string): Promise<T> {
         let bundle = bundleName == BUNDLE_RESOURCES || bundleName == null ? cc.resources : cc.assetManager.getBundle(bundleName);
@@ -44,13 +50,13 @@ export default class AssetManager {
             return new Promise((resovle, reject) => {
                 cc.assetManager.loadBundle(bundleName, (err: Error, loadedBundle: cc.AssetManager.Bundle) => {
                     if (err) {
-                        cc.log('bundle load error:', bundleName);
+                        AssetManager.tracelog.error('bundle load error:', bundleName);
                         reject(err);
                         return;
                     }
                     loadedBundle.load(assetPath, (err: Error, asset: T) => {
                         if (err) {
-                            cc.log('bundle path load error:', bundleName, assetPath);
+                            AssetManager.tracelog.error('bundle path load error:', bundleName, assetPath);
                             reject(err);
                             return;
                         }
@@ -66,7 +72,7 @@ export default class AssetManager {
         return new Promise((resovle, reject) => {
             bundle.load(assetPath, (err: Error, asset: T) => {
                 if (err) {
-                    cc.log('bundle path load error:', bundleName, assetPath);
+                    AssetManager.tracelog.error('bundle path load error:', bundleName, assetPath);
                     reject(err);
                     return;
                 }

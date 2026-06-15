@@ -55,7 +55,7 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
         seatData.status = Def.CanPlayStatus.NORMAL;
         //@PROBLEM(E)
         seatData.chip = player.chip;
-        seatData.setRoundBet(player.roundBet, AnimateDisplayTypeRoundBet.Static);
+        seatData.setRoundBet(player.roundBet, AnimateDisplayTypeRoundBet.PutNear);
         seatData.handBet = 0;
         seatData.roundActioned = false;
         // 自己
@@ -73,7 +73,7 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
                 seatData.setCards([...defaultHandCards], AnimateDisplayTypeCards.Deal, i);
             }
         }
-        seatData.setAction(player.action, AnimateDisplayTypeAction.Static);
+        seatData.setAction(player.action, AnimateDisplayTypeAction.Done);
         seatData.deposit = player.deposit;
         if (seatData.mine) {
             // _plog.debug('can operation', seatData.canOpearate, roomData.basicInfo.gameStatus >= Def.GameStatus.HAND_STARTED , roomData.basicInfo.gameStatus < Def.GameStatus.HAND_END);

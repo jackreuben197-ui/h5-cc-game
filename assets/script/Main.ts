@@ -1,6 +1,5 @@
 import { GameConfig } from './config/GameConfig';
 import { ITraceLog, traceClass } from './core/decorator/LogTrace';
-import SoundComponent from './core/SoundComponent';
 import ProcedureInit from './game/procedure/ProcedureInit';
 import ProcedureManager from './game/procedure/ProcedureManager';
 import h5MessageManager from './H5MsgMgr';
@@ -91,7 +90,6 @@ export default class Main extends cc.Component {
             this.tracelog.debug('逻辑分辨率:', cc.view.getVisibleSize().toString());
             MainUtils.refreshDiss(this.Diss);
         }, 1);
-        SoundComponent.Instance.initSound();
         //监听 H5 层（Vue/Vite）通过 bridge.js 发来的消息
         h5MessageManager.init();
         await MainUtils.registerH5Listeners();

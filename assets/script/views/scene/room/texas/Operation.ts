@@ -1,6 +1,7 @@
 import { ActionLimit, Def } from '@silenthill/agreement-web';
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
+import soundManager, { SoundEffectKey } from '../../../../core/SoundManager';
 import { OperatorMine, OpertionType } from '../../../../data/room/texas/model/Operator';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import TexasGameRoomDataSetting from '../../../../data/room/texas/TexasGameRoomDataSetting';
@@ -258,7 +259,7 @@ export default class Operation extends cc.Component {
         this._actionMap.clear();
         oper.actionLimitList.map(v => this._actionMap.set(v.action, v));
         let actionLimit;
-        // 选了自动 则自动操作
+        // 选了自动 则自动操作(不做声音提示)
         if (this._seatPlayer.autoOperationType != AutoOperationTypeTexas.NO) {
             switch (this._seatPlayer.autoOperationType) {
                 case AutoOperationTypeTexas.AUTO_FOLD:
@@ -293,12 +294,23 @@ export default class Operation extends cc.Component {
             this._seatPlayer.autoOperationType = AutoOperationTypeTexas.NO;
             return;
         }
-        // 手动操作
+        // 手动操作(声音提示)
+        soundManager.playEffect(SoundEffectKey.MyTurn);
         // 先把自动操作面板隐藏
         this._seatPlayer.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
         this.rootNode.active = true;
         this.opTimer.startTimer({
             totalTime: oper.totalOpDuration,
+            stepInterval: 1,
+            onStep: leftTime => {
+                // 剩下 1/3 时间提醒下
+                if (leftTime == Math.floor(oper.totalOpDuration / 3)) {
+                    soundManager.playEffect(SoundEffectKey.ActionAlert);
+                }
+                if (leftTime == 3) {
+                    soundManager.playEffect(SoundEffectKey.CD3S);
+                }
+            },
             elapsedTime: oper.elapsedTime,
             onComplete: () => {
                 this.opTimer.stop();

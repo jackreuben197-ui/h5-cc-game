@@ -1,5 +1,6 @@
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass } from '../../../../core/decorator/LogTrace';
+import soundManager from '../../../../core/SoundManager';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
@@ -225,6 +226,7 @@ export default class UITexasMenu extends cc.Component {
     }
 
     click_setting() {
+        soundManager.volumeOnOff(!soundManager.isOn);
         this.click_black();
         // UIComponent.open(UIDefine.UITexasSettingComponent, null, {
         //     parentUI: this._roomData.basicInfo.uirc.Common_Con

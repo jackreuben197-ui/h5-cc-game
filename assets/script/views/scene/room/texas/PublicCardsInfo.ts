@@ -1,5 +1,6 @@
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
+import soundManager, { SoundEffectKey } from '../../../../core/SoundManager';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPublicCards from '../../../../data/room/texas/TexasGameRoomDataPublicCards';
@@ -78,6 +79,14 @@ export default class PublicCardsInfo extends cc.Component {
         let moveDuration = 0.6;
         if (prevCardsLen > 0) {
             moveDuration = 0;
+        }
+        if (AnimateDisplayTypePublicCards.Deal == pat) {
+            cc.tween(this.node)
+                .delay(moveDuration / 4)
+                .call(() => {
+                    soundManager.playEffect(SoundEffectKey.DealCards);
+                })
+                .start();
         }
         plus.forEach((v, index) => {
             const node = this._publicCards[index + prevCardsLen];
