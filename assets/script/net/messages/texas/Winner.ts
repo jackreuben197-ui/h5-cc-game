@@ -35,7 +35,7 @@ export function Winner(data: ServerMessageWinner.AsObject, roomID: number, match
             });
         }
         if (result.win - result.handBet > 0) {
-            seatData.claimWin();
+            seatData.claimWin(true, result.handValueType, result.chip);
         }
         if (seatData.mine) {
             let mine = seatData.mine;

@@ -170,7 +170,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     }
 
     @pureEvent(TexasGameRoomDataPlayer.WINNER)
-    public claimWin() {}
+    public claimWin(play: boolean, handValueType: number, chip: number) {}
 
     public roundReset() {
         if (this.userID > 0) {
@@ -205,6 +205,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
             if (this.mine) {
                 this.mine.handClear();
             }
+            this.claimWin(false, 0, 0);
         }
     }
 }

@@ -1,6 +1,7 @@
 import { Def } from '@silenthill/agreement-web';
 import { autoBindEvents, bindEvent, unBindEvents, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
+import { HandValueType, handValueTypeToString } from '../../../../core/poker/PoerkCard';
 import soundManager, { SoundEffectKey } from '../../../../core/SoundManager';
 import { Operator, OpertionType } from '../../../../data/room/texas/model/Operator';
 import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
@@ -108,6 +109,8 @@ export default class SeatPlayer extends cc.Component {
     private squidNode: DisplayNode = null;
     @property({ type: cc.Node, displayName: '鱿鱼标记(图标)' })
     private squidMaskNode: cc.Node = null;
+    @property({ type: DisplayNode, displayName: '获胜者的筹码牌型' })
+    private winBoard: DisplayNode = null!; // text 0 handVuleType 1: chip, node 0 handValue 1: slash 2: space(for no handValue )
     private _seatPlayer: TexasGameRoomDataPlayer = null!;
     private _setting: TexasGameRoomDataSetting = null!;
     private _cardBacks: cc.Node[] = [];
@@ -721,7 +724,24 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.WINNER, { dataSource: 'player', initIgnore: true })
-    private onWin() {
+    private onWin(play: boolean, handValueType: number, chip: number) {
+        if (!play) {
+            this.winBoard.node.active = false;
+            return;
+        }
+        this.winBoard.node.active = true;
+        if (handValueType != 0) {
+            this.winBoard.getOpNode(0).active = true; //hv
+            this.winBoard.getOpNode(1).active = true; //slash
+            this.winBoard.getOpNode(2).active = false; // space
+            const hv = handValueType as HandValueType;
+            this.winBoard.setText(handValueTypeToString(hv), this._setting.showNumberWithShowBB(chip));
+        } else {
+            this.winBoard.getOpNode(0).active = false; //hv
+            this.winBoard.getOpNode(1).active = false; //slash
+            this.winBoard.getOpNode(2).active = true; // space
+            this.winBoard.setText('', this._setting.showNumberWithShowBB(chip));
+        }
         soundManager.playEffect(SoundEffectKey.MoveChip);
         this.animatingChips.active = true;
         const startPos = UIViewUtil.caculatePostion(this.animatingChips, this._potNode);
