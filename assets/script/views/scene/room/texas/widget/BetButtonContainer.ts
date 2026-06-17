@@ -1,7 +1,7 @@
 import { Def } from '@silenthill/agreement-web';
 import { traceClass } from '../../../../../core/decorator/LogTrace';
+import TexasGameRoomDataBasic from '../../../../../data/room/texas/TexasGameRoomDataBasic';
 import TexasGameRoomDataPlayer from '../../../../../data/room/texas/TexasGameRoomDataPlayer';
-import TexasGameRoomDataSetting from '../../../../../data/room/texas/TexasGameRoomDataSetting';
 import TexasTableEvent from '../events/TexasTableEvent';
 import BetButton from './BetButton'; // 引入按钮脚本
 
@@ -70,7 +70,7 @@ export default class BetButtonsContainer extends cc.Component {
      * 【懒加载核心刷新接口】
      * @param dataArray 传入的数据数组 (长度 1~5)
      */
-    public refreshAndLayout(dataArray: IBetBtnData[], setting: TexasGameRoomDataSetting) {
+    public refreshAndLayout(dataArray: IBetBtnData[], basicInfo: TexasGameRoomDataBasic) {
         if (!dataArray || !this.betBtnPrefab) return;
         let dataCount = dataArray.length;
         let cacheCount = this._cachedButtons.length;
@@ -96,7 +96,7 @@ export default class BetButtonsContainer extends cc.Component {
             if (i < dataCount) {
                 // 在需要展示的范围内：刷文字、绑回调、露面
                 let data = dataArray[i];
-                btnScript.initData(data.label, data.amount, setting, data.cb);
+                btnScript.initData(data.label, data.amount, basicInfo, data.cb);
                 btnScript.node.active = true;
             } else {
                 // 超出当前数据范围的缓存按钮：暂时退场，等下次召唤

@@ -42,8 +42,8 @@ export enum SoundMusicKey {
 export class SoundManager {
     private _soundOn: boolean = false;
     private _playingMusic: number = -1;
-    private _lastMusicKey: SoundMusicKey | null = null;
-    private _lastMusicVolume: number = 1;
+    private _lastMusicKey: SoundMusicKey = SoundMusicKey.BgmGame;
+    private _lastMusicVolume: number = 0.3;
     public get isOn() {
         return this._soundOn;
     }
@@ -54,7 +54,11 @@ export class SoundManager {
         this._soundOn = storageManager.getItem(StorageKey.SOUND_IS_OPEN) !== '0';
         this._installRecovery();
     }
+
     // ==================== 公开 API ====================
+    playBGM() {
+        return this.playMusic(SoundMusicKey.BgmGame, true, 0.3);
+    }
 
     /** 播放 BGM，返回 audioID。自动停掉上次的 BGM，保证同一时刻只有一个 BGM */
     playMusic(key: SoundMusicKey, loop = true, volume = 1): number {

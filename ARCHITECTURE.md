@@ -320,12 +320,16 @@ if (mine) unBindEvents(this, 'mine');
 ```
 ProtocolAgency（WS 网络层）
     └─ MessageHandler.handle(code, data, roomID, matchID)
+            ├─ code 4001-4999 → GuandanMessageHandler
+            ├─ code 3001-3999 → MahjongMessageHandler
+            ├─ code 2001-2999 → CowboyMessageHandler
+            ├─ code 1201-1399 → FantasyMessageHandler
             ├─ code 1001-1199 → TexasMessageHandler.handle()
             │       └─ switch(code) → EnterRoom / Seated / StartInfo / ActionAll / …
-            ├─ code 1201-1399 → FantasyMessageHandler
-            ├─ code 2001-2999 → CowboyMessageHandler
             └─ code < 1000    → OtherMessageHandler
 ```
+
+> 注意：代码中按 code 从大到小 `if-else` 链判断，第一个匹配即返回。
 
 `net/messages/texas/TexasMessageHandler.ts` 第一道防护：除 `MSG_D_ENTER_ROOM` / `MSG_D_LEAVE` / `MSG_S_LEAVE_NOTIFICATION` 外，先做两层检查：
 
@@ -635,12 +639,17 @@ export default class Operation extends cc.Component {
 
 ```typescript
 export const UIPrefabDialog = {
-    ConfirmOrNotice:     { UIType: UIConfirmDialog,           Bundle, Path: 'rc/dialog/confirm/UIConfirmDialog' },
-    TexasTableSetting:   { UIType: UIGameplayTableSetting,    Bundle, Path: 'rc/dialog/settings/UIGameplayTableSetting' },
-    TexasTableSecurity:  { UIType: UIGameplaySecuritySetting, Bundle, Path: 'rc/dialog/security/UIGameplaySecuritySetting' },
-    BringIn:             { UIType: UIBringIn,                 Bundle, Path: 'rc/dialog/bringin/UIBringIn' },
-    BringOut:            { UIType: UIBringOut,                Bundle, Path: 'rc/dialog/bringin/UIBringIn' },
-    RechargeDiamond:     { UIType: UIRechargeDiamond,         Bundle, Path: 'rc/dialog/rechargediamond/UIRechargeDiamond' },
+    MushroomIntroduction:    { UIType: UIGuideDialog,              Bundle, Path: 'rc/dialog/mushroomandcriticalhit/UIGuideDialog' },
+    CriticalHitIntroduction: { UIType: UIGuideDialog,              Bundle, Path: 'rc/dialog/mushroomandcriticalhit/UIGuideDialog' },
+    SquidIntroduction:       { UIType: UIDialogSquid,              Bundle, Path: 'rc/dialog/squid/UIDialogSquid' },
+    SquidOver:               { UIType: UISquidEnd,                 Bundle, Path: 'rc/dialog/squidover/UISquidOver' },
+    ConfirmOrNotice:         { UIType: UIConfirmDialog,            Bundle, Path: 'rc/dialog/confirm/UIConfirmDialog' },
+    TexasTableSetting:       { UIType: UIGameplayTableSetting,     Bundle, Path: 'rc/dialog/settings/UIGameplayTableSetting' },
+    TexasTableSecurity:      { UIType: UIGameplaySecuritySetting,  Bundle, Path: 'rc/dialog/security/UIGameplaySecuritySetting' },
+    BuyInsurance:            { UIType: UIInsuranceNewPanel,        Bundle, Path: 'rc/dialog/insurance/UIInsuranceNewPanel' },
+    BringIn:                 { UIType: UIBringIn,                  Bundle, Path: 'rc/dialog/bringin/UIBringIn' },
+    BringOut:                { UIType: UIBringOut,                 Bundle, Path: 'rc/dialog/bringin/UIBringIn' },
+    RechargeDiamond:         { UIType: UIRechargeDiamond,          Bundle, Path: 'rc/dialog/rechargediamond/UIRechargeDiamond' },
 } as const;
 
 export const UIPrefabScene = {
@@ -802,6 +811,28 @@ import type {
 
 h5-game 也走 npm git 依赖，但 import 自 `@silenthill/h5-cc-bridge/h5-side` 入口（含 envelope 运行时函数）+ Vite alias `@bridge-protocol` 一层封装，详见 `h5-game/src/bridge/README.md §0`。两端的协议来源最终都是 @silenthill/h5-cc-bridge 仓库的 `dist/`。
 
+### 8.6 其他外部 npm 依赖
+
+除 `@silenthill/h5-cc-bridge` 外，项目还有两个从老项目提取的 npm 包依赖：
+
+| 包名 | 用途 | 老项目对应 |
+|------|------|-----------|
+| `@silenthill/agreement-web` | 协议 Code 枚举 + protobuf 类型定义 | 老项目本地 `protobuf/` 目录（400+ 生成文件） |
+| `@silenthill/h5-cc-i18n` | 多语言运行时 + 翻译资源 | 老项目本地 `i18n/` 资源文件 |
+
+```jsonc
+// package.json
+"dependencies": {
+    "@silenthill/agreement-web": "github:kingofake/agreement-web#master",
+    "@silenthill/h5-cc-bridge":  "github:soolary/h5-cc-bridge#main",
+    "@silenthill/h5-cc-i18n":    "github:guysoup027/h5-cc-i18n#main"
+}
+```
+
+**`@silenthill/agreement-web`**：消息层通过 `import { Code } from '@silenthill/agreement-web'` 引用协议码枚举，`TexasMessageHandler.ts` 的 `switch(code)` 用的就是这里的 `Code.MSG_D_ENTER_ROOM` 等常量。同样遵循 type-only import 原则——运行时值（`Code` 枚举是值）通过 Cocos 的 `require` 解析（`agreement-web` 已构建为 UMD/CJS 可用格式）。
+
+**`@silenthill/h5-cc-i18n`**：提供 `i18n` 翻译函数和语言资源，`i18n/i18nMgr.ts` 内部调用。
+
 ---
 
 ## 9. 进房 / 离房流程
@@ -894,94 +925,183 @@ UI 刷新完成（按 setting.showBB 决定是 "1,500" 还是 "7.5BB"）
 
 ```
 h5-cc-game/assets/script/
+├── config/
+│   └── GameConfig.ts                    # 构建类型、端点、分辨率、FPS 等
 ├── core/
-│   └── decorator/
-│       ├── DataBind.ts                  # 响应式框架：@observable/@pureEvent/@bindEvent/@bindData/autoBindEvents/unBindEvents(All)
-│       └── LogTrace.ts                  # @traceClass / @traceMethod / createLogger
+│   ├── SoundManager.ts                  # 音效管理
+│   ├── decorator/
+│   │   ├── DataBind.ts                  # 响应式框架：@observable/@pureEvent/@bindEvent/@bindData/autoBindEvents/unBindEvents(All)
+│   │   └── LogTrace.ts                  # @traceClass / @traceMethod / createLogger
+│   └── poker/
+│       ├── PoerkCard.ts                 # 扑克牌数据结构
+│       └── PokerUtil.ts                 # 牌型判断工具
 ├── data/
 │   ├── LocalStorage.ts / StorageKey.ts
 │   ├── room/
 │   │   ├── RoomData.ts                  # 基类（roomID/matchID）
 │   │   ├── RoomDataManager.ts           # 房间数据仓库 + 离开锁
 │   │   ├── RoomDataGenericConstraints.ts# 玩法→玩家类型映射（BringIn 泛型使用）
-│   │   ├── mahjong/                     # 麻将
+│   │   ├── mahjong/                     # 麻将数据层
+│   │   │   ├── MahjongGameRoomData.ts
+│   │   │   └── MahjongGameRoomDataBasic.ts
 │   │   └── texas/
 │   │       ├── TexasGameRoomData.ts             # 聚合根
-│   │       ├── TexasGameRoomDataBasic.ts        # 房间基础信息 + 玩法开关
+│   │       ├── TexasGameRoomDataBasic.ts        # 房间基础信息 + 玩法开关（含原 TexasGameplayData）
 │   │       ├── TexasGameRoomDataSetting.ts      # 视图设置（showBB）
 │   │       ├── TexasGameRoomDataPotInfo.ts      # 底池
-│   │       ├── TexasGameRoomDataPublicCards.ts  # 公共牌
+│   │       ├── TexasGameRoomDataPublicCards.ts   # 公共牌
 │   │       ├── TexasGameRoomDataRoundState.ts   # 回合状态
 │   │       ├── TexasGameRoomDataSeatsStateManager.ts # 座位管理（seatsCount/重排/button）
 │   │       ├── TexasGameRoomDataPlayer.ts       # 单座位数据
 │   │       ├── TexasGameRoomDataPlayerMine.ts   # 本人全局状态
 │   │       └── model/Operator.ts                # 操作倒计时模型
 │   ├── trade/
-│   │   ├── TradeStore.ts / TradeStoreUtils.ts   # 商城（USDT 价格/支付方式）
+│   │   └── TradeStore.ts / TradeStoreUtils.ts   # 商城（USDT 价格/支付方式）
 │   └── user/
-│       ├── UserStore.ts / UserStoreUtils.ts     # 用户基础信息 + 钱包/信用列表
+│       └── UserStore.ts / UserStoreUtils.ts     # 用户基础信息 + 钱包/信用列表
 ├── game/
-│   ├── constant/AnimateDisplayType.ts           # 动画类型枚举
-│   ├── constant/BringInChipsType.ts             # 带入类型 + BringInMode
+│   ├── constant/                                # 游戏常量枚举（30+ 文件）
+│   │   ├── AnimateDisplayType.ts                #   动画类型枚举
+│   │   ├── AutoOpertaionType.ts                 #   自动操作类型
+│   │   ├── BringInMode.ts                       #   带入模式（CURRENCY / DIAMOND / CREDIT）
+│   │   ├── Constants.ts                         #   通用常量
+│   │   ├── Mushroom.ts / Squid.ts               #   蘑菇/鱿鱼玩法配置
+│   │   ├── LogicTypeConf.ts                     #   GameType 枚举（HOLDEM / MAHJONG / …）
+│   │   ├── TexasGameStatus.ts                   #   德州游戏状态
+│   │   └── …（AntiCheatType / CurrencyType / MatchType / TableType / VideoModel 等）
 │   ├── entrance/
 │   │   ├── AGameplayEntrance.ts                 # 入口基类
 │   │   ├── AGamelayEntranceProvider.ts          # 入口工厂
 │   │   ├── TexasGameplayEntrance.ts             # 德州入口
 │   │   └── MttTexasGameplayEntrance.ts          # MTT 入口
 │   ├── procedure/
-│   │   ├── ProcedureBase.ts / ProcedureManager.ts / ProcedureDefine.ts
+│   │   ├── ProcedureBase.ts                     # 流程基类
+│   │   ├── ProcedureManager.ts                  # 流程管理器（集中调度）
+│   │   ├── ProcedureDefine.ts                   # 流程枚举（Idle/Init/EnterRoom/Return）
+│   │   ├── ProcedureInit.ts                     # 初始化流程
+│   │   ├── ProcedureIdle.ts                     # 空闲流程
+│   │   ├── ProcedureEnterRoom.ts                # 进房流程
 │   │   └── ProcedureReturn.ts                   # 离桌回 H5（h5Navigate / h5Show）
 │   └── util/GameplayUtil.ts
 ├── net/
+│   ├── agora/
+│   │   ├── AgoraManager.ts                      # Agora 音视频管理
+│   │   └── AgoraVideoRender.ts                  # 视频渲染组件
 │   ├── messages/
 │   │   ├── MessageHandler.ts                    # 按 code 范围分发到各游戏类型
-│   │   └── texas/
-│   │       ├── TexasMessageHandler.ts           # 德州消息 switch + leaving 锁防护
-│   │       ├── EnterRoom.ts                     # 进房（异步，负责场景切换）
-│   │       ├── Seated.ts / SeatedOthers.ts      # 坐下
-│   │       ├── Standup.ts / StandupActive.ts    # 站起
-│   │       ├── Leave.ts / LeaveNotification.ts  # 离桌
-│   │       ├── ActionAll.ts / Action.ts         # 操作
-│   │       ├── ChipsChange.ts / StoreChips.ts   # 筹码
-│   │       ├── PublicCards.ts / Showcards.ts    # 牌
-│   │       ├── HandClear.ts / StartInfo.ts      # 手牌起止
-│   │       ├── KeepSeat.ts / KeepSeatActive.ts  # 留座
-│   │       └── …（每条服务端消息一个文件）
+│   │   ├── texas/                               # 德州消息（63 个文件）
+│   │   │   ├── TexasMessageHandler.ts           #   switch + leaving 锁防护
+│   │   │   ├── EnterRoom.ts                     #   进房（异步，负责场景切换）
+│   │   │   ├── Seated.ts / SeatedOthers.ts      #   坐下
+│   │   │   ├── Standup.ts / StandupActive.ts    #   站起
+│   │   │   ├── Leave.ts / LeaveNotification.ts  #   离桌
+│   │   │   ├── ActionAll.ts / Action.ts         #   操作
+│   │   │   ├── ChipsChange.ts / StoreChips.ts   #   筹码
+│   │   │   ├── PublicCards.ts / Showcards.ts     #   牌
+│   │   │   ├── HandClear.ts / StartInfo.ts      #   手牌起止
+│   │   │   ├── KeepSeat.ts / KeepSeatActive.ts  #   留座
+│   │   │   ├── BuyInsurance.ts / BuyInsuranceActive.ts / InsuranceOutsCards.ts / InsuranceTrigged.ts
+│   │   │   ├── Winner.ts / Showdown.ts / SidePots.ts
+│   │   │   └── …（每条服务端消息一个文件，共 63 个）
+│   │   ├── fantasy/                             # 幻想扑克消息（35 个文件）
+│   │   │   └── FantasyMessageHandler.ts + FT*.ts
+│   │   ├── cowboy/                              # 牛仔消息（23 个文件）
+│   │   │   └── CowboyMessageHandler.ts + CB*.ts
+│   │   ├── mahjong/                             # 麻将消息（47 个文件）
+│   │   │   └── MahjongMessageHandler.ts + MJ*.ts
+│   │   ├── guandan/                             # 掼蛋消息（41 个文件）
+│   │   │   └── GuandanMessageHandler.ts + GD*.ts
+│   │   └── other/                               # 跨游戏全局消息（64 个文件）
+│   │       └── OtherMessageHandler.ts + Register / Heartbeat / RoomChangeNotify / …
 │   ├── websocket/
 │   │   ├── ProtocolAgency.ts                    # WS 网关（通过 H5MsgMgr 代理收发）
-│   │   └── CodeMessage*GC.ts                    # 各玩法 code 映射
-│   └── https/                                   # WWW.Instance.CommonAPI 体系
+│   │   ├── OpCodeHelper.ts                      # OpCode 辅助
+│   │   ├── PacketHead.ts                        # 报文头结构
+│   │   ├── ServerErrorCode.ts                   # 服务端错误码
+│   │   ├── CodeMessageTexasGC.ts                # 德州 code 映射
+│   │   ├── CodeMessageFantasyGC.ts              # 幻想 code 映射
+│   │   ├── CodeMessageCowboyGC.ts               # 牛仔 code 映射
+│   │   ├── CodeMessageMahjongGC.ts              # 麻将 code 映射
+│   │   ├── CodeMessageGuandanGC.ts              # 掼蛋 code 映射
+│   │   └── CodeMessageOtherGC.ts                # 全局 code 映射
+│   └── https/
+│       ├── HttpClient.ts / HttpRequest.ts / HttpLink.ts / HttpErrorCode.ts
+│       ├── WebHelper.ts / WebRequest.ts / WebRequestBase.ts / WebApiCacheCenter.ts
+│       ├── HotUpdateConfigCache.ts
+│       ├── data/                                # HTTP 协议模型
+│       │   ├── room/   (HttpRoomBringInByIDProtocol / HttpRoomBringOutProtocol / HttpRoomUserMuteProtocol)
+│       │   ├── user/   (HttpUserInfoProtocol / HttpUserWalletProtocol / HttpUserSetVideoMaskProtocol)
+│       │   ├── usdt/   (HttpUSDT*Protocol × 6 + USDTTraderType)
+│       │   └── other/  (WebResponseDataBase)
+│       └── web_request/                         # 各功能 HTTP 请求类（25 个）
+│           └── WebRequestUser / WebRequestRoom / WebRequestPay / WebRequestOrder / …
 ├── views/
 │   ├── UIViewManager.ts                         # 场景/对话框/Toast/Preloading 总管
 │   ├── UIPrefabDefinition.ts                    # 所有 Prefab 注册表
-│   ├── base/UIComponentBase.ts / UIComponentDialogBase.ts
-│   ├── loader/AssetManager.ts
-│   ├── util/UIViewUtil.ts                       # 坐标转换等
-│   ├── widget/                                  # CardView / RemoteSprite / SwitchNode / ToastNode / ShiningPathTimer …
+│   ├── base/
+│   │   ├── UIComponentBase.ts                   # 组件基类
+│   │   └── UIComponentDialogBase.ts             # 对话框基类
+│   ├── loader/
+│   │   ├── AssetManager.ts                      # 资源管理
+│   │   └── AssetLoader.ts                       # 资源加载器
+│   ├── animate/
+│   │   └── SpriteAnimationHelper.ts             # 帧动画辅助
+│   ├── util/
+│   │   ├── UIViewUtil.ts                        # 坐标转换等
+│   │   └── ThrowPropManager.ts                  # 丢道具管理
+│   ├── widget/                                  # 通用 UI 组件
+│   │   ├── CardView.ts / RemoteSprite.ts / SwitchNode.ts / ToastNode.ts
+│   │   ├── ShiningPathTimer.ts / CountDownLabel.ts / StepSlider.ts
+│   │   ├── ToggleButton.ts / DisplayNode.ts / Mask.ts
+│   │   └── …
 │   ├── dialog/
 │   │   ├── bringin/
 │   │   │   ├── UIBringIn.ts                     # 带入对话框（泛型多玩法）
+│   │   │   ├── UIClubSelect.ts                  # 俱乐部选择
 │   │   │   ├── provider/BringInProvider.ts      # 抽象 Provider
 │   │   │   ├── provider/BringInProviderTexas.ts # 德州实现
-│   │   │   └── usdtdiamond/USDTDiamond.ts ...
+│   │   │   └── usdtdiamond/USDTDiamond.ts / USDTPaytype.ts
+│   │   ├── bringout/UIBringInOut.ts             # 带出对话框
 │   │   ├── confirm/UIConfirmDialog.ts
+│   │   ├── insurance/UIInsuranceNewPanel.ts     # 保险购买面板
+│   │   ├── mushroomandcriticalhit/UIGuideDialog.ts  # 蘑菇/暴击介绍
+│   │   ├── squid/UIDialogSquid.ts               # 鱿鱼介绍
+│   │   ├── squidover/UISquidEnd.ts / UISquidEndItem.ts  # 鱿鱼结算
 │   │   ├── security/UIGameplaySecuritySetting.ts
 │   │   ├── texassettings/UIGameplayTableSetting.ts
 │   │   └── rechargediamond/UIRechargeDiamond.ts
-│   └── scene/room/texas/
-│       ├── UIRoomTexas.ts                       # 牌桌场景根
-│       ├── UITexasMenu.ts                       # 侧边菜单（带入/站起/规则/showBB…）
-│       ├── SeatManager.ts                       # 座位容器（订阅 SEATS_CHANGE/BUTTON_CHANGE）
-│       ├── SeatPlayer.ts                        # 单座位（旧名 Seat.ts）
-│       ├── SeatAction.ts                        # 操作浮窗（fold/call/raise 标签）
-│       ├── PublicCardsInfo.ts / PotsInfo.ts / RoomInfo.ts
-│       └── events/TexasTableEvent.ts            # 牌桌业务入口（Sitdown/Standup/BringIn/LeaveRoom）
-├── i18n/i18nMgr.ts / CPErrorCode.ts
-├── helper/StringHelper.ts / TimeHelper.ts
+│   └── scene/
+│       ├── UIPreloadingComponent.ts             # 加载进度
+│       ├── UIPromptComponent.ts                 # 网络提示
+│       └── room/texas/
+│           ├── UIRoomTexas.ts                   # 牌桌场景根
+│           ├── UITexasMenu.ts                   # 侧边菜单（带入/站起/规则/showBB…）
+│           ├── SeatManager.ts                   # 座位容器（订阅 SEATS_CHANGE/BUTTON_CHANGE）
+│           ├── SeatPlayer.ts                    # 单座位（旧名 Seat.ts）
+│           ├── SeatAction.ts                    # 操作浮窗（fold/call/raise 标签）
+│           ├── Operation.ts                     # 玩家操作面板（自治组件，详见 §5.5）
+│           ├── InsuranceOperation.ts            # 保险操作面板
+│           ├── MorePlayTypeInfo.ts              # 多玩法信息展示
+│           ├── PublicCardsInfo.ts / PotsInfo.ts / RoomInfo.ts
+│           ├── events/TexasTableEvent.ts        # 牌桌业务入口（Sitdown/Standup/BringIn/LeaveRoom）
+│           ├── operations/AutoOperation.ts      # 自动操作面板（Operation 的子自治组件）
+│           └── widget/BetButton.ts / BetButtonContainer.ts  # 下注按钮组件
+├── i18n/
+│   ├── i18nMgr.ts / CPErrorCode.ts             # 国际化管理 + 错误码
+│   ├── i18nComponent.ts / i18nLabel.ts / i18nSprite.ts  # 运行时多语言组件
+├── helper/
+│   ├── StringHelper.ts / TimeHelper.ts
+│   ├── PublicHelper.ts / WebImageHelper.ts
+├── tools/
+│   ├── CCTools.ts                               # Cocos 工具（查询参数、屏幕方向）
+│   └── TelegramUtils.ts                         # Telegram 集成
 ├── H5MsgMgr.ts                                  # H5↔Cocos 桥接（握手 + WS 代理 + UI 控制），import type 自 @silenthill/h5-cc-bridge/cc-side（详见 §8.5）
 ├── Main.ts / MainUtils.ts
-└── protobuf/                                    # pb 自动生成
+├── SkeletonExt.js                               # Spine 动画扩展
+└── webp_support.js                              # WebP 格式支持
 ```
+
+> **协议代码来源**：老项目 `pokerqueen` 中的本地 `protobuf/` 目录（400+ 生成文件）已被提取为 npm 包 `@silenthill/agreement-web`。消息层通过 `import { Code } from '@silenthill/agreement-web'` 引用协议 Code 枚举和 protobuf 类型，本仓库不再保留 pb 生成文件。
 
 ---
 

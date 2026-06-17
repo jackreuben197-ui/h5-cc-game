@@ -1,18 +1,18 @@
 import RoomData from '../RoomData';
+import texasGamePersonalSettings from './TexasGamePersonalSettings';
 import TexasGameRoomDataBasic from './TexasGameRoomDataBasic';
 import TexasGameRoomDataPlayerMine from './TexasGameRoomDataPlayerMine';
 import TexasGameRoomDataPotInfo from './TexasGameRoomDataPotInfo';
 import TexasGameRoomDataPublicCards from './TexasGameRoomDataPublicCards';
 import TexasGameRoomDataRoundState from './TexasGameRoomDataRoundState';
 import TexasGameRoomDataSeatsStateManager from './TexasGameRoomDataSeatsStateManager';
-import TexasGameRoomDataSetting from './TexasGameRoomDataSetting';
 
 export default class TexasGameRoomData extends RoomData {
     public closed: boolean;
     // 基础信息
     public readonly basicInfo = new TexasGameRoomDataBasic(this);
-    // 牌桌设定
-    public readonly setting = new TexasGameRoomDataSetting(this);
+    // 个性设置（全局单例，所有牌桌共享）
+    public readonly setting = texasGamePersonalSettings;
     // 底池信息
     public readonly potInfo = new TexasGameRoomDataPotInfo();
     // 公共牌信息

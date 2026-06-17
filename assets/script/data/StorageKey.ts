@@ -49,10 +49,8 @@ export default class StorageKey {
     static HOT_UPDATE_ROOM_TEMPLATE_CACHE = 'HOT_UPDATE_ROOM_TEMPLATE_CACHE';
     // static OpenBarrage: string = 'OpenBarrage'; //是否打开弹幕 1 关闭，0 打开
     // //=======================设置相关========================
-    // //桌布样式
-    // static SettingDeskType = 'SettingDeskType';
-    // //扑克牌样式
-    // static SettingPokerType = 'SettingPokerType';
+    static SettingDeskType = 'SettingDeskType';
+    static SettingPokerType = 'SettingPokerType';
     // static TextureResourceLoaded = 'TextureResourceLoaded'; // 牌桌资源已加载过
     // static kQuickActionIndexKEY = 'kQuickActionIndexKEY'; //自定义加注
     // static kQuickActionIndexValueKEY = 'kQuickActionIndexValueKEY';
