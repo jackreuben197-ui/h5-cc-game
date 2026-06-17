@@ -72,6 +72,10 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public set gameStatus(r: Def.GameStatusMap[keyof typeof Def.GameStatus]) {
         this._gameStatus = r;
     }
+    // 在游戏中
+    public get isPlaying() {
+        return this.gameStatus >= Def.GameStatus.HAND_STARTED && this.gameStatus < Def.GameStatus.HAND_END;
+    }
     // 房间类型
     private _roomType: number;
     public get roomType() {
