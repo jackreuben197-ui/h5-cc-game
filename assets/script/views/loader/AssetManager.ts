@@ -5,9 +5,22 @@ export const BUNDLE_RESOURCES: string = 'resources';
 
 export const BUNDLE_TEXAS: string = 'texas';
 
-export type PreloadDefinition = { bundle: string; dir: string; collection: boolean };
+export type PreloadDefinition = {
+    bundle: string;
+    dir: string;
+    collection: boolean;
+};
 
-export type PreloadParams = { preloadDefinition: PreloadDefinition[]; complete?: () => void; stopProgress?: boolean; error?: (err: Error) => void };
+export type DynamicLoadDefinition = {
+    AsyncFunc: () => Promise<void>;
+};
+
+export type PreloadParams = {
+    preloadDefinition: (PreloadDefinition | DynamicLoadDefinition)[];
+    complete?: () => void;
+    stopProgress?: boolean;
+    error?: (err: Error) => void;
+};
 
 export const PreloadDefinitionGame: PreloadDefinition = {
     bundle: BUNDLE_RESOURCES,
@@ -23,17 +36,18 @@ export const PreloadDefinitionSound: PreloadDefinition = {
 // AssetCollectionType 加载素材的时候会把一些spriteframe, sound打包到一个prefab里，然后用于快速索引
 // 应该每一个Prefab对应一个enum索引,这样保证不会重复
 export type AssetTypeMapping = {
-    [AssetCollectionType.SpriteFrameCard]: cc.SpriteFrame;
+    [AssetCollectionType.SpriteFrameCard0]: cc.SpriteFrame;
+    [AssetCollectionType.SpriteFrameCard1]: cc.SpriteFrame;
+    [AssetCollectionType.SpriteFrameTableSmall]: cc.SpriteFrame;
     [AssetCollectionType.AudioSourceSound]: cc.AudioClip;
     [AssetCollectionType.Common]: cc.Component; // 或者是你的其他通用基类
 };
 
-const typesSC = {
-    SpriteFrameCard: cc.Sprite,
-    AudioSourceSound: cc.AudioSource
-};
+type AssetCtor<T extends cc.Asset> = {
+    prototype: T;
+} & typeof cc.Asset;
 
-@traceClass({ level: 'debug' })
+@traceClass()
 export default class AssetManager {
     private static _map: Map<string, cc.SpriteFrame | cc.AudioClip> = new Map();
 
@@ -43,7 +57,7 @@ export default class AssetManager {
         });
     }
 
-    public static async getOrLoad<T extends cc.Asset>(bundleName: string, assetPath: string): Promise<T> {
+    public static async getOrLoad<T extends cc.Asset>(bundleName: string, assetPath: string, te: AssetCtor<T>): Promise<T> {
         let bundle = bundleName == BUNDLE_RESOURCES || bundleName == null ? cc.resources : cc.assetManager.getBundle(bundleName);
         // check it is loaded
         if (!bundle) {
@@ -54,7 +68,7 @@ export default class AssetManager {
                         reject(err);
                         return;
                     }
-                    loadedBundle.load(assetPath, (err: Error, asset: T) => {
+                    loadedBundle.load(assetPath, te, (err: Error, asset: T) => {
                         if (err) {
                             AssetManager.tracelog.error('bundle path load error:', bundleName, assetPath);
                             reject(err);
@@ -65,12 +79,12 @@ export default class AssetManager {
                 });
             });
         }
-        const asset = bundle.get<T>(assetPath);
+        const asset = bundle.get<T>(assetPath, te);
         if (asset) {
             return asset;
         }
         return new Promise((resovle, reject) => {
-            bundle.load(assetPath, (err: Error, asset: T) => {
+            bundle.load(assetPath, te, (err: Error, asset: T) => {
                 if (err) {
                     AssetManager.tracelog.error('bundle path load error:', bundleName, assetPath);
                     reject(err);

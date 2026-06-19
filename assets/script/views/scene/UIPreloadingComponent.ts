@@ -1,7 +1,11 @@
 import { traceClass } from '../../core/decorator/LogTrace';
-import AssetManager, { BUNDLE_RESOURCES, PreloadDefinition, PreloadParams } from '../loader/AssetManager';
+import AssetManager, { BUNDLE_RESOURCES, DynamicLoadDefinition, PreloadDefinition, PreloadParams } from '../loader/AssetManager';
 
 const { ccclass, property, menu } = cc._decorator;
+
+function isDynamicLoad(item: PreloadDefinition | DynamicLoadDefinition): item is DynamicLoadDefinition {
+    return (item as DynamicLoadDefinition).AsyncFunc !== undefined;
+}
 
 @ccclass
 @traceClass()
@@ -39,10 +43,25 @@ export default class UIPreloadingComponent extends cc.Component {
         const parts = param.preloadDefinition.length;
         let part = Math.round(10000 / parts) / 10000;
         try {
+            const parallelTasks: Promise<void>[] = [];
+            const sequentialDefinitions: { def: PreloadDefinition; index: number }[] = [];
             for (let i = 0; i < parts; i++) {
                 const definition = param.preloadDefinition[i];
-                await this.loadResources(definition, param.stopProgress, i * part, part);
+                if (isDynamicLoad(definition)) {
+                    // 发现异步函数，立刻触发执行（开始并行），并收集它的 Promise
+                    parallelTasks.push(definition.AsyncFunc());
+                } else {
+                    // 发现普通资源，先存起来，等下统一走串行流程
+                    sequentialDefinitions.push({ def: definition, index: i });
+                }
             }
+            const runSequentialQueue = async () => {
+                for (const item of sequentialDefinitions) {
+                    // 在这个独立的轨道里，普通资源一个接一个地 await 乖乖排队
+                    await this.loadResources(item.def, param.stopProgress, item.index * part, part);
+                }
+            };
+            await Promise.all([...parallelTasks, runSequentialQueue()]);
             param.complete?.();
         } catch (e) {
             param.error?.(e instanceof Error ? e : new Error(String(e)));

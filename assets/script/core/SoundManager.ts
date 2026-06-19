@@ -1,7 +1,6 @@
-import storageManager from '../data/LocalStorage';
-import StorageKey from '../data/StorageKey';
 import { AssetCollectionType } from '../views/loader/AssetLoader';
 import AssetManager from '../views/loader/AssetManager';
+import { traceClass } from './decorator/LogTrace';
 
 export enum SoundEffectKey {
     // -- SFX --
@@ -39,6 +38,7 @@ export enum SoundMusicKey {
     BgmGame = 'bgm_game'
 }
 
+@traceClass({ level: 'debug' })
 export class SoundManager {
     private _soundOn: boolean = false;
     private _playingMusic: number = -1;
@@ -47,11 +47,14 @@ export class SoundManager {
     public get isOn() {
         return this._soundOn;
     }
+    public set isOn(b: boolean) {
+        this.tracelog.debug('sound', b);
+        this._soundOn = b;
+    }
     private _needRecover: boolean = false;
     private _gestureHandler: ((e: Event) => void) | null = null;
 
     constructor() {
-        this._soundOn = storageManager.getItem(StorageKey.SOUND_IS_OPEN) !== '0';
         this._installRecovery();
     }
 
@@ -98,9 +101,7 @@ export class SoundManager {
         }
         if (!onoff) {
             cc.audioEngine.stopAll();
-            this._playingMusic = -1;
         }
-        storageManager.setItem(StorageKey.SOUND_IS_OPEN, onoff ? '1' : '0');
     }
 
     // ==================== iOS 锁屏恢复 ====================

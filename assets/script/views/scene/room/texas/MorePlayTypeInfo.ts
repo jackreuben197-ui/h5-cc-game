@@ -68,7 +68,7 @@ export default class MorePlayTypeInfo extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataBasic.SQUID_ENABLED, 'basic')
-    @traceMethod({ level: 'debug' })
+    @traceMethod()
     private onSquieStatusChange(b: boolean, ant: AnimateDisplayTypePlayType = AnimateDisplayTypePlayType.Staic) {
         if (b && ant == AnimateDisplayTypePlayType.Start) {
             this.squidStartAnimation.node.active = true;
@@ -90,7 +90,7 @@ export default class MorePlayTypeInfo extends cc.Component {
     //===================== 暴击 ==========================================
 
     @bindEvent(TexasGameRoomDataBasic.CRITIAL_HIT_ENABLED, 'basic')
-    @traceMethod({ level: 'debug' })
+    @traceMethod()
     private onCriticalHitStatusChange(b: boolean, ant: AnimateDisplayTypePlayType = AnimateDisplayTypePlayType.Staic) {
         if (b && ant == AnimateDisplayTypePlayType.Start) {
             this.critialHitStartAnimation.node.active = true;

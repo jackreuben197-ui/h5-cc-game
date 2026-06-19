@@ -4147,7 +4147,16 @@
     "bgSprite": {
       "__id__": 87
     },
+    "mode": 0,
     "step": 0.1,
+    "steps": [
+      0,
+      0.1,
+      0.3,
+      0.5,
+      0.75,
+      1
+    ],
     "_bgColor": {
       "__type__": "cc.Color",
       "r": 127,
@@ -4655,7 +4664,7 @@
     "_srcBlendFactor": 770,
     "_dstBlendFactor": 771,
     "_spriteFrame": {
-      "__uuid__": "5e533bcc-fb36-402d-b615-90ba0f5d6f8d"
+      "__uuid__": "bbd92379-fae6-43db-8b9f-0bddb56e9597"
     },
     "_type": 0,
     "_sizeMode": 0,
@@ -4769,7 +4778,7 @@
       "a": 200
     },
     "_N$normalSprite": {
-      "__uuid__": "5e533bcc-fb36-402d-b615-90ba0f5d6f8d"
+      "__uuid__": "bbd92379-fae6-43db-8b9f-0bddb56e9597"
     },
     "_N$pressedSprite": {
       "__uuid__": "e9ec654c-97a2-4787-9325-e6a10375219a"
@@ -8414,7 +8423,16 @@
     "bgSprite": {
       "__id__": 206
     },
+    "mode": 0,
     "step": 0.1,
+    "steps": [
+      0,
+      0.1,
+      0.3,
+      0.5,
+      0.75,
+      1
+    ],
     "_bgColor": {
       "__type__": "cc.Color",
       "r": 127,

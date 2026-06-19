@@ -1,6 +1,5 @@
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass } from '../../../../core/decorator/LogTrace';
-import soundManager from '../../../../core/SoundManager';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
@@ -225,12 +224,12 @@ export default class UITexasMenu extends cc.Component {
         // UIComponent.open(UIDefine.UIInsurance, { type: 1, roomData: { room_id: GameCache.Instance.room_id, match_id: GameCache.Instance.match_id } });
     }
 
-    click_setting() {
-        soundManager.volumeOnOff(!soundManager.isOn);
+    private click_setting() {
         this.click_black();
-        // UIComponent.open(UIDefine.UITexasSettingComponent, null, {
-        //     parentUI: this._roomData.basicInfo.uirc.Common_Con
-        // });
+        viewManager.openDialog('PersonalSettings', {
+            roomID: this._roomData.roomID,
+            matchID: this._roomData.matchID
+        });
     }
 
     click_rule_tips() {
