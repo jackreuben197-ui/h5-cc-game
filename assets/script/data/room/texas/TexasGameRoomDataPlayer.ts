@@ -45,6 +45,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public static readonly SQUID_COUNT = 'SQUID_COUNT';
     public static readonly SQUID_ESCAPED = 'SQUID_ESCAPED';
     public static readonly MUSHROOM_COUNT = 'MUSHROOM_COUNT';
+    public static readonly POPUP_CARDS = 'POPUP_CARDS';
     private _parentRoomData: TexasGameRoomData;
     public get roomData() {
         return this._parentRoomData;
@@ -185,6 +186,9 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
             }
         }
     }
+
+    @pureEvent(TexasGameRoomDataPlayer.POPUP_CARDS)
+    public popupCards(cards: number[]) {}
 
     public handStart() {
         if (this.userID > 0) {

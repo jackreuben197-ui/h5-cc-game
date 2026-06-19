@@ -415,7 +415,7 @@ export default class SeatPlayer extends cc.Component {
         }
         // reset
         if (l == 0) {
-            this._bigCards.forEach(v => v.highlight(false));
+            this._bigCards.forEach(v => v.reset());
         }
         if (l > 0 && this._seatPlayer.action == Def.Action.FOLD) {
             this.smallCardsContainer.active = false;
@@ -794,6 +794,18 @@ export default class SeatPlayer extends cc.Component {
                     break;
             }
         };
+    }
+
+    @bindEvent(TexasGameRoomDataPlayer.POPUP_CARDS, { dataSource: 'player', initIgnore: true })
+    private onPopupCards(cardsNum: number[]) {
+        const mp: Set<number> = new Set(cardsNum);
+        this._bigCards.forEach(cd => {
+            if (mp.has(cd.storeCardNum)) {
+                cd.popUp(new cc.Vec2(0, 10));
+            } else {
+                cd.gray(true);
+            }
+        });
     }
 
     @bindEvent(TexasGameRoomDataPlayer.KEEPSEAT_CHANGE, 'player')

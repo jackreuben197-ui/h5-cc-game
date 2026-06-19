@@ -9,9 +9,12 @@ const { ccclass, property, menu, executeInEditMode } = cc._decorator;
 @ccclass
 @menu('Widget/CardView')
 export default class CardView extends cc.Component {
+    @property(cc.Sprite)
     private cardSprite: cc.Sprite = null;
     @property(cc.Node)
     private highLightSprite: cc.Node = null;
+    @property(cc.Node)
+    private grayLayer: cc.Node = null;
     // 将原本的属性改为私有变量，作为存取器的内部数据载体
     private _cardNum: number = 0;
     public get cardNum(): number {
@@ -34,9 +37,6 @@ export default class CardView extends cc.Component {
      */
     protected onLoad(): void {
         // 初始化时根据当前的 cardNum 刷新一次外观
-        let node = this.getComponent(cc.Sprite);
-        if (!node) console.error('[CardView]', 'no ccSprite on this node');
-        this.cardSprite = node;
     }
 
     protected onEnable(): void {
@@ -51,6 +51,34 @@ export default class CardView extends cc.Component {
         if (this.highLightSprite) {
             this.highLightSprite.active = b;
         }
+    }
+
+    private _offset: cc.Vec2 = new cc.Vec2(0, 0);
+
+    public popUp(offset: cc.Vec2) {
+        this._offset = offset;
+        cc.tween(this.cardSprite.node)
+            .to(0.3, {
+                x: this.cardSprite.node.position.x + offset.x,
+                y: this.cardSprite.node.position.y + offset.y
+            })
+            .start();
+    }
+
+    public gray(b: boolean) {
+        if (this.grayLayer) {
+            this.grayLayer.active = b;
+        }
+    }
+
+    public reset() {
+        this.highlight(false);
+        if (this._offset.x != 0 && this._offset.y != 0) {
+            this.cardSprite.node.setPosition(this.cardSprite.node.x - this._offset.x, this.cardSprite.node.y - this._offset.y);
+            this._offset.x = 0;
+            this._offset.y = 0;
+        }
+        this.gray(false);
     }
 
     /**
