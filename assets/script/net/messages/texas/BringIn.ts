@@ -30,7 +30,7 @@ export function BringIn(data: ServerMessageBringIn.AsObject, roomID: number, mat
         return;
     }
     //还在游戏中提示
-    if (roomData.basicInfo.isPlaying) {
+    if (roomData.mine.isPlaying) {
         viewManager.showToast(i18nMgr.Get('UIGameplay_UCRechargeBringinAfter'));
     }
     roomData.mine.totalChips = data.totalChips;

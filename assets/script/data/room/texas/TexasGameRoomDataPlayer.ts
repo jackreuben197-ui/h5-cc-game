@@ -186,6 +186,14 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
         }
     }
 
+    public handStart() {
+        if (this.userID > 0) {
+            if (this.mine) {
+                this.mine.handStart();
+            }
+        }
+    }
+
     public handEnd() {
         if (this.userID > 0) {
             if (this.mine) {
