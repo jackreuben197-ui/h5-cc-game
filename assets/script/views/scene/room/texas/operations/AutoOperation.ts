@@ -1,7 +1,7 @@
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../../core/decorator/LogTrace';
+import { TexasGamePersonalSettings } from '../../../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomDataPlayerMine from '../../../../../data/room/texas/TexasGameRoomDataPlayerMine';
-import TexasGameRoomDataSetting from '../../../../../data/room/texas/TexasGameRoomDataSetting';
 import { AutoOperationTypeTexas } from '../../../../../game/constant/AutoOpertaionType';
 import ToggleButton from '../../../../widget/ToggleButton';
 
@@ -58,21 +58,21 @@ export default class AutoOperation extends cc.Component {
         autoBindEvents(this, { mine: this._mineData, setting: this._mineData.roomData.setting });
     }
 
-    @bindEvent(TexasGameRoomDataSetting.SHOW_BB, 'setting')
+    @bindEvent(TexasGamePersonalSettings.SHOW_BB, 'setting')
     @traceMethod()
     private updateLabels(bb: boolean) {
         if (this.toggleAutoAllin.node.active) {
             let num = this.toggleAutoAllin.getCheckRelatedInfo<number>();
             if (num != null) {
                 this.tracelog.debug('atuo allin', num);
-                this.toggleAutoAllin.setCheckText(this._mineData.roomData.setting.showNumberWithShowBB(num), num);
+                this.toggleAutoAllin.setCheckText(this._mineData.roomData.basicInfo.showNumberWithShowBB(num), num);
             }
         }
         if (this.toggleAutoCall.node.active) {
             let num = this.toggleAutoCall.getCheckRelatedInfo<number>();
             if (num != null) {
                 this.tracelog.debug('atuo call', num);
-                this.toggleAutoCall.setCheckText(this._mineData.roomData.setting.showNumberWithShowBB(num), num);
+                this.toggleAutoCall.setCheckText(this._mineData.roomData.basicInfo.showNumberWithShowBB(num), num);
             }
         }
     }
@@ -94,10 +94,10 @@ export default class AutoOperation extends cc.Component {
                 break;
             case AutoOperationTypeTexas.AUTO_CALL:
                 this.toggleAutoCall.node.active = true;
-                this.toggleAutoCall.setCheckText(this._mineData.roomData.setting.showNumberWithShowBB(amount), amount);
+                this.toggleAutoCall.setCheckText(this._mineData.roomData.basicInfo.showNumberWithShowBB(amount), amount);
                 break;
             case AutoOperationTypeTexas.AUTO_ALLIN:
-                this.toggleAutoAllin.setCheckText(this._mineData.roomData.setting.showNumberWithShowBB(amount), amount);
+                this.toggleAutoAllin.setCheckText(this._mineData.roomData.basicInfo.showNumberWithShowBB(amount), amount);
                 this.toggleAutoAllin.node.active = true;
                 break;
             default:

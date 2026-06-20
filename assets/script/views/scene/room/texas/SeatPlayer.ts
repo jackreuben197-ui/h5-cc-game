@@ -1,12 +1,13 @@
 import { Def } from '@silenthill/agreement-web';
 import { autoBindEvents, bindEvent, unBindEvents, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
+import { HandValueType, handValueTypeToString } from '../../../../core/poker/PoerkCard';
 import soundManager, { SoundEffectKey } from '../../../../core/SoundManager';
 import { Operator, OpertionType } from '../../../../data/room/texas/model/Operator';
+import texasGamePersonalSettings, { TexasGamePersonalSettings } from '../../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import { SeatPosition } from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
-import TexasGameRoomDataSetting from '../../../../data/room/texas/TexasGameRoomDataSetting';
 import {
     AnimateDisplayTypeAction,
     AnimateDisplayTypeCards,
@@ -108,8 +109,9 @@ export default class SeatPlayer extends cc.Component {
     private squidNode: DisplayNode = null;
     @property({ type: cc.Node, displayName: '鱿鱼标记(图标)' })
     private squidMaskNode: cc.Node = null;
+    @property({ type: DisplayNode, displayName: '获胜者的筹码牌型' })
+    private winBoard: DisplayNode = null!; // text 0 handVuleType 1: chip, node 0 handValue 1: slash 2: space(for no handValue )
     private _seatPlayer: TexasGameRoomDataPlayer = null!;
-    private _setting: TexasGameRoomDataSetting = null!;
     private _cardBacks: cc.Node[] = [];
     private _bigCards: CardView[] = [];
     // 动画的池的位置（可能是发起，也可能是结尾,计算坐标使用)
@@ -119,7 +121,6 @@ export default class SeatPlayer extends cc.Component {
 
     public initData(seatPlayer: TexasGameRoomDataPlayer, potNode: cc.Node, dealNode: cc.Node) {
         this._seatPlayer = seatPlayer;
-        this._setting = seatPlayer.roomData.setting;
         this._potNode = potNode;
         this._dealNode = dealNode;
         if (this.node.activeInHierarchy) {
@@ -164,7 +165,7 @@ export default class SeatPlayer extends cc.Component {
      */
     private _bindEventsAndRefresh() {
         // 统一激活绑定，注入强类型 tag 推导过滤机制
-        autoBindEvents(this, { player: this._seatPlayer, setting: this._setting });
+        autoBindEvents(this, { player: this._seatPlayer, setting: texasGamePersonalSettings });
     }
 
     @bindEvent(TexasGameRoomDataPlayer.ALLIN_WIN_PERCENT, 'player')
@@ -208,13 +209,13 @@ export default class SeatPlayer extends cc.Component {
 
     @bindEvent(TexasGameRoomDataPlayer.CHIPS_CHANGE, 'player')
     private onUpdateChip(chip: number) {
-        this.chips.string = this._setting.showNumberWithShowBB(chip);
+        this.chips.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(chip);
     }
 
-    @bindEvent(TexasGameRoomDataSetting.SHOW_BB, { dataSource: 'setting', initPriority: 99 })
+    @bindEvent(TexasGamePersonalSettings.SHOW_BB, { dataSource: 'setting', initPriority: 99 })
     private onUpdateShowBB(b: number) {
-        this.chips.string = this._setting.showNumberWithShowBB(this._seatPlayer.chip);
-        this.roundBetLabel.string = this._setting.showNumberWithShowBB(this._seatPlayer.roundBet);
+        this.chips.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(this._seatPlayer.chip);
+        this.roundBetLabel.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(this._seatPlayer.roundBet);
     }
 
     @bindEvent(TexasGameRoomDataPlayer.CANPLAYSTATUS_CHANGE, 'player')
@@ -392,13 +393,13 @@ export default class SeatPlayer extends cc.Component {
                 cc.tween(this.animatingChips)
                     .to(0.5, { x: endPos.x, y: endPos.y }, { easing: 'cubicOut' })
                     .call(() => {
-                        this.roundBetLabel.string = this._setting.showNumberWithShowBB(amount);
+                        this.roundBetLabel.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(amount);
                         this.animatingChips.active = false;
                     })
                     .start();
                 return;
             }
-            this.roundBetLabel.string = this._setting.showNumberWithShowBB(amount);
+            this.roundBetLabel.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(amount);
             return;
         }
         this.roundBetNode.active = false;
@@ -414,7 +415,7 @@ export default class SeatPlayer extends cc.Component {
         }
         // reset
         if (l == 0) {
-            this._bigCards.forEach(v => v.highlight(false));
+            this._bigCards.forEach(v => v.reset());
         }
         if (l > 0 && this._seatPlayer.action == Def.Action.FOLD) {
             this.smallCardsContainer.active = false;
@@ -721,7 +722,24 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.WINNER, { dataSource: 'player', initIgnore: true })
-    private onWin() {
+    private onWin(play: boolean, handValueType: number, chip: number) {
+        if (!play) {
+            this.winBoard.node.active = false;
+            return;
+        }
+        this.winBoard.node.active = true;
+        if (handValueType != 0) {
+            this.winBoard.getOpNode(0).active = true; //hv
+            this.winBoard.getOpNode(1).active = true; //slash
+            this.winBoard.getOpNode(2).active = false; // space
+            const hv = handValueType as HandValueType;
+            this.winBoard.setText(handValueTypeToString(hv), this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(chip));
+        } else {
+            this.winBoard.getOpNode(0).active = false; //hv
+            this.winBoard.getOpNode(1).active = false; //slash
+            this.winBoard.getOpNode(2).active = true; // space
+            this.winBoard.setText('', this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(chip));
+        }
         soundManager.playEffect(SoundEffectKey.MoveChip);
         this.animatingChips.active = true;
         const startPos = UIViewUtil.caculatePostion(this.animatingChips, this._potNode);
@@ -776,6 +794,18 @@ export default class SeatPlayer extends cc.Component {
                     break;
             }
         };
+    }
+
+    @bindEvent(TexasGameRoomDataPlayer.POPUP_CARDS, { dataSource: 'player', initIgnore: true })
+    private onPopupCards(cardsNum: number[]) {
+        const mp: Set<number> = new Set(cardsNum);
+        this._bigCards.forEach(cd => {
+            if (mp.has(cd.storeCardNum)) {
+                cd.popUp(new cc.Vec2(0, 10));
+            } else {
+                cd.gray(true);
+            }
+        });
     }
 
     @bindEvent(TexasGameRoomDataPlayer.KEEPSEAT_CHANGE, 'player')

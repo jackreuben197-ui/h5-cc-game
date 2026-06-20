@@ -4,6 +4,7 @@ import UIBringOut from './dialog/bringout/UIBringInOut';
 import UIConfirmDialog from './dialog/confirm/UIConfirmDialog';
 import UIInsuranceNewPanel from './dialog/insurance/UIInsuranceNewPanel';
 import UIGuideDialog from './dialog/mushroomandcriticalhit/UIGuideDialog';
+import UIPersonalSettings from './dialog/personalsettings/UIPersonalSettings';
 import UIRechargeDiamond from './dialog/rechargediamond/UIRechargeDiamond';
 import UIGameplaySecuritySetting from './dialog/security/UIGameplaySecuritySetting';
 import UIDialogSquid from './dialog/squid/UIDialogSquid';
@@ -87,6 +88,12 @@ export const UIPrefabDialog = {
         Name: '扫码充钻石',
         Bundle: BUNDLE_RESOURCES,
         Path: 'rc/dialog/rechargediamond/UIRechargeDiamond'
+    },
+    PersonalSettings: {
+        UIType: UIPersonalSettings,
+        Name: '个性设置',
+        Bundle: BUNDLE_RESOURCES,
+        Path: 'rc/dialog/personalsettings/UIPersonalSettings'
     }
 } as const;
 

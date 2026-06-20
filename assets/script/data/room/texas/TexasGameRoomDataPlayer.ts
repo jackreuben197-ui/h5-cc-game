@@ -45,6 +45,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public static readonly SQUID_COUNT = 'SQUID_COUNT';
     public static readonly SQUID_ESCAPED = 'SQUID_ESCAPED';
     public static readonly MUSHROOM_COUNT = 'MUSHROOM_COUNT';
+    public static readonly POPUP_CARDS = 'POPUP_CARDS';
     private _parentRoomData: TexasGameRoomData;
     public get roomData() {
         return this._parentRoomData;
@@ -170,7 +171,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     }
 
     @pureEvent(TexasGameRoomDataPlayer.WINNER)
-    public claimWin() {}
+    public claimWin(play: boolean, handValueType: number, chip: number) {}
 
     public roundReset() {
         if (this.userID > 0) {
@@ -182,6 +183,17 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
             this.operator = null;
             if (this.mine) {
                 this.mine.roundReset();
+            }
+        }
+    }
+
+    @pureEvent(TexasGameRoomDataPlayer.POPUP_CARDS)
+    public popupCards(cards: number[]) {}
+
+    public handStart() {
+        if (this.userID > 0) {
+            if (this.mine) {
+                this.mine.handStart();
             }
         }
     }
@@ -205,6 +217,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
             if (this.mine) {
                 this.mine.handClear();
             }
+            this.claimWin(false, 0, 0);
         }
     }
 }

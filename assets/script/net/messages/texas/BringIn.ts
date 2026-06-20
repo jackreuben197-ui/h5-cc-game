@@ -3,6 +3,7 @@ import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
+import { i18nMgr } from '../../../i18n/i18nMgr';
 import viewManager from '../../../views/UIViewManager';
 
 const _plog = createLogger('ServerMessageEnterRoom');
@@ -27,6 +28,10 @@ export function BringIn(data: ServerMessageBringIn.AsObject, roomID: number, mat
         );
         viewManager.showToast(CPErrorCode.ServerErrorDescription(data.status));
         return;
+    }
+    //还在游戏中提示
+    if (roomData.mine.isPlaying) {
+        viewManager.showToast(i18nMgr.Get('UIGameplay_UCRechargeBringinAfter'));
     }
     roomData.mine.totalChips = data.totalChips;
 }

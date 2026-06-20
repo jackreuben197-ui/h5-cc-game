@@ -266,6 +266,7 @@ export function observable(eventName: string, options?: ObservableOptions) {
          */
         const checkArrayAsSetSame = (oldVal: any, newVal: any): boolean => {
             if (!Array.isArray(oldVal) || !Array.isArray(newVal)) {
+                if (oldVal == null || newVal == null) return false;
                 throw new Error(`[DataBind] Property "${propertyKey}" is configured as "arrayAsSet", but the runtime value is not an array.`);
             }
             if (oldVal === newVal) return true;

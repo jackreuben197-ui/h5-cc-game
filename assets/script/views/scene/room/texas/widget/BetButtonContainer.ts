@@ -1,7 +1,8 @@
 import { Def } from '@silenthill/agreement-web';
 import { traceClass } from '../../../../../core/decorator/LogTrace';
+import { ShortCut } from '../../../../../data/room/texas/TexasGamePersonalSettings';
+import TexasGameRoomDataBasic from '../../../../../data/room/texas/TexasGameRoomDataBasic';
 import TexasGameRoomDataPlayer from '../../../../../data/room/texas/TexasGameRoomDataPlayer';
-import TexasGameRoomDataSetting from '../../../../../data/room/texas/TexasGameRoomDataSetting';
 import TexasTableEvent from '../events/TexasTableEvent';
 import BetButton from './BetButton'; // 引入按钮脚本
 
@@ -11,20 +12,18 @@ export interface IBetBtnData {
     cb: (amount: number, ratio: string) => void; // 点击回调
 }
 
-export function caculatePotsBet(roundBet: number, minRaise: number, player: TexasGameRoomDataPlayer): IBetBtnData[] {
+export function caculatePotsBet(scs: ShortCut[], roundBet: number, minRaise: number, player: TexasGameRoomDataPlayer): IBetBtnData[] {
     if (!player || !player.mine) return;
     const pot = player.roomData.potInfo.allPot + roundBet - player.roundBet;
     const myCall = roundBet - player.roundBet;
     const myChip = player.chip;
-    const btn = [1 / 3, 1 / 2, 2 / 3, 1, 1.2];
-    const str = ['1/3', '1/2', '2/3', '1.0', '1.2'];
     const ret: IBetBtnData[] = [];
-    btn.forEach((v, i) => {
-        const amount = Math.floor(pot * v + myCall);
+    scs.forEach((v, i) => {
+        const amount = Math.floor(pot * v.percent + myCall);
         //有钱，还得大于最小下注
         if (amount <= myChip && amount >= minRaise) {
             ret.push({
-                label: str[i],
+                label: v.name,
                 amount: amount,
                 cb: function (amount: number, ratio: string): void {
                     if (amount == myChip) {
@@ -70,7 +69,7 @@ export default class BetButtonsContainer extends cc.Component {
      * 【懒加载核心刷新接口】
      * @param dataArray 传入的数据数组 (长度 1~5)
      */
-    public refreshAndLayout(dataArray: IBetBtnData[], setting: TexasGameRoomDataSetting) {
+    public refreshAndLayout(dataArray: IBetBtnData[], basicInfo: TexasGameRoomDataBasic) {
         if (!dataArray || !this.betBtnPrefab) return;
         let dataCount = dataArray.length;
         let cacheCount = this._cachedButtons.length;
@@ -96,7 +95,7 @@ export default class BetButtonsContainer extends cc.Component {
             if (i < dataCount) {
                 // 在需要展示的范围内：刷文字、绑回调、露面
                 let data = dataArray[i];
-                btnScript.initData(data.label, data.amount, setting, data.cb);
+                btnScript.initData(data.label, data.amount, basicInfo, data.cb);
                 btnScript.node.active = true;
             } else {
                 // 超出当前数据范围的缓存按钮：暂时退场，等下次召唤

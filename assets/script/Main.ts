@@ -48,32 +48,7 @@ export default class Main extends cc.Component {
         ITraceLog.setGlobalLevel(GameConfig.LOG_LEVEL);
         // 关闭左下角 FPS / DrawCall 统计信息
         cc.debug.setDisplayStats(false);
-        // 初始化 Telegram WebApp SDK（必须在最开始）
-        // TelegramUtils.Instance;
-        // // 输出 Telegram 调试信息（在 log 被禁用之前）
-        // if (TelegramUtils.Instance.isInTelegram) {
-        //     TelegramUtils.Instance.printDebugInfo();
-        // }
-        // if (!CCTools.getQueryString('log') && GameConfig.IS_PUBLISHED) {
-        //     this.tracelog.info = function () {};
-        // }
         this.tracelog.info('游戏启动', cc.sys.os);
-        // // UI 节点缓存
-        // Main.CacheUI = this.node.parent.getChildByName('Cache_UI - UI缓存');
-        // Main.Scene = this.node.parent.getChildByName('Scene - 场景');
-        // Main.Marquee = this.node.parent.getChildByName('Marquee - 场景上层');
-        // Main.Form = this.node.parent.getChildByName('Form - 窗体层');
-        // Main.Board = this.node.parent.getChildByName('Board - 遮挡浮窗层');
-        // Main.Dialog = this.node.parent.getChildByName('Dialog - 弹窗层');
-        // Main.Alert = this.node.parent.getChildByName('Alert - 提示框');
-        // Main.Block = this.node.parent.getChildByName('Block - 遮挡');
-        // Main.Prompt = this.node.parent.getChildByName('Prompt - 网络菊花层');
-        // Main.Toast = this.node.parent.getChildByName('Toast - 提示层');
-        // Main.UIPreloading = Main.Block.getChildByName('UIPreloading');
-        // Main.Toast_Node = Main.Toast.getChildByName('Toast_Node');
-        // Main.Orientation = this.node.parent.getChildByName('Orientation');
-        // Main.Reconnect = this.node.parent.getChildByName('Reconnect - 重连');
-        // Main.Diss = this.node.parent.getChildByName('Diss - 出界遮挡');
         viewManager.init({
             dialogLayer: this.Dialog,
             cacheLayer: this.CacheLayer,
@@ -84,7 +59,6 @@ export default class Main extends cc.Component {
             preload: this.Preload,
             prompt: this.Prompt
         });
-        // //UIComponent.Instance.SetPrefabNode(PrefabUI.UIPreloading, Main.UIPreloading);
         this.scheduleOnce(() => {
             this.tracelog.debug('屏幕分辨率:', cc.view.getFrameSize().toString());
             this.tracelog.debug('逻辑分辨率:', cc.view.getVisibleSize().toString());

@@ -7,6 +7,7 @@ export default class TexasGameRoomDataPublicCards extends cc.EventTarget {
     public static readonly SECOND_PUBLICCARDS_CHANGE = 'SECOND_PUBLICCARDS_CHANGE';
     public static readonly PUBLICCARDS_HIGHLIGHT = 'PUBLICCARDS_HIGHLIGHT';
     public static readonly SECOND_PUBLICCARDS_HIGHLIGHT = 'SECOND_PUBLICCARDS_HIGHLIGHT';
+    public static readonly PUBLICCARDS_POPUP = 'PUBLICCARDS_POPUP';
     private _publicCards: number[] = [];
     public get publicCards() {
         return this._publicCards;
@@ -63,6 +64,9 @@ export default class TexasGameRoomDataPublicCards extends cc.EventTarget {
 
     @pureEvent(TexasGameRoomDataPublicCards.PUBLICCARDS_HIGHLIGHT, { initParams: [[]] })
     public higlightPublicards(cards: number[]) {}
+
+    @pureEvent(TexasGameRoomDataPublicCards.PUBLICCARDS_POPUP, { initParams: [[]] })
+    public popUpPublicards(cards: number[]) {}
 
     @pureEvent(TexasGameRoomDataPublicCards.SECOND_PUBLICCARDS_HIGHLIGHT, { initParams: [[]] })
     public higlightSecondPublicCards(cards: number[]) {}
