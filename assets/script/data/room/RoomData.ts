@@ -1,5 +1,4 @@
 export default class RoomData {
-    public roomType: number = 0;
     // roomID 房间ID(MTT时候会再设置)
     private _roomID: number;
     public get roomID() {

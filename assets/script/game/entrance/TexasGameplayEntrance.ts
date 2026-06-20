@@ -6,7 +6,6 @@ import { i18nMgr } from '../../i18n/i18nMgr';
 import ProtocolAgency from '../../net/websocket/ProtocolAgency';
 import viewManager from '../../views/UIViewManager';
 import { AntiCheatType } from '../constant/AntiCheatType';
-import roomReconnectManager from '../RoomReconnectManager';
 import AGameplayEntrance, { LoadIndicator } from './AGameplayEntrance';
 
 /**
@@ -374,7 +373,6 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         if (!roomData) {
             roomData = new TexasGameRoomData(this._roomId, this.matchId);
         }
-        roomData.roomType = this._roomType;
         roomData.basicInfo.subRoomConfig = this._roomInfo.subConfigsList ?? [];
         roomData.basicInfo.roomName = this._roomInfo.name;
         roomData.basicInfo.roomType = this._roomInfo.roomType;
@@ -473,10 +471,6 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         }
         roomData.seatsStateManager.seatsCount = this._roomInfo.seatCount;
         roomDataManager.setRoomData(this._roomId, this.matchId, roomData);
-        roomReconnectManager.setCurrentContext({
-            roomID: this._roomId,
-            matchID: this.matchId
-        });
         const body: ClientMessageEnterRoom.AsObject = {
             room: { roomId: this._roomId, matchId: this.matchId },
             gps: { longitude: '', latitude: '' },

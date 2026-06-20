@@ -4,7 +4,6 @@ import TexasGameRoomData from '../../data/room/texas/TexasGameRoomData';
 import ProtocolAgency from '../../net/websocket/ProtocolAgency';
 import { AntiCheatType } from '../constant/AntiCheatType';
 import { MttPlayerStatus } from '../constant/Constants';
-import roomReconnectManager from '../RoomReconnectManager';
 import AGameplayEntrance, { LoadIndicator } from './AGameplayEntrance';
 
 /**
@@ -236,7 +235,6 @@ export default class MttTexasGameplayEntrance extends AGameplayEntrance {
         // 请求进入德州房间
         // ProcedureManager.StartProcedure(ProcedureDefine.Texas, GameCache.Instance.enter_param);
         const roomData = new TexasGameRoomData(this._roomId, this.matchId);
-        roomData.roomType = this._roomType;
         roomData.basicInfo.roomName = this._mttDetails.mtt.name;
         roomData.basicInfo.roomType = this._mttDetails.mtt.type;
         roomData.basicInfo.delaySeeCard = this._mttDetails.mtt.delayViewCardOn > 0;
@@ -259,10 +257,6 @@ export default class MttTexasGameplayEntrance extends AGameplayEntrance {
         }
         roomData.seatsStateManager.seatsCount = this._mttDetails.mtt.seatCount;
         roomDataManager.setRoomData(this._roomId, this.matchId, roomData);
-        roomReconnectManager.setCurrentContext({
-            roomID: this._roomId,
-            matchID: this.matchId
-        });
         const body: ClientMessageEnterRoom.AsObject = {
             room: { roomId: this._roomId, matchId: this.matchId },
             gps: { longitude: '', latitude: '' },

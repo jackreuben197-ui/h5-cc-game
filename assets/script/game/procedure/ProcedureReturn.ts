@@ -17,7 +17,7 @@ export default class ProcedureReturn extends ProcedureBase {
 
     override lateEnter(param: ProcedureReturnNavigateParam) {
         // 主动离桌 / 被踢 / 服务端关闭都会归到这里，统一清掉重连上下文
-        roomReconnectManager.clearCurrentContext();
+        roomReconnectManager.clearAllContext();
         soundManager.stopAll();
         viewManager.showPreloadingLayer();
         if (param && param.routeData) {

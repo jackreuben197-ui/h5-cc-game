@@ -1,9 +1,8 @@
-import { Def, Player, ServerMessageEnterRoom, ServerMessageSyncEnter } from '@silenthill/agreement-web';
+import { Def, Player, ServerMessageEnterRoom } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
-import TexasGameRoomDataBasic from '../../../data/room/texas/TexasGameRoomDataBasic';
 import {
     AnimateDisplayTypeAction,
     AnimateDisplayTypeButton,
@@ -14,15 +13,32 @@ import {
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
+import roomReconnectManager from '../../../game/RoomReconnectManager';
 import viewManager from '../../../views/UIViewManager';
 
 const _plog = createLogger('ServerMessageEnterRoom');
 
-// EnterRoom (1002) 和 SyncEnter (1025) 回包共用：把服务端房间快照覆盖到本地 roomData
-export type RoomSnapshotData = ServerMessageEnterRoom.AsObject | ServerMessageSyncEnter.AsObject;
-
-export function applyRoomSnapshot(roomData: TexasGameRoomData, data: RoomSnapshotData): void {
+// EnterRoom 1002
+export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: number, matchID: number): Promise<void> {
+    let roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
+    if (!roomData && matchID > 0) {
+        // MTT 首次进桌：客户端用 (0, matchID) 发的请求，服务端回来已分配了真实 roomID
+        roomData = roomDataManager.getRoomData<TexasGameRoomData>(0, matchID);
+        if (roomData) {
+            roomData.roomID = roomID;
+            roomDataManager.deleteRoomData(0, matchID);
+            roomDataManager.setRoomData(roomID, matchID, roomData);
+        }
+    }
+    if (!roomData) {
+        _plog.error('no store room data');
+        return;
+    }
     if (data.status != 0) return;
+    roomReconnectManager.addContext({
+        roomID: roomID,
+        matchID: matchID
+    });
     const myseat = data.myInfo.seatId;
     const seatCount = roomData.seatsStateManager.seatsCount;
     const myOp = myseat > 0 && data.operatorList.filter(v => v.seatId == myseat && !v.isAgreeSecondPc && !v.isInsurance).length > 0;
@@ -195,28 +211,7 @@ export function applyRoomSnapshot(roomData: TexasGameRoomData, data: RoomSnapsho
                 seatData.operator = op;
             }
         });
-        roomData.basicInfo.emit(TexasGameRoomDataBasic.SNAPSHOT_APPLIED);
     }
-}
-
-// EnterRoom 1002
-export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: number, matchID: number): Promise<void> {
-    let roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
-    if (!roomData && matchID > 0) {
-        // MTT 首次进桌：客户端用 (0, matchID) 发的请求，服务端回来已分配了真实 roomID
-        roomData = roomDataManager.getRoomData<TexasGameRoomData>(0, matchID);
-        if (roomData) {
-            roomData.roomID = roomID;
-            roomDataManager.deleteRoomData(0, matchID);
-            roomDataManager.setRoomData(roomID, matchID, roomData);
-        }
-    }
-    if (!roomData) {
-        _plog.error('no store room data');
-        return;
-    }
-    if (data.status != 0) return;
-    applyRoomSnapshot(roomData, data);
     await viewManager.switchScene('TexasRoom', {
         roomID: roomData.roomID,
         matchID: roomData.matchID

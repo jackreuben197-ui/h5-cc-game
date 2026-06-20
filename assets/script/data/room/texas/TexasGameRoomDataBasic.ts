@@ -34,8 +34,6 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public static readonly SQUID_ENABLED = 'SQUID_ENABLED';
     public static readonly SQUID_RESULTS = 'SQUID_RESULTS';
     public static readonly MUSHROOM_ENABLED = 'MUSHROOM_ENABLED';
-    // 服务端房间快照（EnterRoom / SyncEnter）成功应用到 roomData 后触发，供重连等状态机订阅
-    public static readonly SNAPSHOT_APPLIED = 'SNAPSHOT_APPLIED';
     // 不变的信息
     // 基础信息
     public roomName: string;
