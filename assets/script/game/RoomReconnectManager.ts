@@ -17,8 +17,6 @@ class RoomReconnectManager {
     private _contexts: RoomReconnectContext[] = [];
     private _reconnectMap: Map<string, number> = new Map();
     private static readonly RECCONECT_TIMEOUT = 10000; //10s
-    // 是否可以重连
-    private _valid: boolean = false;
 
     public addContext(context: RoomReconnectContext): void {
         // 1. 同时校验 roomID 和 matchID
@@ -43,12 +41,14 @@ class RoomReconnectManager {
             clearInterval(v);
         });
         this._reconnectMap.clear();
+        viewManager.hidePrompting();
     }
 
     private _genKey(roomID: number, matchID: number): string {
         return roomID + '-' + matchID;
     }
 
+    /** 主动离开某个房间可能需要，就是离开房间A，直接跳到房间B，目前用不到 */
     public clearContext(roomID: number, matchID: number): void {
         const index = this._contexts.findIndex(c => c.roomID === roomID && c.matchID === matchID);
         // 找到了就从数组中抹去
@@ -58,17 +58,17 @@ class RoomReconnectManager {
         this._reconnectMap.delete(this._genKey(roomID, matchID));
     }
 
-    private isInRoom(): boolean {
+    private _isInRoom(): boolean {
         return ProcedureManager.currProcedure?.id === ProcedureDefine.EnterRoom;
     }
 
     public markReconnecting(): void {
-        if (!this.isInRoom()) return;
+        if (!this._isInRoom()) return;
         viewManager.showPrompting();
     }
 
     public requestReconnect(): void {
-        if (!this.isInRoom()) {
+        if (!this._isInRoom()) {
             this.tracelog.info('not in room procedure, skip reconnect');
             viewManager.hidePrompting();
             return;
@@ -78,23 +78,34 @@ class RoomReconnectManager {
             viewManager.hidePrompting();
             return;
         }
+        // 如果上次重连没结束, 继续操作, 也许可以选择清理全部,重新开始，这里可以做逻辑就是，
+        // 如果多次这样的重连,最后弹出窗口，
+        // 让用户到网络稳定后手动选择重连（@TODO）优化项目
+        if (this._reconnectMap.size > 0) {
+            this.tracelog.warn('last reconnect is not complete, ignore, continue');
+        }
         // 调用这个时候是 wsConnected 必然是可以的
-        this._valid = true;
         this._contexts.forEach(context => {
-            const roomData = roomDataManager.getRoomData(context.roomID, context.matchID);
             const key = this._genKey(context.roomID, context.matchID);
             // 上次重连还没结束
             if (this._reconnectMap.has(key)) {
                 return;
             }
-            // 超时清理
-            const timer = setTimeout(() => this._reconnectMap.delete(key), RoomReconnectManager.RECCONECT_TIMEOUT);
-            this._reconnectMap.set(key, timer);
+            const roomData = roomDataManager.getRoomData(context.roomID, context.matchID);
             if (!roomData) {
                 this.tracelog.warn('no room data for reconnect', context.roomID, context.matchID);
                 viewManager.hidePrompting();
                 return;
             }
+            // 超时清理(超时时间可以优化到以后阶梯处理5，10，20，30，60等)
+            const timer = setTimeout(() => {
+                this._reconnectMap.delete(key);
+                if (this._reconnectMap.size == 0) {
+                    viewManager.hidePrompting();
+                }
+            }, RoomReconnectManager.RECCONECT_TIMEOUT);
+            // 设置重连房间锁（不要重复请求)
+            this._reconnectMap.set(key, timer);
             if (roomData instanceof TexasGameRoomData) {
                 const body: ClientMessageSyncEnter.AsObject = {
                     room: { roomId: context.roomID, matchId: context.matchID }
@@ -106,7 +117,7 @@ class RoomReconnectManager {
                     body
                 });
             }
-            this.tracelog.info('sync enter requested', context.roomID, context.matchID);
+            this.tracelog.info('sync enter requested(start)', context.roomID, context.matchID);
         });
     }
 
@@ -118,11 +129,14 @@ class RoomReconnectManager {
             clearInterval(timer);
             this._reconnectMap.delete(key);
         }
+        if (this._reconnectMap.size == 0) {
+            viewManager.hidePrompting();
+        }
+        this.tracelog.info('sync enter requested(complete)', roomID, matchID);
     }
 
     /** 清理所有重连房间 */
     public failReconnect(reason: string): void {
-        this._valid = false;
         viewManager.hidePrompting();
         this.tracelog.warn('reconnect failed', reason);
     }
