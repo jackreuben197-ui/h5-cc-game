@@ -38,7 +38,7 @@ class RoomReconnectManager {
     public clearAllContext() {
         this._contexts = [];
         this._reconnectMap.forEach(v => {
-            clearInterval(v);
+            clearTimeout(v);
         });
         this._reconnectMap.clear();
         viewManager.hidePrompting();
@@ -59,7 +59,8 @@ class RoomReconnectManager {
     }
 
     private _isInRoom(): boolean {
-        return ProcedureManager.currProcedure?.id === ProcedureDefine.EnterRoom;
+        const proc = ProcedureManager.currProcedure;
+        return proc != null && proc.id === ProcedureDefine.EnterRoom;
     }
 
     public markReconnecting(): void {
@@ -94,7 +95,6 @@ class RoomReconnectManager {
             const roomData = roomDataManager.getRoomData(context.roomID, context.matchID);
             if (!roomData) {
                 this.tracelog.warn('no room data for reconnect', context.roomID, context.matchID);
-                viewManager.hidePrompting();
                 return;
             }
             // 超时清理(超时时间可以优化到以后阶梯处理5，10，20，30，60等)
@@ -126,7 +126,7 @@ class RoomReconnectManager {
         const key = this._genKey(roomID, matchID);
         const timer = this._reconnectMap.get(key);
         if (timer) {
-            clearInterval(timer);
+            clearTimeout(timer);
             this._reconnectMap.delete(key);
         }
         if (this._reconnectMap.size == 0) {
@@ -137,8 +137,8 @@ class RoomReconnectManager {
 
     /** 清理所有重连房间 */
     public failReconnect(reason: string): void {
-        viewManager.hidePrompting();
         this.tracelog.warn('reconnect failed', reason);
+        this.clearAllContext();
     }
 }
 
