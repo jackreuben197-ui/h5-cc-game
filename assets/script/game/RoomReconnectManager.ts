@@ -76,7 +76,8 @@ class RoomReconnectManager {
     }
 
     private _isInRoom(): boolean {
-        return ProcedureManager.currProcedure?.id === ProcedureDefine.EnterRoom;
+        const proc = ProcedureManager.currProcedure;
+        return proc != null && proc.id === ProcedureDefine.EnterRoom;
     }
 
     /** 当前 procedure 正在展示的房间 (多桌场景下其他 context 不可见) */
@@ -217,8 +218,8 @@ class RoomReconnectManager {
 
     /** 清理所有重连房间 */
     public failReconnect(reason: string): void {
-        viewManager.hidePrompting();
         this.tracelog.warn('reconnect failed', reason);
+        this.clearAllContext();
     }
 }
 
