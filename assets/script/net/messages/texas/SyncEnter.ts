@@ -196,5 +196,5 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
         }
     });
     // 通知重连结束了
-    roomReconnectManager.syncEnterCompete(roomID, matchID);
+    roomReconnectManager.syncEnterComplete(roomID, matchID);
 }
