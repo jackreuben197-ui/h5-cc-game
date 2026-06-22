@@ -37,6 +37,7 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     // 不变的信息
     // 基础信息
     public roomName: string;
+    public roomUniqueID: string = '';
     public gameType: number;
     public pokerType: number;
     public betType: number;

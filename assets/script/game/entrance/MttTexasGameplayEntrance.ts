@@ -260,7 +260,7 @@ export default class MttTexasGameplayEntrance extends AGameplayEntrance {
         const body: ClientMessageEnterRoom.AsObject = {
             room: { roomId: this._roomId, matchId: this.matchId },
             gps: { longitude: '', latitude: '' },
-            mttPartialBringIn: 0,
+            mttPartialBringIn: this._partialBringIn,
             observer: this._isObserver,
             wantSeat: Def.WantSeatType.WST_NO
         };
