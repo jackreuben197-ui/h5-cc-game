@@ -326,6 +326,7 @@ export default class ProtocolAgency extends cc.Component {
         }
         if (
             code < 1000 &&
+            code != Code.MSG_D_REGISTER &&
             code != Code.MSG_R_ROOMS &&
             code != Code.MSG_R_MTT_DETAIL &&
             code != Code.MSG_S_UTIL_ANTI_CHEAT_ROOM_VIDEO &&

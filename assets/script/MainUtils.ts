@@ -287,6 +287,17 @@ export async function registerH5Listeners(): Promise<void> {
         }
         _ploger.info('[H5Bridge] syncDiamondConfig 预填完成');
     });
+    // syncToken：H5 在登录/续期/登出后把最新 token 推过来，写入 userStore，避免 H5/CC 两端 token 错开。
+    h5MessageManager.on('syncToken', payload => {
+        const token = typeof payload?.token === 'string' ? payload.token.trim() : '';
+        if (!token) {
+            userStore.token = '';
+            _ploger.info('[H5Bridge] syncToken 清空登录态');
+            return;
+        }
+        userStore.token = token;
+        _ploger.info('[H5Bridge] syncToken 更新完成, expireAt:', payload?.expireAt || 0);
+    });
     // h5MessageManager.on('syncRoomsList', (payload) => {
     //     _ploger.info('[H5Bridge] 同步房间列表:', payload);
     //     const records = payload?.response?.data?.records;
