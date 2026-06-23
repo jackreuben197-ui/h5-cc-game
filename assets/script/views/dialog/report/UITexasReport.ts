@@ -702,11 +702,16 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
 
     private _refreshMushDir(): void {
         const isMush = this._subType === 'mush';
-        this.mushDirNode.active = isMush;
-        if (!isMush) return;
-        const tpl = i18nMgr.Get('UIMushYaJinDir');
-        const base = this._roomData.basicInfo.mushroomBase || 0;
-        this.mushDirText.string = StringHelper.Format(tpl, [StringHelper.GetLongString(base)]);
+        const isSquid = this._subType === 'squid';
+        this.mushDirNode.active = isMush || isSquid;
+        if (isMush) {
+            const tpl = i18nMgr.Get('UIMushYaJinDir');
+            const base = this._roomData.basicInfo.mushroomBase || 0;
+            this.mushDirText.string = StringHelper.Format(tpl, [StringHelper.GetLongString(base)]);
+        } else if (isSquid) {
+            const base = this._roomData.basicInfo.squidBase || 0;
+            this.mushDirText.string = `${i18nMgr.Get('UISquidYaJin')} ${StringHelper.GetLongString(base)}`;
+        }
     }
 
     /** 蘑菇/鱿鱼模式下，底部 tab 的"鱿鱼记录/蘑菇记录"文案随玩法切换。 */
@@ -932,9 +937,13 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     // 工具函数
     // ============================================================
     private _resolveSubType(): ReportSubType {
+        // 注意：mushroomBase 可能在鱿鱼桌上仍有残留配置；以 mushroomMode（0=未开启）判断玩法是否真启用，
+        // 否则鱿鱼桌会被误判为蘑菇模式，导致 listBarMushRoom 显示、玩家行渲染蘑菇列、mushDirText 走蘑菇文案。
         const b = this._roomData.basicInfo;
-        if (b.hasMushroom || (b.mushroomBase || 0) > 0) return 'mush';
-        if (b.squidBase > 0 || b.squidStatusEnabled) return 'squid';
+        const mushOn = (b.mushroomMode || 0) > 0 || b.mushroomStatusEnabled;
+        if (mushOn) return 'mush';
+        const squidOn = b.hasSquid || (b.squidBase || 0) > 0 || b.squidStatusEnabled;
+        if (squidOn) return 'squid';
         return 'none';
     }
 
