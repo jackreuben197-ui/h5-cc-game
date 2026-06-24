@@ -7,6 +7,7 @@ import ProcedureDefine from '../../../game/procedure/ProcedureDefine';
 import ProcedureManager from '../../../game/procedure/ProcedureManager';
 import { ProcedureReturnNavigateParam } from '../../../game/procedure/ProcedureReturn';
 import { i18nMgr } from '../../../i18n/i18nMgr';
+import VideoRoomManager from '../../../net/agora/VideoRoomManager';
 import viewManager from '../../../views/UIViewManager';
 
 const _glog = createLogger('LeaveNotification');
@@ -14,6 +15,8 @@ const _glog = createLogger('LeaveNotification');
 // LeaveNotification 1114
 export function LeaveNotification(data: ServerMessageLeaveNotification.AsObject, roomID: number, matchID: number) {
     roomDataManager.clearInternalLeave(roomID, matchID);
+    // 视频房间：离房前清理 Agora 频道
+    VideoRoomManager.Instance.leaveVideoChannel();
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     _glog.debug('leave', data.reason, roomData);
     switch (data.reason) {

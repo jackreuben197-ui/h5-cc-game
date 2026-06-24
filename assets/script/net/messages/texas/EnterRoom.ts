@@ -13,6 +13,7 @@ import {
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
+import VideoRoomManager from '../../../net/agora/VideoRoomManager';
 import viewManager from '../../../views/UIViewManager';
 
 const _plog = createLogger('ServerMessageEnterRoom');
@@ -208,5 +209,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             roomID: roomData.roomID,
             matchID: roomData.matchID
         });
+        // 视频房间：检查是否已有远端视频流（解决时序竞争：joinVideoChannelIfNeed 可能在 EnterRoom 回包之前完成）
+        VideoRoomManager.Instance.renderExistingRemoteVideosIfJoined();
     }
 }
