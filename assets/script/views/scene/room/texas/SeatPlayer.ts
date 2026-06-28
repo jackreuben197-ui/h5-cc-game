@@ -1,11 +1,13 @@
 import { Def } from '@silenthill/agreement-web';
 import { autoBindEvents, bindEvent, unBindEvents, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
+import { HandValueType, handValueTypeToString } from '../../../../core/poker/PoerkCard';
+import soundManager, { SoundEffectKey } from '../../../../core/SoundManager';
 import { Operator, OpertionType } from '../../../../data/room/texas/model/Operator';
+import texasGamePersonalSettings, { TexasGamePersonalSettings } from '../../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import { SeatPosition } from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
-import TexasGameRoomDataSetting from '../../../../data/room/texas/TexasGameRoomDataSetting';
 import {
     AnimateDisplayTypeAction,
     AnimateDisplayTypeCards,
@@ -83,8 +85,12 @@ export default class SeatPlayer extends cc.Component {
     private seatActionDisplay: SeatAction = null!;
     @property({ type: ShiningPathTimer, displayName: '其他人的倒计时圆圈' })
     private otherPersonActionCountdown: ShiningPathTimer = null!;
-    @property(sp.Skeleton)
+    @property({ type: sp.Skeleton, displayName: '获胜动画' })
     private winAnimation: sp.Skeleton = null!;
+    @property({ type: sp.Skeleton, displayName: 'ALLIN动画' })
+    private allInAnimation: sp.Skeleton = null!;
+    @property({ type: sp.Skeleton, displayName: 'ALLIN(other)动画' })
+    private allInOtherAnimation: sp.Skeleton = null!;
     @property({ type: ShiningPathTimer, displayName: '留坐的倒计时圆圈' })
     private keepSeatTimer: ShiningPathTimer = null;
     @property({ type: DisplayNode, displayName: '胜率节点' })
@@ -103,8 +109,9 @@ export default class SeatPlayer extends cc.Component {
     private squidNode: DisplayNode = null;
     @property({ type: cc.Node, displayName: '鱿鱼标记(图标)' })
     private squidMaskNode: cc.Node = null;
+    @property({ type: DisplayNode, displayName: '获胜者的筹码牌型' })
+    private winBoard: DisplayNode = null!; // text 0 handVuleType 1: chip, node 0 handValue 1: slash 2: space(for no handValue )
     private _seatPlayer: TexasGameRoomDataPlayer = null!;
-    private _setting: TexasGameRoomDataSetting = null!;
     private _cardBacks: cc.Node[] = [];
     private _bigCards: CardView[] = [];
     // 动画的池的位置（可能是发起，也可能是结尾,计算坐标使用)
@@ -118,7 +125,6 @@ export default class SeatPlayer extends cc.Component {
 
     public initData(seatPlayer: TexasGameRoomDataPlayer, potNode: cc.Node, dealNode: cc.Node) {
         this._seatPlayer = seatPlayer;
-        this._setting = seatPlayer.roomData.setting;
         this._potNode = potNode;
         this._dealNode = dealNode;
         if (this.node.activeInHierarchy) {
@@ -163,7 +169,7 @@ export default class SeatPlayer extends cc.Component {
      */
     private _bindEventsAndRefresh() {
         // 统一激活绑定，注入强类型 tag 推导过滤机制
-        autoBindEvents(this, { player: this._seatPlayer, setting: this._setting });
+        autoBindEvents(this, { player: this._seatPlayer, setting: texasGamePersonalSettings });
     }
 
     @bindEvent(TexasGameRoomDataPlayer.ALLIN_WIN_PERCENT, 'player')
@@ -207,13 +213,13 @@ export default class SeatPlayer extends cc.Component {
 
     @bindEvent(TexasGameRoomDataPlayer.CHIPS_CHANGE, 'player')
     private onUpdateChip(chip: number) {
-        this.chips.string = this._setting.showNumberWithShowBB(chip);
+        this.chips.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(chip);
     }
 
-    @bindEvent(TexasGameRoomDataSetting.SHOW_BB, { dataSource: 'setting', initPriority: 99 })
+    @bindEvent(TexasGamePersonalSettings.SHOW_BB, { dataSource: 'setting', initPriority: 99 })
     private onUpdateShowBB(b: number) {
-        this.chips.string = this._setting.showNumberWithShowBB(this._seatPlayer.chip);
-        this.roundBetLabel.string = this._setting.showNumberWithShowBB(this._seatPlayer.roundBet);
+        this.chips.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(this._seatPlayer.chip);
+        this.roundBetLabel.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(this._seatPlayer.roundBet);
     }
 
     @bindEvent(TexasGameRoomDataPlayer.CANPLAYSTATUS_CHANGE, 'player')
@@ -265,9 +271,9 @@ export default class SeatPlayer extends cc.Component {
                     this.buttonIcon.setPosition(-320, -30);
                     // 筹码位置
                     this.roudBetIcon.setPosition(-25, 0);
-                    this.roundBetNode.setPosition(175, 355);
+                    this.roundBetNode.setPosition(175, 360);
                     // 大牌的显示位置调整,并隐藏
-                    this.bigCardsContainer.setPosition(0, 230);
+                    this.bigCardsContainer.setPosition(0, 235);
                     this.bigCardsContainer.setScale(1, 1);
                     this._bigCards.forEach(v => (v.node.parent.active = false));
                     //隐藏名字
@@ -288,11 +294,11 @@ export default class SeatPlayer extends cc.Component {
                 }
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.winPercentNode.node.active = false;
-                this.mushroomNode.node.setPosition(75, 65);
+                this.mushroomNode.node.setPosition(75, 72);
                 this.mushroomNode.node.scaleX = 1;
                 this.mushroomNode.getOpNode(0).scaleX = 1;
                 this.mushroomNode.getOpNode(1).scaleX = 1;
-                this.squidNode.node.setPosition(75, 65);
+                this.squidNode.node.setPosition(75, 70);
                 this.squidNode.node.scaleX = 1;
                 this.squidNode.getOpNode(0).scaleX = 1;
                 break;
@@ -306,11 +312,11 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.mushroomNode.node.setPosition(75, 65);
+                this.mushroomNode.node.setPosition(75, 72);
                 this.mushroomNode.node.scaleX = 1;
                 this.mushroomNode.getOpNode(0).scaleX = 1;
                 this.mushroomNode.getOpNode(1).scaleX = 1;
-                this.squidNode.node.setPosition(75, 65);
+                this.squidNode.node.setPosition(75, 70);
                 this.squidNode.node.scaleX = 1;
                 this.squidNode.getOpNode(0).scaleX = 1;
                 this.winPercentNode.node.active = false;
@@ -322,11 +328,11 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.mushroomNode.node.setPosition(75, 65);
+                this.mushroomNode.node.setPosition(75, 72);
                 this.mushroomNode.node.scaleX = 1;
                 this.mushroomNode.getOpNode(0).scaleX = 1;
                 this.mushroomNode.getOpNode(1).scaleX = 1;
-                this.squidNode.node.setPosition(75, 65);
+                this.squidNode.node.setPosition(75, 70);
                 this.squidNode.node.scaleX = 1;
                 this.squidNode.getOpNode(0).scaleX = 1;
                 this.winPercentNode.node.active = false;
@@ -339,11 +345,11 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.mushroomNode.node.setPosition(-75, 65);
+                this.mushroomNode.node.setPosition(-75, 72);
                 this.mushroomNode.node.scaleX = -1; // 先反转
                 this.mushroomNode.getOpNode(0).scaleX = -1; // 文本再转回去
                 this.mushroomNode.getOpNode(1).scaleX = -1; // 文本再转回去
-                this.squidNode.node.setPosition(-75, 65);
+                this.squidNode.node.setPosition(-75, 70);
                 this.squidNode.node.scaleX = -1; // 先反转
                 this.squidNode.getOpNode(0).scaleX = -1; // 文本再转回去
                 this.winPercentNode.node.active = false;
@@ -358,11 +364,11 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.mushroomNode.node.setPosition(-75, 65);
+                this.mushroomNode.node.setPosition(-75, 72);
                 this.mushroomNode.node.scaleX = -1; // 先反转
                 this.mushroomNode.getOpNode(0).scaleX = -1; // 文本再转回去
                 this.mushroomNode.getOpNode(1).scaleX = -1; // 文本再转回去
-                this.squidNode.node.setPosition(-75, 65);
+                this.squidNode.node.setPosition(-75, 70);
                 this.squidNode.node.scaleX = -1; // 先反转
                 this.squidNode.getOpNode(0).scaleX = -1; // 文本再转回去
                 this.winPercentNode.node.active = false;
@@ -384,19 +390,20 @@ export default class SeatPlayer extends cc.Component {
         if (amount > 0) {
             this.roundBetNode.active = true;
             if (aat == AnimateDisplayTypeRoundBet.PutNear) {
+                soundManager.playEffect(SoundEffectKey.MoveChip);
                 this.animatingChips.active = true;
                 this.animatingChips.setPosition(0, 0);
                 const endPos = UIViewUtil.caculatePostion(this.animatingChips, this.roundBetNode);
                 cc.tween(this.animatingChips)
                     .to(0.5, { x: endPos.x, y: endPos.y }, { easing: 'cubicOut' })
                     .call(() => {
-                        this.roundBetLabel.string = this._setting.showNumberWithShowBB(amount);
+                        this.roundBetLabel.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(amount);
                         this.animatingChips.active = false;
                     })
                     .start();
                 return;
             }
-            this.roundBetLabel.string = this._setting.showNumberWithShowBB(amount);
+            this.roundBetLabel.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(amount);
             return;
         }
         this.roundBetNode.active = false;
@@ -412,7 +419,7 @@ export default class SeatPlayer extends cc.Component {
         }
         // reset
         if (l == 0) {
-            this._bigCards.forEach(v => v.highlight(false));
+            this._bigCards.forEach(v => v.reset());
         }
         if (l > 0 && this._seatPlayer.action == Def.Action.FOLD) {
             this.smallCardsContainer.active = false;
@@ -430,6 +437,9 @@ export default class SeatPlayer extends cc.Component {
             this._cardBacks.forEach(v => (v.active = false));
             //动作相关隐藏掉
             this.seatActionDisplay.node.active = false;
+            if (AnimateDisplayTypeCards.ShowCards == atc) {
+                soundManager.playEffect(SoundEffectKey.DealCards);
+            }
             //牌面展示
             for (let i = 0; i < this._bigCards.length; i++) {
                 //Cards/l2r/New Node/Image_Card(CardView)
@@ -513,6 +523,12 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setScale(0.5, 0.5);
                 cc.tween(this.smallCardsContainer)
                     .delay(currentOrder * 0.2)
+                    .call(() => {
+                        soundManager.playEffect(SoundEffectKey.DealCards);
+                    })
+                    .start();
+                cc.tween(this.smallCardsContainer)
+                    .delay(currentOrder * 0.2)
                     .to(0.5, { x: endPos.x, y: endPos.y, opacity: 255, scaleX: 1, scaleY: 1 }, { easing: 'cubicOut' })
                     .call(() => {
                         this._dealNode.active = false;
@@ -530,6 +546,13 @@ export default class SeatPlayer extends cc.Component {
             const endPos = this.bigCardsContainer.position;
             this.bigCardsContainer.setPosition(startPos);
             this.bigCardsContainer.setScale(0.15, 0.15);
+            //延迟发声
+            cc.tween(this.bigCardsContainer)
+                .delay(currentOrder * 0.2)
+                .call(() => {
+                    soundManager.playEffect(SoundEffectKey.DealCards);
+                })
+                .start();
             cc.tween(this.bigCardsContainer)
                 .delay(currentOrder * 0.2)
                 .to(0.5, { x: endPos.x, y: endPos.y, opacity: 255, scaleX: 1, scaleY: 1 }, { easing: 'cubicOut' })
@@ -553,9 +576,9 @@ export default class SeatPlayer extends cc.Component {
 
     @bindEvent(TexasGameRoomDataPlayer.ACTION_CHANGE, 'player', AnimateDisplayTypeAction.Static)
     private onUpdateAction(action: Def.ActionMap[keyof Def.ActionMap], aat: AnimateDisplayTypeAction) {
-        if (this._seatPlayer.mine) {
-            this.tracelog.debug(action, aat, this._seatPlayer.seatNo);
-        }
+        // if (this._seatPlayer.mine) {
+        //     this.tracelog.debug(action, aat, this._seatPlayer.seatNo);
+        // }
         // 操作结束直接不倒计时
         if (aat == AnimateDisplayTypeAction.Done) {
             this.otherPersonActionCountdown.stop();
@@ -576,6 +599,7 @@ export default class SeatPlayer extends cc.Component {
                 this.roundBetNode.active = false;
                 this.seatActionDisplay.fold(i18nMgr.Get('adaptation10047'));
                 if (aat == AnimateDisplayTypeAction.Done) {
+                    soundManager.playEffect(SoundEffectKey.Fold);
                     if (this._seatPlayer.mine) {
                         const startPos = this.bigCardsContainer.position;
                         const endPos = UIViewUtil.caculatePostion(this.bigCardsContainer, this._dealNode);
@@ -604,21 +628,63 @@ export default class SeatPlayer extends cc.Component {
                 }
                 break;
             case Def.Action.CHECK:
+                if (aat == AnimateDisplayTypeAction.Done) {
+                    soundManager.playEffect(SoundEffectKey.Check);
+                }
                 this.seatActionDisplay.node.active = true;
                 this.seatActionDisplay.showAction(i18nMgr.Get('adaptation10046'), yellowColor);
                 break;
             case Def.Action.RAISE:
+                // if (aat == AnimateDisplayTypeAction.Done) {
+                //     soundManager.playEffect(SoundEffectKey.RaiseBetCallPost);
+                // }
                 this.seatActionDisplay.node.active = true;
                 this.seatActionDisplay.showAction(i18nMgr.Get('adaptation10045'), greenColor);
                 break;
             case Def.Action.ALLIN:
+                if (aat == AnimateDisplayTypeAction.Done) {
+                    soundManager.playEffect(SoundEffectKey.AllIn);
+                    if (this._seatPlayer.mine) {
+                        this.allInAnimation.node.active = true;
+                        this.allInAnimation.setAnimation(0, 'animation', false);
+                        this.allInAnimation.setCompleteListener(() => {
+                            //cc.log("动画结束");
+                            this.allInAnimation.node.active = false;
+                            this.seatActionDisplay.node.active = true;
+                            this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), redColor);
+                        });
+                        break;
+                    }
+                    this.allInOtherAnimation.node.active = true;
+                    this.allInOtherAnimation.setAnimation(0, 'animation', false);
+                    this.allInOtherAnimation.setCompleteListener(() => {
+                        //cc.log("动画结束");
+                        this.allInOtherAnimation.node.active = false;
+                        this.seatActionDisplay.node.active = true;
+                        this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), redColor);
+                    });
+                    break;
+                }
                 this.seatActionDisplay.node.active = true;
                 this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), redColor);
                 break;
             case Def.Action.POST:
             case Def.Action.POSTANTE:
+                // if (aat == AnimateDisplayTypeAction.Done) {
+                //     soundManager.playEffect(SoundEffectKey.RaiseBetCallPost);
+                // }
                 this.seatActionDisplay.node.active = true;
                 this.seatActionDisplay.showAction(i18nMgr.Get('UITexas_addBlind'), yellowColor);
+                break;
+            case Def.Action.SB:
+                if (aat == AnimateDisplayTypeAction.Done) {
+                    soundManager.playEffect(SoundEffectKey.SB);
+                }
+                break;
+            case Def.Action.BB:
+                if (aat == AnimateDisplayTypeAction.Done) {
+                    soundManager.playEffect(SoundEffectKey.BB);
+                }
                 break;
             default:
                 this.seatActionDisplay.node.active = false;
@@ -660,7 +726,25 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.WINNER, { dataSource: 'player', initIgnore: true })
-    private onWin() {
+    private onWin(play: boolean, handValueType: number, chip: number) {
+        if (!play) {
+            this.winBoard.node.active = false;
+            return;
+        }
+        this.winBoard.node.active = true;
+        if (handValueType != 0) {
+            this.winBoard.getOpNode(0).active = true; //hv
+            this.winBoard.getOpNode(1).active = true; //slash
+            this.winBoard.getOpNode(2).active = false; // space
+            const hv = handValueType as HandValueType;
+            this.winBoard.setText(handValueTypeToString(hv), this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(chip));
+        } else {
+            this.winBoard.getOpNode(0).active = false; //hv
+            this.winBoard.getOpNode(1).active = false; //slash
+            this.winBoard.getOpNode(2).active = true; // space
+            this.winBoard.setText('', this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(chip));
+        }
+        soundManager.playEffect(SoundEffectKey.MoveChip);
         this.animatingChips.active = true;
         const startPos = UIViewUtil.caculatePostion(this.animatingChips, this._potNode);
         const endPos = new cc.Vec3(0, 0, 0);
@@ -714,6 +798,18 @@ export default class SeatPlayer extends cc.Component {
                     break;
             }
         };
+    }
+
+    @bindEvent(TexasGameRoomDataPlayer.POPUP_CARDS, { dataSource: 'player', initIgnore: true })
+    private onPopupCards(cardsNum: number[]) {
+        const mp: Set<number> = new Set(cardsNum);
+        this._bigCards.forEach(cd => {
+            if (mp.has(cd.storeCardNum)) {
+                cd.popUp(new cc.Vec2(0, 10));
+            } else {
+                cd.gray(true);
+            }
+        });
     }
 
     @bindEvent(TexasGameRoomDataPlayer.KEEPSEAT_CHANGE, 'player')

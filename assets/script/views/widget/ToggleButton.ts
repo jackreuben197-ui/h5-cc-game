@@ -19,8 +19,8 @@ export default class ToggleButton extends cc.Component {
 
     onLoad() {
         //this.defaultLabel = this.node.getChildByName('Label');
-        this.uncheckedNode.on('click', this.onChedkNodeClicked, this);
-        this.checkNode.on('click', this.onChedkNodeClicked, this);
+        this.uncheckedNode.on('click', this.onCheckNodeClicked, this);
+        this.checkNode.on('click', this.onCheckNodeClicked, this);
         this.check(false);
     }
 
@@ -64,7 +64,7 @@ export default class ToggleButton extends cc.Component {
         }
     }
 
-    private onChedkNodeClicked() {
+    private onCheckNodeClicked() {
         this._isChecked = !this._isChecked; // 状态反转
         // 播放丝滑的切换动画
         this.updateVisual(true);

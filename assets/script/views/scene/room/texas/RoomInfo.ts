@@ -1,9 +1,12 @@
 import { RoomInfo as RoomInfoPb } from '@silenthill/agreement-web';
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
-import { traceClass } from '../../../../core/decorator/LogTrace';
+import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
+import texasGamePersonalSettings, { TexasGamePersonalSettings } from '../../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataBasic from '../../../../data/room/texas/TexasGameRoomDataBasic';
+import dlTexasRoomBackground from '../../../../data/room/texas/load/DLTexasRoomBacground';
+import { AnimateDisplayBackground } from '../../../../game/constant/AnimateDisplayType';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
@@ -16,6 +19,10 @@ const { ccclass, property, menu } = cc._decorator;
 export default class RoomInfo extends cc.Component {
     @property(cc.Label)
     private roomInfoLabel: cc.Label = null;
+    @property(cc.Sprite)
+    private bgSprite: cc.Sprite = null!;
+    @property(sp.Skeleton)
+    private bgAnim: sp.Skeleton = null;
     private _roomID: number;
     private _matchID: number;
     private _roomBaseInfo: TexasGameRoomDataBasic;
@@ -45,7 +52,8 @@ export default class RoomInfo extends cc.Component {
     private _bindEventsAndRefresh() {
         if (!this._roomBaseInfo) return;
         autoBindEvents(this, {
-            basic: this._roomBaseInfo
+            basic: this._roomBaseInfo,
+            setting: texasGamePersonalSettings
         });
     }
 
@@ -130,5 +138,63 @@ export default class RoomInfo extends cc.Component {
         let pokerTypeStr: string = i18nMgr.Get('PokerType_' + this._roomBaseInfo.pokerType);
         let betTypeStr: string = i18nMgr.Get('BetType_' + this._roomBaseInfo.betType);
         return gameTypeStr + '-' + pokerTypeStr + '-' + betTypeStr;
+    }
+
+    @bindEvent(TexasGamePersonalSettings.DESK_TYPE_CHANGE, 'setting')
+    @traceMethod({ level: 'debug' })
+    private async onUpdateBg(deskType: number, bat: AnimateDisplayBackground = AnimateDisplayBackground.Static) {
+        const bgData = await dlTexasRoomBackground.getBackground(deskType);
+        this._fitDeskCover(bgData.SpriteFrame);
+        if (bgData.Animataion && bat == AnimateDisplayBackground.Go) {
+            this._playDeskSpine(bgData.Animataion);
+        }
+    }
+
+    /**
+     * 根据 deskType 播放对应的桌布 Spine 动画
+     * 非动画桌布类型会清理已有节点
+     */
+    private _playDeskSpine(data: sp.SkeletonData): void {
+        this.bgAnim.skeletonData = data;
+        this.bgAnim.setAnimation(0, 'animation', true);
+    }
+
+    /**
+     * 桌布 Cover 适配：保持贴图原始比例铺满 1242×2688，居中裁切多余部分
+     *
+     * 原理：
+     * 1. 关闭 Widget（避免它强制拉伸节点尺寸导致 Sprite 拉伸变形）
+     * 2. 将节点尺寸设为贴图原始尺寸（Sprite 按 1:1 渲染，不变形）
+     * 3. 计算 cover 缩放 = max(目标宽/贴图宽, 目标高/贴图高)
+     * 4. 设置 scale，节点居中（锚点 0.5,0.5），溢出部分被屏幕裁切
+     */
+    private _fitDeskCover(sp: cc.SpriteFrame): void {
+        console.log('spp', sp);
+        const sprite = this.bgSprite;
+        sprite.spriteFrame = sp;
+        const node = sprite.node;
+        const sf = sprite.spriteFrame;
+        console.log('spp2', sp);
+        // 贴图原始尺寸
+        const texW = sf.getOriginalSize().width;
+        const texH = sf.getOriginalSize().height;
+        // 目标尺寸（设计分辨率）
+        const targetW = 1242;
+        const targetH = 2688;
+        // 宽高比一致则无需 cover 处理
+        if (Math.abs(texW / texH - targetW / targetH) < 0.01) {
+            const widget = node.getComponent(cc.Widget);
+            if (widget) widget.enabled = true;
+            node.setScale(1, 1);
+            return;
+        }
+        // 关闭 Widget，避免它强制设置节点尺寸导致拉伸
+        const widget = node.getComponent(cc.Widget);
+        if (widget) widget.enabled = false;
+        // 节点尺寸设为贴图原始尺寸，Sprite 按 1:1 渲染不变形
+        node.setContentSize(texW, texH);
+        // Cover 缩放：取较大值，保证宽和高都 >= 目标
+        const scale = Math.max(targetW / texW, targetH / texH);
+        node.setScale(scale, scale);
     }
 }

@@ -14,12 +14,12 @@ import UIComponentBase from '../../../base/UIComponentBase';
 import { UIGuideDialogType } from '../../../dialog/mushroomandcriticalhit/UIGuideDialog';
 import viewManager from '../../../UIViewManager';
 import InsuranceOperation from './InsuranceOperation';
+import MorePlayTypeInfo from './MorePlayTypeInfo';
 import Operation from './Operation';
 import PotsInfo from './PotsInfo';
 import PublicCardsInfo from './PublicCardsInfo';
 import RoomInfo from './RoomInfo';
 import SeatManager from './SeatManager';
-import SquidInfo from './SquidInfo';
 import UITexasMenu from './UITexasMenu';
 
 export interface UIRoomTexasEnterParam {
@@ -52,8 +52,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private _opPannel: Operation = null!;
     @property({ type: InsuranceOperation, displayName: '保险弹窗触发器' })
     private insuranceOperation: InsuranceOperation = null!;
-    @property({ type: SquidInfo, displayName: '鱿鱼操作' })
-    private squidInfo: SquidInfo = null;
+    @property({ type: MorePlayTypeInfo, displayName: '其他游戏玩法的处理节点' })
+    private squidInfo: MorePlayTypeInfo = null;
     // main_menu 底部按钮
     @property({ type: cc.Node, displayName: '表情按钮' })
     private btnEmoji: cc.Node = null;

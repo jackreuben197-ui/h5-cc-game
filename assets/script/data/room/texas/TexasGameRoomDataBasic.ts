@@ -6,7 +6,9 @@ import { MushroomMode } from '../../../game/constant/Mushroom';
 import { SquidLeaveMode, SquidMode } from '../../../game/constant/Squid';
 import { ViewPlayerCardsMode } from '../../../game/constant/ViewPlayerCardsMode';
 import GameplayUtil from '../../../game/util/GameplayUtil';
+import { StringHelper } from '../../../helper/StringHelper';
 import { UISquidEndItemShowData } from '../../../views/dialog/squidover/UISquidEndItem';
+import texasGamePersonalSettings from './TexasGamePersonalSettings';
 import TexasGameRoomData from './TexasGameRoomData';
 
 export interface tableBetInfo {
@@ -35,6 +37,7 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     // 不变的信息
     // 基础信息
     public roomName: string;
+    public roomUniqueID: string = '';
     public gameType: number;
     public pokerType: number;
     public betType: number;
@@ -71,6 +74,10 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     }
     public set gameStatus(r: Def.GameStatusMap[keyof typeof Def.GameStatus]) {
         this._gameStatus = r;
+    }
+    // 在游戏中
+    public get isPlaying() {
+        return this.gameStatus >= Def.GameStatus.HAND_STARTED && this.gameStatus < Def.GameStatus.HAND_END;
     }
     // 房间类型
     private _roomType: number;
@@ -169,6 +176,14 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     // 下注信息会变
     @observable(TexasGameRoomDataBasic.TABLE_BET_INFO_CHANGE)
     public sbante: tableBetInfo;
+
+    public showNumberWithShowBB(value: number): string {
+        const base = this.sbante.sb * 2;
+        const ratio = texasGamePersonalSettings.showBB ? base : 100;
+        const ex: string = texasGamePersonalSettings.showBB ? 'BB' : '';
+        return `${StringHelper.GetDecimalNWithKM(value / ratio)}${ex}`;
+    }
+
     private _randomAnte: number[]; // anteMin, anteMax, randomStep
     public get randomAnte() {
         return this._randomAnte;

@@ -9,6 +9,7 @@ import { createLogger } from './core/decorator/LogTrace';
 import userStore from './data/user/UserStore';
 import ProcedureDefine from './game/procedure/ProcedureDefine';
 import ProcedureManager from './game/procedure/ProcedureManager';
+import roomReconnectManager from './game/RoomReconnectManager';
 import h5MessageManager, { EnterMttMatchInfo, EnterTableRoomInfo, SyncUserClubResponse, SyncUserInfo } from './H5MsgMgr';
 import AgoraManager from './net/agora/AgoraManager';
 import ProtocolAgency from './net/websocket/ProtocolAgency';
@@ -208,6 +209,7 @@ export async function registerH5Listeners(): Promise<void> {
     registerTexasMtt();
     h5MessageManager.on('exitTable', payload => {
         _ploger.info('[H5Bridge] 离开牌桌:', payload);
+        // 重连 context 由 ProcedureReturn 离桌时统一清理，覆盖主动离桌和被踢两条路径
         // TODO: 调用离开牌桌的逻辑
     });
     h5MessageManager.on('syncUser', payload => {
@@ -417,5 +419,24 @@ export async function registerH5Listeners(): Promise<void> {
      */
     h5MessageManager.on('wsError', payload => {
         _ploger.warn('[H5Bridge] wsError:', payload);
+    });
+    h5MessageManager.on('wsReconnecting', payload => {
+        _ploger.warn('[H5Bridge] wsReconnecting:', payload);
+        roomReconnectManager.markReconnecting();
+    });
+    h5MessageManager.on('wsReconnected', payload => {
+        _ploger.info('[H5Bridge] wsReconnected:', payload);
+        roomReconnectManager.requestReconnect();
+    });
+    h5MessageManager.on('wsReconnectFailed', payload => {
+        _ploger.error('[H5Bridge] wsReconnectFailed:', payload);
+        roomReconnectManager.failReconnect(String(payload?.reason || 'unknown'));
+        if (payload?.reason === 'auth-invalid') return;
+        h5MessageManager.sendToH5('h5Navigate', 1, {
+            name: 'guest-home',
+            replace: true,
+            ensureVisible: true,
+            openLoginModal: true
+        });
     });
 }

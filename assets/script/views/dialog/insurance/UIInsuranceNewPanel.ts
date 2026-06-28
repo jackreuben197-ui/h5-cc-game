@@ -1,6 +1,8 @@
 import { Code, Def, InsurancePotLimit, OutsCard, PotInsuranceBuy } from '@silenthill/agreement-web';
 import { traceClass } from '../../../core/decorator/LogTrace';
+import soundManager, { SoundEffectKey } from '../../../core/SoundManager';
 import { OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
+import texasGamePersonalSettings from '../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataBasic from '../../../data/room/texas/TexasGameRoomDataBasic';
 import TexasGameRoomDataPlayerMine from '../../../data/room/texas/TexasGameRoomDataPlayerMine';
@@ -11,7 +13,6 @@ import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
-import { AssetCollectionType } from '../../loader/AssetLoader';
 import AssetManager from '../../loader/AssetManager';
 import TexasTableEvent from '../../scene/room/texas/events/TexasTableEvent';
 
@@ -46,7 +47,7 @@ class InsuranceCardItem {
         this.cardId = cardId;
         if (this.sprite) {
             const resName = GameplayUtil.CardNoToLocalResource(cardId);
-            this.sprite.spriteFrame = AssetManager.getAsset(AssetCollectionType.SpriteFrameCard, resName);
+            this.sprite.spriteFrame = AssetManager.getAsset(texasGamePersonalSettings.pokerCardType, resName);
         }
     }
 }
@@ -83,7 +84,7 @@ class PlayerItem {
                 sprite.node.x = posX[i] ?? sprite.node.x;
                 sprite.node.active = true;
                 const resName = GameplayUtil.CardNoToLocalResource(cards[i]);
-                sprite.spriteFrame = AssetManager.getAsset(AssetCollectionType.SpriteFrameCard, resName);
+                sprite.spriteFrame = AssetManager.getAsset(texasGamePersonalSettings.pokerCardType, resName);
             } else {
                 sprite.node.active = false;
             }
@@ -242,6 +243,12 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
         if (!this._isCounting) return;
         const now = Date.now() / 1000;
         const remain = Math.max(0, this._countDownEnd - now);
+        if (remain == Math.floor(this._countDownTotal / 3)) {
+            soundManager.playEffect(SoundEffectKey.ActionAlert);
+        }
+        if (remain == 3) {
+            soundManager.playEffect(SoundEffectKey.CD3S);
+        }
         this._refreshCountDownProgress(remain);
         if (remain <= 0) {
             this._isCounting = false;
@@ -391,7 +398,7 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
             if (!sp) continue;
             const cardId = cards[i] ?? 0;
             const resName = GameplayUtil.CardNoToLocalResource(cardId);
-            sp.spriteFrame = AssetManager.getAsset(AssetCollectionType.SpriteFrameCard, resName);
+            sp.spriteFrame = AssetManager.getAsset(texasGamePersonalSettings.pokerCardType, resName);
         }
     }
     // ============================================================

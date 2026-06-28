@@ -10,7 +10,7 @@ import { i18nMgr } from '../../../i18n/i18nMgr';
 import VideoRoomManager from '../../../net/agora/VideoRoomManager';
 import viewManager from '../../../views/UIViewManager';
 
-const _glog = createLogger('LeaveNotification');
+const _glog = createLogger('LeaveNotification', 'debug');
 
 // LeaveNotification 1114
 export function LeaveNotification(data: ServerMessageLeaveNotification.AsObject, roomID: number, matchID: number) {

@@ -1,9 +1,10 @@
 import { ActionLimit, Def } from '@silenthill/agreement-web';
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
+import soundManager, { SoundEffectKey } from '../../../../core/SoundManager';
 import { OperatorMine, OpertionType } from '../../../../data/room/texas/model/Operator';
+import texasGamePersonalSettings, { ShortCut, TexasGamePersonalSettings } from '../../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
-import TexasGameRoomDataSetting from '../../../../data/room/texas/TexasGameRoomDataSetting';
 import { AutoOperationTypeTexas } from '../../../../game/constant/AutoOpertaionType';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
 import { UIComfirmDialogType } from '../../../dialog/confirm/UIConfirmDialog';
@@ -17,7 +18,7 @@ import BetButtonsContainer, { caculatePotsBet } from './widget/BetButtonContaine
 const { ccclass, property, menu } = cc._decorator;
 
 @ccclass
-@traceClass()
+@traceClass({ level: 'debug' })
 @menu('Scene/Room/Texas/Operation')
 export default class Operation extends cc.Component {
     @property({ type: cc.Node, displayName: '真正根节点,保证根节点永远不会Disable' })
@@ -64,6 +65,7 @@ export default class Operation extends cc.Component {
     private _raiseAmount: number = 0;
     private _seatPlayer: TexasGameRoomDataPlayerMine = null;
     private _actionMap: Map<Def.ActionMap[keyof Def.ActionMap], ActionLimit.AsObject> = new Map();
+    private _tempData: any = null!;
 
     protected onLoad(): void {
         this.freeBetContainer.active = false;
@@ -195,11 +197,11 @@ export default class Operation extends cc.Component {
                     this.btnFold.node.active = true;
                     break;
                 case Def.Action.STRADDLE:
-                    this.btnStraddleAmount.string = this._seatPlayer.roomData.setting.showNumberWithShowBB(actionLimit.min);
+                    this.btnStraddleAmount.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(actionLimit.min);
                     this.btnStraddle.node.active = true;
                     break;
                 case Def.Action.CALL:
-                    this.btnCallAmount.string = this._seatPlayer.roomData.setting.showNumberWithShowBB(actionLimit.min);
+                    this.btnCallAmount.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(actionLimit.min);
                     this.btnCall.node.active = true;
                     break;
                 case Def.Action.RAISE:
@@ -220,7 +222,7 @@ export default class Operation extends cc.Component {
                     this.freeBetSilder.onValueChanged = progress => {
                         this.freeBetInfoNode.active = true;
                         this._raiseAmount = Math.min(rangeAmount + actionLimit.min, Math.round(progress * rangeAmount + actionLimit.min));
-                        this.freeBetAmount.string = this._seatPlayer.roomData.setting.showNumberWithShowBB(this._raiseAmount);
+                        this.freeBetAmount.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(this._raiseAmount);
                         this.freeBetPercent.string = Math.min(100, Math.round(progress * 100)) + '%';
                     };
                     break;
@@ -238,13 +240,27 @@ export default class Operation extends cc.Component {
                     break;
             }
         });
-        const btns = caculatePotsBet(roundBetEqual, minRaise, this._seatPlayer.player);
-        this.shortCutContainer.refreshAndLayout(btns, this._seatPlayer.roomData.setting);
+        this._tempData = {
+            roundBetEqual,
+            minRaise
+        };
+        this.tracelog.debug(texasGamePersonalSettings.shortCuts.length);
+        const btns = caculatePotsBet(texasGamePersonalSettings.shortCuts, roundBetEqual, minRaise, this._seatPlayer.player);
+        this.shortCutContainer.refreshAndLayout(btns, this._seatPlayer.roomData.basicInfo);
     }
 
-    @bindEvent(TexasGameRoomDataSetting.SHOW_BB, 'setting')
+    @bindEvent(TexasGamePersonalSettings.SHORTCUTS_CHANGGE, 'setting')
+    @traceMethod()
+    public onShortCutsChange(shortCuts: ShortCut[]) {
+        if (!this.rootNode.active) return;
+        if (this._tempData == null) return;
+        const btns = caculatePotsBet(shortCuts, this._tempData.roundBetEqual, this._tempData.minRaise, this._seatPlayer.player);
+        this.shortCutContainer.refreshAndLayout(btns, this._seatPlayer.roomData.basicInfo);
+    }
+
+    @bindEvent(TexasGamePersonalSettings.SHOW_BB, 'setting')
     public updateShowAmount() {
-        this.freeBetAmount.string = this._seatPlayer.roomData.setting.showNumberWithShowBB(this._raiseAmount);
+        this.freeBetAmount.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(this._raiseAmount);
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.PREPARE_OPERATION_MINE, 'mine')
@@ -252,13 +268,14 @@ export default class Operation extends cc.Component {
     private onPrepareActionMine(oper: OperatorMine) {
         if (!oper || oper.opType != OpertionType.NORMAL) {
             this.rootNode.active = false;
+            this._tempData = null;
             this.node.stopAllActions();
             return;
         }
         this._actionMap.clear();
         oper.actionLimitList.map(v => this._actionMap.set(v.action, v));
         let actionLimit;
-        // 选了自动 则自动操作
+        // 选了自动 则自动操作(不做声音提示)
         if (this._seatPlayer.autoOperationType != AutoOperationTypeTexas.NO) {
             switch (this._seatPlayer.autoOperationType) {
                 case AutoOperationTypeTexas.AUTO_FOLD:
@@ -293,12 +310,23 @@ export default class Operation extends cc.Component {
             this._seatPlayer.autoOperationType = AutoOperationTypeTexas.NO;
             return;
         }
-        // 手动操作
+        // 手动操作(声音提示)
+        soundManager.playEffect(SoundEffectKey.MyTurn);
         // 先把自动操作面板隐藏
         this._seatPlayer.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
         this.rootNode.active = true;
         this.opTimer.startTimer({
             totalTime: oper.totalOpDuration,
+            stepInterval: 1,
+            onStep: leftTime => {
+                // 剩下 1/3 时间提醒下
+                if (leftTime == Math.floor(oper.totalOpDuration / 3)) {
+                    soundManager.playEffect(SoundEffectKey.ActionAlert);
+                }
+                if (leftTime == 3) {
+                    soundManager.playEffect(SoundEffectKey.CD3S);
+                }
+            },
             elapsedTime: oper.elapsedTime,
             onComplete: () => {
                 this.opTimer.stop();
