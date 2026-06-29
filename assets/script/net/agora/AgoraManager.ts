@@ -214,7 +214,7 @@ export default class AgoraManager {
             this._handleConnectionStateChange(curState, revState);
         });
         this._client.on('exception', (e: any) => {
-            this.tracelog.warn('[AgoraManager] 异常事件:', e.code, e.msg);
+            console.warn('[AgoraManager] 异常事件:', e.code, e.msg);
         });
         // Token 过期前 30 秒自动续期
         this._client.on('token-privilege-will-expire', async () => {
@@ -244,11 +244,11 @@ export default class AgoraManager {
             return false;
         }
         if (this._joined) {
-            this.tracelog.warn('[AgoraManager] 已在频道中，请先 leave()');
+            console.warn('[AgoraManager] 已在频道中，请先 leave()');
             return false;
         }
         if (this._joining) {
-            this.tracelog.warn('[AgoraManager] 正在加入频道中，请勿重复调用');
+            console.warn('[AgoraManager] 正在加入频道中，请勿重复调用');
             return false;
         }
         if (!this.appId) {
@@ -265,6 +265,18 @@ export default class AgoraManager {
                 return false;
             }
         }
+        console.log(
+            '[AgoraManager] 准备加入频道, appId:',
+            this.appId,
+            'channel:',
+            channel,
+            'uid:',
+            uid,
+            'token长度:',
+            actualToken?.length,
+            'token前20字符:',
+            actualToken?.substring(0, 20)
+        );
         try {
             this._uid = await this._client.join(this.appId, channel, actualToken, uid || 0);
             this._channelName = channel;
@@ -296,7 +308,7 @@ export default class AgoraManager {
                 }
                 break;
             case 'RECONNECTING':
-                this.tracelog.warn('[AgoraManager] SDK 内部自动重连中...');
+                console.warn('[AgoraManager] SDK 内部自动重连中...');
                 break;
             case 'DISCONNECTED':
                 if (this._joined) {
@@ -402,7 +414,7 @@ export default class AgoraManager {
     public async enableCamera(container?: HTMLElement): Promise<boolean> {
         if (!this._joined) return false;
         if (!this.isMediaDevicesSupported) {
-            this.tracelog.error(
+            console.error(
                 '[AgoraManager] 浏览器不支持摄像头。' + (this.isSecureContext ? '' : ' 请使用 HTTPS 访问或在 iframe 标签添加 allow="camera; microphone"。')
             );
             return false;
@@ -426,7 +438,7 @@ export default class AgoraManager {
             const code = e?.code || '';
             const msg = e?.message || String(e);
             if (code === 'NOT_ALLOWED' || msg.includes('NotAllowedError') || msg.includes('Permission')) {
-                this.tracelog.warn('[AgoraManager] 摄像头权限被拒绝，请手动点击摄像头按钮开启');
+                console.warn('[AgoraManager] 摄像头权限被拒绝，请手动点击摄像头按钮开启');
             } else {
                 this.tracelog.error('开启摄像头失败:', e);
             }
@@ -442,7 +454,7 @@ export default class AgoraManager {
             try {
                 await this._client.unpublish([this._localVideoTrack]);
             } catch (e) {
-                this.tracelog.warn('[AgoraManager] unpublish 视频轨道失败:', e);
+                console.warn('[AgoraManager] unpublish 视频轨道失败:', e);
             }
         }
         this._localVideoTrack?.close();
@@ -490,7 +502,7 @@ export default class AgoraManager {
                     this.onRemoteVideoUnsubscribed?.(user.uid);
                 }
             } catch (e) {
-                this.tracelog.warn('[AgoraManager] 切换远端视频失败, uid:', user.uid, e);
+                console.warn('[AgoraManager] 切换远端视频失败, uid:', user.uid, e);
             }
         }
         this.tracelog.info('远端视频', enabled ? '已恢复' : '已隐藏', uid !== undefined ? 'uid:' + uid : '全部');
@@ -592,7 +604,7 @@ export default class AgoraManager {
     public getRemoteVideoTrack(uid: number): MediaStreamTrack | null {
         const user = this._client?.remoteUsers?.find((u: any) => u.uid === uid);
         if (!user?.videoTrack) {
-            this.tracelog.warn('[AgoraManager] 远端用户视频Track不存在, uid:', uid);
+            console.warn('[AgoraManager] 远端用户视频Track不存在, uid:', uid);
             return null;
         }
         return user.videoTrack.getMediaStreamTrack() || null;

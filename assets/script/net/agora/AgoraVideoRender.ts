@@ -12,17 +12,28 @@
  *   └── VideoOverlay (cc.Sprite) ← 视频覆盖层，仅渲染时可见
  *
  * 编辑器配置:
+ *   renderTarget: local = 本地摄像头, remote = 远端用户
+ *   remoteUid:    renderTarget 为 remote 时，指定远端用户 UID
  *   mirror:       镜像显示（本地摄像头建议开启）
  *   targetFps:    目标帧率
  */
-import { traceClass } from '../../core/decorator/LogTrace';
 import AgoraManager from './AgoraManager';
 
 const { ccclass, property } = cc._decorator;
 
 @ccclass
-@traceClass()
 export default class AgoraVideoRender extends cc.Component {
+    @property({
+        tooltip: '点击时渲染的目标: local=本地摄像头, remote=远端用户'
+    })
+    renderTarget: string = 'local';
+    @property({
+        tooltip: '远端用户 UID（仅 renderTarget=remote 时生效）',
+        visible: function (this: any) {
+            return this.renderTarget === 'remote';
+        }
+    })
+    remoteUid: number = 0;
     @property({ tooltip: '镜像显示（本地摄像头建议开启）' })
     mirror: boolean = false;
     @property({ tooltip: '目标帧率（视频聊天 15-30 够用）' })
@@ -91,7 +102,7 @@ export default class AgoraVideoRender extends cc.Component {
     /** 用已有的 MediaStreamTrack 渲染 */
     public async renderFromTrack(track: MediaStreamTrack): Promise<boolean> {
         if (!track) {
-            this.tracelog.error('[AgoraVideoRender] track 为空');
+            console.error('[AgoraVideoRender] track 为空');
             return false;
         }
         return this._startWithStream(new MediaStream([track]));
@@ -99,10 +110,10 @@ export default class AgoraVideoRender extends cc.Component {
 
     /** 渲染远端用户视频 */
     public async renderRemoteUser(uid: number): Promise<boolean> {
-        this.tracelog.debug('[AgoraVideoRender] renderRemoteUser, uid:', uid);
+        console.log('[AgoraVideoRender] renderRemoteUser, uid:', uid);
         const track = AgoraManager.Instance.getRemoteVideoTrack(uid);
         if (!track) {
-            this.tracelog.warn('[AgoraVideoRender] 远端视频Track为空, uid:', uid);
+            console.warn('[AgoraVideoRender] 远端视频Track为空, uid:', uid);
             return false;
         }
         return this._startWithStream(new MediaStream([track]));
@@ -112,7 +123,7 @@ export default class AgoraVideoRender extends cc.Component {
      * 初始化: video 元素 + Texture2D（用 video 直接作为纹理源，无 canvas 中转）
      */
     private async _startWithStream(stream: MediaStream): Promise<boolean> {
-        this.tracelog.debug('[AgoraVideoRender] _startWithStream 开始, stream tracks:', stream.getTracks().length);
+        console.log('[AgoraVideoRender] _startWithStream 开始, stream tracks:', stream.getTracks().length);
         this._ensureOverlay();
         this.stopRender();
         this._isCancelled = false;
@@ -135,13 +146,13 @@ export default class AgoraVideoRender extends cc.Component {
         this._video.srcObject = stream;
         try {
             await Promise.race([this._video.play(), new Promise<void>((_, reject) => setTimeout(() => reject(new Error('play timeout')), 5000))]);
-            this.tracelog.debug('[AgoraVideoRender] play() 成功');
+            console.log('[AgoraVideoRender] play() 成功');
         } catch (e: any) {
             if (this._isCancelled) {
-                this.tracelog.debug('[AgoraVideoRender] play后已取消');
+                console.log('[AgoraVideoRender] play后已取消');
                 return false;
             }
-            this.tracelog.warn('[AgoraVideoRender] play失败或超时:', e?.message || e);
+            console.warn('[AgoraVideoRender] play失败或超时:', e?.message || e);
             this.stopRender();
             return false;
         }
@@ -163,7 +174,7 @@ export default class AgoraVideoRender extends cc.Component {
                 }, 3000);
             }
         });
-        this.tracelog.debug(
+        console.log(
             '[AgoraVideoRender] metadata 就绪, readyState:',
             this._video.readyState,
             'videoSize:',
@@ -214,7 +225,7 @@ export default class AgoraVideoRender extends cc.Component {
         this._isRendering = true;
         // 6. 视频渲染成功后，尝试显示窗花覆盖层
         this._applyVideoMask();
-        this.tracelog.info('[AgoraVideoRender] 开始渲染 (video direct), video:', vw, 'x', vh, 'overlay:', cw, 'x', ch, 'fps:', this.targetFps);
+        console.log('[AgoraVideoRender] 开始渲染 (video direct), video:', vw, 'x', vh, 'overlay:', cw, 'x', ch, 'fps:', this.targetFps);
         return true;
     }
 
@@ -309,7 +320,7 @@ export default class AgoraVideoRender extends cc.Component {
         } catch (e) {
             this._consecutiveErrors++;
             if (this._consecutiveErrors >= AgoraVideoRender.MAX_CONSECUTIVE_ERRORS) {
-                this.tracelog.warn('[AgoraVideoRender] 连续渲染帧异常达', this._consecutiveErrors, '次，停止渲染:', (e as Error).message);
+                console.warn('[AgoraVideoRender] 连续渲染帧异常达', this._consecutiveErrors, '次，停止渲染:', (e as Error).message);
                 this.stopRender();
             }
             // 未达阈值时仅打日志，下一帧继续尝试
@@ -335,7 +346,7 @@ export default class AgoraVideoRender extends cc.Component {
         const now = Date.now();
         if (now - this._lastLogTime > 10000) {
             this._lastLogTime = now;
-            this.tracelog.debug('[AgoraVideoRender] time:', this._video.currentTime.toFixed(2));
+            console.log('[AgoraVideoRender] time:', this._video.currentTime.toFixed(2));
         }
     }
 
@@ -386,7 +397,7 @@ export default class AgoraVideoRender extends cc.Component {
         const path = `videomask/vm${captureMaskId}`;
         cc.resources.load(path, cc.Texture2D, (err, texture: cc.Texture2D) => {
             if (err || !texture) {
-                this.tracelog.warn('[AgoraVideoRender] 窗花纹理加载失败:', path, err?.message);
+                console.warn('[AgoraVideoRender] 窗花纹理加载失败:', path, err?.message);
                 return;
             }
             // 加载期间组件可能已销毁、停止渲染或切换了 maskId

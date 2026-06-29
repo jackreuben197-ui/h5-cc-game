@@ -49,11 +49,6 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public get needVideoPermision() {
         return this._roomData.basicInfo.videoModel !== VideoModel.NONE;
     }
-    // ==================== 随机视频验证状态 ====================
-    /** 是否正在随机视频验证中 */
-    public randomVideoActive: boolean = false;
-    /** 随机视频验证结束时间戳（毫秒），0 表示未在验证 */
-    public randomVideoEndTime: number = 0;
     // 如果有座位,座位号 > 0
     @observable(TexasGameRoomDataPlayerMine.SEATNO_CHANGED)
     public seatNo: number = 0;

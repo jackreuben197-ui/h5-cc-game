@@ -4,7 +4,6 @@ import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataSeatsStateManager from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
 import { AnimateDisplayTypeButton } from '../../../../game/constant/AnimateDisplayType';
-import VideoRoomManager from '../../../../net/agora/VideoRoomManager';
 import SeatPlayer from './SeatPlayer';
 
 const { ccclass, property, menu } = cc._decorator;
@@ -43,8 +42,6 @@ export default class SeatManager extends cc.Component {
 
     public onDisable(): void {
         unBindEventsAll(this);
-        // 清理视频座位头像注册
-        VideoRoomManager.Instance.clearSeatAvatars();
     }
 
     private _bindEventsAndRefresh() {
@@ -139,8 +136,6 @@ export default class SeatManager extends cc.Component {
                 let comp = this._seatNodesMap.get(i + 1);
                 comp.initData(seatData, this.potNot, this.dealNode);
                 node.active = true;
-                // 注册头像节点到视频管理器
-                VideoRoomManager.Instance.registerSeatAvatar(i + 1, comp.avatarNode);
             }
         }
     }

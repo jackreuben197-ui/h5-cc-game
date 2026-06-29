@@ -118,10 +118,6 @@ export default class SeatPlayer extends cc.Component {
     private _potNode: cc.Node = null!;
     // 发牌
     private _dealNode: cc.Node = null!;
-    /** 暴露头像节点供视频渲染使用 */
-    public get avatarNode(): cc.Node {
-        return this.avatar.node;
-    }
 
     public initData(seatPlayer: TexasGameRoomDataPlayer, potNode: cc.Node, dealNode: cc.Node) {
         this._seatPlayer = seatPlayer;

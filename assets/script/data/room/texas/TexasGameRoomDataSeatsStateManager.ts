@@ -170,33 +170,6 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
         return this._playerMap.get(s);
     }
 
-    /**
-     * 通过 userID 查找座位数据
-     * @returns 匹配的 TexasGameRoomDataPlayer，未找到返回 null
-     */
-    public findSeatByUserId(userId: number): TexasGameRoomDataPlayer | null {
-        let found: TexasGameRoomDataPlayer = null;
-        this._playerMap.forEach((p: TexasGameRoomDataPlayer) => {
-            if (!found && p.userID === userId) {
-                found = p;
-            }
-        });
-        return found;
-    }
-
-    /**
-     * 获取所有已入座的座位数据
-     */
-    public getAllSeats(): TexasGameRoomDataPlayer[] {
-        const result: TexasGameRoomDataPlayer[] = [];
-        this._playerMap.forEach((p: TexasGameRoomDataPlayer) => {
-            if (p.userID) {
-                result.push(p);
-            }
-        });
-        return result;
-    }
-
     public roundReset() {
         this._playerMap.forEach(p => {
             p.roundReset();
