@@ -14,6 +14,7 @@ import {
     AnimateDisplayTypePosition,
     AnimateDisplayTypeRoundBet
 } from '../../../../game/constant/AnimateDisplayType';
+import { MicIconState } from '../../../../game/constant/MicIconState';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
@@ -111,6 +112,13 @@ export default class SeatPlayer extends cc.Component {
     private squidMaskNode: cc.Node = null;
     @property({ type: DisplayNode, displayName: '获胜者的筹码牌型' })
     private winBoard: DisplayNode = null!; // text 0 handVuleType 1: chip, node 0 handValue 1: slash 2: space(for no handValue )
+    @property({ tooltip: '正在说话时显示的喇叭图标', type: cc.SpriteFrame })
+    private speakingIcon: cc.SpriteFrame = null;
+    @property({ tooltip: '麦克风被禁止时显示的图标', type: cc.SpriteFrame })
+    private micMutedIcon: cc.SpriteFrame = null;
+    // 麦克风状态图标（动态创建）
+    private _micIcon: cc.Node = null;
+    private _micIconSprite: cc.Sprite = null;
     private _seatPlayer: TexasGameRoomDataPlayer = null!;
     private _cardBacks: cc.Node[] = [];
     private _bigCards: CardView[] = [];
@@ -152,6 +160,8 @@ export default class SeatPlayer extends cc.Component {
         this.emptySeat.node.on('click', this._clickEmptySeat, this);
         this.insuranceCountdownBubble.node.active = false;
         this.returnToGameButton.node.on('click', this._clickReturnToGame, this);
+        // 动态创建麦克风状态图标
+        this._createMicIcon();
     }
 
     protected onEnable(): void {
@@ -170,6 +180,67 @@ export default class SeatPlayer extends cc.Component {
     private _bindEventsAndRefresh() {
         // 统一激活绑定，注入强类型 tag 推导过滤机制
         autoBindEvents(this, { player: this._seatPlayer, setting: texasGamePersonalSettings });
+    }
+    // ==================== 麦克风状态图标（视频房间用） ====================
+    /** 动态创建麦克风状态图标节点，挂在 avatar 父级（与头像同坐标系，便于定位） */
+    private _createMicIcon(): void {
+        if (this._micIcon) return;
+        const parent = this.avatar.node.parent || this.userSeat || this.node;
+        this._micIcon = new cc.Node('MicIcon');
+        this._micIconSprite = this._micIcon.addComponent(cc.Sprite);
+        this._micIcon.setContentSize(82, 82);
+        this._micIcon.active = false;
+        parent.addChild(this._micIcon);
+    }
+
+    /**
+     * 设置麦克风图标状态
+     * @param state HIDDEN=不显示, SPEAKING=正在说话, MUTED=麦克风被禁止/未开启
+     */
+    public setMicIconState(state: MicIconState): void {
+        if (!this._micIcon) return;
+        switch (state) {
+            case MicIconState.SPEAKING:
+                if (this.speakingIcon) {
+                    this._micIconSprite.spriteFrame = this.speakingIcon;
+                    this._micIcon.active = true;
+                } else {
+                    this._micIcon.active = false;
+                }
+                break;
+            case MicIconState.MUTED:
+                if (this.micMutedIcon) {
+                    this._micIconSprite.spriteFrame = this.micMutedIcon;
+                    this._micIcon.active = true;
+                } else {
+                    this._micIcon.active = false;
+                }
+                break;
+            case MicIconState.HIDDEN:
+            default:
+                this._micIcon.active = false;
+                break;
+        }
+        this._updateMicIconPosition();
+    }
+
+    /** 根据座位左右侧更新话筒图标位置（基于 avatar 节点坐标，避免被头像裁剪） */
+    private _updateMicIconPosition(): void {
+        if (!this._micIcon || !this.avatar?.node) return;
+        const headPos = this.avatar.node.getPosition();
+        const headSize = this.avatar.node.getContentSize();
+        const iconSize = this._micIcon.getContentSize();
+        const gap = 4;
+        const arrange = seatArrange[this._seatPlayer.position];
+        const isRight = arrange ? arrange.x > 0 : false;
+        this._micIcon.y = headPos.y;
+        if (isRight) {
+            // 右侧座位：图标放在头像左侧
+            this._micIcon.x = headPos.x - headSize.width / 2 - iconSize.width / 2 - gap;
+        } else {
+            // 左侧/中：图标放在头像右侧
+            this._micIcon.x = headPos.x + headSize.width / 2 + iconSize.width / 2 + gap;
+        }
     }
 
     @bindEvent(TexasGameRoomDataPlayer.ALLIN_WIN_PERCENT, 'player')

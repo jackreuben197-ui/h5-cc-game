@@ -16,6 +16,7 @@
  *   targetFps:    目标帧率
  */
 import { traceClass } from '../../core/decorator/LogTrace';
+import AssetManager, { BUNDLE_RESOURCES } from '../../views/loader/AssetManager';
 import AgoraManager from './AgoraManager';
 
 const { ccclass, property } = cc._decorator;
@@ -40,8 +41,6 @@ export default class AgoraVideoRender extends cc.Component {
     private _maskSprite: cc.Sprite = null;
     /** 当前座位玩家的 videoMaskId */
     private _videoMaskId: number = 0;
-    /** 已加载的窗花纹理缓存 key=maskId, value=SpriteFrame */
-    private static _maskCache: Map<number, cc.SpriteFrame> = new Map();
     private _stream: MediaStream = null;
     private _isRendering: boolean = false;
     private _isCancelled: boolean = false;
@@ -213,7 +212,7 @@ export default class AgoraVideoRender extends cc.Component {
         }
         this._isRendering = true;
         // 6. 视频渲染成功后，尝试显示窗花覆盖层
-        this._applyVideoMask();
+        void this._applyVideoMask();
         this.tracelog.info('[AgoraVideoRender] 开始渲染 (video direct), video:', vw, 'x', vh, 'overlay:', cw, 'x', ch, 'fps:', this.targetFps);
         return true;
     }
@@ -358,7 +357,7 @@ export default class AgoraVideoRender extends cc.Component {
         this._videoMaskId = maskId;
         // 如果视频正在渲染中，立即刷新窗花显示
         if (this._isRendering) {
-            this._applyVideoMask();
+            void this._applyVideoMask();
         }
     }
 
@@ -366,45 +365,29 @@ export default class AgoraVideoRender extends cc.Component {
      * 根据条件显示/隐藏窗花覆盖层
      * 条件：房间 power_saving=1 且 videoMaskId>0
      */
-    private _applyVideoMask(): void {
+    private async _applyVideoMask(): Promise<void> {
         if (!this._maskNode) return;
         // 不满足条件则隐藏
         if (this._videoPowerSaving !== 1 || !this._videoMaskId) {
             this._maskNode.active = false;
             return;
         }
-        // 尝试从缓存获取
-        const cached = AgoraVideoRender._maskCache.get(this._videoMaskId);
-        if (cached && cached.isValid) {
-            this._maskSprite.spriteFrame = cached;
-            this._maskNode.active = true;
-            this._maskNode.setSiblingIndex(this.node.childrenCount - 1);
+        // 从 dynamic 动态加载（走 AssetManager，与项目模式对齐）
+        const captureMaskId = this._videoMaskId;
+        const path = `dynamic/videomask/vm${captureMaskId}`;
+        let spriteFrame: cc.SpriteFrame;
+        try {
+            spriteFrame = await AssetManager.getOrLoad(BUNDLE_RESOURCES, path, cc.SpriteFrame);
+        } catch (err) {
+            this.tracelog.warn('[AgoraVideoRender] 窗花纹理加载失败:', path, (err as Error)?.message);
             return;
         }
-        // 从 resources 加载纹理
-        const captureMaskId = this._videoMaskId;
-        const path = `videomask/vm${captureMaskId}`;
-        cc.resources.load(path, cc.Texture2D, (err, texture: cc.Texture2D) => {
-            if (err || !texture) {
-                this.tracelog.warn('[AgoraVideoRender] 窗花纹理加载失败:', path, err?.message);
-                return;
-            }
-            // 加载期间组件可能已销毁、停止渲染或切换了 maskId
-            if (!(this as any).isValid || !this._isRendering || this._videoMaskId !== captureMaskId) return;
-            const spriteFrame = new cc.SpriteFrame(texture);
-            AgoraVideoRender._maskCache.set(captureMaskId, spriteFrame);
-            if (this._maskNode?.isValid && this._maskSprite) {
-                this._maskSprite.spriteFrame = spriteFrame;
-                this._maskNode.active = true;
-                this._maskNode.setSiblingIndex(this.node.childrenCount - 1);
-            }
-        });
-    }
-
-    /**
-     * 清理窗花纹理缓存（退房时调用）
-     */
-    public static clearMaskCache(): void {
-        AgoraVideoRender._maskCache.clear();
+        // 加载期间组件可能已销毁、停止渲染或切换了 maskId
+        if (!(this as any).isValid || !this._isRendering || this._videoMaskId !== captureMaskId) return;
+        if (this._maskNode?.isValid && this._maskSprite) {
+            this._maskSprite.spriteFrame = spriteFrame;
+            this._maskNode.active = true;
+            this._maskNode.setSiblingIndex(this.node.childrenCount - 1);
+        }
     }
 }

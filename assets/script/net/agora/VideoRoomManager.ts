@@ -136,8 +136,9 @@ class VideoRoomManager {
         agora.onError = null;
         agora.onActiveSpeaker = null;
         agora.stopVolumeMonitor();
-        // 清理窗花纹理缓存
-        AgoraVideoRender.clearMaskCache();
+        // 清空说话者状态，触发话筒图标隐藏
+        const roomData = roomDataManager.getRoomData<TexasGameRoomData>(this._roomID, this._matchID);
+        if (roomData) roomData.seatsStateManager.speakingUid = 0;
         await agora.leave();
         this._roomID = 0;
         this._matchID = 0;
@@ -384,9 +385,12 @@ class VideoRoomManager {
         this.tracelog.error('Agora 错误:', err?.code || err?.message || err);
     }
 
-    /** 说话者变化回调（Phase 1 暂不处理 UI） */
+    /** 说话者变化回调：写入座位数据的 speakingUid，触发 SPEAKING_CHANGE 刷新头像话筒图标 */
     private _onActiveSpeaker(uid: number | null): void {
         this.tracelog.debug('当前说话者:', uid);
+        const roomData = roomDataManager.getRoomData<TexasGameRoomData>(this._roomID, this._matchID);
+        if (!roomData) return;
+        roomData.seatsStateManager.speakingUid = uid ?? 0;
     }
 
     /** 将远端用户视频渲染到对应座位头像 */
