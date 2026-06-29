@@ -121,7 +121,7 @@ export default class SeatManager extends cc.Component {
     }
 
     /** 说话者变化：刷新所有座位头像的麦克风图标（对齐 pokerqueen 三分支逻辑） */
-    @bindEvent(TexasGameRoomDataSeatsStateManager.SPEAKING_CHANGE, 'seats')
+    @bindEvent(TexasGameRoomDataSeatsStateManager.SPEAKING_CHANGE, { dataSource: 'seats', initIgnore: true })
     @traceMethod()
     private onUpdateSpeaking(speakingUid: number) {
         const agora = AgoraManager.Instance;

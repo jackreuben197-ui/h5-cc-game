@@ -1,4 +1,4 @@
-import { bindData, pureEvent } from '../../../core/decorator/DataBind';
+import { bindData, observable, pureEvent } from '../../../core/decorator/DataBind';
 import { AnimateDisplayTypeButton, AnimateDisplayTypeMushroomPool, AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';
@@ -113,23 +113,9 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     })
     public buttonChangeEvent(prev: number, cur: number, bat: AnimateDisplayTypeButton) {}
 
-    // 当前说话者 uid（0 = 无人说话），由 VideoRoomManager 在 activeSpeaker 回调中设置
-    private _speakingUid: number = 0;
-    public get speakingUid(): number {
-        return this._speakingUid;
-    }
-    public set speakingUid(uid: number) {
-        if (this._speakingUid === uid) return;
-        this._speakingUid = uid;
-        this.speakingChangeEmit(uid);
-    }
-
-    @pureEvent(TexasGameRoomDataSeatsStateManager.SPEAKING_CHANGE, {
-        initParams() {
-            return [this._speakingUid];
-        }
-    })
-    public speakingChangeEmit(uid: number) {}
+    /** 当前说话者 uid（0 = 无人说话），由 VideoRoomManager 在 activeSpeaker 回调中设置 */
+    @observable(TexasGameRoomDataSeatsStateManager.SPEAKING_CHANGE)
+    public speakingUid: number = 0;
 
     private _seatsCount: number;
 
