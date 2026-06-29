@@ -13,6 +13,8 @@ import {
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
+import { VideoModel } from '../../../game/constant/VideoModel';
+import VideoRoomManager from '../../../net/agora/VideoRoomManager';
 
 const _plog = createLogger('ServerMessageStartInfo');
 
@@ -138,5 +140,10 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
             }
             seatData.operator = op;
         }
+    }
+    // 麦序模式：新手牌开始时同步视频可见性
+    if (roomData.basicInfo.videoModel === VideoModel.SEQUENCE) {
+        const opSeatId = data.nextOperator ? data.nextOperator.seatId : 0;
+        VideoRoomManager.Instance.sequenceSyncRemoteVideos(opSeatId);
     }
 }

@@ -1,4 +1,4 @@
-import { bindData, pureEvent } from '../../../core/decorator/DataBind';
+import { bindData, observable, pureEvent } from '../../../core/decorator/DataBind';
 import { AnimateDisplayTypeButton, AnimateDisplayTypeMushroomPool, AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';
@@ -67,6 +67,7 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     public static readonly BUTTON_CHANGE = 'BUTTON_CHANGE';
     public static readonly SEATS_CHANGE = 'SEATS_CHANGE';
     public static readonly MUSHROOM_POOL_CHANGE = 'MUSHROOM_POOL_CHANGE';
+    public static readonly SPEAKING_CHANGE = 'SPEAKING_CHANGE';
     private _parentRoomData: TexasGameRoomData;
 
     constructor(p: TexasGameRoomData) {
@@ -111,6 +112,10 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
         }
     })
     public buttonChangeEvent(prev: number, cur: number, bat: AnimateDisplayTypeButton) {}
+
+    /** 当前说话者 uid（0 = 无人说话），由 VideoRoomManager 在 activeSpeaker 回调中设置 */
+    @observable(TexasGameRoomDataSeatsStateManager.SPEAKING_CHANGE)
+    public speakingUid: number = 0;
 
     private _seatsCount: number;
 
@@ -168,6 +173,33 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
             j++;
         }
         return this._playerMap.get(s);
+    }
+
+    /**
+     * 通过 userID 查找座位数据
+     * @returns 匹配的 TexasGameRoomDataPlayer，未找到返回 null
+     */
+    public findSeatByUserId(userId: number): TexasGameRoomDataPlayer | null {
+        let found: TexasGameRoomDataPlayer = null;
+        this._playerMap.forEach((p: TexasGameRoomDataPlayer) => {
+            if (!found && p.userID === userId) {
+                found = p;
+            }
+        });
+        return found;
+    }
+
+    /**
+     * 获取所有已入座的座位数据
+     */
+    public getAllSeats(): TexasGameRoomDataPlayer[] {
+        const result: TexasGameRoomDataPlayer[] = [];
+        this._playerMap.forEach((p: TexasGameRoomDataPlayer) => {
+            if (p.userID) {
+                result.push(p);
+            }
+        });
+        return result;
     }
 
     public roundReset() {
