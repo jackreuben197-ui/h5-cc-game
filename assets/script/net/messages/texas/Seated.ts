@@ -8,7 +8,6 @@ import { AnimateDisplayTypePosition } from '../../../game/constant/AnimateDispla
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
 import { BringInMode } from '../../../game/constant/BringInMode';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
-import VideoRoomManager from '../../../net/agora/VideoRoomManager';
 import viewManager from '../../../views/UIViewManager';
 
 const _plog = createLogger('ServerMessageSeated');
@@ -121,17 +120,21 @@ export function Seated(data: ServerMessageSeated.AsObject, roomID: number, match
     //     //ShowVipSeatDownTips(GameCache.Instance.nick);
     // }
     // 视频房间：坐下后渲染本地摄像头到自己的头像
-    const videoMgr = VideoRoomManager.Instance;
-    if (videoMgr.isVideoRoom && videoMgr.currentVideoModel !== 0) {
-        const avatarNode = videoMgr.getSeatAvatarNode(seatData.seatNo);
-        if (avatarNode) {
-            videoMgr.renderLocalVideoOnMySeat(avatarNode).then(ok => {
-                if (!ok) {
-                    viewManager.showToast('无法开启摄像头，请检查浏览器权限后重新入座');
-                }
-            });
-        }
-    }
+    // if (GameCache.Instance._videoModel !== VideoModel.NONE) {
+    //     const agora = AgoraManager.Instance;
+    //     if (agora.isJoined) {
+    //         // 频道已加入，直接渲染
+    //         this.renderLocalVideoOnMySeat().then(ok => {
+    //             if (!ok) {
+    //                 ToastManager.Instance.createToast('无法开启摄像头，请检查浏览器权限后重新入座');
+    //                 setTimeout(() => {
+    //                     this.game.TexasGameUtils.LeaveRoom();
+    //                 }, 3000);
+    //             }
+    //         });
+    //     }
+    //     // 频道还没加入时不弹 toast，等 JoinVideoChannelIfNeed 完成后自动补渲染
+    // }
     //房间坐下时时添加firebase事件触发
     // Dictionary < string, string > paramMap = new Dictionary<string, string>();
     // paramMap.Add("game_type", GameCache.Instance.game_type + "");//游戏类型
