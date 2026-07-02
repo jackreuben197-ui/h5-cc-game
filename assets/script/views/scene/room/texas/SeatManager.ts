@@ -25,6 +25,7 @@ export default class SeatManager extends cc.Component {
     private _seatManager: TexasGameRoomDataSeatsStateManager;
     private _seatNodes: cc.Node[] = [];
     private _seatNodesMap: Map<number, SeatPlayer> = new Map();
+    private _seatYOffset: number = 0;
 
     public initData(roomID: number, matchID: number) {
         const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
@@ -36,6 +37,13 @@ export default class SeatManager extends cc.Component {
 
     public onLoad() {
         // 如果绑定点击写这里
+    }
+
+    public setSeatYOffset(offset: number): void {
+        this._seatYOffset = offset;
+        this._seatNodesMap.forEach(seatPlayer => {
+            seatPlayer.setLayoutYOffset(offset);
+        });
     }
 
     public onEnable(): void {
@@ -163,6 +171,7 @@ export default class SeatManager extends cc.Component {
                 const seatData = this._seatManager.getSeatPlayer(i + 1);
                 let comp = this._seatNodesMap.get(i + 1);
                 comp.initData(seatData, this.potNot, this.dealNode);
+                comp.setLayoutYOffset(this._seatYOffset);
                 node.active = true;
                 // 注册头像节点到视频管理器
                 VideoRoomManager.Instance.registerSeatAvatar(i + 1, comp.avatarNode);

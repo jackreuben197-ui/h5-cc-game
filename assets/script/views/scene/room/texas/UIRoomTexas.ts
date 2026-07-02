@@ -3,7 +3,9 @@ import storageManager from '../../../../data/LocalStorage';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
+import { SeatPosition } from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
 import { VideoModel } from '../../../../game/constant/VideoModel';
+import h5MessageManager from '../../../../H5MsgMgr';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
 import AgoraManager from '../../../../net/agora/AgoraManager';
@@ -20,6 +22,7 @@ import PotsInfo from './PotsInfo';
 import PublicCardsInfo from './PublicCardsInfo';
 import RoomInfo from './RoomInfo';
 import SeatManager from './SeatManager';
+import SeatPlayer, { getSeatArrangePosition } from './SeatPlayer';
 import UITexasMenu from './UITexasMenu';
 
 export interface UIRoomTexasEnterParam {
@@ -28,6 +31,19 @@ export interface UIRoomTexasEnterParam {
 }
 
 const { ccclass, property, menu } = cc._decorator;
+
+const ADAPTIVE_LIMIT_HEIGHT = 2400;
+
+const ADAPTIVE_MAIN_HEIGHT = 2688;
+
+const ADAPTIVE_SEAT_MARGIN = 30;
+
+const ADAPTIVE_SETTING_BUTTON_GAP = 280;
+
+type AdaptiveOffsetNode = {
+    node: cc.Node;
+    originY: number;
+};
 
 @ccclass
 @menu('Scene/Room/Texas/UIRoomTexas')
@@ -80,11 +96,16 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private _muteMicCloseBtn: cc.Node = null;
     private _hideVideoOpenBtn: cc.Node = null;
     private _hideVideoCloseBtn: cc.Node = null;
+    private _mainNode: cc.Node = null;
+    private _mainMenuNode: cc.Node = null;
+    private _btnImNode: cc.Node = null;
+    private _adaptiveOffsetNodes: AdaptiveOffsetNode[] = [];
 
     protected onLoad(): void {
         // 兜底：prefab 未在编辑器绑定按钮属性时，按路径从节点树查找
         // 这些按钮/控制节点都在 side_btns/main_menu 下
-        const _menuRoot = cc.find('side_btns/main_menu', this.node);
+        const sideBtnsNode = this.node.getChildByName('side_btns');
+        const _menuRoot = sideBtnsNode ? sideBtnsNode.getChildByName('main_menu') : null;
         if (_menuRoot) {
             if (!this.btnCamera) this.btnCamera = _menuRoot.getChildByName('btn_camera');
             if (!this.btnAudio) this.btnAudio = _menuRoot.getChildByName('btn_audio');
@@ -94,6 +115,16 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
             if (!this.muteMicNode) this.muteMicNode = _menuRoot.getChildByName('muteMicNode');
             if (!this.hideVideoNode) this.hideVideoNode = _menuRoot.getChildByName('hideVideoNode');
         }
+        this._mainNode = this.node.getChildByName('main');
+        this._mainMenuNode = _menuRoot;
+        this._btnImNode = sideBtnsNode ? sideBtnsNode.getChildByName('btn_im') : null;
+        this._recordAdaptiveOffsetNodes([
+            this.sideMenu ? this.sideMenu.node : sideBtnsNode ? sideBtnsNode.getChildByName('btn_menu') : null,
+            this._btnImNode,
+            sideBtnsNode ? sideBtnsNode.getChildByName('btn_safety_guard') : null,
+            sideBtnsNode ? sideBtnsNode.getChildByName('table_add_chip') : null,
+            this._findNodeByName(this.node, 'RemainingSquidCount')
+        ]);
         //菜单项
         this._onSideMenuClicked = () => {
             this._sideMenuTexasMenu.fadeIn(true);
@@ -126,7 +157,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this._hideVideoCloseBtn?.on('click', this._clickHideVideoClose, this);
     }
 
-    async initialize(param: UIRoomTexasEnterParam) {
+    public async initialize(param: UIRoomTexasEnterParam) {
         const roomData = roomDataManager.getRoomData<TexasGameRoomData>(param.roomID, param.matchID);
         this._mine = roomData.mine;
         this.roomInfo.initData(param.roomID, param.matchID);
@@ -137,12 +168,109 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this._opPannel.initData(this._mine);
         this.insuranceOperation.initData(this._mine);
         this.squidInfo.initData(this._mine);
+        this._adaptiveMain();
         //展示介绍对话框
         await this._showSquidIntroDialog(roomData);
         await this._showMushroomIntroDialog(roomData);
         await this._showCriticalHitIntroDialog(roomData);
         //初始化视频按钮
         this._initVideoButtons();
+    }
+
+    private _adaptiveMain(): void {
+        if (!this._mainNode) return;
+        const viewHeight = cc.view.getVisibleSize().height;
+        if (viewHeight <= ADAPTIVE_LIMIT_HEIGHT) {
+            this._mainNode.height = ADAPTIVE_MAIN_HEIGHT;
+            const scale = viewHeight / ADAPTIVE_MAIN_HEIGHT;
+            this._mainNode.setScale(scale, scale);
+        } else {
+            this._mainNode.setScale(1, 1);
+            this._mainNode.height = viewHeight;
+        }
+        this.scheduleOnce(() => {
+            const seatYOffset = this._calculateSeatYOffset();
+            this.seatManager.setSeatYOffset(seatYOffset);
+            this._applyAdaptiveControls(seatYOffset);
+            this._applyOperationPanelPosition();
+        }, 0);
+    }
+
+    private _calculateSeatYOffset(): number {
+        if (!this._mainMenuNode || !this.seatManager?.node || !this._mainNode) return 0;
+        const menuBox = this._mainMenuNode.getBoundingBoxToWorld();
+        const menuTopWorldY = menuBox.y + menuBox.height;
+        const bottomSeatPosition = getSeatArrangePosition(SeatPosition.BottomMiddle);
+        const bottomSeatWorldPosition = this.seatManager.node.convertToWorldSpaceAR(cc.v2(bottomSeatPosition.x, bottomSeatPosition.y));
+        const overlapWorld = menuTopWorldY - bottomSeatWorldPosition.y;
+        if (overlapWorld <= 0) return 0;
+        const mainScale = this._mainNode.scaleY || 1;
+        let offset = overlapWorld / mainScale + ADAPTIVE_SEAT_MARGIN;
+        const topSeatPosition = getSeatArrangePosition(SeatPosition.TopMiddle);
+        const topSeatNewY = topSeatPosition.y + offset;
+        if (topSeatNewY > 0) {
+            offset -= topSeatNewY;
+        }
+        return Math.max(0, offset);
+    }
+
+    private _applyAdaptiveControls(seatYOffset: number): void {
+        const safeAreaTop = h5MessageManager.safeArea ? h5MessageManager.safeArea.top : 0;
+        const controlOffset = safeAreaTop > 0 ? 0 : seatYOffset;
+        this._applyNodesYOffset(this._adaptiveOffsetNodes, controlOffset, false);
+        if (safeAreaTop > 0 || !this._btnImNode || !this._btnImNode.active || !this._mainNode) return;
+        const mainBox = this._mainNode.getBoundingBoxToWorld();
+        const mainTopWorldY = mainBox.y + mainBox.height;
+        const iconCenterWorld = this._btnImNode.convertToWorldSpaceAR(cc.v2(0, -this._btnImNode.height / 2));
+        const gapLocal = (mainTopWorldY - iconCenterWorld.y) / (this._mainNode.scaleY || 1);
+        if (gapLocal > ADAPTIVE_SETTING_BUTTON_GAP) {
+            this._applyNodesYOffset(this._adaptiveOffsetNodes, gapLocal - ADAPTIVE_SETTING_BUTTON_GAP, true);
+        }
+    }
+
+    private _applyOperationPanelPosition(): void {
+        if (!this._opPannel || !this.opPannelNode || !this.seatManager) return;
+        const bottomSeat = this._getBottomSeatPlayer();
+        if (!bottomSeat) return;
+        const mark = this._findNodeByName(bottomSeat.node, 'Operation_Pos_Mark');
+        if (!mark || !mark.parent) return;
+        const worldPosition = mark.parent.convertToWorldSpaceAR(cc.v2(mark.x, mark.y));
+        const operationPosition = this.opPannelNode.convertToNodeSpaceAR(worldPosition);
+        this._opPannel.node.setPosition(operationPosition.x, operationPosition.y + 200);
+    }
+
+    private _getBottomSeatPlayer(): SeatPlayer {
+        if (!this.seatManager?.node) return null;
+        const seatRoot = this.seatManager.node;
+        for (let i = 0; i < seatRoot.childrenCount; i++) {
+            const seatPlayer = seatRoot.children[i].getComponent(SeatPlayer);
+            if (seatPlayer && seatPlayer.seatPosition === SeatPosition.BottomMiddle) return seatPlayer;
+        }
+        return null;
+    }
+
+    private _recordAdaptiveOffsetNodes(nodes: cc.Node[]): void {
+        this._adaptiveOffsetNodes = [];
+        nodes.forEach(node => {
+            if (!node) return;
+            this._adaptiveOffsetNodes.push({ node, originY: node.y });
+        });
+    }
+
+    private _applyNodesYOffset(nodes: AdaptiveOffsetNode[], offset: number, append: boolean): void {
+        nodes.forEach(item => {
+            item.node.y = append ? item.node.y + offset : item.originY + offset;
+        });
+    }
+
+    private _findNodeByName(root: cc.Node, name: string): cc.Node {
+        if (!root) return null;
+        if (root.name === name) return root;
+        for (let i = 0; i < root.childrenCount; i++) {
+            const result = this._findNodeByName(root.children[i], name);
+            if (result) return result;
+        }
+        return null;
     }
 
     private async _showSquidIntroDialog(roomData: TexasGameRoomData): Promise<boolean> {

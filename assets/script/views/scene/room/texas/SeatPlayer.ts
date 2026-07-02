@@ -45,6 +45,11 @@ const seatArrange: Record<SeatPosition, cc.Vec3> = {
     [SeatPosition.TopRight7]: cc.v3(480, -1065) // 9 7 人桌的修正
 };
 
+export function getSeatArrangePosition(pos: SeatPosition): cc.Vec3 {
+    const arrange = seatArrange[pos] || seatArrange[SeatPosition.Default];
+    return cc.v3(arrange.x, arrange.y, arrange.z);
+}
+
 const redColor = cc.Color.fromHEX(new cc.Color(), '#FA2B4B');
 
 const greenColor = cc.Color.fromHEX(new cc.Color(), '#78E4E4');
@@ -122,6 +127,7 @@ export default class SeatPlayer extends cc.Component {
     private _seatPlayer: TexasGameRoomDataPlayer = null!;
     private _cardBacks: cc.Node[] = [];
     private _bigCards: CardView[] = [];
+    private _layoutYOffset: number = 0;
     // 动画的池的位置（可能是发起，也可能是结尾,计算坐标使用)
     private _potNode: cc.Node = null!;
     // 发牌
@@ -129,6 +135,10 @@ export default class SeatPlayer extends cc.Component {
     /** 暴露头像节点供视频渲染使用 */
     public get avatarNode(): cc.Node {
         return this.avatar.node;
+    }
+    public get seatPosition(): SeatPosition {
+        if (!this._seatPlayer) return SeatPosition.Default;
+        return this._seatPlayer.position;
     }
 
     public initData(seatPlayer: TexasGameRoomDataPlayer, potNode: cc.Node, dealNode: cc.Node) {
@@ -138,6 +148,12 @@ export default class SeatPlayer extends cc.Component {
         if (this.node.activeInHierarchy) {
             this._bindEventsAndRefresh();
         }
+    }
+
+    public setLayoutYOffset(offset: number): void {
+        this._layoutYOffset = offset;
+        if (!this._seatPlayer) return;
+        this.onUpdatePosition(this._seatPlayer.position, AnimateDisplayTypePosition.Static);
     }
 
     // 防止内存泄露(简单说就是防止this丢失)
@@ -231,7 +247,7 @@ export default class SeatPlayer extends cc.Component {
         const headSize = this.avatar.node.getContentSize();
         const iconSize = this._micIcon.getContentSize();
         const gap = 4;
-        const arrange = seatArrange[this._seatPlayer.position];
+        const arrange = getSeatArrangePosition(this._seatPlayer.position);
         const isRight = arrange ? arrange.x > 0 : false;
         this._micIcon.y = headPos.y;
         if (isRight) {
@@ -445,7 +461,7 @@ export default class SeatPlayer extends cc.Component {
                 this.winPercentNode.node.active = false;
                 break;
         }
-        const realPos = seatArrange[pos];
+        const realPos = this._getRealSeatPosition(pos);
         if (pat == AnimateDisplayTypePosition.ToTarget) {
             this.node.opacity = 0;
             cc.tween(this.node)
@@ -454,6 +470,12 @@ export default class SeatPlayer extends cc.Component {
             return;
         }
         this.node.setPosition(realPos);
+    }
+
+    private _getRealSeatPosition(pos: SeatPosition): cc.Vec3 {
+        const realPos = getSeatArrangePosition(pos);
+        realPos.y += this._layoutYOffset;
+        return realPos;
     }
 
     @bindEvent(TexasGameRoomDataPlayer.ROUND_BET_CHANGE, 'player', AnimateDisplayTypeRoundBet.Static)

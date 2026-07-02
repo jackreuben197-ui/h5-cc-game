@@ -18,7 +18,10 @@ export function LeaveNotification(data: ServerMessageLeaveNotification.AsObject,
     // 视频房间：离房前清理 Agora 频道
     VideoRoomManager.Instance.leaveVideoChannel();
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
-    _glog.debug('leave', data.reason, roomData);
+    if (roomData == null) {
+        _glog.debug('leave', data.reason, 'roomData is null, roomID:', roomID, 'matchID:', matchID);
+        return;
+    }
     switch (data.reason) {
         case Def.LeaveReason.LR_ACTIVE: // 主动退出
             break;

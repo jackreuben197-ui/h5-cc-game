@@ -76,8 +76,10 @@ export default class Main extends cc.Component {
     /**
      * 窗口大小变化时重新适配（防抖 200ms）
      *
-     * 不使用 resizeWithBrowserSize（会和 Canvas.fitCanvasToWindow 互相覆盖导致 _frameSize 过时），
-     * 而是手动更新容器 DOM，直接设置 _frameSize 并调用 setDesignResolutionSize。
+     * 引擎已启用 resizeWithBrowserSize(true)，会按新视口自动重新适配 canvas
+     * （保持设计分辨率比例，键盘弹出时整体上移而非变形）。
+     * 这里只负责按宽高比动态切换 FIXED_WIDTH / FIXED_HEIGHT 适配策略，
+     * 并刷新预览模式下未跟随窗口的容器 DOM。
      */
     private _onWindowResize(): void {
         clearTimeout(this._resizeTimer);
@@ -103,7 +105,14 @@ export default class Main extends cc.Component {
             }
             // 等一帧让 DOM 重排完成，再更新引擎画布
             requestAnimationFrame(() => {
-                ProcedureInit.updateFitMode();
+                // TG 环境下，键盘适配完全由 H5 层 focusin/focusout 控制，CC 层不调 updateFitMode。
+                // 避免 race condition：H5 focusout 后 200ms 标志被清，但 window.resize 可能更晚触发，
+                // 导致 CC 误判键盘已收起 → 调 setDesignResolutionSize 污染 cocos 内部状态
+                // → 第二次键盘弹出时画面变形。
+                const isTelegram = !!(window as any).Telegram?.WebApp;
+                if (!isTelegram) {
+                    ProcedureInit.updateFitMode();
+                }
                 if (this.Diss && this.Diss.isValid) {
                     MainUtils.refreshDiss(this.Diss);
                 }

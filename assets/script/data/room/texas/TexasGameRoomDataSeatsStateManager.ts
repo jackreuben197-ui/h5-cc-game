@@ -116,7 +116,6 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     /** 当前说话者 uid（0 = 无人说话），由 VideoRoomManager 在 activeSpeaker 回调中设置 */
     @observable(TexasGameRoomDataSeatsStateManager.SPEAKING_CHANGE)
     public speakingUid: number = 0;
-
     private _seatsCount: number;
 
     public getSeatPlayer(i: number) {
