@@ -112,7 +112,7 @@
         "__id__": 21
       }
     ],
-    "_active": false,
+    "_active": true,
     "_components": [],
     "_prefab": {
       "__id__": 24
@@ -3020,7 +3020,7 @@
   {
     "__type__": "cc.Node",
     "_name": "out_mush",
-    "_objFlags": 0,
+    "_objFlags": 512,
     "_parent": {
       "__id__": 77
     },
