@@ -1,0 +1,41 @@
+
+44paizuo.png
+size: 2048,1024
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+Image0045
+  rotate: false
+  xy: 1451, 510
+  size: 495, 496
+  orig: 495, 496
+  offset: 0, 0
+  index: -1
+Image0063
+  rotate: false
+  xy: 2, 132
+  size: 874, 874
+  orig: 874, 874
+  offset: 0, 0
+  index: -1
+dayuan
+  rotate: false
+  xy: 878, 324
+  size: 571, 682
+  orig: 571, 682
+  offset: 0, 0
+  index: -1
+lzi
+  rotate: false
+  xy: 2, 2
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+xiaoyuan
+  rotate: false
+  xy: 1451, 95
+  size: 413, 413
+  orig: 437, 414
+  offset: 3, 1
+  index: -1

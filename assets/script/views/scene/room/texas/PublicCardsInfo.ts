@@ -52,11 +52,11 @@ export default class PublicCardsInfo extends cc.Component {
     public onUpdateResetPublicCards() {
         this._publicCards.forEach(v => {
             v.node.active = false;
-            v.highlight(false);
+            v.reset();
         });
         this._secPublicCards.forEach(v => {
             v.node.active = false;
-            v.highlight(false);
+            v.reset();
         });
     }
 
@@ -165,6 +165,18 @@ export default class PublicCardsInfo extends cc.Component {
                 }
             } else {
                 cd.highlight(false);
+            }
+        });
+    }
+
+    @bindEvent(TexasGameRoomDataPublicCards.PUBLICCARDS_POPUP, { dataSource: 'publicCards', initIgnore: true })
+    private onPopupCards(cardsNum: number[]) {
+        const mp: Set<number> = new Set(cardsNum);
+        this._publicCards.forEach(cd => {
+            if (mp.has(cd.storeCardNum)) {
+                cd.popUp(new cc.Vec2(0, 20));
+            } else {
+                cd.gray(true);
             }
         });
     }

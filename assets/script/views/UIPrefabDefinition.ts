@@ -4,6 +4,7 @@ import UIBringOut from './dialog/bringout/UIBringInOut';
 import UIConfirmDialog from './dialog/confirm/UIConfirmDialog';
 import UIInsuranceNewPanel from './dialog/insurance/UIInsuranceNewPanel';
 import UIGuideDialog from './dialog/mushroomandcriticalhit/UIGuideDialog';
+import UIPersonalSettings from './dialog/personalsettings/UIPersonalSettings';
 import UIRechargeDiamond from './dialog/rechargediamond/UIRechargeDiamond';
 import UITexasReport from './dialog/report/UITexasReport';
 import UITexasReportPlayerInfo from './dialog/report/UITexasReportPlayerInfo';
@@ -101,6 +102,12 @@ export const UIPrefabDialog = {
         Name: '战绩玩家详情',
         Bundle: BUNDLE_RESOURCES,
         Path: 'rc/scene/room/texas/UITexasReportPlayerInfo'
+    },
+    PersonalSettings: {
+        UIType: UIPersonalSettings,
+        Name: '个性设置',
+        Bundle: BUNDLE_RESOURCES,
+        Path: 'rc/dialog/personalsettings/UIPersonalSettings'
     }
 } as const;
 

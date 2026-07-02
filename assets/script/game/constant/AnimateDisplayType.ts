@@ -44,3 +44,8 @@ export enum AnimateDisplayTypePlayType {
     Start = 1,
     End = 2
 }
+
+export enum AnimateDisplayBackground {
+    Static = 0, // 纯静态变化
+    Go = 1 // 展示
+}

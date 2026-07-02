@@ -1,9 +1,11 @@
 import { GameConfig } from '../../config/GameConfig';
 import { traceClass } from '../../core/decorator/LogTrace';
+import dlTexasRoomBackground from '../../data/room/texas/load/DLTexasRoomBacground';
+import texasGamePersonalSettings from '../../data/room/texas/TexasGamePersonalSettings';
 import h5MessageManager from '../../H5MsgMgr';
 import { i18nMgr } from '../../i18n/i18nMgr';
 import * as MainUtils from '../../MainUtils';
-import { PreloadDefinitionGame, PreloadDefinitionSound } from '../../views/loader/AssetManager';
+import { DynamicLoadDefinition, PreloadDefinitionGame, PreloadDefinitionSound } from '../../views/loader/AssetManager';
 import viewManager from '../../views/UIViewManager';
 import ProcedureBase from './ProcedureBase';
 
@@ -28,6 +30,12 @@ export default class ProcedureInit extends ProcedureBase {
         MainUtils.loadWebSDK();
         // 引擎设置完成，等待 H5 层发送消息驱动后续流程
         this.tracelog.debug('等待 H5 层指令...');
+        const loadTexasBg: DynamicLoadDefinition = {
+            AsyncFunc: async () => {
+                dlTexasRoomBackground.getBackground(texasGamePersonalSettings.deskType);
+                return;
+            }
+        };
         //显示房间进入loading
         viewManager.showPreloading({
             preloadDefinition: [PreloadDefinitionGame, PreloadDefinitionSound],

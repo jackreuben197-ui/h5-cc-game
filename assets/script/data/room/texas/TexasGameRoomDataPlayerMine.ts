@@ -111,6 +111,7 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
 
     @observable(TexasGameRoomDataPlayerMine.SHOW_SQUID_IN)
     public showSquidInButton: boolean = false;
+    public isPlaying: boolean = false;
 
     /** 计算当前能带入的上下限 */
     public caculateCanBringMinMax() {
@@ -191,10 +192,15 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
         }
     }
 
+    public handStart() {
+        this.isPlaying = true;
+    }
+
     public handEnd() {
         if (this.seatNo == 0) return;
         this.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
         this.autoOperationType = AutoOperationTypeTexas.NO;
+        this.isPlaying = false;
     }
 
     public handClear() {

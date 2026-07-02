@@ -92,6 +92,7 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
         seatData.squidIn = player.inSquid;
         seatData.squidCount = player.squidCount;
         seatData.squidEscaped = player.squidEscaped;
+        seatData.handStart();
     }
     // 如果我坐着,则处理下我的加入按钮
     if (roomData.mine.seatNo > 0) {

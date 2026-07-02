@@ -69,7 +69,9 @@ export class DisplayNode extends cc.Component {
             // 按有效顺序依次填入文本
             if (textIndex < texts.length) {
                 label.string = texts[textIndex];
-                label.node.active = true;
+                if (texts[textIndex] != '') {
+                    label.node.active = true;
+                }
                 textIndex++;
             } else {
                 // 没分到文字的 Label 自动隐藏

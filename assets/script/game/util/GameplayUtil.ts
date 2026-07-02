@@ -47,6 +47,10 @@ export default class GameplayUtil {
         return `p_${calc}`;
     }
 
+    public static DeskTypeIndexToLocalResource(tableIndex: number) {
+        return 't_' + tableIndex;
+    }
+
     /**
      * 判断两个对象是否深度完全相同（支持嵌套对象/数组递归穿透）
      * @returns {boolean} true 表示【完全相同】，false 表示【不相同/有变化】

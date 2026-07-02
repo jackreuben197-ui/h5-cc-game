@@ -9,11 +9,10 @@ import { ProcedureReturnNavigateParam } from '../../../game/procedure/ProcedureR
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import viewManager from '../../../views/UIViewManager';
 
-const _glog = createLogger('LeaveNotification');
+const _glog = createLogger('LeaveNotification', 'debug');
 
 // LeaveNotification 1114
 export function LeaveNotification(data: ServerMessageLeaveNotification.AsObject, roomID: number, matchID: number) {
-    roomDataManager.clearInternalLeave(roomID, matchID);
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     _glog.debug('leave', data.reason, roomData);
     switch (data.reason) {

@@ -11,6 +11,14 @@ export type SliderData = {
     own?: any;
 };
 
+// 定义刻度模式枚举
+enum StepSliderMode {
+    UNIFORM = 0, // 均匀步长模式 (原模式)
+    CUSTOM_ARRAY = 1 // 自定义非均匀数组模式
+}
+
+cc.Enum(StepSliderMode);
+
 @ccclass
 @executeInEditMode
 @menu('Widget/StepSlider')
@@ -21,9 +29,23 @@ export default class StepSlider extends cc.Component {
     progressBar: cc.ProgressBar = null;
     @property(cc.Sprite)
     bgSprite: cc.Sprite = null;
-    @property({ tooltip: '最小滑动刻度 (0~1)。设置为 0 代表无缝滑动。' })
+    @property({ type: StepSliderMode, displayName: '刻度模式', tooltip: 'UNIFORM: 均匀固定步长; CUSTOM_ARRAY: 自定义非均匀数组' })
+    mode: StepSliderMode = StepSliderMode.UNIFORM;
+    @property({
+        tooltip: '最小滑动刻度 (0~1)。设置为 0 代表无缝滑动。',
+        visible(this: any) {
+            return this.mode === StepSliderMode.UNIFORM;
+        }
+    })
     step: number = 0.1;
-
+    @property({
+        type: [cc.Float],
+        tooltip: '自定义刻度数组 (0~1)，必须升序排列。例如: [0, 0.1, 0.3, 0.5, 0.75, 1]。',
+        visible(this: any) {
+            return this.mode === StepSliderMode.CUSTOM_ARRAY;
+        }
+    })
+    steps: number[] = [0, 0.1, 0.3, 0.5, 0.75, 1];
     @property({ visible: false })
     private _bgColor: cc.Color = cc.Color.GRAY;
     @property({ type: cc.Color, displayName: '底槽背景色' })
@@ -69,11 +91,29 @@ export default class StepSlider extends cc.Component {
         if (this.progressBar?.barSprite) this.progressBar.barSprite.node.color = this._progressColor;
     }
 
-    /** 把任意 progress 吸附到 step 刻度并夹紧到 [0,1] */
+    /** 把任意 progress 按当前刻度模式吸附并夹紧到 [0,1] */
     private snap(progress: number): number {
         let p = Math.min(1, Math.max(0, progress));
+        // 自定义非均匀数组模式：吸附到最近的刻度
+        if (this.mode === StepSliderMode.CUSTOM_ARRAY) {
+            if (!this.steps || this.steps.length === 0) return p;
+            let closest = this.steps[0];
+            let minDiff = Math.abs(p - closest);
+            for (let i = 1; i < this.steps.length; i++) {
+                const diff = Math.abs(p - this.steps[i]);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closest = this.steps[i];
+                }
+            }
+            return Math.min(1, Math.max(0, closest));
+        }
+        // 均匀步长模式
         if (this.step >= 1 || !isFinite(this.step)) return 1;
-        if (this.step > 0) p = Math.round(p / this.step) * this.step;
+        if (this.step > 0) {
+            p = Math.round(p / this.step) * this.step;
+            p = Math.round(p * 10000) / 10000; // 消除浮点累积误差
+        }
         if (p >= 0.999) return 1;
         if (p <= 0.001) return 0;
         return Math.min(1, Math.max(0, p));
@@ -120,7 +160,7 @@ export default class StepSlider extends cc.Component {
     }
 
     public get progress(): number {
-        return this.progressBar.progress;
+        return this.progressBar ? this.progressBar.progress : 0;
     }
 
     public setProgress(progress: number) {
@@ -129,9 +169,10 @@ export default class StepSlider extends cc.Component {
         this.syncVisual(p);
     }
 
-    /** 用绝对值区间初始化滑块（启用绝对值模式） */
+    /** 用绝对值区间初始化滑块（启用绝对值模式，强制均匀步长） */
     public show(data: SliderData) {
         this._data = data;
+        this.mode = StepSliderMode.UNIFORM;
         const range = data.max_value - data.min_value;
         this.step = range > 0 && data.step > 0 ? data.step / range : 0;
         this._curValue = data.min_value;

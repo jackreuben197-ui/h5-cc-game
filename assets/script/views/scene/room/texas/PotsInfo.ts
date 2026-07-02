@@ -2,9 +2,10 @@ import { SidePot } from '@silenthill/agreement-web';
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceMethod } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
+import texasGamePersonalSettings, { TexasGamePersonalSettings } from '../../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
+import TexasGameRoomDataBasic from '../../../../data/room/texas/TexasGameRoomDataBasic';
 import TexasGameRoomDataPotInfo from '../../../../data/room/texas/TexasGameRoomDataPotInfo';
-import TexasGameRoomDataSetting from '../../../../data/room/texas/TexasGameRoomDataSetting';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
 import UIViewUtil from '../../../util/UIViewUtil';
 
@@ -23,7 +24,7 @@ export default class PotsInfo extends cc.Component {
     private sidePot: cc.Node = null;
     private _allPotsNodes: cc.Node[] = [];
     private _potInfo: TexasGameRoomDataPotInfo;
-    private _setting: TexasGameRoomDataSetting;
+    private _basicInfo: TexasGameRoomDataBasic;
     private _last_pots_count: number = 0;
     private _sidePotsLayouts: cc.Layout = null;
     private _sidePotsPosition: cc.Vec3[] = [];
@@ -32,7 +33,7 @@ export default class PotsInfo extends cc.Component {
         const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
         //this._roomBaseInfo = roomData.basicInfo;
         this._potInfo = roomData.potInfo;
-        this._setting = roomData.setting;
+        this._basicInfo = roomData.basicInfo;
         if (this.node.activeInHierarchy) {
             this._bindEventsAndRefresh();
         }
@@ -63,20 +64,20 @@ export default class PotsInfo extends cc.Component {
     }
 
     private _bindEventsAndRefresh() {
-        autoBindEvents(this, { pot: this._potInfo, setting: this._setting });
+        autoBindEvents(this, { pot: this._potInfo, setting: texasGamePersonalSettings });
     }
 
     @traceMethod()
     @bindEvent(TexasGameRoomDataPotInfo.ALLPOTS_CHANGE, 'pot')
     private onUpdateAllPots(allpots: number) {
-        this.allPotsLabel.string = `${i18nMgr.Get('adaptation20005')} : ${this._setting.showNumberWithShowBB(allpots)}`;
+        this.allPotsLabel.string = `${i18nMgr.Get('adaptation20005')} : ${this._basicInfo.showNumberWithShowBB(allpots)}`;
         this.allPotsLabel.node.active = true;
     }
 
     @traceMethod()
-    @bindEvent(TexasGameRoomDataSetting.SHOW_BB, { dataSource: 'setting', initPriority: 99 })
+    @bindEvent(TexasGamePersonalSettings.SHOW_BB, { dataSource: 'setting', initPriority: 99 })
     private onUpdateShowBB(b: number) {
-        this.allPotsLabel.string = `${i18nMgr.Get('adaptation20005')} : ${this._setting.showNumberWithShowBB(this._potInfo.allPot)}`;
+        this.allPotsLabel.string = `${i18nMgr.Get('adaptation20005')} : ${this._basicInfo.showNumberWithShowBB(this._potInfo.allPot)}`;
         let pots = this._potInfo.potList;
         let l = pots.length;
         for (let i = 0; i < 9; i++) {
@@ -88,7 +89,7 @@ export default class PotsInfo extends cc.Component {
             const pot = pots[i];
             sidePot.active = true;
             const lbl = this._allPotsNodes[i].getComponentInChildren(cc.Label);
-            lbl.string = this._setting.showNumberWithShowBB(pot.amount);
+            lbl.string = this._basicInfo.showNumberWithShowBB(pot.amount);
         }
     }
 
@@ -113,7 +114,7 @@ export default class PotsInfo extends cc.Component {
             const pot = pots[i];
             sidePot.active = true;
             const lbl = this._allPotsNodes[i].getComponentInChildren(cc.Label);
-            lbl.string = this._setting.showNumberWithShowBB(pot.amount);
+            lbl.string = this._basicInfo.showNumberWithShowBB(pot.amount);
             //判断进行位移
             if (i > 0 && i >= this._last_pots_count) {
                 sidePot.setPosition(this._sidePotsPosition[1]);

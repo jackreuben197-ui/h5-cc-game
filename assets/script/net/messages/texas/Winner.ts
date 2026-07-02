@@ -1,4 +1,4 @@
-import { Def, ServerMessageWinner } from '@silenthill/agreement-web';
+import { Def, Result, ServerMessageWinner } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { AnimateDisplayTypeCards, AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDisplayType';
@@ -10,6 +10,8 @@ export function Winner(data: ServerMessageWinner.AsObject, roomID: number, match
     roomData.basicInfo.gameStatus = Def.GameStatus.HAND_END;
     let squidEnded = false;
     let squidResult: UISquidEndItemShowData[] = [];
+    let maxHv = 0;
+    let maxResult: Result.AsObject = null;
     data.resultsList.forEach(result => {
         const seatData = roomData.seatsStateManager.getSeatPlayer(result.seatId);
         // 已经站起
@@ -35,7 +37,10 @@ export function Winner(data: ServerMessageWinner.AsObject, roomID: number, match
             });
         }
         if (result.win - result.handBet > 0) {
-            seatData.claimWin();
+            seatData.claimWin(true, result.handValueType, result.chip);
+            if (result.handValueType > maxHv) {
+                maxResult = result;
+            }
         }
         if (seatData.mine) {
             let mine = seatData.mine;
@@ -60,6 +65,27 @@ export function Winner(data: ServerMessageWinner.AsObject, roomID: number, match
             roomData.publicCards.higlightPublicards(pubH);
         }
     });
+    if (maxResult != null) {
+        let pubH: number[] = [];
+        let myCardsH: number[] = [];
+        maxResult.winCardsList.forEach(v => {
+            if (v.isPublic) {
+                pubH.push(v.card);
+            } else {
+                myCardsH.push(v.card);
+            }
+        });
+        const player = roomData.seatsStateManager.getSeatPlayer(maxResult.seatId);
+        player.popupCards(myCardsH);
+        roomData.publicCards.popUpPublicards(pubH);
+        data.resultsList.forEach(result => {
+            const seatData = roomData.seatsStateManager.getSeatPlayer(result.seatId);
+            if (seatData.userID == 0 || result.standUp) return;
+            if (result.handValueType > 0 && maxResult.seatId != result.seatId) {
+                seatData.popupCards([]);
+            }
+        });
+    }
     data.pools?.squidDetailsList.forEach(v => {
         squidResult.push({
             userID: v.userRid,

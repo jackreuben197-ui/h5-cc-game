@@ -3,11 +3,17 @@
  */
 export enum AssetCollectionType {
     Common,
-    //新素材
-    SpriteFrameCard,
+    //牌类型0
+    SpriteFrameCard0,
+    //牌类型1
+    SpriteFrameCard1,
+    //牌类型1
+    SpriteFrameTableSmall,
     //声音
     AudioSourceSound
 }
+
+export type PokerCardType = AssetCollectionType.SpriteFrameCard0 | AssetCollectionType.SpriteFrameCard1;
 
 const { ccclass, property, executionOrder, menu } = cc._decorator;
 

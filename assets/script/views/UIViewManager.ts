@@ -233,7 +233,7 @@ class UIViewManager {
             let ui = this._scenesPool.get(key) as UIComponentBase<any>;
             if (!ui) {
                 const uiprefab = UIPrefabScene[key];
-                const asset = await AssetManager.getOrLoad<cc.Prefab>(uiprefab.Bundle, uiprefab.Path);
+                const asset = await AssetManager.getOrLoad(uiprefab.Bundle, uiprefab.Path, cc.Prefab);
                 const uiNode = cc.instantiate(asset);
                 ui = uiNode.getComponent(uiprefab.UIType as any);
                 if (!ui) {
@@ -278,7 +278,7 @@ class UIViewManager {
             if (!ui) {
                 this.tracelog.debug('no instance create new one', key);
                 const uiprefab = UIPrefabDialog[key];
-                const asset = await AssetManager.getOrLoad<cc.Prefab>(uiprefab.Bundle, uiprefab.Path);
+                const asset = await AssetManager.getOrLoad(uiprefab.Bundle, uiprefab.Path, cc.Prefab);
                 const uiNode = cc.instantiate(asset);
                 ui = uiNode.getComponent(UIComponentDialogBase);
                 if (!ui) {
@@ -396,7 +396,7 @@ class UIViewManager {
             if (typeof firstParam === 'string') {
                 // ---- 通道 A：配置表 ----
                 const uiprefab = UIPrefabComponent[firstParam as UIPrefabComponentType];
-                asset = await AssetManager.getOrLoad<cc.Prefab>(uiprefab.Bundle, uiprefab.Path);
+                asset = await AssetManager.getOrLoad(uiprefab.Bundle, uiprefab.Path, cc.Prefab);
                 targetComponentClass = uiprefab.UIType;
                 count = typeof secondParam === 'number' ? secondParam : 1; // 此时第二个参数是 count
             } else {
