@@ -3,6 +3,7 @@ import { traceClass } from '../../core/decorator/LogTrace';
 import roomDataManager from '../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../data/room/texas/TexasGameRoomData';
 import { i18nMgr } from '../../i18n/i18nMgr';
+import VideoRoomManager from '../../net/agora/VideoRoomManager';
 import ProtocolAgency from '../../net/websocket/ProtocolAgency';
 import viewManager from '../../views/UIViewManager';
 import { AntiCheatType } from '../constant/AntiCheatType';
@@ -129,6 +130,8 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
      * 通信层离开玩法
      */
     public override messageLayerLeave(): void {
+        // 视频房间：离开时清理 Agora 频道
+        VideoRoomManager.Instance.leaveVideoChannel();
         // TODO: 发送离开房间消息
     }
 
@@ -484,6 +487,10 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
             matchID: this.matchId,
             body: body
         });
+        // 视频房间：入房后加入 Agora 频道
+        if (roomData.basicInfo.videoModel !== 0) {
+            VideoRoomManager.Instance.joinVideoChannelIfNeed(this._roomId, this.matchId);
+        }
         return 0;
     }
 }

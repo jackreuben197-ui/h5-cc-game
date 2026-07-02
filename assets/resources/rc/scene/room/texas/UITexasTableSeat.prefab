@@ -12374,6 +12374,12 @@
     "winBoard": {
       "__id__": 128
     },
+    "speakingIcon": {
+      "__uuid__": "dce266d1-b69d-4b86-bbc3-05a18a39927d"
+    },
+    "micMutedIcon": {
+      "__uuid__": "22efe1b1-8140-4315-b524-5fe8bcfa4c82"
+    },
     "_id": ""
   },
   {
