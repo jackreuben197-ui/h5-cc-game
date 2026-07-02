@@ -1,6 +1,7 @@
 import soundManager from '../../core/SoundManager';
 import { default as h5MessageManager, default as H5MsgMgr, H5NavigatePayload } from '../../H5MsgMgr';
 import viewManager from '../../views/UIViewManager';
+import roomReconnectManager from '../RoomReconnectManager';
 import ProcedureBase from './ProcedureBase';
 
 export interface ProcedureReturnNavigateParam {
@@ -15,6 +16,8 @@ export default class ProcedureReturn extends ProcedureBase {
     override Name: string = 'ProcedureReturn';
 
     override lateEnter(param: ProcedureReturnNavigateParam) {
+        // 主动离桌 / 被踢 / 服务端关闭都会归到这里，统一清掉重连上下文
+        roomReconnectManager.clearAllContext();
         soundManager.stopAll();
         viewManager.showPreloadingLayer();
         if (param && param.routeData) {

@@ -13,6 +13,8 @@ import {
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
+import VideoRoomManager from '../../../net/agora/VideoRoomManager';
+import roomReconnectManager from '../../../game/RoomReconnectManager';
 import viewManager from '../../../views/UIViewManager';
 
 const _plog = createLogger('ServerMessageEnterRoom');
@@ -21,6 +23,7 @@ const _plog = createLogger('ServerMessageEnterRoom');
 export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: number, matchID: number): Promise<void> {
     let roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     if (!roomData && matchID > 0) {
+        // MTT 首次进桌：客户端用 (0, matchID) 发的请求，服务端回来已分配了真实 roomID
         roomData = roomDataManager.getRoomData<TexasGameRoomData>(0, matchID);
         if (roomData) {
             roomData.roomID = roomID;
@@ -32,12 +35,18 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         _plog.error('no store room data');
         return;
     }
+    if (data.status != 0) return;
+    roomReconnectManager.addContext({
+        roomID: roomID,
+        matchID: matchID
+    });
     const myseat = data.myInfo.seatId;
     const seatCount = roomData.seatsStateManager.seatsCount;
     const myOp = myseat > 0 && data.operatorList.filter(v => v.seatId == myseat && !v.isAgreeSecondPc && !v.isInsurance).length > 0;
     const defaultHandCards = new Array(roomData.basicInfo.handCardNum).fill(0);
-    if (data.status == 0) {
+    {
         roomData.basicInfo.sbante = { sb: data.roomInfo.smallBlind, ante: data.roomInfo.ante };
+        roomData.basicInfo.roomUniqueID = data.roomInfo.uniqueId || '';
         roomData.basicInfo.gameStatus = data.gameStatus;
         roomData.basicInfo.deposit = data.roomInfo.deposit;
         roomData.basicInfo.opDuration = data.roomInfo.opDuration;
@@ -203,9 +212,11 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
                 seatData.operator = op;
             }
         });
-        await viewManager.switchScene('TexasRoom', {
-            roomID: roomData.roomID,
-            matchID: roomData.matchID
-        });
     }
+    await viewManager.switchScene('TexasRoom', {
+        roomID: roomData.roomID,
+        matchID: roomData.matchID
+    });
+    // 视频房间：检查是否已有远端视频流（解决时序竞争：joinVideoChannelIfNeed 可能在 EnterRoom 回包之前完成）
+    VideoRoomManager.Instance.renderExistingRemoteVideosIfJoined();
 }
