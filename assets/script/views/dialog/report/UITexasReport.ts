@@ -346,9 +346,9 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         const avgStr =
             s.totalHand > 0
                 ? (() => {
-                      const avg = s.totalPot / s.totalHand / 100;
-                      return Number.isInteger(avg) ? `${avg}` : avg.toFixed(2);
-                  })()
+                    const avg = s.totalPot / s.totalHand / 100;
+                    return Number.isInteger(avg) ? `${avg}` : avg.toFixed(2);
+                })()
                 : '0';
         this.verBottomLabel.string = `${i18nMgr.Get('UISituationVerBottom')} ${avgStr}`;
         const used = s.startTime > 0 ? Math.floor(Date.now() / 1000) - s.startTime : 0;
@@ -413,9 +413,15 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         const textAllCol = ele.getChildByName('Text_All_Col');
         if (textAllCol) {
             const allLbl = textAllCol.getChildByName('Text_All')?.getComponent(cc.Label);
-            const all1Lbl = textAllCol.getChildByName('Text_All1')?.getComponent(cc.Label);
+            const all1Lbl = textAllCol.getChildByName('Text_All1')
             if (allLbl) allLbl.string = StringHelper.GetLongString(p.bringInTotal);
-            if (all1Lbl) all1Lbl.string = p.storeChips ? `(${StringHelper.GetLongString(p.storeChips)})` : '';
+            if (all1Lbl) {
+                if (p.storeChips) {
+                    all1Lbl.getComponent(cc.Label).string = StringHelper.GetLongString(p.storeChips)
+                } else {
+                    all1Lbl.active = false
+                }
+            }
         }
         const score = (p.win || 0) + (p.storeChips || 0);
         this._setSignedText(ele.getChildByName('Text_Count'), score);
