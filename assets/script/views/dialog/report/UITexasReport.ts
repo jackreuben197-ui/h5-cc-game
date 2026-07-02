@@ -20,7 +20,7 @@ import { APITexasSituationMushRound, APITexasSituationSquidRound, WebStatsRoomIn
 import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import viewManager from '../../UIViewManager';
-import SliderPlus from '../../widget/SliderPlus';
+import StepSlider from '../../widget/StepSlider';
 
 const { ccclass, property, menu } = cc._decorator;
 
@@ -159,10 +159,8 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     private leftBtn: cc.Node = null;
     @property({ type: cc.Node, displayName: '[分页] 右翻 $right_btn' })
     private rightBtn: cc.Node = null;
-    @property({ type: SliderPlus, displayName: '[分页] 滑块 SliderPlus$slider' })
-    private sliderPlus: SliderPlus = null;
-    @property({ type: cc.Node, displayName: '[分页] 蓝条进度 SliderPlus$slider/background/$progressBlue' })
-    private progressBlue: cc.Node = null;
+    @property({ type: StepSlider, displayName: '[分页] 滑块 StepSlider' })
+    private sliderPlus: StepSlider = null;
 
     // ─── 底部 tab 切换（bottomToggle）────────────────
     @property({ type: cc.Node, displayName: '[底部] 切换根 bottomToggle' })
@@ -746,7 +744,6 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         if (nextRound < 1) nextRound = total;
         this._squidCurRound = nextRound;
         this.sliderPlus.value = nextRound;
-        this._syncProgressBlue();
         if (this._report.squidRounds.has(nextRound)) {
             this._refreshPageText();
             this._renderSquidList();
@@ -870,7 +867,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     }
 
     // ============================================================
-    // SliderPlus 接线（对齐 pokerqueen UITexasReportComponent.setupSlider/sliderChange/onSliderTouchEnd）
+    // StepSlider 接线（对齐 pokerqueen UITexasReportComponent.setupSlider/sliderChange/onSliderTouchEnd）
     // ============================================================
     private _setupSlider(): void {
         const total = this._squidTotalRound();
@@ -886,7 +883,6 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         const target = this._squidCurRound > 0 ? this._squidCurRound : total;
         this._squidCurRound = target;
         this.sliderPlus.value = target;
-        this._syncProgressBlue();
     }
 
     private _sliderChange(value: number): void {
@@ -894,7 +890,6 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         if (this._squidCurRound === round) return;
         this._squidCurRound = round;
         this._refreshPageText();
-        this._syncProgressBlue();
     }
 
     private _onSliderTouchEnd(): void {
@@ -906,16 +901,6 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         }
     }
 
-    private _syncProgressBlue(): void {
-        const s = this.sliderPlus;
-        const range = s.data.max_value - s.data.min_value;
-        if (range <= 0) {
-            this.progressBlue.width = 0;
-            return;
-        }
-        const k = (s.value - s.data.min_value) / range;
-        this.progressBlue.width = s.min + (s.max - s.min) * k;
-    }
 
     // ============================================================
     // 玩家详情子窗口
