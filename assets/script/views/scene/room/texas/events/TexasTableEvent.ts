@@ -1,6 +1,7 @@
 import { ClientMessageSeated, Code, Def, PotInsuranceBuy, RoomInfo } from '@silenthill/agreement-web';
 import { traceClass } from '../../../../../core/decorator/LogTrace';
 import TexasGameRoomDataPlayerMine from '../../../../../data/room/texas/TexasGameRoomDataPlayerMine';
+import TexasGameRoomDataPlayer from '../../../../../data/room/texas/TexasGameRoomDataPlayer';
 import userStore from '../../../../../data/user/UserStore';
 import UserStoreUtils from '../../../../../data/user/UserStoreUtils';
 import { BringInMode } from '../../../../../game/constant/BringInMode';
@@ -19,6 +20,15 @@ import viewManager from '../../../../UIViewManager';
 
 @traceClass()
 export default class TexasTableEvent {
+    public static OpenPlayerInfo(player: TexasGameRoomDataPlayer): void {
+        if (!player?.userID || !player.roomData) return;
+        viewManager.openDialog('PlayerInfo', {
+            roomID: player.roomData.roomID,
+            matchID: player.roomData.matchID,
+            player
+        });
+    }
+
     /// <summary>
     /// 坐下
     /// </summary>

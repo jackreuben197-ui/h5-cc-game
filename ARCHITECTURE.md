@@ -1232,6 +1232,20 @@ private onNewStateChange(value: number, animType: AnimateDisplayTypeNew) {
 2. 在 `views/UIPrefabDefinition.ts` 的 `UIPrefabDialog` 表里加一项（含 `UIType` / `Path`）。
 3. 业务代码里调 `viewManager.openDialog('Xxx', param)` —— IDE 会根据 `UIPrefabDialogType` 自动校验 key 与 param 类型。
 
+### 场景 C-1：从 pokerqueen 迁移旧对话框
+
+1. 先清点旧功能边界：入口事件、prefab、贴图、脚本依赖、HTTP API、协议消息、全局状态。不要把 `UIBasePlus`、`UIComponent`、`GameCache` 这类旧框架依赖直接带进 h5。
+2. 资源迁移优先保留 prefab 和贴图 `.meta` 的 UUID。旧 prefab 根节点脚本引用的 UUID 要么改 prefab，要么让新脚本 `.ts.meta` 复用旧 UUID；本项目倾向后者，减少 prefab JSON 改动。
+3. 新脚本按 h5 规范拆分：
+   - `UIXxx.ts` 继承 `UIComponentBaseDialog<Param>`，实现 `initialize(param)`。
+   - 纯 HTTP/协议适配放到同目录 `XxxProvider.ts`，UI 只负责节点状态和交互。
+   - 弹窗关闭统一用 `this.close()`，外部打开统一用 `viewManager.openDialog('Key', param)`。
+4. 旧项目的自动绑定字段（如 `$panel_click`、`cc_Label$NickName`）迁过来时，可以按节点名递归查找；不要恢复旧自动绑定框架。
+5. 入口接入放到玩法事件类，例如德州桌面使用 `TexasTableEvent`，座位组件只负责触发事件。
+6. 旧 `GameCache` 里的权限/全局配置，如果 h5 当前数据层没有明确字段，必须通过 param 显式传入或默认关闭相关按钮，不能猜测放权。
+7. 涉及 websocket protobuf 时，只从 `@silenthill/agreement-web` 引入 `Code`、`Def` 和消息类型，不再引用旧 `protobuf/` 目录。
+8. 落地后至少做三项验证：`npm run check:ts`、prefab 引用 UUID 缺失检查、`git diff` 人工 review 入口与资源路径。
+
 ### 场景 D：与 H5 新增一种数据/控制消息
 
 协议层已经抽到独立仓库 [@silenthill/h5-cc-bridge](https://github.com/soolary/h5-cc-bridge)，h5-game 和 h5-cc-game 共用同一份类型。新增 action 不要直接改 `H5MsgMgr.ts`。

@@ -4,6 +4,8 @@ import UIBringOut from './dialog/bringout/UIBringInOut';
 import UIConfirmDialog from './dialog/confirm/UIConfirmDialog';
 import UIInsuranceNewPanel from './dialog/insurance/UIInsuranceNewPanel';
 import UIGuideDialog from './dialog/mushroomandcriticalhit/UIGuideDialog';
+import UIPlayerInfo from './dialog/playerinfo/UIPlayerInfo';
+import UIReport from './dialog/playerinfo/UIReport';
 import UIPersonalSettings from './dialog/personalsettings/UIPersonalSettings';
 import UIRechargeDiamond from './dialog/rechargediamond/UIRechargeDiamond';
 import UIGameplaySecuritySetting from './dialog/security/UIGameplaySecuritySetting';
@@ -94,6 +96,18 @@ export const UIPrefabDialog = {
         Name: '个性设置',
         Bundle: BUNDLE_RESOURCES,
         Path: 'rc/dialog/personalsettings/UIPersonalSettings'
+    },
+    PlayerInfo: {
+        UIType: UIPlayerInfo,
+        Name: '玩家信息',
+        Bundle: BUNDLE_RESOURCES,
+        Path: 'rc/dialog/playerinfo/UIPlayerInfo'
+    },
+    PlayerReport: {
+        UIType: UIReport,
+        Name: '举报',
+        Bundle: BUNDLE_RESOURCES,
+        Path: 'rc/dialog/playerinfo/UIReport'
     }
 } as const;
 

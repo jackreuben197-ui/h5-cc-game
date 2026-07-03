@@ -142,6 +142,7 @@ export default class SeatPlayer extends cc.Component {
 
     // 防止内存泄露(简单说就是防止this丢失)
     private _clickEmptySeat: () => void = null!;
+    private _clickPlayerInfo: () => void = null!;
 
     protected onLoad() {
         // 如果绑定点击写这里
@@ -158,6 +159,12 @@ export default class SeatPlayer extends cc.Component {
             TexasTableEvent.Sitdown(this._seatPlayer.roomData.mine, this._seatPlayer.seatNo);
         };
         this.emptySeat.node.on('click', this._clickEmptySeat, this);
+        this._clickPlayerInfo = () => {
+            if (this._seatPlayer?.seated) {
+                TexasTableEvent.OpenPlayerInfo(this._seatPlayer);
+            }
+        };
+        this.avatar.node.on(cc.Node.EventType.TOUCH_END, this._clickPlayerInfo, this);
         this.insuranceCountdownBubble.node.active = false;
         this.returnToGameButton.node.on('click', this._clickReturnToGame, this);
         // 动态创建麦克风状态图标
@@ -172,6 +179,13 @@ export default class SeatPlayer extends cc.Component {
     protected onDisable(): void {
         this.insuranceCountdownBubble.node.active = false;
         unBindEventsAll(this);
+    }
+
+    protected onDestroy(): void {
+        this.emptySeat?.node.targetOff(this);
+        this.avatar?.node.targetOff(this);
+        this.userSeat?.targetOff(this);
+        this.returnToGameButton?.node.targetOff(this);
     }
 
     /**
