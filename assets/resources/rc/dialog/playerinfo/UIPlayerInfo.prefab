@@ -17003,6 +17003,57 @@
     "toggleOnBg": {
       "__uuid__": "f118f944-1a53-4d04-a425-0a475f0208e7"
     },
+    "panelClick": {
+      "__id__": 2
+    },
+    "dialogNode": {
+      "__id__": 6
+    },
+    "headImgNode": {
+      "__id__": 7
+    },
+    "headImgIcon": {
+      "__id__": 8
+    },
+    "nickNameLabel": {
+      "__id__": 13
+    },
+    "maleNode": {
+      "__id__": 15
+    },
+    "femaleNode": {
+      "__id__": 18
+    },
+    "playerIDLabel": {
+      "__id__": 25
+    },
+    "playerNoteNode": {
+      "__id__": 37
+    },
+    "playerNoteLabel": {
+      "__id__": 38
+    },
+    "noteEditBox": {
+      "__id__": 53
+    },
+    "noteBtn": {
+      "__id__": 30
+    },
+    "opButtonNode": {
+      "__id__": 58
+    },
+    "propOpNode": {
+      "__id__": 301
+    },
+    "diamondShowNode": {
+      "__id__": 436
+    },
+    "diamondNumNode": {
+      "__id__": 443
+    },
+    "dataTabNode": {
+      "__id__": 153
+    },
     "_id": ""
   },
   {

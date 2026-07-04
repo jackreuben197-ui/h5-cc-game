@@ -1,0 +1,188 @@
+
+chicken_spine.png
+size: 512,512
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+chicken1_beak_down
+  rotate: true
+  xy: 502, 492
+  size: 20, 8
+  orig: 20, 8
+  offset: 0, 0
+  index: -1
+chicken1_beak_top
+  rotate: true
+  xy: 188, 192
+  size: 21, 14
+  orig: 21, 14
+  offset: 0, 0
+  index: -1
+chicken1_body
+  rotate: false
+  xy: 0, 46
+  size: 170, 203
+  orig: 170, 203
+  offset: 0, 0
+  index: -1
+chicken1_comb
+  rotate: false
+  xy: 0, 9
+  size: 52, 37
+  orig: 52, 37
+  offset: 0, 0
+  index: -1
+chicken1_eyelid_down
+  rotate: false
+  xy: 367, 224
+  size: 19, 12
+  orig: 19, 12
+  offset: 0, 0
+  index: -1
+chicken1_eyelid_top
+  rotate: false
+  xy: 0, 0
+  size: 18, 9
+  orig: 18, 9
+  offset: 0, 0
+  index: -1
+chicken1_feather
+  rotate: true
+  xy: 170, 32
+  size: 64, 119
+  orig: 64, 119
+  offset: 0, 0
+  index: -1
+chicken1_leg_b_1
+  rotate: true
+  xy: 471, 435
+  size: 77, 31
+  orig: 77, 31
+  offset: 0, 0
+  index: -1
+chicken1_leg_b_2
+  rotate: false
+  xy: 471, 412
+  size: 30, 23
+  orig: 30, 23
+  offset: 0, 0
+  index: -1
+chicken1_leg_b_3
+  rotate: false
+  xy: 490, 221
+  size: 8, 19
+  orig: 8, 19
+  offset: 0, 0
+  index: -1
+chicken1_leg_f
+  rotate: false
+  xy: 425, 193
+  size: 65, 47
+  orig: 65, 47
+  offset: 0, 0
+  index: -1
+chicken1_pupil
+  rotate: false
+  xy: 18, 0
+  size: 9, 9
+  orig: 9, 9
+  offset: 0, 0
+  index: -1
+chicken1_sclera
+  rotate: true
+  xy: 289, 78
+  size: 18, 19
+  orig: 18, 19
+  offset: 0, 0
+  index: -1
+chicken1_wing
+  rotate: true
+  xy: 308, 78
+  size: 114, 64
+  orig: 114, 64
+  offset: 0, 0
+  index: -1
+chicken2_body
+  rotate: false
+  xy: 0, 249
+  size: 225, 263
+  orig: 225, 263
+  offset: 0, 0
+  index: -1
+chicken2_comb
+  rotate: false
+  xy: 170, 213
+  size: 55, 36
+  orig: 55, 36
+  offset: 0, 0
+  index: -1
+chicken2_feather_1
+  rotate: false
+  xy: 52, 26
+  size: 20, 20
+  orig: 20, 20
+  offset: 0, 0
+  index: -1
+chicken2_feather_2
+  rotate: false
+  xy: 52, 0
+  size: 14, 26
+  orig: 14, 26
+  offset: 0, 0
+  index: -1
+chicken2_feather_3
+  rotate: false
+  xy: 170, 192
+  size: 18, 21
+  orig: 18, 21
+  offset: 0, 0
+  index: -1
+chicken2_tail
+  rotate: false
+  xy: 289, 8
+  size: 88, 70
+  orig: 88, 70
+  offset: 0, 0
+  index: -1
+chicken2_wing_b_back
+  rotate: false
+  xy: 377, 335
+  size: 94, 177
+  orig: 94, 177
+  offset: 0, 0
+  index: -1
+chicken2_wing_b_top
+  rotate: false
+  xy: 225, 192
+  size: 142, 139
+  orig: 142, 139
+  offset: 0, 0
+  index: -1
+hand_fist_down
+  rotate: false
+  xy: 170, 96
+  size: 138, 96
+  orig: 138, 96
+  offset: 0, 0
+  index: -1
+hand_fist_top
+  rotate: false
+  xy: 367, 236
+  size: 58, 95
+  orig: 58, 95
+  offset: 0, 0
+  index: -1
+hand_palm
+  rotate: false
+  xy: 225, 331
+  size: 152, 181
+  orig: 152, 181
+  offset: 0, 0
+  index: -1
+hand_palm_1
+  rotate: false
+  xy: 425, 240
+  size: 79, 95
+  orig: 79, 95
+  offset: 0, 0
+  index: -1

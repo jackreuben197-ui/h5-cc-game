@@ -2,11 +2,15 @@ import { autoBindEvents, bindData, bindEvent, unBindEventsAll } from '../../../.
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
-import TexasGameRoomDataSeatsStateManager from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
+import TexasGameRoomDataSeatsStateManager, {
+    DiamondGiftBroadcastData,
+    ThrowPropBroadcastData
+} from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
 import { AnimateDisplayTypeButton } from '../../../../game/constant/AnimateDisplayType';
 import { MicIconState } from '../../../../game/constant/MicIconState';
 import AgoraManager from '../../../../net/agora/AgoraManager';
 import VideoRoomManager from '../../../../net/agora/VideoRoomManager';
+import throwPropManager from '../../../util/ThrowPropManager';
 import SeatPlayer from './SeatPlayer';
 
 const { ccclass, property, menu } = cc._decorator;
@@ -47,10 +51,22 @@ export default class SeatManager extends cc.Component {
         unBindEventsAll(this);
         // 清理视频座位头像注册
         VideoRoomManager.Instance.clearSeatAvatars();
+        throwPropManager.clearSeatNodes();
     }
 
     private _bindEventsAndRefresh() {
+        throwPropManager.initialize(this.node);
         autoBindEvents(this, { seats: this._seatManager });
+    }
+
+    @bindEvent(TexasGameRoomDataSeatsStateManager.THROW_PROP, { dataSource: 'seats', initIgnore: true })
+    private onThrowProp(data: ThrowPropBroadcastData): void {
+        throwPropManager.playProp(data);
+    }
+
+    @bindEvent(TexasGameRoomDataSeatsStateManager.DIAMOND_GIFT, { dataSource: 'seats', initIgnore: true })
+    private onDiamondGift(data: DiamondGiftBroadcastData): void {
+        throwPropManager.playDiamondGift(data);
     }
 
     @bindEvent(TexasGameRoomDataSeatsStateManager.MUSHROOM_POOL_CHANGE, 'seats')
@@ -147,6 +163,7 @@ export default class SeatManager extends cc.Component {
     @bindEvent(TexasGameRoomDataSeatsStateManager.SEATS_CHANGE, { dataSource: 'seats', initPriority: 10 })
     @traceMethod()
     private onUpdateSeats(count: number) {
+        throwPropManager.clearSeatNodes();
         if (this._seatNodes.length < count) {
             for (let i = this._seatNodes.length; i < count; i++) {
                 let nd = cc.instantiate(this.seatPrefab);
@@ -166,6 +183,7 @@ export default class SeatManager extends cc.Component {
                 node.active = true;
                 // 注册头像节点到视频管理器
                 VideoRoomManager.Instance.registerSeatAvatar(i + 1, comp.avatarNode);
+                if (seatData?.userID) throwPropManager.registerSeat(seatData.userID, comp.avatarNode);
             }
         }
     }

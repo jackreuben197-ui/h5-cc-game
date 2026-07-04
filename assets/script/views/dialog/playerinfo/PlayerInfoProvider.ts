@@ -1,4 +1,3 @@
-import { Def } from '@silenthill/agreement-web';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import {
     WebChatMessageReport,
@@ -15,6 +14,8 @@ import {
     WebUserMuteList,
     WWW
 } from '../../../net/https/WebRequest';
+
+const CONSUME_TYPE_EMOJI_2 = 6;
 
 export interface PlayerInfoBasicData {
     nick_name?: string;
@@ -157,7 +158,7 @@ export default class PlayerInfoProvider {
         const list: any[] = res?.data?.list || [];
         return list.map(item => ({
             payPrice: item?.pay_price || 0,
-            priceID: item?.price_id || Def.ConsumeType.CT_EMOJI_2
+            priceID: item?.price_id || CONSUME_TYPE_EMOJI_2
         }));
     }
 

@@ -26,7 +26,7 @@ export function Seated(data: ServerMessageSeated.AsObject, roomID: number, match
     if (data.videoMaskId > 4) data.videoMaskId = 1;
     const seatData = roomData.seatsStateManager.setMySeat(data.recvSeatId, AnimateDisplayTypePosition.ToTarget);
     const mine = roomData.mine;
-    seatData.userID = userStore.userID;
+    seatData.userID = userStore.userRID;
     seatData.name = userStore.name;
     seatData.avatar = userStore.avatar;
     seatData.chip = data.chips;

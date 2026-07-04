@@ -160,7 +160,7 @@ export default class SeatPlayer extends cc.Component {
         };
         this.emptySeat.node.on('click', this._clickEmptySeat, this);
         this._clickPlayerInfo = () => {
-            if (this._seatPlayer?.seated) {
+            if (this._seatPlayer.seated) {
                 TexasTableEvent.OpenPlayerInfo(this._seatPlayer);
             }
         };

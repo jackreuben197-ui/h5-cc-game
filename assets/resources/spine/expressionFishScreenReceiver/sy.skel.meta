@@ -1,0 +1,13 @@
+{
+  "ver": "1.2.5",
+  "uuid": "7b6a8dcb-d574-488d-b13d-04e713a620df",
+  "importer": "spine",
+  "textures": [
+    "e2b96820-83b4-4b58-8e8d-45ac6e44d5be",
+    "88ef5697-0749-452f-be50-137ee3046b9e",
+    "64e5fbcb-000f-4874-9d0b-afd09ec3a0a1",
+    "32943c83-c89c-4f2d-abc1-0f9748c3d2cd"
+  ],
+  "scale": 1,
+  "subMetas": {}
+}

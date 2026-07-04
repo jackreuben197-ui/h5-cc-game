@@ -1,4 +1,4 @@
-import { Code, Def } from '@silenthill/agreement-web';
+import { Code } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayer from '../../../data/room/texas/TexasGameRoomDataPlayer';
@@ -18,6 +18,8 @@ import PlayerInfoProvider, { PlayerInfoBasicData, PlayerInfoDiamondConfig, Playe
 
 const { ccclass, menu, property } = cc._decorator;
 const VIEW_MANAGER_MASK_NODE = 'ithinktisinotshouldbedupilcatednodename';
+const CONSUME_TYPE_EMOJI_2 = 6;
+const BROADCAST_MSG_TYPE_THROW = 4;
 
 export interface PlayerInfoPermissions {
     isRoomManager?: boolean;
@@ -44,10 +46,45 @@ interface DataLabelItem {
 @ccclass
 @menu('CrazyPoker/Texas/Dialog/UIPlayerInfo')
 export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoParam> {
-    @property(cc.SpriteFrame)
+    @property({ type: cc.SpriteFrame, displayName: '开关选中背景' })
     public toggleOnBg: cc.SpriteFrame = null;
 
-    private static readonly PROP_TYPE_BASE = Def.ConsumeType.CT_EMOJI_2 * 100;
+    @property({ type: cc.Node, displayName: '关闭触摸遮罩' })
+    private panelClick: cc.Node = null;
+    @property({ type: cc.Node, displayName: '弹窗主体' })
+    private dialogNode: cc.Node = null;
+    @property({ type: cc.Node, displayName: '头像信息根节点' })
+    private headImgNode: cc.Node = null;
+    @property({ type: cc.Node, displayName: '头像图片节点' })
+    private headImgIcon: cc.Node = null;
+    @property({ type: cc.Label, displayName: '昵称文本' })
+    private nickNameLabel: cc.Label = null;
+    @property({ type: cc.Node, displayName: '男性图标' })
+    private maleNode: cc.Node = null;
+    @property({ type: cc.Node, displayName: '女性图标' })
+    private femaleNode: cc.Node = null;
+    @property({ type: cc.Label, displayName: '玩家ID文本' })
+    private playerIDLabel: cc.Label = null;
+    @property({ type: cc.Node, displayName: '备注显示节点' })
+    private playerNoteNode: cc.Node = null;
+    @property({ type: cc.Label, displayName: '备注文本' })
+    private playerNoteLabel: cc.Label = null;
+    @property({ type: cc.EditBox, displayName: '备注输入框' })
+    private noteEditBox: cc.EditBox = null;
+    @property({ type: cc.Node, displayName: '备注编辑按钮' })
+    private noteBtn: cc.Node = null;
+    @property({ type: cc.Node, displayName: '操作按钮根节点' })
+    private opButtonNode: cc.Node = null;
+    @property({ type: cc.Node, displayName: '道具操作根节点' })
+    private propOpNode: cc.Node = null;
+    @property({ type: cc.Node, displayName: '钻石余额根节点' })
+    private diamondShowNode: cc.Node = null;
+    @property({ type: cc.Node, displayName: '钻石余额文本节点' })
+    private diamondNumNode: cc.Node = null;
+    @property({ type: cc.Node, displayName: '数据页签根节点' })
+    private dataTabNode: cc.Node = null;
+
+    private static readonly PROP_TYPE_BASE = CONSUME_TYPE_EMOJI_2 * 100;
     private static readonly PROP_TYPE_MAP: number[] = [602, 609, 608, 605, 600, 610, 611, 603, 604, 607, 601, 606];
     private static readonly shieldUsers: Set<number> = new Set();
     private static readonly savedRemarks: Map<number, string> = new Map();
@@ -64,22 +101,6 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private _tabIndex = 0;
     private _requestRID = 0;
 
-    private _panelClick: cc.Node = null;
-    private _dialogNode: cc.Node = null;
-    private _headImgIcon: cc.Node = null;
-    private _nickNameLabel: cc.Label = null;
-    private _maleNode: cc.Node = null;
-    private _femaleNode: cc.Node = null;
-    private _playerIDLabel: cc.Label = null;
-    private _playerNoteNode: cc.Node = null;
-    private _playerNoteLabel: cc.Label = null;
-    private _noteEditBox: cc.EditBox = null;
-    private _noteBtn: cc.Node = null;
-    private _opButtonNode: cc.Node = null;
-    private _propOpNode: cc.Node = null;
-    private _diamondShowNode: cc.Node = null;
-    private _diamondNumNode: cc.Node = null;
-    private _dataTabNode: cc.Node = null;
     private _tabNodes: cc.Node[] = [];
     private _underlineNodes: cc.Node[] = [];
     private _contentNodes: cc.Node[] = [];
@@ -107,13 +128,13 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this._permissions = param.permissions || {};
         this._diamondConfig = param.diamondConfig || null;
         this._diamondSentCount = param.diamondConfig?.sentCount || 0;
-        this._requestRID = this._player?.userID || 0;
-        this._isSelf = this._requestRID === userStore.userRID || this._requestRID === userStore.userID;
+        this._requestRID = this._player.userID;
+        this._isSelf = this._requestRID === userStore.userRID;
         this._applyTargetLayout();
         this._resetView();
         this._refreshBasicInfo({
-            nick_name: this._player?.name || '',
-            avatar: this._player?.avatar || '',
+            nick_name: this._player.name || '',
+            avatar: this._player.avatar || '',
             random_num: this._requestRID
         });
         this._refreshSelfState();
@@ -123,7 +144,6 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     protected onLoad(): void {
-        this._cacheNodes();
         this._bindStaticEvents();
         this._initTabs();
         this._initDataNodes();
@@ -135,43 +155,20 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
 
     protected onDestroy(): void {
         this.node.targetOff(this);
-        this._dialogNode?.targetOff(this);
-        this._tabNodes.forEach(node => node?.targetOff(this));
-        this._diamondNodes.forEach(item => item.node?.targetOff(this));
-        this._propOpNode?.children.forEach(node => node.targetOff(this));
-        this._noteEditBox?.node.targetOff(this);
-    }
-
-    private _cacheNodes(): void {
-        this._panelClick = this._findNode('$panel_click');
-        this._dialogNode = this._findNode('PlayerInfoDlg');
-        this._headImgIcon = this._findNode('$HeadImgIcon');
-        this._nickNameLabel = this._findNode('cc_Label$NickName')?.getComponent(cc.Label);
-        const nickNode = this._findNode('$nickNameNode');
-        this._maleNode = nickNode?.getChildByName('male');
-        this._femaleNode = nickNode?.getChildByName('female');
-        this._playerIDLabel = this._findNode('playerid')?.getComponent(cc.Label);
-        const noteNode = this._findNode('noteNode');
-        this._noteBtn = noteNode?.getChildByName('noteBtn');
-        this._playerNoteNode = noteNode?.getChildByName('playerNote');
-        this._playerNoteLabel = this._playerNoteNode?.getComponent(cc.Label);
-        this._noteEditBox = noteNode?.getChildByName('noteEditBox')?.getComponent(cc.EditBox);
-        this._opButtonNode = this._findNode('$OpButtonNode');
-        this._propOpNode = this._findNode('$PropOpNode');
-        this._diamondShowNode = this._findNode('$DiamondShow');
-        this._diamondNumNode = this._findNode('$diamondNum');
-        this._dataTabNode = this._findNode('$dataTabNode');
+        this.dialogNode.targetOff(this);
+        this._tabNodes.forEach(node => node.targetOff(this));
+        this._diamondNodes.forEach(item => item.node.targetOff(this));
+        this.propOpNode.children.forEach(node => node.targetOff(this));
+        this.noteEditBox.node.targetOff(this);
     }
 
     private _bindStaticEvents(): void {
-        this._bindClick(this._panelClick, this.close);
-        if (this._dialogNode) {
-            this._dialogNode.on(cc.Node.EventType.TOUCH_START, (event: cc.Event.EventTouch) => event.stopPropagation(), this);
-            this._dialogNode.on(cc.Node.EventType.TOUCH_END, (event: cc.Event.EventTouch) => event.stopPropagation(), this);
-        }
-        this._bindClick(this._noteBtn, this._clickEditNote);
-        this._bindClick(this._playerNoteNode, this._clickEditNote);
-        this._noteEditBox?.node.on('editing-did-ended', this._onNoteEditEnded, this);
+        this._bindClick(this.panelClick, this.close);
+        this.dialogNode.on(cc.Node.EventType.TOUCH_START, (event: cc.Event.EventTouch) => event.stopPropagation(), this);
+        this.dialogNode.on(cc.Node.EventType.TOUCH_END, (event: cc.Event.EventTouch) => event.stopPropagation(), this);
+        this._bindClick(this.noteBtn, this._clickEditNote);
+        this._bindClick(this.playerNoteNode, this._clickEditNote);
+        this.noteEditBox.node.on('editing-did-ended', this._onNoteEditEnded, this);
         this._bindOpButton('StandUpBtn', this._clickStandUp);
         this._bindOpButton('DissolveBtn', this._clickLeave);
         this._bindOpButton('CreditBtn', this._clickCredit);
@@ -183,9 +180,9 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _resetView(): void {
-        if (this._noteEditBox) this._noteEditBox.node.active = false;
-        if (this._playerNoteNode) this._playerNoteNode.active = true;
-        if (this._noteBtn) this._noteBtn.active = true;
+        this.noteEditBox.node.active = false;
+        this.playerNoteNode.active = true;
+        this.noteBtn.active = true;
         this._refreshDataDescriptions();
         this._refreshAllInPanel(null);
         this._isChatMuted = false;
@@ -200,7 +197,6 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
 
     private async _loadAsyncData(): Promise<void> {
         const rid = this._requestRID;
-        if (!this._roomData || !rid) return;
         if (!this._isSelf) {
             this._loadMuteState();
             this._loadAudioVideoState();
@@ -220,29 +216,27 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
 
     private _refreshBasicInfo(data: PlayerInfoBasicData): void {
         const rid = data.random_num || data.un_id || this._requestRID;
-        if (data.avatar) this._loadRemoteSprite(this._headImgIcon, data.avatar);
-        if (this._nickNameLabel) {
-            this._nickNameLabel.string = StringHelper.LengthNick(data.nick_name || data.nickname || this._player?.name || '', 16);
-        }
-        if (this._maleNode) this._maleNode.active = data.sex !== 1;
-        if (this._femaleNode) this._femaleNode.active = data.sex === 1;
-        if (this._playerIDLabel) this._playerIDLabel.string = `${rid || ''}`;
+        if (data.avatar) this._loadRemoteSprite(this.headImgIcon, data.avatar);
+        this.nickNameLabel.string = StringHelper.LengthNick(data.nick_name || data.nickname || this._player.name || '', 16);
+        this.maleNode.active = data.sex !== 1;
+        this.femaleNode.active = data.sex === 1;
+        this.playerIDLabel.string = `${rid || ''}`;
         if (data.user_id) this._dbUserID = data.user_id;
         let remark = UIPlayerInfo.savedRemarks.get(rid);
         if (remark === undefined) remark = data.remark_name || '';
         this._currentRemark = remark;
-        if (this._playerNoteLabel) this._playerNoteLabel.string = remark || '点击添加备注';
+        this.playerNoteLabel.string = remark || '点击添加备注';
     }
 
     private _refreshSelfState(): void {
-        if (this._propOpNode) this._propOpNode.active = false;
-        if (this._diamondShowNode) this._diamondShowNode.active = !this._isSelf;
+        const canUseProp = !this._isSelf && !!this._requestRID && !!this._roomData.mine.seatNo;
+        this.propOpNode.active = canUseProp;
+        this.diamondShowNode.active = !this._isSelf;
         if (this._tabNodes[2]) this._tabNodes[2].active = false;
     }
 
     private _initTabs(): void {
-        const tabNode = this._dataTabNode?.getChildByName('tabNode');
-        if (!tabNode) return;
+        const tabNode = this.dataTabNode.getChildByName('tabNode');
         const tabNames = ['Data', 'allIn', 'Gift'];
         this._tabNodes = [];
         this._underlineNodes = [];
@@ -254,51 +248,49 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             const gfx = underline.addComponent(cc.Graphics);
             gfx.strokeColor = cc.Color.WHITE;
             gfx.lineWidth = 8;
-            const width = node?.width || 100;
+            const width = node.width;
             gfx.moveTo(-width / 2, 0);
             gfx.lineTo(width / 2, 0);
             gfx.stroke();
             underline.y = -40;
             underline.active = false;
-            node?.addChild(underline);
+            node.addChild(underline);
             this._underlineNodes.push(underline);
         }
         this._contentNodes = [
-            this._dataTabNode.getChildByName('dataNode'),
-            this._dataTabNode.getChildByName('allInNode'),
-            this._dataTabNode.getChildByName('diamondNode')
+            this.dataTabNode.getChildByName('dataNode'),
+            this.dataTabNode.getChildByName('allInNode'),
+            this.dataTabNode.getChildByName('diamondNode')
         ];
     }
 
     private _switchTab(index: number): void {
-        if ((this._isSelf || !this._tabNodes[2]?.active) && index === 2) index = 0;
+        if ((this._isSelf || !this._tabNodes[2].active) && index === 2) index = 0;
         this._tabIndex = index;
         for (let i = 0; i < this._underlineNodes.length; i++) {
-            if (this._underlineNodes[i]) this._underlineNodes[i].active = i === index;
+            this._underlineNodes[i].active = i === index;
         }
         for (let i = 0; i < this._contentNodes.length; i++) {
-            if (this._contentNodes[i]) this._contentNodes[i].active = i === index;
+            this._contentNodes[i].active = i === index;
         }
     }
 
     private _initDataNodes(): void {
-        const dataNode = this._dataTabNode?.getChildByName('dataNode');
-        if (!dataNode) return;
+        const dataNode = this.dataTabNode.getChildByName('dataNode');
         this._dataLabels = [];
         for (let i = 1; i <= 6; i++) {
             const node = dataNode.getChildByName('LabelNode' + i);
             if (!node) continue;
             this._dataLabels.push({
                 node,
-                des: node.getChildByName('dataDes')?.getComponent(cc.Label),
-                num: node.getChildByName('dataNum')?.getComponent(cc.Label)
+                des: node.getChildByName('dataDes').getComponent(cc.Label),
+                num: node.getChildByName('dataNum').getComponent(cc.Label)
             });
         }
     }
 
     private _initAllInNodes(): void {
-        const allInNode = this._dataTabNode?.getChildByName('allInNode');
-        if (!allInNode) return;
+        const allInNode = this.dataTabNode.getChildByName('allInNode');
         const labelNames = ['LabelPositive', 'LabelPassive', 'LabelBehind', 'LabelLeading'];
         this._allInLabels = [];
         labelNames.forEach(name => {
@@ -306,8 +298,8 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             if (!node) return;
             this._allInLabels.push({
                 node,
-                des: node.getChildByName('des')?.getComponent(cc.Label),
-                num: node.getChildByName('num')?.getComponent(cc.Label)
+                des: node.getChildByName('des').getComponent(cc.Label),
+                num: node.getChildByName('num').getComponent(cc.Label)
             });
         });
         this._radarNode = allInNode.getChildByName('radarChartNode');
@@ -318,15 +310,14 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _initDiamondNodes(): void {
-        const diamondNode = this._dataTabNode?.getChildByName('diamondNode');
-        if (!diamondNode) return;
-        this._noticeLabel = diamondNode.getChildByName('notice')?.getComponent(cc.Label);
+        const diamondNode = this.dataTabNode.getChildByName('diamondNode');
+        this._noticeLabel = diamondNode.getChildByName('notice').getComponent(cc.Label);
         this._diamondNodes = [];
         diamondNode.children.forEach(node => {
             const match = node.name.match(/^diamond(\d+)$/);
             if (!match) return;
             const amount = parseInt(match[1], 10);
-            const label = node.getChildByName('diamondNum')?.getComponent(cc.Label);
+            const label = node.getChildByName('diamondNum').getComponent(cc.Label);
             if (label) label.string = `${amount}`;
             this._bindClick(node, () => this._clickSendDiamond(amount, node));
             this._diamondNodes.push({ node, amount });
@@ -334,10 +325,8 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _initPropNodes(): void {
-        if (!this._propOpNode) return;
         for (let i = 1; i <= 12; i++) {
-            const node = this._propOpNode.getChildByName('$propOp_' + i);
-            if (!node) continue;
+            const node = this.propOpNode.getChildByName('$propOp_' + i);
             this._bindClick(node, () => this._clickProp(i, node));
         }
         this._loadPropList();
@@ -353,50 +342,21 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             mask.setContentSize(1242, 2688);
             mask.opacity = 190;
         }
-        if (this._panelClick) {
-            this._panelClick.setPosition(0, 0);
-            this._panelClick.setContentSize(1242, 2688);
-            this._panelClick.opacity = 0;
-        }
-        this._disableLayout(this._dialogNode);
-        this._disableLayout(this._opButtonNode);
-        this._disableLayout(this._dataTabNode);
-
-        if (this._dialogNode) {
-            this._dialogNode.setPosition(0, 0);
-            this._dialogNode.setContentSize(1088, 1600);
-            this._dialogNode.opacity = 255;
-        }
-        this._findNode('$HeadImgNode')?.setPosition(0, 610);
-        if (this._opButtonNode) {
-            this._opButtonNode.setPosition(0, 350);
-            this._opButtonNode.setContentSize(1000, 120);
-        }
-        this._opButtonNode?.getChildByName('shieldToggle')?.setPosition(-250, 0);
-        this._opButtonNode?.getChildByName('ReportBtn')?.setPosition(250, 0);
-        if (this._dataTabNode) {
-            this._dataTabNode.setPosition(0, -180);
-            this._dataTabNode.setContentSize(1000, 760);
-        }
-        this._dataTabNode?.getChildByName('tabNode')?.setPosition(0, 310);
-        this._dataTabNode?.getChildByName('dataNode')?.setPosition(0, -80);
-        this._dataTabNode?.getChildByName('allInNode')?.setPosition(0, -80);
-        this._dataTabNode?.getChildByName('diamondNode')?.setPosition(0, -80);
-        this._dataTabNode?.getChildByName('tabNode')?.getChildByName('Data')?.setPosition(-340, 0);
-        this._dataTabNode?.getChildByName('tabNode')?.getChildByName('allIn')?.setPosition(-90, 0);
-        this._dataTabNode?.getChildByName('tabNode')?.getChildByName('Gift')?.setPosition(260, 0);
-        if (this._diamondShowNode) {
-            this._diamondShowNode.setPosition(0, -720);
-            this._diamondShowNode.active = !this._isSelf;
-        }
-        if (this._propOpNode) {
-            this._propOpNode.active = false;
-        }
-    }
-
-    private _disableLayout(node: cc.Node): void {
-        const layout = node?.getComponent(cc.Layout);
-        if (layout) layout.enabled = false;
+        this.panelClick.setPosition(0, 0);
+        this.panelClick.setContentSize(1242, 2688);
+        this.panelClick.opacity = 0;
+        this.dialogNode.setPosition(0, 0);
+        this.dialogNode.setContentSize(1088, 2280);
+        this.dialogNode.opacity = 255;
+        this.headImgNode.setPosition(0, 987.5);
+        this.opButtonNode.setPosition(0, 577);
+        this.opButtonNode.setContentSize(1000, 556);
+        this.dataTabNode.setPosition(0, -163.5);
+        this.dataTabNode.setContentSize(1000, 905);
+        this.diamondShowNode.setPosition(0, -1070);
+        this.diamondShowNode.active = !this._isSelf;
+        this.propOpNode.setPosition(0, -823);
+        this.propOpNode.setContentSize(1000, 394);
     }
 
     private _refreshDataDescriptions(): void {
@@ -404,19 +364,19 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         const isMTT = !!this._roomData?.basicInfo?.isMtt;
         const descs = isMTT
             ? [
-                  i18nMgr.Get('UIData_YGvXd5iXr_006') || '冠军',
-                  i18nMgr.Get('UIData_YGvXd5iXr_007') || '亚军',
-                  i18nMgr.Get('UIData_YGvXd5iXr_008') || '季军',
-                  i18nMgr.Get('UIData_YGvXd5iXr_005') || '参赛',
-                  i18nMgr.Get('UITexasInfo_wincount') || '获奖'
+                  i18nMgr.Get('UIData_YGvXd5iXr_006'),
+                  i18nMgr.Get('UIData_YGvXd5iXr_007'),
+                  i18nMgr.Get('UIData_YGvXd5iXr_008'),
+                  i18nMgr.Get('UIData_YGvXd5iXr_005'),
+                  i18nMgr.Get('UITexasInfo_wincount')
               ]
             : [
-                  i18nMgr.Get('UITexasInfo_games') || '局数',
-                  i18nMgr.Get('UITexasInfo_poolrate') || '入池率',
-                  i18nMgr.Get('UITexasInfo_flop') || '翻前加注',
-                  i18nMgr.Get('UITexasInfo_allhands') || '总手数',
-                  i18nMgr.Get('UITexasInfo_poolwin') || '入池胜率',
-                  i18nMgr.Get('UITexasInfo_loss') || '百手盈利'
+                  i18nMgr.Get('UITexasInfo_games'),
+                  i18nMgr.Get('UITexasInfo_poolrate'),
+                  i18nMgr.Get('UITexasInfo_flop'),
+                  i18nMgr.Get('UITexasInfo_allhands'),
+                  i18nMgr.Get('UITexasInfo_poolwin'),
+                  i18nMgr.Get('UITexasInfo_loss')
               ];
         for (let i = 0; i < this._dataLabels.length; i++) {
             const item = this._dataLabels[i];
@@ -536,7 +496,6 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _refreshOpButtons(): void {
-        if (!this._opButtonNode || !this._roomData) return;
         const basic = this._roomData.basicInfo;
         const isManager = !!this._permissions.isRoomManager;
         this._setButtonActive('StandUpBtn', !this._isSelf && isManager && !!this._permissions.canStandUp);
@@ -584,16 +543,14 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _updateMediaButton(name: string, hasTrack: boolean, closed: boolean, openText: string, closeText: string): void {
-        const node = this._opButtonNode?.getChildByName(name);
-        if (!node) return;
+        const node = this.opButtonNode.getChildByName(name);
         node.opacity = hasTrack ? 255 : 128;
         this._setToggleBg(node, hasTrack && closed);
         this._setNodeLabelString(node, closed ? openText : closeText);
     }
 
     private async _loadDiamondBalance(): Promise<void> {
-        const label = this._diamondNumNode?.getComponent(cc.Label);
-        if (!label) return;
+        const label = this.diamondNumNode.getComponent(cc.Label);
         try {
             const diamonds = await PlayerInfoProvider.getDiamondBalance();
             if (this._isCurrentRequest(this._requestRID)) label.string = diamonds.toLocaleString('en-US');
@@ -603,7 +560,6 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _refreshDiamondNotice(): void {
-        if (!this._noticeLabel) return;
         if (!this._diamondConfig) {
             this._noticeLabel.string = '';
             return;
@@ -616,10 +572,9 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private async _loadPropList(): Promise<void> {
         try {
             this._propListData = await PlayerInfoProvider.getPropList();
-            if (!this._propOpNode) return;
             this._propListData.forEach((item, index) => {
-                const propNode = this._propOpNode.getChildByName('$propOp_' + (index + 1));
-                const label = propNode ? cc.find('diamondCost/costNum', propNode)?.getComponent(cc.Label) : null;
+                const propNode = this.propOpNode.getChildByName('$propOp_' + (index + 1));
+                const label = cc.find('diamondCost/costNum', propNode).getComponent(cc.Label);
                 if (label && item.payPrice > 0) label.string = `${item.payPrice}`;
             });
         } catch (error) {
@@ -628,18 +583,17 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _clickEditNote(): void {
-        if (!this._noteEditBox) return;
-        if (this._playerNoteNode) this._playerNoteNode.active = false;
-        if (this._noteBtn) this._noteBtn.active = false;
-        this._noteEditBox.node.active = true;
-        this._noteEditBox.string = this._currentRemark;
-        this._noteEditBox.focus();
+        this.playerNoteNode.active = false;
+        this.noteBtn.active = false;
+        this.noteEditBox.node.active = true;
+        this.noteEditBox.string = this._currentRemark;
+        this.noteEditBox.focus();
     }
 
     private _onNoteEditEnded(editBox: cc.EditBox): void {
         editBox.node.active = false;
-        if (this._playerNoteNode) this._playerNoteNode.active = true;
-        if (this._noteBtn) this._noteBtn.active = true;
+        this.playerNoteNode.active = true;
+        this.noteBtn.active = true;
         const text = editBox.string.trim();
         if (text === this._currentRemark) return;
         this._saveUserRemark(text);
@@ -654,7 +608,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             if (res?.code === 0) {
                 this._currentRemark = text;
                 UIPlayerInfo.savedRemarks.set(rid, text);
-                if (this._playerNoteLabel) this._playerNoteLabel.string = text || '点击添加备注';
+                this.playerNoteLabel.string = text || '点击添加备注';
                 viewManager.showToast('备注修改成功');
                 return;
             }
@@ -662,7 +616,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         } catch (error) {
             if (this._isCurrentRequest(rid)) viewManager.showToast('备注修改失败');
         }
-        if (this._playerNoteLabel) this._playerNoteLabel.string = this._currentRemark || '点击添加备注';
+        this.playerNoteLabel.string = this._currentRemark || '点击添加备注';
     }
 
     private _clickStandUp(): void {
@@ -678,7 +632,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private async _confirmAndRun(content: string, action: () => Promise<any>): Promise<void> {
-        const name = this._player?.name || '';
+        const name = this._player.name || '';
         viewManager.openDialog('ConfirmOrNotice', {
             content: content.replace('{0}', name),
             diaolgType: UIComfirmDialogType.CONFIRM,
@@ -763,14 +717,19 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _clickProp(propIndex: number, clickNode: cc.Node): void {
-        if (!this._roomData || !this._requestRID) return;
         this._playClickScale(clickNode, true);
-        const consume = this._propListData[propIndex - 1]?.priceID || Def.ConsumeType.CT_EMOJI_2;
+        const propData = this._propListData[propIndex - 1];
+        const consume = propData ? propData.priceID : CONSUME_TYPE_EMOJI_2;
         const propType = UIPlayerInfo.PROP_TYPE_MAP[propIndex - 1] || UIPlayerInfo.PROP_TYPE_BASE;
+        this._roomData.seatsStateManager.setPendingThrowProp({
+            type: propType,
+            userID: userStore.userRID || userStore.userID,
+            targetUserID: this._requestRID
+        });
         const inner = JSON.stringify({
             name: userStore.name,
             target_user_id: this._requestRID,
-            user_id: userStore.userRID,
+            user_id: userStore.userRID || userStore.userID,
             type: propType,
             msgType: 1,
             time: Math.floor(Date.now() / 1000),
@@ -789,26 +748,24 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
                 consume,
                 message: '',
                 extra: this._stringToBytes(extra),
-                msgType: Def.BroadcastMsgType.BC_MSG_THROW
+                msgType: BROADCAST_MSG_TYPE_THROW
             } as any
         } as any);
     }
 
     private _clickReport(): void {
-        if (!this._roomData || !this._requestRID) return;
         viewManager.openDialog('PlayerReport', {
             roomID: this._roomData.roomID,
             matchID: this._roomData.matchID,
             userRID: this._requestRID,
             randomNum: this._requestRID,
-            sendName: this._player?.name || '',
+            sendName: this._player.name || '',
             type: 1
         });
     }
 
     private _refreshToggleVisual(name: string, isOn: boolean): void {
-        const node = this._opButtonNode?.getChildByName(name);
-        if (!node) return;
+        const node = this.opButtonNode.getChildByName(name);
         if (name === 'chatCloseToggle' || name === 'shieldToggle') {
             const isMute = name === 'chatCloseToggle';
             this._setNodeLabelString(node, isOn ? (isMute ? '取消禁言' : '取消屏蔽') : isMute ? '禁言' : '屏蔽名字');
@@ -846,8 +803,8 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _loadRemoteSprite(node: cc.Node, url: string): void {
-        const sprite = node?.getComponent(cc.Sprite);
-        if (!sprite || !url) return;
+        const sprite = node.getComponent(cc.Sprite);
+        if (!url) return;
         const requestURL = url;
         (node as any)._playerInfoRemoteURL = requestURL;
         cc.assetManager.loadRemote(requestURL, { ext: '.png' }, (err, texture: cc.Texture2D) => {
@@ -858,11 +815,10 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _bindOpButton(name: string, handler: () => void): void {
-        this._bindClick(this._opButtonNode?.getChildByName(name), handler);
+        this._bindClick(this.opButtonNode.getChildByName(name), handler);
     }
 
     private _bindClick(node: cc.Node, handler: () => void): void {
-        if (!node) return;
         if (!node.getComponent(cc.Button)) {
             const button = node.addComponent(cc.Button);
             button.transition = cc.Button.Transition.NONE;
@@ -871,12 +827,12 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _setButtonActive(name: string, active: boolean): void {
-        const node = this._opButtonNode?.getChildByName(name);
-        if (node) node.active = active;
+        const node = this.opButtonNode.getChildByName(name);
+        node.active = active;
     }
 
     private _setNodeLabelString(node: cc.Node, text: string): void {
-        const label = node?.getComponent(cc.Label) || node?.getComponentInChildren(cc.Label);
+        const label = node.getComponent(cc.Label) || node.getComponentInChildren(cc.Label);
         if (label) label.string = text;
     }
 
@@ -893,22 +849,10 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _stringToBytes(str: string): Uint8Array {
-        const bytes = new Uint8Array(str.length);
-        for (let i = 0; i < str.length; i++) bytes[i] = str.charCodeAt(i);
+        const encoded = unescape(encodeURIComponent(str));
+        const bytes = new Uint8Array(encoded.length);
+        for (let i = 0; i < encoded.length; i++) bytes[i] = encoded.charCodeAt(i);
         return bytes;
     }
 
-    private _findNode(name: string): cc.Node {
-        return this._findNodeRecursive(this.node, name);
-    }
-
-    private _findNodeRecursive(root: cc.Node, name: string): cc.Node {
-        if (!root) return null;
-        if (root.name === name) return root;
-        for (let i = 0; i < root.childrenCount; i++) {
-            const child = this._findNodeRecursive(root.children[i], name);
-            if (child) return child;
-        }
-        return null;
-    }
 }
