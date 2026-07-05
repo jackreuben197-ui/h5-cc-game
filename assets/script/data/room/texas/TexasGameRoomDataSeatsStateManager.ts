@@ -1,5 +1,8 @@
-import { bindData, observable, pureEvent } from '../../../core/decorator/DataBind';
+import { bindData, pureEvent } from '../../../core/decorator/DataBind';
 import { AnimateDisplayTypeButton, AnimateDisplayTypeMushroomPool, AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
+import { ButtonState } from '../../../game/constant/Constants';
+import { MicIconState } from '../../../game/constant/MicIconState';
+import agoraManager from '../../../net/agora/AgoraManager';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';
 
@@ -113,9 +116,23 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     })
     public buttonChangeEvent(prev: number, cur: number, bat: AnimateDisplayTypeButton) {}
 
-    /** 当前说话者 uid（0 = 无人说话），由 VideoRoomManager 在 activeSpeaker 回调中设置 */
-    @observable(TexasGameRoomDataSeatsStateManager.SPEAKING_CHANGE)
-    public speakingUid: number = 0;
+    /** 当前说话者的座位号 */
+    private _speeking: number = 0;
+    public set speakingUID(uid: number) {
+        const seat = this.getSeatPlayerByUserID(uid);
+        let seatNo = 0;
+        if (seat) {
+            seatNo = seat.seatNo;
+        }
+        if (seatNo == this._speeking) return;
+        const prev = this._speeking;
+        this._speeking = seatNo;
+        this.speakingChangeEvent(prev, this._speeking);
+    }
+
+    /** 当前说话者 uid（0 = 无人说话），由 Texas 视频流程在 activeSpeaker 回调中设置 */
+    @pureEvent(TexasGameRoomDataSeatsStateManager.SPEAKING_CHANGE)
+    public speakingChangeEvent(prev: number, cur: number) {}
 
     private _seatsCount: number;
 
@@ -175,31 +192,42 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
         return this._playerMap.get(s);
     }
 
-    /**
-     * 通过 userID 查找座位数据
-     * @returns 匹配的 TexasGameRoomDataPlayer，未找到返回 null
-     */
-    public findSeatByUserId(userId: number): TexasGameRoomDataPlayer | null {
-        let found: TexasGameRoomDataPlayer = null;
-        this._playerMap.forEach((p: TexasGameRoomDataPlayer) => {
-            if (!found && p.userID === userId) {
-                found = p;
+    public getSeatPlayerByUserID(userID: number): TexasGameRoomDataPlayer | null {
+        let target: TexasGameRoomDataPlayer = null;
+        this._playerMap.forEach(player => {
+            if (player.userID == userID) {
+                target = player;
             }
         });
-        return found;
+        return target;
     }
 
-    /**
-     * 获取所有已入座的座位数据
-     */
-    public getAllSeats(): TexasGameRoomDataPlayer[] {
-        const result: TexasGameRoomDataPlayer[] = [];
-        this._playerMap.forEach((p: TexasGameRoomDataPlayer) => {
-            if (p.userID) {
-                result.push(p);
+    // 同步
+    public syncAllSeatVideoAndAudioStates() {
+        const remoteUserMap = agoraManager.getRemoteUserMap();
+        this._playerMap.forEach(async seat => {
+            if (seat.mine) {
+                seat.remoteVideoVisible = false;
+                seat.micIconState = seat.mine.localMicEnabled > 0 ? MicIconState.HIDDEN : MicIconState.MUTED;
+                if (agoraManager.localAudioTrack) {
+                    await agoraManager.localAudioTrack.setMuted(seat.mine.localMicEnabled != ButtonState.ON);
+                }
+                if (agoraManager.localVideoTrack) {
+                    await agoraManager.localVideoTrack.setMuted(seat.mine.localCameraEnabled != ButtonState.ON);
+                }
+                return;
             }
+            const remoteUser = remoteUserMap.get(seat.userID);
+            seat.remoteVideoVisible = !agoraManager.isRemoteVideoMuted && !!remoteUser && remoteUser.hasVideo;
+            seat.micIconState = !agoraManager.isRemoteAudioMuted && !!remoteUser && remoteUser.hasAudio ? MicIconState.HIDDEN : MicIconState.MUTED;
         });
-        return result;
+    }
+
+    public resetVideoAndAudioStates(): void {
+        this.speakingUID = 0;
+        this._playerMap.forEach(p => {
+            p.resetVideoAndAudioStates();
+        });
     }
 
     public roundReset() {

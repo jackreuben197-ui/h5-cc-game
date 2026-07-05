@@ -50,3 +50,9 @@ export enum GamePlaySubType {
     MUSH = 1,
     SQUID = 2
 }
+
+export enum ButtonState {
+    DISABLE = 0,
+    ON = 1,
+    OFF = 2
+}

@@ -7,17 +7,18 @@ import ProcedureDefine from '../../../game/procedure/ProcedureDefine';
 import ProcedureManager from '../../../game/procedure/ProcedureManager';
 import { ProcedureReturnNavigateParam } from '../../../game/procedure/ProcedureReturn';
 import { i18nMgr } from '../../../i18n/i18nMgr';
-import VideoRoomManager from '../../../net/agora/VideoRoomManager';
 import viewManager from '../../../views/UIViewManager';
+import agoraManager from '../../agora/AgoraManager';
+import TexasVideoMediaHelper from './TexasVideoMediaHelper';
 
 const _glog = createLogger('LeaveNotification', 'debug');
 
 // LeaveNotification 1114
 export function LeaveNotification(data: ServerMessageLeaveNotification.AsObject, roomID: number, matchID: number) {
+    const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     roomDataManager.clearInternalLeave(roomID, matchID);
     // 视频房间：离房前清理 Agora 频道
-    VideoRoomManager.Instance.leaveVideoChannel();
-    const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
+    void leaveAgoraVideoChannel(roomData);
     _glog.debug('leave', data.reason, roomData);
     switch (data.reason) {
         case Def.LeaveReason.LR_ACTIVE: // 主动退出
@@ -63,4 +64,13 @@ export function LeaveNotification(data: ServerMessageLeaveNotification.AsObject,
             });
             break;
     }
+}
+
+async function leaveAgoraVideoChannel(roomData: TexasGameRoomData | null): Promise<void> {
+    TexasVideoMediaHelper.clearAllMediaStates(roomData);
+    await agoraManager.disableCamera();
+    agoraManager.disableMic();
+    agoraManager.clearCallbacks();
+    agoraManager.stopVolumeMonitor();
+    await agoraManager.leave();
 }

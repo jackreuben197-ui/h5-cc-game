@@ -197,4 +197,7 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
     });
     // 通知重连结束了
     roomReconnectManager.syncEnterComplete(roomID, matchID);
+    if (roomData.basicInfo.isInVideoRoom) {
+        roomData.seatsStateManager.syncAllSeatVideoAndAudioStates();
+    }
 }

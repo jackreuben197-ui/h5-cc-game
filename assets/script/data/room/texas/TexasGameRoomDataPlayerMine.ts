@@ -4,12 +4,20 @@ import { traceClass } from '../../../core/decorator/LogTrace';
 import { handValueTypeToString } from '../../../core/poker/PoerkCard';
 import { getMaxHandValueByPokeType } from '../../../core/poker/PokerUtil';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
-import { VideoModel } from '../../../game/constant/VideoModel';
+import { ButtonState } from '../../../game/constant/Constants';
+import agoraManager from '../../../net/agora/AgoraManager';
 import { OperatorMine } from './model/Operator';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';
 
-interface TexasGameRoomDataPlayerMine extends IObservableBindings<TexasGameRoomDataPlayerMine> {}
+type PlayerMineBindings = {
+    localCameraState: [];
+    localMicEnabled: [];
+    randomVideoActive: [];
+    randomVideoEndTime: [];
+};
+
+interface TexasGameRoomDataPlayerMine extends IObservableBindings<TexasGameRoomDataPlayerMine, PlayerMineBindings> {}
 
 @bindData()
 @traceClass()
@@ -24,6 +32,10 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public static readonly AUTO_OPERATION_TYPE_CHANGE = 'AUTO_OPERATION_TYPE_CHANGE';
     public static readonly VALID_AUTO_OPERATIONS_CHANGE = 'VALID_AUTO_OPERATIONS_CHANGE';
     public static readonly SHOW_SQUID_IN = 'SHOW_SQUID_IN';
+    public static readonly LOCAL_CAMERA_STATE_CHANGE = 'LOCAL_CAMERA_STATE_CHANGE';
+    public static readonly LOCAL_MIC_ENABLED_CHANGE = 'LOCAL_MIC_ENABLED_CHANGE';
+    public static readonly RANDOM_VIDEO_ACTIVE_CHANGE = 'RANDOM_VIDEO_ACTIVE_CHANGE';
+    public static readonly RANDOM_VIDEO_END_TIME_CHANGE = 'RANDOM_VIDEO_END_TIME_CHANGE';
     private _roomData: TexasGameRoomData;
     public get roomData() {
         return this._roomData;
@@ -46,13 +58,27 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     @pureEvent(TexasGameRoomDataPlayerMine.HIGHLIGHT_CARDS)
     public highlightCards(cards: number[]) {}
 
-    public get needVideoPermision() {
-        return this._roomData.basicInfo.videoModel !== VideoModel.NONE;
+    @observable(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE)
+    public localCameraEnabled: ButtonState = ButtonState.DISABLE;
+    @observable(TexasGameRoomDataPlayerMine.LOCAL_MIC_ENABLED_CHANGE)
+    public localMicEnabled: ButtonState = ButtonState.DISABLE;
+
+    public async clearVideoAndAudio() {
+        this.randomVideoActive = false;
+        this.randomVideoEndTime = 0;
+        await agoraManager.disableCamera();
+        await agoraManager.disableMic();
+        this.muteEvents();
+        this.localCameraEnabled = ButtonState.DISABLE;
+        this.localMicEnabled = ButtonState.DISABLE;
+        this.unmuteEvents();
     }
     // ==================== 随机视频验证状态 ====================
     /** 是否正在随机视频验证中 */
+    @observable(TexasGameRoomDataPlayerMine.RANDOM_VIDEO_ACTIVE_CHANGE)
     public randomVideoActive: boolean = false;
     /** 随机视频验证结束时间戳（毫秒），0 表示未在验证 */
+    @observable(TexasGameRoomDataPlayerMine.RANDOM_VIDEO_END_TIME_CHANGE)
     public randomVideoEndTime: number = 0;
     // 如果有座位,座位号 > 0
     @observable(TexasGameRoomDataPlayerMine.SEATNO_CHANGED)

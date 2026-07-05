@@ -13,9 +13,11 @@ import {
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
-import VideoRoomManager from '../../../net/agora/VideoRoomManager';
+import { ButtonState } from '../../../game/constant/Constants';
 import roomReconnectManager from '../../../game/RoomReconnectManager';
 import viewManager from '../../../views/UIViewManager';
+import agoraManager from '../../agora/AgoraManager';
+import TexasVideoMediaHelper from './TexasVideoMediaHelper';
 
 const _plog = createLogger('ServerMessageEnterRoom');
 
@@ -213,10 +215,39 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             }
         });
     }
+    roomData.mine.localCameraEnabled = ButtonState.DISABLE;
+    roomData.mine.localMicEnabled = ButtonState.DISABLE;
+    roomData.mine.randomVideoActive = false;
+    roomData.mine.randomVideoEndTime = 0;
+    roomData.seatsStateManager.resetVideoAndAudioStates();
+    // 视频房间：入房后加入 Agora 频道
+    if (roomData.mine.seatNo > 0 && roomData.basicInfo.antiCheatConfig) {
+        const seatedConfig = roomData.basicInfo.antiCheatConfig.getSeatedSetting();
+        const promise = [];
+        try {
+            let video = false;
+            if (seatedConfig.showCamera) {
+                video = true;
+                promise.push(agoraManager.enableCamera());
+            }
+            promise.push(agoraManager.enableMic());
+            promise.push(TexasVideoMediaHelper.joinAgoraVideoChannelIfNeed(roomID, matchID));
+            // 如果在强制时间内强制打开
+            if (seatedConfig.showCamera && seatedConfig.timeLimit == -1 && roomData.basicInfo.antiCheatConfig.getDuration() < seatedConfig.timeLimit) {
+                roomData.mine.localCameraEnabled = ButtonState.ON;
+                roomData.mine.localMicEnabled = ButtonState.ON;
+            } else {
+                roomData.mine.localCameraEnabled = ButtonState.OFF;
+                roomData.mine.localMicEnabled = ButtonState.OFF;
+            }
+            await Promise.all(promise);
+        } catch (e) {
+            _plog.error('加入视频桌失败', e);
+            viewManager.showToast('无法开启摄像头，请检查浏览器权限后重新入座');
+        }
+    }
     await viewManager.switchScene('TexasRoom', {
         roomID: roomData.roomID,
         matchID: roomData.matchID
     });
-    // 视频房间：检查是否已有远端视频流（解决时序竞争：joinVideoChannelIfNeed 可能在 EnterRoom 回包之前完成）
-    VideoRoomManager.Instance.renderExistingRemoteVideosIfJoined();
 }

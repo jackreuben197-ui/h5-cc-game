@@ -2,7 +2,6 @@ import { Def, ServerMessageSeatedOthers } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
-import VideoRoomManager from '../../../net/agora/VideoRoomManager';
 
 const _plog = createLogger('ServerMessageSeatedOthers');
 
@@ -45,9 +44,4 @@ export function SeatedOthers(data: ServerMessageSeatedOthers.AsObject, roomID: n
     }
     // 标记入座
     seatData.setSeated(true, null);
-    // 视频房间：检查该玩家是否已有远端视频流
-    const videoMgr = VideoRoomManager.Instance;
-    if (videoMgr.isVideoRoom) {
-        videoMgr.tryRenderRemoteVideoForSeat(userRid);
-    }
 }
