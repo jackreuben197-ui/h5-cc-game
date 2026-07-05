@@ -20,7 +20,6 @@ const { ccclass, menu, property } = cc._decorator;
 const VIEW_MANAGER_MASK_NODE = 'ithinktisinotshouldbedupilcatednodename';
 const CONSUME_TYPE_EMOJI_2 = 6;
 const BROADCAST_MSG_TYPE_THROW = 4;
-const SELF_DATA_TAB_Y = 500;
 const OTHER_DATA_TAB_Y = -163.5;
 
 export interface PlayerInfoPermissions {
@@ -237,7 +236,8 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this.propOpNode.active = canUseProp;
         this.diamondShowNode.active = !this._isSelf;
         this.noteNode.active = !this._isSelf;
-        if (this._tabNodes[2]) this._tabNodes[2].active = false;
+        if (this._tabNodes[2]) this._tabNodes[2].active = !this._isSelf;
+        this._refreshDialogLayout();
     }
 
     private _initTabs(): void {
@@ -356,12 +356,23 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this.headImgNode.setPosition(0, 987.5);
         this.opButtonNode.setPosition(0, 577);
         this.opButtonNode.setContentSize(1000, 556);
-        this.dataTabNode.setPosition(0, this._isSelf ? SELF_DATA_TAB_Y : OTHER_DATA_TAB_Y);
+        this.dataTabNode.setPosition(0, OTHER_DATA_TAB_Y);
         this.dataTabNode.setContentSize(1000, 905);
         this.diamondShowNode.setPosition(0, -1070);
         this.diamondShowNode.active = !this._isSelf;
         this.propOpNode.setPosition(0, -823);
         this.propOpNode.setContentSize(1000, 394);
+    }
+
+    private _refreshDialogLayout(): void {
+        const opLayout = this.opButtonNode.getComponent(cc.Layout);
+        if (opLayout) opLayout.updateLayout();
+        const dataLayout = this.dataTabNode.getComponent(cc.Layout);
+        if (dataLayout) dataLayout.updateLayout();
+        const propLayout = this.propOpNode.getComponent(cc.Layout);
+        if (propLayout) propLayout.updateLayout();
+        const dialogLayout = this.dialogNode.getComponent(cc.Layout);
+        if (dialogLayout) dialogLayout.updateLayout();
     }
 
     private _refreshDataDescriptions(): void {
@@ -514,6 +525,8 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this._setButtonActive('videoCloseToggle', !this._isSelf && basic.antiCheatType === AntiCheatType.VIDEO);
         this._setButtonActive('shieldToggle', !this._isSelf && basic.antiCheatType < AntiCheatType.FACE_VERIFY && basic.chatType !== ChatType.CLOSE);
         this._setButtonActive('ReportBtn', !this._isSelf);
+        this.opButtonNode.active = this.opButtonNode.children.some(node => node.active);
+        this._refreshDialogLayout();
     }
 
     private async _loadMuteState(): Promise<void> {
