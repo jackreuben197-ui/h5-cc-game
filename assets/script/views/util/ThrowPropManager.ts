@@ -55,9 +55,11 @@ class ThrowPropManager {
     private _root: cc.Node = null;
     private _seatNodes: Map<number, cc.Node> = new Map();
     private _skeletonCache: Map<string, sp.SkeletonData> = new Map();
+    private _preloadStarted = false;
 
     public initialize(root: cc.Node): void {
         this._root = root;
+        this._preloadSkeletons();
     }
 
     public registerSeat(userID: number, avatarNode: cc.Node): void {
@@ -366,6 +368,20 @@ class ThrowPropManager {
 
     private _loadSkeletons(paths: string[]): Promise<sp.SkeletonData[]> {
         return Promise.all(paths.map(path => this._loadSkeleton(path)));
+    }
+
+    private _preloadSkeletons(): void {
+        if (this._preloadStarted) return;
+        this._preloadStarted = true;
+        const paths: string[] = [];
+        ThrowPropManager.CONFIGS.forEach(config => {
+            config.spines.forEach(path => {
+                if (paths.indexOf(path) < 0) paths.push(path);
+            });
+        });
+        paths.forEach(path => {
+            this._loadSkeleton(path).catch(error => cc.warn('[ThrowPropManager] preload skeleton failed', path, error));
+        });
     }
 
     private _createSpineNode(skeletonData: sp.SkeletonData, animName: string, loop: boolean, localPos: cc.Vec3): cc.Node {

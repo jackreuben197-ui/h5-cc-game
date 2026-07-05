@@ -20,6 +20,8 @@ const { ccclass, menu, property } = cc._decorator;
 const VIEW_MANAGER_MASK_NODE = 'ithinktisinotshouldbedupilcatednodename';
 const CONSUME_TYPE_EMOJI_2 = 6;
 const BROADCAST_MSG_TYPE_THROW = 4;
+const SELF_DATA_TAB_Y = 500;
+const OTHER_DATA_TAB_Y = -163.5;
 
 export interface PlayerInfoPermissions {
     isRoomManager?: boolean;
@@ -65,6 +67,8 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private femaleNode: cc.Node = null;
     @property({ type: cc.Label, displayName: '玩家ID文本' })
     private playerIDLabel: cc.Label = null;
+    @property({ type: cc.Node, displayName: '备注根节点' })
+    private noteNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '备注显示节点' })
     private playerNoteNode: cc.Node = null;
     @property({ type: cc.Label, displayName: '备注文本' })
@@ -129,7 +133,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this._diamondConfig = param.diamondConfig || null;
         this._diamondSentCount = param.diamondConfig?.sentCount || 0;
         this._requestRID = this._player.userID;
-        this._isSelf = this._requestRID === userStore.userRID;
+        this._isSelf = this._requestRID === userStore.userRID || this._requestRID === userStore.userID;
         this._applyTargetLayout();
         this._resetView();
         this._refreshBasicInfo({
@@ -232,6 +236,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         const canUseProp = !this._isSelf && !!this._requestRID && !!this._roomData.mine.seatNo;
         this.propOpNode.active = canUseProp;
         this.diamondShowNode.active = !this._isSelf;
+        this.noteNode.active = !this._isSelf;
         if (this._tabNodes[2]) this._tabNodes[2].active = false;
     }
 
@@ -351,7 +356,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this.headImgNode.setPosition(0, 987.5);
         this.opButtonNode.setPosition(0, 577);
         this.opButtonNode.setContentSize(1000, 556);
-        this.dataTabNode.setPosition(0, -163.5);
+        this.dataTabNode.setPosition(0, this._isSelf ? SELF_DATA_TAB_Y : OTHER_DATA_TAB_Y);
         this.dataTabNode.setContentSize(1000, 905);
         this.diamondShowNode.setPosition(0, -1070);
         this.diamondShowNode.active = !this._isSelf;

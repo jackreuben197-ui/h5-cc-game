@@ -61,11 +61,13 @@ export default class SeatManager extends cc.Component {
 
     @bindEvent(TexasGameRoomDataSeatsStateManager.THROW_PROP, { dataSource: 'seats', initIgnore: true })
     private onThrowProp(data: ThrowPropBroadcastData): void {
+        this._refreshThrowPropSeatNodes();
         throwPropManager.playProp(data);
     }
 
     @bindEvent(TexasGameRoomDataSeatsStateManager.DIAMOND_GIFT, { dataSource: 'seats', initIgnore: true })
     private onDiamondGift(data: DiamondGiftBroadcastData): void {
+        this._refreshThrowPropSeatNodes();
         throwPropManager.playDiamondGift(data);
     }
 
@@ -186,5 +188,13 @@ export default class SeatManager extends cc.Component {
                 if (seatData?.userID) throwPropManager.registerSeat(seatData.userID, comp.avatarNode);
             }
         }
+    }
+
+    private _refreshThrowPropSeatNodes(): void {
+        throwPropManager.clearSeatNodes();
+        this._seatNodesMap.forEach((seatPlayer, seatNo) => {
+            const seatData = this._seatManager.getSeatPlayer(seatNo);
+            if (seatData?.userID) throwPropManager.registerSeat(seatData.userID, seatPlayer.avatarNode);
+        });
     }
 }

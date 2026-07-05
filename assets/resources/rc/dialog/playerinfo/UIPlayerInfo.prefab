@@ -17027,6 +17027,9 @@
     "playerIDLabel": {
       "__id__": 25
     },
+    "noteNode": {
+      "__id__": 29
+    },
     "playerNoteNode": {
       "__id__": 37
     },
