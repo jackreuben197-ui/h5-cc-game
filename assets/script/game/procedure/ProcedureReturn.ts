@@ -18,7 +18,7 @@ export default class ProcedureReturn extends ProcedureBase {
     override lateEnter(param: ProcedureReturnNavigateParam) {
         // 主动离桌 / 被踢 / 服务端关闭都会归到这里，统一清掉重连上下文
         roomReconnectManager.clearAllContext();
-        soundManager.stopAll();
+        soundManager.volumeOnOff(false);
         viewManager.showPreloadingLayer();
         if (param && param.routeData) {
             H5MsgMgr.sendToH5('h5Navigate', 1, param.routeData);

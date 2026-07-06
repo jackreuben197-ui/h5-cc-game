@@ -1,5 +1,6 @@
 import { Def, Player, ServerMessageEnterRoom } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
+import soundManager from '../../../core/SoundManager';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
@@ -38,6 +39,9 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         return;
     }
     if (data.status != 0) return;
+    // 声音处理
+    soundManager.volumeOnOff(roomData.setting.soundOn);
+    soundManager.playBGM();
     roomReconnectManager.addContext({
         roomID: roomID,
         matchID: matchID
@@ -225,9 +229,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         const seatedConfig = roomData.basicInfo.antiCheatConfig.getSeatedSetting();
         const promise = [];
         try {
-            let video = false;
             if (seatedConfig.showCamera) {
-                video = true;
                 promise.push(agoraManager.enableCamera());
             }
             promise.push(agoraManager.enableMic());

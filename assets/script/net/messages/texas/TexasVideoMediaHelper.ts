@@ -1,4 +1,5 @@
 import { IRemoteAudioTrack, IRemoteVideoTrack } from 'agora-rtc-sdk-ng';
+import { traceClass, traceMethod } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import type TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import userStore from '../../../data/user/UserStore';
@@ -6,8 +7,14 @@ import { ButtonState } from '../../../game/constant/Constants';
 import { MicIconState } from '../../../game/constant/MicIconState';
 import agoraManager from '../../agora/AgoraManager';
 
+@traceClass()
 export default class TexasVideoMediaHelper {
+    @traceMethod()
     public static async joinAgoraVideoChannelIfNeed(roomID: number, matchID: number): Promise<void> {
+        if (!agoraManager.isReady) {
+            this.tracelog.error('agoramanager is not ready');
+            return;
+        }
         const uid = userStore.userRID;
         const roomData = TexasVideoMediaHelper.getAgoraCallbackRoomData(roomID, matchID, '加入房间', uid);
         if (agoraManager.isJoined) {
@@ -17,8 +24,6 @@ export default class TexasVideoMediaHelper {
             agoraManager.stopVolumeMonitor();
             await agoraManager.leave();
         }
-        const ready = await agoraManager.ensureReady(10000);
-        if (!ready) return;
         TexasVideoMediaHelper.bindAgoraCallbacks(roomID, matchID);
         const channelName = 'rtc_d_1-0-' + roomID + '-' + matchID;
         const ok = await agoraManager.join(channelName, uid);

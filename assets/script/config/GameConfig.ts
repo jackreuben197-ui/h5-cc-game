@@ -35,8 +35,11 @@ class GameConfig {
     static readonly DEFAULT_LANGUAGE: string = 'cn';
     //是否使用代理
     static useProxy: boolean = false;
-    //是否启用声网 Agora（false 则跳过 SDK 加载、初始化等全部流程）
-    static enableAgora: boolean = true;
+    //是否启用声网 Agora（false 则跳过 SDK 加载、初始化等全部流程
+    static agoraKey: string = 'da91afd18fa84618bee90c5468b06a5f';
+    static get enableAgora(): boolean {
+        return !!GameConfig.agoraKey?.trim();
+    }
     //是否使用新域名
     //static IsNewArea: boolean = false;
     //设计分辨率

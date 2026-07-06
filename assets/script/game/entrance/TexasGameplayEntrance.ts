@@ -457,12 +457,15 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         roomData.basicInfo.randomSeated = this._roomInfo.randomSeat == 1; // 2 关闭
         //安全屋
         roomData.basicInfo.seatedMessage = this._roomInfo.seatedMessaging > 0;
+        // mock video
+        this._roomInfo.antiCheatType = AntiCheatType.VIDEO;
+        this._roomInfo.antiCheatVideoType = 1;
         //video/audio
         if (this._roomInfo.antiCheatType == AntiCheatType.VIDEO || this._roomInfo.antiCheatType == AntiCheatType.AUDIO) {
             roomData.basicInfo.antiCheatConfig = new VideoAntiCheatConfig(
                 this._roomInfo.antiCheatType,
                 this._roomInfo.antiCheatTimelimit,
-                this._roomInfo.antiCheatVideoType,
+                this._roomInfo.antiCheatVideoType, // 视频模式 0 未知 1 全时长 2 随机验证 3 麦序, 5, 6
                 this._roomInfo.micSeatSwitch == 1,
                 this._roomInfo.micMiddleSwitch == 1,
                 this._roomInfo.videoSeatSwitch == 1,

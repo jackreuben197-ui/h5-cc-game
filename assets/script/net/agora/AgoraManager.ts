@@ -6,7 +6,7 @@ import { IAgoraRTCClient, IAgoraRTCRemoteUser, ICameraVideoTrack, IMicrophoneAud
 import { ITraceLog, traceClass } from '../../core/decorator/LogTrace';
 import { WWW } from '../https/WebRequest';
 
-@traceClass()
+@traceClass({ level: 'debug' })
 class AgoraManager {
     private static _instance: AgoraManager = null;
     // ==================== 连接状态追踪 ====================
@@ -21,7 +21,7 @@ class AgoraManager {
     }
     // ==================== 配置项 ====================
     /** 声网 App ID */
-    public appId: string = 'da91afd18fa84618bee90c5468b06a5f';
+    private _appId: string = '';
     // =========================================================
     private _client: IAgoraRTCClient = null;
     private _localAudioTrack: IMicrophoneAudioTrack = null;
@@ -70,8 +70,8 @@ class AgoraManager {
     private constructor() {}
 
     /** Agora SDK 是否已加载 */
-    public get isSDKReady(): boolean {
-        return !!(window as any).AgoraRTC;
+    private get isSDKReady(): boolean {
+        return !!window.AgoraRTC;
     }
 
     /** 浏览器是否支持摄像头/麦克风（需要 HTTPS 或 localhost） */
@@ -115,12 +115,15 @@ class AgoraManager {
     public get channelName(): string {
         return this._channelName;
     }
+    public get isReady(): boolean {
+        return !!this._client;
+    }
 
     /**
      * 初始化 Agora Client
      * 必须在 SDK 加载完成后调用
      */
-    public init(): void {
+    private init(): void {
         if (!this.isSDKReady) {
             this.tracelog.error('SDK 未加载，无法初始化');
             return;
@@ -153,7 +156,8 @@ class AgoraManager {
         );
     }
 
-    public async ensureReady(timeoutMs: number): Promise<boolean> {
+    public async ensureReadySDK(appKey: string, timeoutMs: number): Promise<boolean> {
+        this._appId = appKey;
         if (this.isSDKReady) {
             if (!this._client) {
                 this.init();
@@ -302,10 +306,6 @@ class AgoraManager {
             this.tracelog.warn('[AgoraManager] 正在加入频道中，请勿重复调用');
             return false;
         }
-        if (!this.appId) {
-            this.tracelog.error('appId 未配置');
-            return false;
-        }
         if (channel.length === 0) {
             this.tracelog.error('频道名为空，无法加入 Agora');
             return false;
@@ -317,7 +317,7 @@ class AgoraManager {
             return false;
         }
         try {
-            await this._client.join(this.appId, channel, actualToken, uid);
+            await this._client.join(this._appId, channel, actualToken, uid);
             this._uid = uid;
             this._channelName = channel;
             this._joined = true;
