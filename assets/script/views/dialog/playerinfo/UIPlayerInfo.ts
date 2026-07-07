@@ -12,6 +12,8 @@ import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import AgoraManager from '../../../net/agora/AgoraManager';
+import { WebResponseDataBase } from '../../../net/https/data/other/WebResponseDataBase';
+import { HttpStatsOtherUserStats } from '../../../net/https/data/stats/HttpStatsOtherUserStats';
 import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import { UIComfirmDialogType } from '../confirm/UIConfirmDialog';
@@ -382,7 +384,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
                   i18nMgr.Get('UITexasInfo_flop'),
                   i18nMgr.Get('UITexasInfo_allhands'),
                   i18nMgr.Get('UITexasInfo_poolwin'),
-                  i18nMgr.Get('UITexasInfo_loss')
+                  i18nMgr.Get('UIPlayerInfo_TablePoolRate')
               ];
         for (let i = 0; i < this._dataLabels.length; i++) {
             const item = this._dataLabels[i];
@@ -392,7 +394,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         }
     }
 
-    private _refreshDataPanel(data: any): void {
+    private _refreshDataPanel(data: HttpStatsOtherUserStats.Data): void {
         if (this._roomData?.basicInfo?.isMtt) {
             this._refreshMTTData(data);
         } else {
@@ -401,9 +403,8 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this._refreshAllInPanel(data);
     }
 
-    private _refreshMTTData(data: any): void {
-        let mtt = data?.mtt_room_data;
-        if (Array.isArray(mtt)) mtt = mtt[0];
+    private _refreshMTTData(data: HttpStatsOtherUserStats.Data): void {
+        const mtt = data.mtt_room_data;
         if (!mtt) return;
         const items = [mtt.frist_times || 0, mtt.second_times || 0, mtt.third_times || 0, mtt.play_times || 0, mtt.win_times || 0];
         for (let i = 0; i < this._dataLabels.length; i++) {
@@ -413,15 +414,8 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         }
     }
 
-    private _refreshRegularData(data: any): void {
-        let roomStats = data?.room_data;
-        if (Array.isArray(roomStats)) {
-            const gameType = this._roomData?.basicInfo?.gameType ?? 0;
-            roomStats =
-                roomStats.find((item: any) => item.game_type === gameType && item.data_type === 4) ||
-                roomStats.find((item: any) => item.game_type === gameType) ||
-                roomStats[0];
-        }
+    private _refreshRegularData(data: HttpStatsOtherUserStats.Data): void {
+        const roomStats = data.room_data;
         if (!roomStats) return;
         const items = [
             `${roomStats.total_game_cnt || 0}`,
@@ -429,7 +423,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             `${roomStats.prf || 0}%`,
             `${roomStats.total_hand || 0}`,
             `${roomStats.wins || 0}%`,
-            `${(roomStats.aveage_earn_hundred || 0) / 100}`
+            `${(data.pool_rate / 1000) * 100}%`
         ];
         for (let i = 0; i < this._dataLabels.length; i++) {
             const item = this._dataLabels[i];
@@ -438,7 +432,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         }
     }
 
-    private _refreshAllInPanel(data: any): void {
+    private _refreshAllInPanel(data: HttpStatsOtherUserStats.Data | null): void {
         const allIn = data?.allin_data;
         const items = [
             { count: allIn?.active_count || 0, profit: allIn?.active_profit_count || 0 },
@@ -611,16 +605,16 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         const rid = this._requestRID;
         const targetUserID = this._dbUserID || rid;
         try {
-            const res: any = await PlayerStoreUtils.saveRemark(this._roomData, targetUserID, text);
+            const res = await PlayerStoreUtils.saveRemark(this._roomData, targetUserID, text);
             if (!this._isCurrentRequest(rid)) return;
-            if (res?.code === 0) {
+            if (res.code === 0) {
                 this._currentRemark = text;
                 playerStore.updateRemark(rid, text);
                 this.playerNoteLabel.string = text || i18nMgr.Get('UIUserRemarks_7S612w03');
                 viewManager.showToast('备注修改成功');
                 return;
             }
-            viewManager.showToast(res?.message || '备注修改失败');
+            viewManager.showToast(res.message || '备注修改失败');
         } catch (error) {
             if (this._isCurrentRequest(rid)) viewManager.showToast('备注修改失败');
         }
@@ -639,18 +633,18 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         viewManager.showToast('当前版本暂未接入发放额度面板');
     }
 
-    private async _confirmAndRun(content: string, action: () => Promise<any>): Promise<void> {
+    private async _confirmAndRun(content: string, action: () => Promise<WebResponseDataBase>): Promise<void> {
         const name = this._player.name || '';
         viewManager.openDialog('ConfirmOrNotice', {
             content: content.replace('{0}', name),
             diaolgType: UIComfirmDialogType.CONFIRM,
             commit_click: async () => {
-                const res: any = await action();
-                if (res?.code === 0) {
+                const res = await action();
+                if (res.code === 0) {
                     this.close();
                     return;
                 }
-                viewManager.showToast(res?.message || CPErrorCode.ServerErrorDescription(res?.code) || '操作失败');
+                viewManager.showToast(res.message || CPErrorCode.ServerErrorDescription(res.code) || '操作失败');
             }
         });
     }
@@ -665,12 +659,12 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this._isChatMuted = next;
         this._refreshToggleVisual('chatCloseToggle', next);
         try {
-            const res: any = await PlayerStoreUtils.setMuteState(this._roomData, this._requestRID, next);
-            if (res?.code !== 0) throw new Error(res?.message || '禁言失败');
-        } catch (error: any) {
+            const res = await PlayerStoreUtils.setMuteState(this._roomData, this._requestRID, next);
+            if (res.code !== 0) throw new Error(res.message || '禁言失败');
+        } catch (error) {
             this._isChatMuted = !next;
             this._refreshToggleVisual('chatCloseToggle', this._isChatMuted);
-            viewManager.showToast(error?.message || '禁言失败');
+            viewManager.showToast((error as Error).message || '禁言失败');
         }
     }
 
@@ -691,18 +685,18 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         }
         this._playClickScale(clickNode, false);
         try {
-            const res: any = await PlayerStoreUtils.sendDiamond(this._requestRID, amount);
-            if (res?.code === 0) {
+            const res = await PlayerStoreUtils.sendDiamond(this._requestRID, amount);
+            if (res.code === 0) {
                 this._diamondSentCount++;
                 this._refreshDiamondNotice();
                 this._loadDiamondBalance();
                 return;
             }
-            if (res?.code === 20124) {
+            if (res.code === 20124) {
                 this._diamondSentCount = this._diamondConfig?.limit_time_pre_day || 999;
                 this._refreshDiamondNotice();
             }
-            viewManager.showToast(res?.message || i18nMgr.Get('GiftDiamondError') || '赠送失败');
+            viewManager.showToast(res.message || i18nMgr.Get('GiftDiamondError') || '赠送失败');
         } catch (error) {
             viewManager.showToast(i18nMgr.Get('GiftDiamondError') || '赠送失败');
         }
