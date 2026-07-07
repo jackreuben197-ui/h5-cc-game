@@ -425,6 +425,7 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         roomData.basicInfo.callTimeWinline = this._roomInfo.calltimeWinLine;
         roomData.basicInfo.callTimeLimit = this._roomInfo.calltimeLimit;
         roomData.basicInfo.handNum = this._roomInfo.handNum;
+        roomData.basicInfo.playDuration = this._roomInfo.playDuration;
         roomData.basicInfo.goldType = this._roomInfo.goldType;
         //jackpot
         roomData.basicInfo.jackpot = this._roomInfo.jackpot == 1;

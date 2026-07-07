@@ -57,6 +57,8 @@ export async function Seated(data: ServerMessageSeated.AsObject, roomID: number,
     mine.storeChips = data.storeChips;
     mine.totalChips = data.chips;
     mine.deposit = data.deposit;
+    // 战绩面板：累加本人的总带入（对应 Unity TexasSituationController.SitDown）
+    roomData.report.applySitDown(userStore.userID, data.totalBringin || data.chips, data.deposit, userStore.name, userStore.avatar);
     // 操作面板(不显示)
     mine.autoOperationType = AutoOperationTypeTexas.NO;
     mine.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);

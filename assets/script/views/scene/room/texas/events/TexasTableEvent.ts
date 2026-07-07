@@ -499,4 +499,19 @@ export default class TexasTableEvent {
             }
         });
     }
+
+    public static PrefetchhReportRoomers(roomID: number, matchID: number): void {
+        if (!roomID) return;
+        ProtocolAgency.Send({
+            code: Code.MSG_D_ROOMERS,
+            roomID,
+            matchID,
+            body: {
+                room: { roomId: roomID, matchId: matchID },
+                history: true,
+                historyOffset: 0,
+                historyLimit: 1000
+            }
+        });
+    }
 }
