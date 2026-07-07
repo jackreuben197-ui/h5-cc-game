@@ -9,6 +9,8 @@ export type ReplayHandData = typeof WebRoomCenterHistoryReplay.Data & {
     // 发发看揭示的公共牌(HTTP 回包合并进缓存,解析时 overlay 到公共牌数组)
     pub_cards?: string;
     pub_cards2?: string;
+    // 本手牌收藏状态(查询/增删收藏后合并进缓存,翻回该页不再请求)
+    collected?: boolean;
 };
 
 @bindData()
@@ -93,6 +95,74 @@ export default class TexasGameRoomDataReplay extends cc.EventTarget {
         if (viewData.pub_cards2) cached.pub_cards2 = viewData.pub_cards2;
         this.persist(handNum, cached);
         this.applyReplay(cached);
+    }
+
+    /** 收藏状态(合并在手牌缓存记录上,null 表示尚未查询过) */
+    public getCollected(handNum: number): boolean | null {
+        return this._cache.get(handNum)?.collected ?? null;
+    }
+
+    /** 收藏状态写入手牌缓存并持久化(查询回包/收藏增删成功后调用) */
+    public setCollected(handNum: number, collected: boolean) {
+        const cached = this._cache.get(handNum);
+        if (!cached) return;
+        cached.collected = collected;
+        this.persist(handNum, cached);
+    }
+    // ==================== 偷看次数 / VIP 免费次数(内存 + H5 IndexedDB 双级缓存) ====================
+    // 内存缓存 null 表示未加载;偷偷看/发发看购买成功后 clear,下次取价重新拉取回填
+    private _peekTimes: number = null;
+    private _viewPubFreeCount: number = null;
+
+    /** 偷偷看已付费次数(房间级),未缓存返回 null */
+    public async getPeekTimes(): Promise<number | null> {
+        if (this._peekTimes != null) return this._peekTimes;
+        const uid = userStore.userRID;
+        if (!uid) return null;
+        const cached = await bridgeStorage.indexedDBGet<number>(
+            StorageKey.STORE_TABLE_USER_DATA_INFO,
+            StorageKey.getReplayPeekTimesKey(uid, this._roomData.roomID)
+        );
+        if (cached != null) this._peekTimes = cached;
+        return cached;
+    }
+
+    public setPeekTimes(times: number) {
+        this._peekTimes = times;
+        const uid = userStore.userRID;
+        if (!uid) return;
+        bridgeStorage.indexedDBPut(StorageKey.STORE_TABLE_USER_DATA_INFO, StorageKey.getReplayPeekTimesKey(uid, this._roomData.roomID), times);
+    }
+
+    public clearPeekTimes() {
+        this._peekTimes = null;
+        const uid = userStore.userRID;
+        if (!uid) return;
+        bridgeStorage.indexedDBDelete(StorageKey.STORE_TABLE_USER_DATA_INFO, StorageKey.getReplayPeekTimesKey(uid, this._roomData.roomID));
+    }
+
+    /** 发发看 VIP 免费剩余次数(用户级),未缓存返回 null */
+    public async getViewPubFreeCount(): Promise<number | null> {
+        if (this._viewPubFreeCount != null) return this._viewPubFreeCount;
+        const uid = userStore.userRID;
+        if (!uid) return null;
+        const cached = await bridgeStorage.indexedDBGet<number>(StorageKey.STORE_TABLE_USER_DATA_INFO, StorageKey.getReplayViewPubFreeKey(uid));
+        if (cached != null) this._viewPubFreeCount = cached;
+        return cached;
+    }
+
+    public setViewPubFreeCount(count: number) {
+        this._viewPubFreeCount = count;
+        const uid = userStore.userRID;
+        if (!uid) return;
+        bridgeStorage.indexedDBPut(StorageKey.STORE_TABLE_USER_DATA_INFO, StorageKey.getReplayViewPubFreeKey(uid), count);
+    }
+
+    public clearViewPubFreeCount() {
+        this._viewPubFreeCount = null;
+        const uid = userStore.userRID;
+        if (!uid) return;
+        bridgeStorage.indexedDBDelete(StorageKey.STORE_TABLE_USER_DATA_INFO, StorageKey.getReplayViewPubFreeKey(uid));
     }
 
     @pureEvent(TexasGameRoomDataReplay.REPLAY_DATA_CHANGE)

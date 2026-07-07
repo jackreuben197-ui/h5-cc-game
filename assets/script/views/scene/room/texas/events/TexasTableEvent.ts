@@ -13,7 +13,19 @@ import { CPErrorCode } from '../../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../../i18n/i18nMgr';
 import { HttpRoomBringInByIDProtocol } from '../../../../../net/https/data/room/HttpRoomBringInByIDProtocol';
 import { HttpRoomBringOutProtocol } from '../../../../../net/https/data/room/HttpRoomBringOutProtocol';
-import { WebRoomCenterGameWatch, WebRoomCenterHistoryViewPublicCards, WebUserRoom, WebUserRoomBringin, WWW } from '../../../../../net/https/WebRequest';
+import {
+    WebMiscGameRecordRound,
+    WebMiscGameRemoveRound,
+    WebMiscGameRoundStatus,
+    WebRoomCenterGameWatch,
+    WebRoomCenterGameWatchNum,
+    WebRoomCenterHistoryViewPublicCards,
+    WebRoomCenterHistoryViewPublicCardsFreeCount,
+    WebUserDiamondsWallet,
+    WebUserRoom,
+    WebUserRoomBringin,
+    WWW
+} from '../../../../../net/https/WebRequest';
 import ProtocolAgency from '../../../../../net/websocket/ProtocolAgency';
 import { BringInCommitFn } from '../../../../dialog/bringin/provider/BringInProvider';
 import viewManager from '../../../../UIViewManager';
@@ -549,6 +561,8 @@ export default class TexasTableEvent {
             });
             if (res?.code === 0 && res?.data) {
                 roomData.replay.mergeWatchedHands(handNum, res.data.be_watched_user_hands);
+                // 付费次数变了,失效缓存,下次取价重新拉档位
+                roomData.replay.clearPeekTimes();
             }
             return { code: res?.code ?? -1 };
         } catch (e) {
@@ -569,13 +583,108 @@ export default class TexasTableEvent {
                 })
             });
             if (res?.code === 0 && res?.data) {
-                // 兼容 data 平铺/嵌套两种回包
-                const viewData = res.data.pub_cards != null ? res.data : (res.data.data ?? res.data);
-                roomData.replay.mergeViewedPublicCards(handNum, viewData);
+                roomData.replay.mergeViewedPublicCards(handNum, res.data);
+                // 免费次数/付费状态变了,失效缓存,下次取价重新拉取
+                roomData.replay.clearViewPubFreeCount();
             }
             return { code: res?.code ?? -1 };
         } catch (e) {
             return { code: -1 };
         }
+    }
+
+    /** 牌谱收藏状态查询(true=已收藏);缓存合并在手牌回放记录上,翻回已查询过的页不再请求 */
+    public static async ReqReplayCollectStatus(
+        roomData: TexasGameRoomData,
+        params: { room_id: number; room_unique_id: string; hand_num: number }
+    ): Promise<boolean> {
+        const cached = roomData.replay.getCollected(params.hand_num);
+        if (cached != null) return cached;
+        return WWW.Instance.CommonAPI({
+            web_class: WebMiscGameRoundStatus,
+            body: WebMiscGameRoundStatus.Request(params)
+        }).then(
+            (res: any) => {
+                const records = res?.data?.records;
+                const isCollected = res?.code === 0 && records?.length > 0 && records[0].remove === 0;
+                if (res?.code === 0) roomData.replay.setCollected(params.hand_num, isCollected);
+                return isCollected;
+            },
+            () => false
+        );
+    }
+
+    /** 牌谱收藏(成功后回写缓存) */
+    public static ReqReplayAddCollect(roomData: TexasGameRoomData, body: typeof WebMiscGameRecordRound.RequestParams): Promise<{ code: number }> {
+        return WWW.Instance.CommonAPI({
+            web_class: WebMiscGameRecordRound,
+            body: WebMiscGameRecordRound.Request(body)
+        }).then(
+            (res: any) => {
+                if (res?.code === 0) roomData.replay.setCollected(body.hand_num, true);
+                return { code: res?.code ?? -1 };
+            },
+            (err: any) => ({ code: err?.code ?? -1 })
+        );
+    }
+
+    /** 取消牌谱收藏(成功后回写缓存) */
+    public static ReqReplayRemoveCollect(
+        roomData: TexasGameRoomData,
+        params: { room_id: number; room_unique_id: string; hand_num: number }
+    ): Promise<{ code: number }> {
+        return WWW.Instance.CommonAPI({
+            web_class: WebMiscGameRemoveRound,
+            body: WebMiscGameRemoveRound.Request(params)
+        }).then(
+            (res: any) => {
+                if (res?.code === 0) roomData.replay.setCollected(params.hand_num, false);
+                return { code: res?.code ?? -1 };
+            },
+            (err: any) => ({ code: err?.code ?? -1 })
+        );
+    }
+
+    /** 偷偷看已付费次数(阶梯计价档位用);缓存优先,偷偷看成功后由 PeekReplayHands 失效 */
+    public static async ReqReplayPeekTimes(roomData: TexasGameRoomData): Promise<number> {
+        const cached = await roomData.replay.getPeekTimes();
+        if (cached != null) return cached;
+        return WWW.Instance.CommonAPI({
+            web_class: WebRoomCenterGameWatchNum,
+            body: WebRoomCenterGameWatchNum.Request({ room_id: roomData.roomID })
+        }).then(
+            (res: any) => {
+                const times = res?.data?.pay_times || 0;
+                roomData.replay.setPeekTimes(times);
+                return times;
+            },
+            () => 0
+        );
+    }
+
+    /** 发发看 VIP 免费剩余次数;缓存优先,发发看成功后由 RevealReplayPublicCards 失效 */
+    public static async ReqReplayViewPubFreeCount(roomData: TexasGameRoomData): Promise<number> {
+        const cached = await roomData.replay.getViewPubFreeCount();
+        if (cached != null) return cached;
+        return WWW.Instance.CommonAPI({
+            web_class: WebRoomCenterHistoryViewPublicCardsFreeCount
+        }).then(
+            (res: any) => {
+                const count = res?.data?.free_count ?? 0;
+                roomData.replay.setViewPubFreeCount(count);
+                return count;
+            },
+            () => 0
+        );
+    }
+
+    /** 钻石余额(仅展示,不回写 store) */
+    public static ReqDiamondBalance(): Promise<number | null> {
+        return WWW.Instance.CommonAPI({
+            web_class: WebUserDiamondsWallet
+        }).then(
+            (res: any): number | null => res?.data?.diamonds_wallet?.diamonds ?? null,
+            (): number | null => null
+        );
     }
 }

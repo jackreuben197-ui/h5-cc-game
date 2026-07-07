@@ -64,6 +64,13 @@ export interface HistoryStreetModel {
     pot: number;
 }
 
+/** 玩家整手牌的最后一次动作(概览卡用),raiseTimes 为该玩家自己累计的 bet/raise 次数 */
+export interface HistoryLastAction {
+    actName: string;
+    actChip: number;
+    raiseTimes: number;
+}
+
 export interface HistoryHandModel {
     handNum: number;
     playerCount: number;
@@ -80,6 +87,18 @@ export interface HistoryHandModel {
     river: HistoryStreetModel;
     showdownPot: number;
     insurancePool: number;
+    /** seatID → 最后动作(解析时一趟预计算,替代逐玩家全量遍历) */
+    lastActions: Map<number, HistoryLastAction>;
+}
+
+/**
+ * bet/raise 的显示规则(概览卡与详情行共用):
+ * 首次下注显示动作本身,第二次显示"加注",更多次显示 次数+后缀
+ */
+export function formatRaiseTimes(raiseTimes: number, firstLabel: string, raiseLabel: string, multiSuffix: string = raiseLabel): string {
+    if (raiseTimes <= 1) return firstLabel;
+    if (raiseTimes === 2) return raiseLabel;
+    return raiseTimes + multiSuffix;
 }
 
 export function getActionNumByName(actionName: string): HistoryActionType {
@@ -190,11 +209,10 @@ export function hasHiddenCards(data: ReplayHandData, model: HistoryHandModel, my
     return false;
 }
 
-/** 玩家整手牌的最后一次动作(概览卡用) */
-export function getPlayerLastAction(seatID: number, data: ReplayHandData): { actName: string; actChip: number; raiseTimes: number } {
-    const lastAct = { actName: '', actChip: 0, raiseTimes: 0 };
-    let raiseCount = 0;
-    const procedure = data.s.procedure;
+/** 一趟遍历四条街,得出每个座位的最后动作(下标为 seatID) */
+function parseLastActions(procedure: typeof WebRoomCenterHistoryReplay.Procedure): Map<number, HistoryLastAction> {
+    const lastActions = new Map<number, HistoryLastAction>();
+    const raiseCounts = new Map<number, number>();
     const allRounds: ProcedurePl[] = [
         ...(procedure.preflop?.pl ?? []),
         ...(procedure.flop?.pl ?? []),
@@ -202,15 +220,13 @@ export function getPlayerLastAction(seatID: number, data: ReplayHandData): { act
         ...(procedure.river?.pl ?? [])
     ];
     for (const round of allRounds) {
-        if (round.sn !== seatID) continue;
+        let raiseCount = raiseCounts.get(round.sn) ?? 0;
         if (round.act === 'bet' || round.act === 'raise') {
-            raiseCount++;
+            raiseCounts.set(round.sn, ++raiseCount);
         }
-        lastAct.actName = round.act;
-        lastAct.actChip = round.act_amt;
-        lastAct.raiseTimes = raiseCount;
+        lastActions.set(round.sn, { actName: round.act, actChip: round.act_amt, raiseTimes: raiseCount });
     }
-    return lastAct;
+    return lastActions;
 }
 
 function parseStreet(
@@ -396,6 +412,7 @@ export function parseHistoryHand(data: ReplayHandData, myRID: number): HistoryHa
         turn,
         river,
         showdownPot: potRef.pot,
-        insurancePool
+        insurancePool,
+        lastActions: parseLastActions(procedure)
     };
 }

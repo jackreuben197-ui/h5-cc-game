@@ -7,23 +7,16 @@ import diamondModel from '../../../data/trade/DiamondModel';
 import userStore from '../../../data/user/UserStore';
 import { StringHelper } from '../../../helper/StringHelper';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
-import {
-    WebMiscGameRecordRound,
-    WebMiscGameRemoveRound,
-    WebMiscGameRoundStatus,
-    WebRoomCenterGameWatchNum,
-    WebRoomCenterHistoryViewPublicCardsFreeCount,
-    WebUserDiamondsWallet,
-    WWW
-} from '../../../net/https/WebRequest';
+import { i18nMgr } from '../../../i18n/i18nMgr';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import AssetManager, { BUNDLE_RESOURCES } from '../../loader/AssetManager';
 import TexasTableEvent from '../../scene/room/texas/events/TexasTableEvent';
 import viewManager from '../../UIViewManager';
 import StepSlider from '../../widget/StepSlider';
 import HistoryPlayerCardItem from './HistoryPlayerCardItem';
-import { getPlayerLastAction, getViewPubRound, hasHiddenCards, hasHiddenPublicCards, HistoryHandModel, parseHistoryHand } from './HistoryReplayModel';
-import { ScoreRowMode, ScoreSectionView, StreetSectionView } from './HistorySections';
+import { getViewPubRound, hasHiddenCards, hasHiddenPublicCards, HistoryHandModel, parseHistoryHand } from './HistoryReplayModel';
+import HistoryScoreSection, { ScoreRowMode } from './HistoryScoreSection';
+import HistoryStreetSection from './HistoryStreetSection';
 
 export type UITexasHistoryParam = {
     roomID: number;
@@ -35,10 +28,10 @@ const { ccclass, property, menu } = cc._decorator;
 /**
  * 牌谱回放对话框。
  * prefab 迁自 pokerqueen(UITexasHistory.prefab):主节点走 @property 编辑器绑定,
- * 已绑定节点内部的子节点(标题标签/模板/价格标签等)按路径查找;详情区行节点用 prefab 内模板克隆。
+ * 已绑定节点内部的子节点(价格标签/箭头等)按路径查找。
+ * 详情区块组件化:$Score/$Preflop 是 prefab 常驻节点(编辑器绑定组件),
+ * Flop/Turn/River 与 Showdown/Showdown2 由通用区块 prefab 运行时实例化。
  * 翻页滑条为 prefab 内置的通用 StepSlider 节点,编辑器绑定,接线方式对齐 UITexasReport。
- * prefab 精简:$Turn/$River 运行时克隆自 $Flop(改标题、补公牌位),$Showdown2 克隆自 $Showdown,
- * prefab 内不再保留这三个区块;克隆体内部子节点名沿用源区块($Flop_Cards / $Showdown_Childs 等)。
  */
 @ccclass
 @traceClass()
@@ -57,16 +50,16 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     private dashboardNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '详情展开按钮($DetailsBtn,含 Background/arrowsp 箭头)' })
     private detailsBtnNode: cc.Node = null;
-    @property({ type: cc.Node, displayName: 'Score结算区($Score)' })
-    private scoreNode: cc.Node = null;
-    @property({ type: cc.Node, displayName: 'Preflop区($Preflop)' })
-    private preflopNode: cc.Node = null;
+    @property({ type: HistoryScoreSection, displayName: 'Score结算区组件($Score)' })
+    private scoreSection: HistoryScoreSection = null;
+    @property({ type: HistoryStreetSection, displayName: 'Preflop区组件($Preflop)' })
+    private preflopSection: HistoryStreetSection = null;
     @property({ type: cc.Node, displayName: 'Preflop标题空心牌容器($Preflop_title_childs)' })
     private preflopTitleCards: cc.Node = null;
-    @property({ type: cc.Node, displayName: 'Flop区($Flop,Turn/River 运行时克隆自此)' })
-    private flopNode: cc.Node = null;
-    @property({ type: cc.Node, displayName: 'Showdown结算区($Showdown,Showdown2 运行时克隆自此)' })
-    private showdownNode: cc.Node = null;
+    @property({ type: cc.Prefab, displayName: '街道区块Prefab(实例化Flop/Turn/River)', tooltip: 'rc/scene/room/texas/widget/HistoryStreetSection' })
+    private streetSectionPrefab: cc.Prefab = null;
+    @property({ type: cc.Prefab, displayName: '结算区块Prefab(实例化Showdown/Showdown2)', tooltip: 'rc/scene/room/texas/widget/HistoryScoreSection' })
+    private scoreSectionPrefab: cc.Prefab = null;
     @property({ type: StepSlider, displayName: '翻页滑条(StepSlider)' })
     private pageSlider: StepSlider = null;
     @property({ type: cc.Label, displayName: '页码标签(cc_Label$page)' })
@@ -88,14 +81,12 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     private peekCostLabel: cc.Label = null;
     private viewPubCostLabel: cc.Label = null;
     private favoStar: cc.Node = null;
-    // ==================== 详情区视图 ====================
-    private scoreSection: ScoreSectionView = null;
-    private preflopSection: StreetSectionView = null;
-    private flopSection: StreetSectionView = null;
-    private turnSection: StreetSectionView = null;
-    private riverSection: StreetSectionView = null;
-    private showdownSection: ScoreSectionView = null;
-    private showdown2Section: ScoreSectionView = null;
+    // ==================== 运行时实例化的详情区块 ====================
+    private flopSection: HistoryStreetSection = null;
+    private turnSection: HistoryStreetSection = null;
+    private riverSection: HistoryStreetSection = null;
+    private showdownSection: HistoryScoreSection = null;
+    private showdown2Section: HistoryScoreSection = null;
     // ==================== 私有状态 ====================
     private _roomData: TexasGameRoomData = null;
     private _currentData: ReplayHandData = null;
@@ -123,64 +114,39 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     // ====================================================
 
     private _resolveChildNodes() {
-        // top_block 的 BlockInputEvents 覆盖全屏会拦截 Scroller 拖动,禁用(对齐老版)
+        // top_block 的 BlockInputEvents 覆盖全屏会拦截滚动拖拽,禁用(对齐老版)
         const blockComp = this.topBlockNode?.getComponent(cc.BlockInputEvents);
         if (blockComp) blockComp.enabled = false;
-        // Scroller 的 ScrollView 在代码里接线(迁移的 prefab 里 content 引用缺失,不依赖编辑器绑定)
-        const scrollerNode = this.contentNode.parent?.parent;
-        const scrollView = scrollerNode?.getComponent(cc.ScrollView) ?? scrollerNode?.addComponent(cc.ScrollView);
-        if (scrollView) {
-            scrollView.content = this.contentNode;
-            scrollView.vertical = true;
-            scrollView.horizontal = false;
-        }
         this.detailsArrow = cc.find('Background/arrowsp', this.detailsBtnNode);
         this.peekCostLabel = cc.find('diamondIcon/$PeekCost', this.peekBtnNode)?.getComponent(cc.Label);
         this.viewPubCostLabel = cc.find('diamondIcon/$ViewPubCost', this.viewPubBtnNode)?.getComponent(cc.Label);
         this.favoStar = cc.find('Background/$star', this.favoBtnNode);
     }
 
-    private _buildSections() {
-        // Turn/River/Showdown2 区块运行时克隆(prefab 只保留 $Flop/$Showdown 一份);
-        // 必须在 StreetSectionView 构造前克隆,构造器会把行模板从容器中摘除
-        const turnNode = this._cloneStreetNode('Turn', 4, 1);
-        const riverNode = this._cloneStreetNode('River', 5, 2);
-        const showdown2Node = cc.instantiate(this.showdownNode);
-        showdown2Node.name = '$Showdown2';
-        showdown2Node.parent = this.showdownNode.parent;
-        showdown2Node.setSiblingIndex(this.showdownNode.getSiblingIndex() + 1);
-        // Score 区行模板(单套/双套),Showdown/Showdown2 共用单套模板
-        const scoreChilds = cc.find('Shows/$Score_Childs', this.scoreNode);
-        const singleTemplate = scoreChilds.getChildByName('$Score_Child');
-        const dualTemplate = scoreChilds.getChildByName('$Score_Second_Child');
-        singleTemplate.removeFromParent(false);
-        dualTemplate.removeFromParent(false);
-        this.scoreSection = new ScoreSectionView(this.scoreNode, '$Score_PublicCards', '$Score_Childs', singleTemplate, dualTemplate);
-        this.preflopSection = new StreetSectionView(this.preflopNode, null, '$Preflop_Childs', '$Preflop_Child', true);
-        this.flopSection = new StreetSectionView(this.flopNode, '$Flop_Cards', '$Flop_Childs', '$Flop_Child');
-        this.turnSection = new StreetSectionView(turnNode, '$Flop_Cards', '$Flop_Childs', '$Flop_Child');
-        this.riverSection = new StreetSectionView(riverNode, '$Flop_Cards', '$Flop_Childs', '$Flop_Child');
-        this.showdownSection = new ScoreSectionView(this.showdownNode, '$Showdown_PublicCards', '$Showdown_Childs', singleTemplate);
-        this.showdown2Section = new ScoreSectionView(showdown2Node, '$Showdown_PublicCards', '$Showdown_Childs', singleTemplate);
-    }
-
     /**
-     * 从 $Flop 克隆街道区块:改标题文字、补公牌位(标题公牌显示数量由子节点数决定,Flop 3 / Turn 4 / River 5),
-     * 插到 $content 中 $Flop 之后,保持 Layout 纵向顺序
+     * Flop/Turn/River 与 Showdown/Showdown2 用通用区块 prefab 实例化;
+     * $content 里 $Preflop 是最后一个常驻区块,顺序追加即可保持 Layout 纵向顺序。
+     * 标题公牌显示数量由子节点数决定(prefab 默认 3 张,Turn 4 / River 5)
      */
-    private _cloneStreetNode(flagText: string, titleCardCount: number, siblingOffset: number): cc.Node {
-        const node = cc.instantiate(this.flopNode);
-        node.name = `$${flagText}`;
-        node.parent = this.flopNode.parent;
-        node.setSiblingIndex(this.flopNode.getSiblingIndex() + siblingOffset);
-        const flagLabel = cc.find('Title/flag', node)?.getComponent(cc.Label);
-        if (flagLabel) flagLabel.string = flagText;
-        const cardsContainer = cc.find('Title/$Flop_Cards', node);
-        while (cardsContainer.childrenCount < titleCardCount) {
-            const card = cc.instantiate(cardsContainer.children[0]);
-            card.parent = cardsContainer;
-        }
-        return node;
+    private _buildSections() {
+        const container = this.preflopSection.node.parent;
+        const makeStreet = (flagText: string, titleCardCount: number) => {
+            const node = cc.instantiate(this.streetSectionPrefab);
+            node.parent = container;
+            const section = node.getComponent(HistoryStreetSection);
+            section.setup(flagText, titleCardCount);
+            return section;
+        };
+        this.flopSection = makeStreet('Flop', 3);
+        this.turnSection = makeStreet('Turn', 4);
+        this.riverSection = makeStreet('River', 5);
+        const makeScore = () => {
+            const node = cc.instantiate(this.scoreSectionPrefab);
+            node.parent = container;
+            return node.getComponent(HistoryScoreSection);
+        };
+        this.showdownSection = makeScore();
+        this.showdown2Section = makeScore();
     }
 
     private _registerTouchEvents() {
@@ -196,7 +162,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     }
 
     private async _loadPrefabs() {
-        const cardPrefab = await AssetManager.getOrLoad(BUNDLE_RESOURCES, 'rc/dialog/history/HistoryPlayerCardItem', cc.Prefab);
+        const cardPrefab = await AssetManager.getOrLoad(BUNDLE_RESOURCES, 'rc/scene/room/texas/widget/HistoryPlayerCardItem', cc.Prefab);
         if (!cc.isValid(this.node)) return;
         this._playerCardPrefab = cardPrefab;
         // 首包比 prefab 先到时补渲染
@@ -263,7 +229,6 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
 
     /** 用绝对值区间 1~totalPage 初始化滑条,并把滑块摆到当前页 */
     private _applySliderState() {
-        if (!this.pageSlider) return;
         if (this._totalPage <= 0) {
             this.pageSlider.setProgress(0);
             return;
@@ -286,9 +251,10 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         this._refreshPageLabel();
     }
 
-    /** 缓存命中时数据层直接回发 REPLAY_DATA_CHANGE,重复请求无副作用 */
+    /** 缓存命中时数据层直接回发 REPLAY_DATA_CHANGE;页码没动且已是当前数据时不再重复请求/重渲染 */
     private _onSliderTouchEnd() {
         if (this._totalPage <= 0 || !this._roomData) return;
+        if (this._currentData?.s?.hand === this._currentPage) return;
         TexasTableEvent.RequestReplay(this._roomData, this._currentPage);
     }
 
@@ -296,7 +262,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     private _gotoPage(page: number) {
         this._currentPage = page;
         this._refreshPageLabel();
-        if (this.pageSlider) this.pageSlider.value = page;
+        this.pageSlider.value = page;
         TexasTableEvent.RequestReplay(this._roomData, page);
     }
 
@@ -376,7 +342,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
                 return;
             }
             const player = model.players[index];
-            const lastAct = getPlayerLastAction(player.seatID, this._currentData);
+            const lastAct = model.lastActions.get(player.seatID) ?? { actName: '', actChip: 0, raiseTimes: 0 };
             item.node.active = true;
             item.setData({
                 userName: player.userName,
@@ -400,21 +366,36 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         const cardCount = this._roomData.basicInfo.handCardNum;
         // 双套牌局 Score/Showdown/Showdown2 各显示半池(对齐老版)
         const showdownPot = model.haveSecondCard ? model.showdownPot / 2 : model.showdownPot;
-        this.scoreSection.show(
-            model.hasResult ? model.players : [],
+        this.scoreSection.show({
+            players: model.hasResult ? model.players : [],
             model,
             cardCount,
-            model.haveSecondCard ? ScoreRowMode.DualBoard : ScoreRowMode.FirstBoard,
-            model.publicCards,
-            showdownPot
-        );
+            mode: model.haveSecondCard ? ScoreRowMode.DualBoard : ScoreRowMode.FirstBoard,
+            titleCards: model.publicCards,
+            pot: showdownPot
+        });
         this.preflopSection.show(model.preflop, []);
         this.flopSection.show(model.flop, model.publicCards);
         this.turnSection.show(model.turn, model.publicCards);
         this.riverSection.show(model.river, model.publicCards);
-        this.showdownSection.show(model.hasResult ? model.winners : [], model, cardCount, ScoreRowMode.FirstBoard, model.publicCards, showdownPot);
+        const winners = model.hasResult ? model.winners : [];
+        this.showdownSection.show({
+            players: winners,
+            model,
+            cardCount,
+            mode: ScoreRowMode.FirstBoard,
+            titleCards: model.publicCards,
+            pot: showdownPot
+        });
         if (model.haveSecondCard) {
-            this.showdown2Section.show(model.hasResult ? model.winners : [], model, cardCount, ScoreRowMode.SecondBoard, model.secondPublicCards, showdownPot);
+            this.showdown2Section.show({
+                players: winners,
+                model,
+                cardCount,
+                mode: ScoreRowMode.SecondBoard,
+                titleCards: model.secondPublicCards,
+                pot: showdownPot
+            });
         } else {
             // 从双套牌局切到单套时清掉残留
             this.showdown2Section.clearLabels();
@@ -423,8 +404,11 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         this._applyDetailsVisibility();
     }
 
-    /** 详情区显隐 = 展开状态 && 该区有数据 */
+    /** 详情区显隐 = 展开状态 && 该区有数据;箭头方向跟随展开状态(对话框池化复用后重开也一致) */
     private _applyDetailsVisibility() {
+        if (this.detailsArrow) {
+            this.detailsArrow.scaleY = Math.abs(this.detailsArrow.scaleY) * (this._detailsExpanded ? -1 : 1);
+        }
         const sections = [
             this.scoreSection,
             this.preflopSection,
@@ -454,9 +438,6 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     private onDetailsClicked() {
         this._detailsExpanded = !this._detailsExpanded;
         this._applyDetailsVisibility();
-        if (this.detailsArrow) {
-            this.detailsArrow.scaleY *= -1;
-        }
     }
 
     private onCloseClicked() {
@@ -496,7 +477,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     /** 偷偷看价格(阶梯收费,按已偷看次数取档) */
     private async _reqPeekPrice() {
         try {
-            const peekCount = await this._reqWatchNum();
+            const peekCount = await TexasTableEvent.ReqReplayPeekTimes(this._roomData);
             const times = Math.min(peekCount, 4);
             const typeExt = 11 + 10 * times;
             await diamondModel.reqDiamondConfig(UITexasHistory.DIAMOND_CONFIG_PEEK);
@@ -508,20 +489,8 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         }
     }
 
-    private _reqWatchNum(): Promise<number> {
-        return new Promise(resolve => {
-            WWW.Instance.CommonAPI({
-                web_class: WebRoomCenterGameWatchNum,
-                body: WebRoomCenterGameWatchNum.Request({ room_id: this._roomData.roomID })
-            }).then(
-                (res: any) => resolve(res?.data?.pay_times || 0),
-                () => resolve(0)
-            );
-        });
-    }
-
     /** 从钻石配置中按小盲档位匹配价格 */
-    private _getPriceFromConfig(diamondConfig: any): number {
+    private _getPriceFromConfig(diamondConfig: { setting?: { sb: number; price: number }[] }): number {
         if (!diamondConfig?.setting) return 0;
         const sb = this._roomData.basicInfo.sbante?.sb || 0;
         for (const item of diamondConfig.setting) {
@@ -555,7 +524,8 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         if (result.code === 0) {
             this._reqDiamondBalance();
         } else if (result.code === 90003) {
-            viewManager.showToast('该手牌尚未同步到历史记录，请稍后再试');
+            // 该手牌尚未同步到历史记录(无专用 i18n key,用通用"服务器正忙,请稍后再试")
+            viewManager.showToast(i18nMgr.Get('error997'));
         } else {
             viewManager.showToast(CPErrorCode.ServerErrorDescription(result.code));
         }
@@ -564,10 +534,10 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     /** 发发看价格(VIP 免费次数优先,否则按轮次取钻石配置) */
     private async _reqViewPubPrice() {
         try {
-            const freeCount = await this._reqViewPubFreeCount();
+            const freeCount = await TexasTableEvent.ReqReplayViewPubFreeCount(this._roomData);
             if (!cc.isValid(this.node)) return;
             if (freeCount > 0) {
-                this.viewPubCostLabel.string = `VIP免费 ${freeCount}`;
+                this.viewPubCostLabel.string = `${i18nMgr.Get('UIMIneVIPFreeTip')} ${freeCount}`;
                 return;
             }
             const round = getViewPubRound(this._model.publicCards);
@@ -579,17 +549,6 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         } catch (e) {
             this.tracelog.warn('_reqViewPubPrice failed', e);
         }
-    }
-
-    private _reqViewPubFreeCount(): Promise<number> {
-        return new Promise(resolve => {
-            WWW.Instance.CommonAPI({
-                web_class: WebRoomCenterHistoryViewPublicCardsFreeCount
-            }).then(
-                (res: any) => resolve(res?.data?.free_count ?? res?.data?.data?.free_count ?? 0),
-                () => resolve(0)
-            );
-        });
     }
     // ====================================================
     // 收藏
@@ -613,68 +572,47 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         };
     }
 
-    private _reqCollectStatus() {
+    private async _reqCollectStatus() {
         const params = this._collectParamsBase();
         if (!params.room_id || !params.hand_num) return;
-        WWW.Instance.CommonAPI({
-            web_class: WebMiscGameRoundStatus,
-            body: WebMiscGameRoundStatus.Request(params)
-        }).then((res: any) => {
-            if (!cc.isValid(this.node)) return;
-            const records = res?.data?.data?.records ?? res?.data?.records;
-            const isCollected = res?.code === 0 && records?.length > 0 && records[0].remove === 0;
-            this._refreshCollectShow(isCollected);
-        });
+        const isCollected = await TexasTableEvent.ReqReplayCollectStatus(this._roomData, params);
+        if (!cc.isValid(this.node)) return;
+        this._refreshCollectShow(isCollected);
     }
 
-    private _reqAddCollect() {
+    private async _reqAddCollect() {
         const base = this._collectParamsBase();
         this._setButtonEnabled(this.favoBtnNode, false);
-        WWW.Instance.CommonAPI({
-            web_class: WebMiscGameRecordRound,
-            body: WebMiscGameRecordRound.Request({
-                id: 0,
-                room_id: base.room_id,
-                match_id: this._currentData?.s?.mid || this._roomData.matchID || 0,
-                room_unique_id: base.room_unique_id,
-                name: this._roomData.basicInfo.roomName || '',
-                hand_num: base.hand_num,
-                change: 0,
-                type: 0,
-                open: 0
-            })
-        }).then(
-            (res: any) => {
-                if (!cc.isValid(this.node)) return;
-                if (res?.code === 0) {
-                    this._refreshCollectShow(true);
-                    viewManager.showToast('收藏成功');
-                } else {
-                    this._refreshCollectShow(this._isCollected);
-                    viewManager.showToast(CPErrorCode.ServerErrorDescription(res?.code));
-                }
-            },
-            (err: any) => {
-                if (!cc.isValid(this.node)) return;
-                this._refreshCollectShow(this._isCollected);
-                viewManager.showToast(CPErrorCode.ServerErrorDescription(err?.code));
-            }
-        );
+        const result = await TexasTableEvent.ReqReplayAddCollect(this._roomData, {
+            id: 0,
+            room_id: base.room_id,
+            match_id: this._currentData?.s?.mid || this._roomData.matchID || 0,
+            room_unique_id: base.room_unique_id,
+            name: this._roomData.basicInfo.roomName || '',
+            hand_num: base.hand_num,
+            change: 0,
+            type: 0,
+            open: 0
+        });
+        if (!cc.isValid(this.node)) return;
+        if (result.code === 0) {
+            this._refreshCollectShow(true);
+            viewManager.showToast(i18nMgr.Get('Collection_success'));
+        } else {
+            this._refreshCollectShow(this._isCollected);
+            viewManager.showToast(CPErrorCode.ServerErrorDescription(result.code));
+        }
     }
 
-    private _reqRemoveCollect() {
-        WWW.Instance.CommonAPI({
-            web_class: WebMiscGameRemoveRound,
-            body: WebMiscGameRemoveRound.Request(this._collectParamsBase())
-        }).then((res: any) => {
-            if (!cc.isValid(this.node)) return;
-            if (res?.code === 0) {
-                this._refreshCollectShow(false);
-                viewManager.showToast('已取消收藏');
-            } else {
-                viewManager.showToast(CPErrorCode.ServerErrorDescription(res?.code));
-            }
-        });
+    private async _reqRemoveCollect() {
+        const result = await TexasTableEvent.ReqReplayRemoveCollect(this._roomData, this._collectParamsBase());
+        if (!cc.isValid(this.node)) return;
+        if (result.code === 0) {
+            this._refreshCollectShow(false);
+            viewManager.showToast(i18nMgr.Get('adaptation10211'));
+        } else {
+            viewManager.showToast(CPErrorCode.ServerErrorDescription(result.code));
+        }
     }
 
     /** 收藏按钮状态:参与过这手牌才可收藏;已收藏时星星点亮 */
@@ -690,15 +628,11 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     // 钻石余额(仅展示,不回写 store)
     // ====================================================
 
-    private _reqDiamondBalance() {
-        WWW.Instance.CommonAPI({
-            web_class: WebUserDiamondsWallet
-        }).then((res: any) => {
-            if (!cc.isValid(this.node)) return;
-            const diamonds = res?.data?.diamonds_wallet?.diamonds;
-            if (diamonds != null) {
-                this.diamondNumLabel.string = diamonds.toLocaleString('en-US');
-            }
-        });
+    private async _reqDiamondBalance() {
+        const diamonds = await TexasTableEvent.ReqDiamondBalance();
+        if (!cc.isValid(this.node)) return;
+        if (diamonds != null) {
+            this.diamondNumLabel.string = diamonds.toLocaleString('en-US');
+        }
     }
 }

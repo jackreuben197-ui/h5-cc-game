@@ -4,8 +4,8 @@ import TexasGameRoomDataBasic from './TexasGameRoomDataBasic';
 import TexasGameRoomDataPlayerMine from './TexasGameRoomDataPlayerMine';
 import TexasGameRoomDataPotInfo from './TexasGameRoomDataPotInfo';
 import TexasGameRoomDataPublicCards from './TexasGameRoomDataPublicCards';
-import TexasGameRoomDataReport from './TexasGameRoomDataReport';
 import TexasGameRoomDataReplay from './TexasGameRoomDataReplay';
+import TexasGameRoomDataReport from './TexasGameRoomDataReport';
 import TexasGameRoomDataRoundState from './TexasGameRoomDataRoundState';
 import TexasGameRoomDataSeatsStateManager from './TexasGameRoomDataSeatsStateManager';
 

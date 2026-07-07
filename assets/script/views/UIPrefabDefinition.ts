@@ -114,7 +114,7 @@ export const UIPrefabDialog = {
         UIType: UITexasHistory,
         Name: '牌谱回放',
         Bundle: BUNDLE_RESOURCES,
-        Path: 'rc/dialog/history/UITexasHistory'
+        Path: 'rc/scene/room/texas/UITexasHistory'
     }
 } as const;
 

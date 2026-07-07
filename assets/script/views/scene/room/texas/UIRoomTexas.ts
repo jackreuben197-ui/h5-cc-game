@@ -7,11 +7,11 @@ import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRo
 import { VideoModel } from '../../../../game/constant/VideoModel';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
-import ProtocolAgency from '../../../../net/websocket/ProtocolAgency';
 import AgoraManager from '../../../../net/agora/AgoraManager';
 import AgoraVideoRender from '../../../../net/agora/AgoraVideoRender';
 import VideoRoomManager from '../../../../net/agora/VideoRoomManager';
 import { WebUserSetVideoMask, WWW } from '../../../../net/https/WebRequest';
+import ProtocolAgency from '../../../../net/websocket/ProtocolAgency';
 import UIComponentBase from '../../../base/UIComponentBase';
 import { UIGuideDialogType } from '../../../dialog/mushroomandcriticalhit/UIGuideDialog';
 import viewManager from '../../../UIViewManager';
@@ -49,9 +49,9 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private sideMenuNode: cc.Node = null;
     private _sideMenuTexasMenu: UITexasMenu = null;
     private _onSideMenuClicked: () => void = null!;
-    @property({ type: cc.Button, displayName: '战绩按钮'})
+    @property({ type: cc.Button, displayName: '战绩按钮' })
     private btnReport: cc.Button = null!;
-    @property({ type: cc.Button, displayName: '牌谱按钮'})
+    @property({ type: cc.Button, displayName: '牌谱按钮' })
     private btnReplay: cc.Button = null!;
     @property({ type: cc.Node, displayName: '操作面板' })
     private opPannelNode: cc.Node = null!;

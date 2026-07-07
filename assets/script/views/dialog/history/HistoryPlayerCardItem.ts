@@ -2,44 +2,31 @@ import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import RemoteSprite from '../../widget/RemoteSprite';
 import { setCardSprite } from './HistoryCardHelper';
-import { getActionNumByName, getCardTypeName, HistoryActionType } from './HistoryReplayModel';
+import { formatRaiseTimes, getActionNumByName, getCardTypeName, HistoryActionType } from './HistoryReplayModel';
 
 /**
- * 操作动作 i18n key 映射,下标对应 HistoryActionType
+ * 操作动作 i18n key 映射,下标对应 HistoryActionType(对齐 Unity UITexasReplay 系列的取词)
  */
 const PLAYER_ACTION_I18N_KEYS = [
     '', // 0: 无操作
     'UISB', // 1: small blind → 小盲
     'UIBB', // 2: big blind → 大盲
     'UITexas_call', // 3: call → 跟注
-    '', // 4: check → 过牌 (无专用key,直接写)
-    '', // 5: straddle → 偷鸡 (直接写)
+    'adaptation10315', // 4: check → 让牌
+    '', // 5: straddle (无专用key,用通用术语字面量)
     'UITexas_Bet', // 6: bet → 下注
     'adaptation10045', // 7: raise → 加注
-    '', // 8: 3Bet (组合显示)
+    '', // 8: 3Bet (通用术语字面量)
     'adaptation30074', // 9: all in → 全下
     'UITexas_fold', // 10: fold → 弃牌
-    '' // 11: insure → 保险 (直接写)
+    'adaptation10179' // 11: insure → 保险
 ];
-
-// ── 私牌排列锚点 (取自 prefab 中 cardS1 / cardS6 的初始 x) ──
-const HAND_CARD_LEFT_X = -290.378;
-
-const HAND_CARD_RIGHT_X = -144.331;
-
-const HAND_CARD_Y = 29;
-
-const HAND_CARD_WIDTH = 84;
 
 const HAND_CARD_VISIBLE_GAP = 4;
 
-// ── 公牌位置常量 ──
+// 单套牌局的行高(双套行高取 prefab 根节点默认高度)
+const SINGLE_BOARD_HEIGHT = 240;
 
-const PUBLIC_CARD_SINGLE_Y = 29; // 单套公牌 Y (与私牌同行)
-
-const PUBLIC_CARD_UPPER_Y = 65.531; // 双套公牌上排 Y
-
-const PUBLIC_CARD_LOWER_Y = -72.164; // 双套公牌下排 Y
 const COLOR_WIN = cc.color(255, 80, 80);
 
 const COLOR_LOSE = cc.color(80, 160, 255);
@@ -70,6 +57,7 @@ const { ccclass, property, menu } = cc._decorator;
 /**
  * 牌谱概览卡(prefab 迁自 pokerqueen playerCardNode,裸 Sprite 结构),主节点走 @property 编辑器绑定。
  * 头像 RemoteSprite 在 onLoad 运行时挂到头像节点上(prefab 里只有普通 Sprite)。
+ * 卡牌排列锚点(私牌左右界/公牌两排 Y)首次 setData 时从 prefab 初始位置读出,不在代码里写死。
  */
 @ccclass
 @menu('Dialog/History/HistoryPlayerCardItem')
@@ -95,12 +83,22 @@ export default class HistoryPlayerCardItem extends cc.Component {
     @property({ type: cc.Label, displayName: '第二套盈亏(profit_b)' })
     private profitB: cc.Label = null;
     private playHeadImg: RemoteSprite = null;
+    // ==================== 排列锚点(首次 setData 从 prefab 初始位置读取) ====================
+    private _anchorsReady: boolean = false;
+    private _handLeftX: number = 0;
+    private _handRightX: number = 0;
+    private _handY: number = 0;
+    private _handCardWidth: number = 0;
+    private _pubUpperY: number = 0;
+    private _pubLowerY: number = 0;
+    private _dualBoardHeight: number = 0;
 
     protected onLoad(): void {
         this.playHeadImg = this.headNode.getComponent(RemoteSprite) || this.headNode.addComponent(RemoteSprite);
     }
 
     public setData(data: HistoryPlayerCardData) {
+        this._initAnchorsOnce();
         this.playerName.string = StringHelper.LengthNick(data.userName);
         if (data.headPic) {
             this.playHeadImg.url = data.headPic;
@@ -112,6 +110,20 @@ export default class HistoryPlayerCardItem extends cc.Component {
         this._setProfit(data.winAnte, data.isMine, data.publicCards2, data.winAnte2);
     }
 
+    /** 锚点必须在任何布局改写前读取;不用 onLoad 是因为节点可能挂在未激活的容器下 */
+    private _initAnchorsOnce() {
+        if (this._anchorsReady) return;
+        this._anchorsReady = true;
+        const firstHand = this.handCardNodes[0];
+        this._handLeftX = firstHand.x;
+        this._handRightX = this.handCardNodes[this.handCardNodes.length - 1].x;
+        this._handY = firstHand.y;
+        this._handCardWidth = firstHand.width;
+        this._pubUpperY = this.publicCardNodes[0].y;
+        this._pubLowerY = this.publicCardNodesB[0].y;
+        this._dualBoardHeight = this.node.height;
+    }
+
     /**
      * 私牌左对齐紧密排列(无数据显示2张牌背):
      * spacing = min(牌宽+间隙, (rightX-leftX)/(count-1)),牌多时压缩到右边界内
@@ -119,13 +131,13 @@ export default class HistoryPlayerCardItem extends cc.Component {
     private _setHandCards(cards: number[]) {
         const showBack = !cards || cards.length === 0;
         const count = showBack ? 2 : cards.length;
-        const spacing = count > 1 ? Math.min(HAND_CARD_WIDTH + HAND_CARD_VISIBLE_GAP, (HAND_CARD_RIGHT_X - HAND_CARD_LEFT_X) / (count - 1)) : 0;
+        const spacing = count > 1 ? Math.min(this._handCardWidth + HAND_CARD_VISIBLE_GAP, (this._handRightX - this._handLeftX) / (count - 1)) : 0;
         for (let i = 0; i < this.handCardNodes.length; i++) {
             const card = this.handCardNodes[i];
             if (i < count) {
                 card.active = true;
-                card.x = count === 1 ? HAND_CARD_LEFT_X : HAND_CARD_LEFT_X + i * spacing;
-                card.y = HAND_CARD_Y;
+                card.x = count === 1 ? this._handLeftX : this._handLeftX + i * spacing;
+                card.y = this._handY;
                 card.zIndex = i;
                 setCardSprite(card, showBack ? 0 : cards[i] || 0);
             } else {
@@ -140,8 +152,8 @@ export default class HistoryPlayerCardItem extends cc.Component {
      */
     private _setPublicCards(publicCards: number[], publicCards2?: number[]) {
         const isDualBoard = publicCards2 && publicCards2.length > 0;
-        this.node.height = isDualBoard ? 300 : 240;
-        const upperY = isDualBoard ? PUBLIC_CARD_UPPER_Y : PUBLIC_CARD_SINGLE_Y;
+        this.node.height = isDualBoard ? this._dualBoardHeight : SINGLE_BOARD_HEIGHT;
+        const upperY = isDualBoard ? this._pubUpperY : this._handY;
         this.publicCardNodes.forEach((card, index) => {
             if (publicCards && publicCards[index] > 0) {
                 card.active = true;
@@ -154,7 +166,7 @@ export default class HistoryPlayerCardItem extends cc.Component {
         this.publicCardNodesB.forEach((card, index) => {
             if (isDualBoard && publicCards2[index] > 0) {
                 card.active = true;
-                card.y = PUBLIC_CARD_LOWER_Y;
+                card.y = this._pubLowerY;
                 setCardSprite(card, publicCards2[index]);
             } else {
                 card.active = false;
@@ -165,22 +177,16 @@ export default class HistoryPlayerCardItem extends cc.Component {
     private _setCardType(cardType: number) {
         let name = getCardTypeName(cardType);
         if (!name) {
-            name = i18nMgr.Get('UITexas_fold') || '弃牌';
+            name = i18nMgr.Get('UITexas_fold');
         }
         this.ctLabel.string = name;
     }
 
     private _setAction(actName: string, actChip: number, raiseTimes: number) {
         const actNum = getActionNumByName(actName);
-        let actionStr = '';
+        let actionStr: string;
         if (actNum === HistoryActionType.Bet || actNum === HistoryActionType.Raise) {
-            if (raiseTimes <= 1) {
-                actionStr = this._getActionI18N(actNum);
-            } else if (raiseTimes === 2) {
-                actionStr = this._getActionI18N(HistoryActionType.Raise);
-            } else {
-                actionStr = raiseTimes + this._getActionI18N(HistoryActionType.Raise);
-            }
+            actionStr = formatRaiseTimes(raiseTimes, this._getActionI18N(actNum), this._getActionI18N(HistoryActionType.Raise));
         } else {
             actionStr = this._getActionI18N(actNum);
         }
@@ -200,15 +206,12 @@ export default class HistoryPlayerCardItem extends cc.Component {
         if (key) {
             return i18nMgr.Get(key) || '';
         }
+        // 无专用 i18n key 的扑克通用术语(对齐 Unity 明细区缩写方案)
         switch (actNum) {
-            case HistoryActionType.Check:
-                return '过牌';
             case HistoryActionType.Straddle:
-                return '偷鸡';
+                return 'Straddle';
             case HistoryActionType.ThreeBet:
                 return '3Bet';
-            case HistoryActionType.Insure:
-                return '保险';
             default:
                 return '';
         }
