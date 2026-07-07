@@ -18,7 +18,7 @@ import BetButtonsContainer, { caculatePotsBet } from './widget/BetButtonContaine
 const { ccclass, property, menu } = cc._decorator;
 
 @ccclass
-@traceClass({ level: 'debug' })
+@traceClass()
 @menu('Scene/Room/Texas/Operation')
 export default class Operation extends cc.Component {
     @property({ type: cc.Node, displayName: '真正根节点,保证根节点永远不会Disable' })
@@ -312,6 +312,11 @@ export default class Operation extends cc.Component {
         }
         // 手动操作(声音提示)
         soundManager.playEffect(SoundEffectKey.MyTurn);
+        // 麦序模式
+        if (this._seatPlayer.roomData.basicInfo.antiCheatConfig && this._seatPlayer.roomData.basicInfo.antiCheatConfig.isOrderMode) {
+            this._seatPlayer.localCameraEnabled = true;
+            this._seatPlayer.localMicrophoneEnabled = true;
+        }
         // 先把自动操作面板隐藏
         this._seatPlayer.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
         this.rootNode.active = true;

@@ -4,7 +4,8 @@ import { traceClass } from '../../../core/decorator/LogTrace';
 import { handValueTypeToString } from '../../../core/poker/PoerkCard';
 import { getMaxHandValueByPokeType } from '../../../core/poker/PokerUtil';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
-import { VideoModel } from '../../../game/constant/VideoModel';
+import { ButtonState } from '../../../game/constant/Constants';
+import agoraManager from '../../../net/agora/AgoraManager';
 import { OperatorMine } from './model/Operator';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';
@@ -24,6 +25,16 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public static readonly AUTO_OPERATION_TYPE_CHANGE = 'AUTO_OPERATION_TYPE_CHANGE';
     public static readonly VALID_AUTO_OPERATIONS_CHANGE = 'VALID_AUTO_OPERATIONS_CHANGE';
     public static readonly SHOW_SQUID_IN = 'SHOW_SQUID_IN';
+    public static readonly LOCAL_CAMERA_STATE_CHANGE = 'LOCAL_CAMERA_STATE_CHANGE';
+    public static readonly LOCAL_CAMERA_BTN_STATE_CHANGE = 'LOCAL_CAMERA_BTN_STATE_CHANGE';
+    public static readonly LOCAL_CAMERA_STATE_CHANGE_DELAY = 'LOCAL_CAMERA_STATE_CHANGE_DELAY';
+    public static readonly LOCAL_MICROPHONE_STATE_CHANGE = 'LOCAL_MICROPHONE_STATE_CHANGE';
+    public static readonly LOCAL_MICROPHONE_BTN_STATE_CHANGE = 'LOCAL_MICROPHONE_BTN_STATE_CHANGE';
+    public static readonly VIDEO_MASK_BTN_STATE_CHAGE = 'VIDEO_MASK_BTN_STATE_CHAGE';
+    public static readonly REMOTE_CAMERA_STATE_CHANGE = 'REMOTE_CAMERA_STATE_CHANGE';
+    public static readonly REMOTE_MICROPHONE_ENABLED_CHANGE = 'REMOTE_MICROPHONE_ENABLED_CHANGE';
+    public static readonly RANDOM_VIDEO_ACTIVE_CHANGE = 'RANDOM_VIDEO_ACTIVE_CHANGE';
+    public static readonly RANDOM_VIDEO_END_TIME_CHANGE = 'RANDOM_VIDEO_END_TIME_CHANGE';
     private _roomData: TexasGameRoomData;
     public get roomData() {
         return this._roomData;
@@ -46,13 +57,48 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     @pureEvent(TexasGameRoomDataPlayerMine.HIGHLIGHT_CARDS)
     public highlightCards(cards: number[]) {}
 
-    public get needVideoPermision() {
-        return this._roomData.basicInfo.videoModel !== VideoModel.NONE;
+    // 真实状态(摄像机)
+    @observable(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE)
+    public localCameraEnabled: boolean = false;
+    // 延迟渲染（摄像头)
+    @observable(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE_DELAY)
+    public localCameraEnabledDelayed: boolean = false;
+    // 按钮（摄像头）
+    @observable(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_BTN_STATE_CHANGE)
+    public localCameraBtnState: ButtonState = ButtonState.DISABLE;
+    // 真实状态（麦克风）
+    @observable(TexasGameRoomDataPlayerMine.LOCAL_MICROPHONE_STATE_CHANGE)
+    public localMicrophoneEnabled: boolean = false;
+    // 按钮（麦克风）
+    @observable(TexasGameRoomDataPlayerMine.LOCAL_MICROPHONE_BTN_STATE_CHANGE)
+    public localMicrophoneBtnState: ButtonState = ButtonState.DISABLE;
+    // 按钮（节能）
+    @observable(TexasGameRoomDataPlayerMine.VIDEO_MASK_BTN_STATE_CHAGE)
+    public maskBtnState: ButtonState = ButtonState.DISABLE;
+    //public maskBtnIncludeDisable: boolean = false;
+    @observable(TexasGameRoomDataPlayerMine.REMOTE_CAMERA_STATE_CHANGE)
+    public remoteCameraEnabled: ButtonState = ButtonState.HIDDEN;
+    @observable(TexasGameRoomDataPlayerMine.REMOTE_MICROPHONE_ENABLED_CHANGE)
+    public remoteMicrophoneEnabled: ButtonState = ButtonState.HIDDEN;
+
+    public async clearVideoAndAudio() {
+        this.randomVideoActive = false;
+        this.randomVideoEndTime = 0;
+        await agoraManager.disableCamera();
+        await agoraManager.disableMicrophone();
+        this.muteEvents();
+        this.localCameraBtnState = ButtonState.DISABLE;
+        this.localMicrophoneBtnState = ButtonState.DISABLE;
+        this.remoteCameraEnabled = ButtonState.HIDDEN;
+        this.remoteMicrophoneEnabled = ButtonState.HIDDEN;
+        this.unmuteEvents();
     }
     // ==================== 随机视频验证状态 ====================
     /** 是否正在随机视频验证中 */
+    @observable(TexasGameRoomDataPlayerMine.RANDOM_VIDEO_ACTIVE_CHANGE)
     public randomVideoActive: boolean = false;
     /** 随机视频验证结束时间戳（毫秒），0 表示未在验证 */
+    @observable(TexasGameRoomDataPlayerMine.RANDOM_VIDEO_END_TIME_CHANGE)
     public randomVideoEndTime: number = 0;
     // 如果有座位,座位号 > 0
     @observable(TexasGameRoomDataPlayerMine.SEATNO_CHANGED)

@@ -5,8 +5,6 @@ import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/m
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { AnimateDisplayTypeAction, AnimateDisplayTypeCards, AnimateDisplayTypeRoundBet } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
-import { VideoModel } from '../../../game/constant/VideoModel';
-import VideoRoomManager from '../../../net/agora/VideoRoomManager';
 
 const _plog = createLogger('ServerMessageActionAll');
 
@@ -32,6 +30,11 @@ export function ActionAll(data: ServerMessageActionAll.AsObject, roomID: number,
     }
     if (seatPlayer.mine) {
         seatPlayer.mine.operator = null;
+        //麦序关闭
+        if (roomData.basicInfo.antiCheatConfig && roomData.basicInfo.antiCheatConfig.isOrderMode) {
+            seatPlayer.mine.localCameraEnabled = false;
+            seatPlayer.mine.localMicrophoneEnabled = false;
+        }
     }
     //所有下注
     roomData.potInfo.allPot = data.allBet;
@@ -81,10 +84,5 @@ export function ActionAll(data: ServerMessageActionAll.AsObject, roomID: number,
             }
             seatData.operator = op;
         }
-    }
-    // 麦序模式：操作者变更时同步视频可见性
-    if (roomData.basicInfo.videoModel === VideoModel.SEQUENCE) {
-        const nextSeatId = data.nextOperator ? data.nextOperator.seatId : 0;
-        VideoRoomManager.Instance.sequenceSyncRemoteVideos(nextSeatId);
     }
 }

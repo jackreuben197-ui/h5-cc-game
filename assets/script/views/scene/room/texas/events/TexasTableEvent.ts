@@ -10,6 +10,7 @@ import ProcedureManager from '../../../../../game/procedure/ProcedureManager';
 import h5MessageManager from '../../../../../H5MsgMgr';
 import { CPErrorCode } from '../../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../../i18n/i18nMgr';
+import agoraManager from '../../../../../net/agora/AgoraManager';
 import { HttpRoomBringInByIDProtocol } from '../../../../../net/https/data/room/HttpRoomBringInByIDProtocol';
 import { HttpRoomBringOutProtocol } from '../../../../../net/https/data/room/HttpRoomBringOutProtocol';
 import { WebUserRoom, WebUserRoomBringin, WWW } from '../../../../../net/https/WebRequest';
@@ -41,17 +42,11 @@ export default class TexasTableEvent {
             return;
         }
         // 视频房间：坐下前先请求浏览器摄像头权限（不依赖 Agora 频道状态）
-        if (seatData.needVideoPermision) {
-            try {
-                this.tracelog.debug('[Sitdown] 请求浏览器摄像头权限...');
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                // 权限通过，立即释放 stream（Agora 的 enableCamera 会自己创建 track）
-                this.tracelog.debug('[Sitdown] 摄像头权限通过，释放 stream');
-                stream.getTracks().forEach(t => t.stop());
-            } catch (e) {
-                // 权限被拒绝
-                this.tracelog.error('[Sitdown] 摄像头权限被拒绝:', e);
-                viewManager.showToast('必须同意浏览器的视频权限才能成功坐在视频桌');
+        if (seatData.roomData.basicInfo.antiCheatConfig) {
+            const seatedConfig = seatData.roomData.basicInfo.antiCheatConfig.getSeatedSetting();
+            const ok = await agoraManager.getMediaDevicesSupported(seatedConfig.enableCamera, true);
+            if (!ok) {
+                viewManager.showToast('必须同意浏览器的音视频权限才能成功坐在视频桌');
                 setTimeout(() => {
                     ProcedureManager.StartProcedure(ProcedureDefine.Return);
                 }, 3000);

@@ -2,8 +2,10 @@ import { Def, InsuranceOddsForPotsUserCount, RoomJackpotConfig, SquidCountRateCo
 import { bindData, IObservableBindings, observable, pureEvent } from '../../../core/decorator/DataBind';
 import { AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDisplayType';
 import { ChatType } from '../../../game/constant/ChatType';
+import { GameTypeToTableCategory } from '../../../game/constant/LogicTypeConf';
 import { MushroomMode } from '../../../game/constant/Mushroom';
 import { SquidLeaveMode, SquidMode } from '../../../game/constant/Squid';
+import { VideoAntiCheatConfig } from '../../../game/constant/VideoModel';
 import { ViewPlayerCardsMode } from '../../../game/constant/ViewPlayerCardsMode';
 import GameplayUtil from '../../../game/util/GameplayUtil';
 import { StringHelper } from '../../../helper/StringHelper';
@@ -84,9 +86,14 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public get roomType() {
         return this._roomType;
     }
+    private _tableCategory: number;
+    public get tableCategory(): number {
+        return this._tableCategory;
+    }
     public set roomType(r: number) {
         const { gameType, pokerType, betType, isMTT } = GameplayUtil.RoomTypeExtract(r);
         this.gameType = gameType;
+        this._tableCategory = GameTypeToTableCategory(gameType);
         this.pokerType = pokerType;
         this.betType = betType;
         this.isMtt = isMTT;
@@ -134,15 +141,14 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     //安全房间
     public seatedMessage: boolean; // 坐下才有消息(也就是安全房间)
     public onlyIOS: boolean;
-    // 视频相关
-    public antiCheatType: number; // 防作弊类型 0 未知 1 无 2 实时语音 3 实时视频 4 人脸验证
-    public normalAntiCheatOrderType: number;
-    public normalAntiCheatOrderMicType: number;
-    public antiCheatTimeLimit: number;
-    public videoEffectType: number;
-    public videoPowerSaving: number;
-    public videoVerifyType: number;
-    public videoModel: number;
+    // 音视频防作弊
+    public antiCheatConfig: VideoAntiCheatConfig = null;
+    public get antiCheatType(): number {
+        return this.antiCheatConfig ? this.antiCheatConfig.antiCheatType : 1;
+    }
+    public get isInVideoRoom(): boolean {
+        return !!this.antiCheatConfig && this.antiCheatConfig.isInVideoRoom;
+    }
     // 限制带入（只能申请）
     public limitBringIn: boolean;
     //强制随机坐下
