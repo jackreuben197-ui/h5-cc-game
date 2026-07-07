@@ -1,7 +1,7 @@
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import viewManager from '../../UIViewManager';
-import PlayerInfoProvider from './PlayerInfoProvider';
+import PlayerStoreUtils from '../../../data/player/PlayerStoreUtils';
 
 const { ccclass, menu, property } = cc._decorator;
 
@@ -123,7 +123,7 @@ export default class UIReport extends UIComponentBaseDialog<UIReportParam> {
             return;
         }
         try {
-            const res: any = await PlayerInfoProvider.report({
+            const res: any = await PlayerStoreUtils.report({
                 roomID: this._param?.roomID || 0,
                 matchID: this._param?.matchID || 0,
                 userRID: this._param?.randomNum || this._param?.userRID || 0,

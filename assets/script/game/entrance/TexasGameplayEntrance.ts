@@ -472,6 +472,7 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         } else {
             roomData.basicInfo.videoModel = 0;
         }
+        roomData.mine.updateRoomAdminPermissions(this._roomInfo.roomAdmin || null);
         roomData.seatsStateManager.seatsCount = this._roomInfo.seatCount;
         roomDataManager.setRoomData(this._roomId, this.matchId, roomData);
         const body: ClientMessageEnterRoom.AsObject = {

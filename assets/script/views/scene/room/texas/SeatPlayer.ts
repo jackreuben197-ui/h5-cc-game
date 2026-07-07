@@ -3,6 +3,7 @@ import { autoBindEvents, bindEvent, unBindEvents, unBindEventsAll } from '../../
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import { HandValueType, handValueTypeToString } from '../../../../core/poker/PoerkCard';
 import soundManager, { SoundEffectKey } from '../../../../core/SoundManager';
+import PlayerStoreUtils from '../../../../data/player/PlayerStoreUtils';
 import { Operator, OpertionType } from '../../../../data/room/texas/model/Operator';
 import texasGamePersonalSettings, { TexasGamePersonalSettings } from '../../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
@@ -194,6 +195,7 @@ export default class SeatPlayer extends cc.Component {
     private _bindEventsAndRefresh() {
         // 统一激活绑定，注入强类型 tag 推导过滤机制
         autoBindEvents(this, { player: this._seatPlayer, setting: texasGamePersonalSettings });
+        PlayerStoreUtils.syncSeatPlayer(this._seatPlayer);
     }
     // ==================== 麦克风状态图标（视频房间用） ====================
     /** 动态创建麦克风状态图标节点，挂在 avatar 父级（与头像同坐标系，便于定位） */
@@ -272,6 +274,9 @@ export default class SeatPlayer extends cc.Component {
         this.userSeat.active = b;
         this.emptySeat.node.active = !b;
         this.emptySeat.interactable = !b;
+        if (b) {
+            PlayerStoreUtils.syncSeatPlayer(this._seatPlayer);
+        }
         // 本人相关,设置属性
         if (b && mine) {
             autoBindEvents(this, { mine: mine });
@@ -289,11 +294,13 @@ export default class SeatPlayer extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayer.NICKNAME_CHANGE, 'player')
     private onUpdateNickname(na: string) {
         this.nickName.string = na;
+        PlayerStoreUtils.syncSeatPlayer(this._seatPlayer);
     }
 
     @bindEvent(TexasGameRoomDataPlayer.AVATAR_CHANGE, 'player')
     private onUpdateAvatar(avatar: string) {
         this.avatar.url = avatar;
+        PlayerStoreUtils.syncSeatPlayer(this._seatPlayer);
     }
 
     @bindEvent(TexasGameRoomDataPlayer.CHIPS_CHANGE, 'player')

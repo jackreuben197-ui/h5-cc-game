@@ -2,7 +2,9 @@ import { Code } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayer from '../../../data/room/texas/TexasGameRoomDataPlayer';
-import userStore from '../../../data/user/UserStore';
+import playerStore, { PlayerBasicData, PlayerDiamondConfig, PlayerPropData } from '../../../data/player/PlayerStore';
+import PlayerStoreUtils from '../../../data/player/PlayerStoreUtils';
+import userStore, { UserStore } from '../../../data/user/UserStore';
 import { AntiCheatType } from '../../../game/constant/AntiCheatType';
 import { ChatType } from '../../../game/constant/ChatType';
 import { RoomOriginType } from '../../../game/constant/RoomOriginType';
@@ -14,7 +16,6 @@ import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import { UIComfirmDialogType } from '../confirm/UIConfirmDialog';
 import viewManager from '../../UIViewManager';
-import PlayerInfoProvider, { PlayerInfoBasicData, PlayerInfoDiamondConfig, PlayerInfoPropData } from './PlayerInfoProvider';
 
 const { ccclass, menu, property } = cc._decorator;
 const VIEW_MANAGER_MASK_NODE = 'ithinktisinotshouldbedupilcatednodename';
@@ -22,20 +23,11 @@ const CONSUME_TYPE_EMOJI_2 = 6;
 const BROADCAST_MSG_TYPE_THROW = 4;
 const OTHER_DATA_TAB_Y = -163.5;
 
-export interface PlayerInfoPermissions {
-    isRoomManager?: boolean;
-    canStandUp?: boolean;
-    canLeave?: boolean;
-    canCredit?: boolean;
-    canMute?: boolean;
-}
-
 export interface UIPlayerInfoParam {
     roomID: number;
     matchID: number;
     player: TexasGameRoomDataPlayer;
-    permissions?: PlayerInfoPermissions;
-    diamondConfig?: PlayerInfoDiamondConfig;
+    diamondConfig?: PlayerDiamondConfig;
 }
 
 interface DataLabelItem {
@@ -90,14 +82,12 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private static readonly PROP_TYPE_BASE = CONSUME_TYPE_EMOJI_2 * 100;
     private static readonly PROP_TYPE_MAP: number[] = [602, 609, 608, 605, 600, 610, 611, 603, 604, 607, 601, 606];
     private static readonly shieldUsers: Set<number> = new Set();
-    private static readonly savedRemarks: Map<number, string> = new Map();
     private static readonly audioClosedUsers: Set<number> = new Set();
     private static readonly videoClosedUsers: Set<number> = new Set();
 
     private _param: UIPlayerInfoParam = null;
     private _roomData: TexasGameRoomData = null;
     private _player: TexasGameRoomDataPlayer = null;
-    private _permissions: PlayerInfoPermissions = {};
     private _isSelf = false;
     private _dbUserID = 0;
     private _currentRemark = '';
@@ -114,7 +104,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private _radarSize = 80;
     private _diamondNodes: Array<{ node: cc.Node; amount: number }> = [];
     private _noticeLabel: cc.Label = null;
-    private _diamondConfig: PlayerInfoDiamondConfig = null;
+    private _diamondConfig: PlayerDiamondConfig = null;
     private _diamondSentCount = 0;
     private _isChatMuted = false;
     private _isShielded = false;
@@ -122,13 +112,12 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private _hasVideoTrack = false;
     private _isAudioClosed = false;
     private _isVideoClosed = false;
-    private _propListData: PlayerInfoPropData[] = [];
+    private _propListData: PlayerPropData[] = [];
 
     public initialize(param: UIPlayerInfoParam): void {
         this._param = param;
         this._roomData = roomDataManager.getRoomData<TexasGameRoomData>(param.roomID, param.matchID);
         this._player = param.player;
-        this._permissions = param.permissions || {};
         this._diamondConfig = param.diamondConfig || null;
         this._diamondSentCount = param.diamondConfig?.sentCount || 0;
         this._requestRID = this._player.userID;
@@ -140,6 +129,8 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             avatar: this._player.avatar || '',
             random_num: this._requestRID
         });
+        const cachedBasicInfo = playerStore.getBasicInfo(this._requestRID);
+        if (cachedBasicInfo) this._refreshBasicInfo(cachedBasicInfo);
         this._refreshSelfState();
         this._refreshOpButtons();
         this._switchTab(0);
@@ -163,6 +154,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this._diamondNodes.forEach(item => item.node.targetOff(this));
         this.propOpNode.children.forEach(node => node.targetOff(this));
         this.noteEditBox.node.targetOff(this);
+        userStore.targetOff(this);
     }
 
     private _bindStaticEvents(): void {
@@ -180,6 +172,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this._bindOpButton('videoCloseToggle', this._clickVideoClose);
         this._bindOpButton('shieldToggle', this._clickShield);
         this._bindOpButton('ReportBtn', this._clickReport);
+        userStore.on(UserStore.DIAMONDS_CHANGE, this._refreshDiamondBalance, this);
     }
 
     private _resetView(): void {
@@ -206,29 +199,26 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             this._loadDiamondBalance();
         }
         try {
-            const data = await PlayerInfoProvider.getBasicInfo(rid);
-            if (!this._isCurrentRequest(rid) || !data) return;
-            this._refreshBasicInfo(data);
-            const statsRID = data.random_num || data.un_id || rid;
-            const stats = await PlayerInfoProvider.getStats(this._roomData, statsRID);
+            const data = playerStore.getBasicInfo(rid);
+            const statsRID = data?.random_num || rid;
+            const stats = await PlayerStoreUtils.getStats(this._roomData, statsRID);
             if (this._isCurrentRequest(rid) && stats) this._refreshDataPanel(stats);
         } catch (error) {
             cc.warn('[UIPlayerInfo] load player info failed', error);
         }
     }
 
-    private _refreshBasicInfo(data: PlayerInfoBasicData): void {
-        const rid = data.random_num || data.un_id || this._requestRID;
+    private _refreshBasicInfo(data: PlayerBasicData): void {
+        const rid = data.random_num || this._requestRID;
         if (data.avatar) this._loadRemoteSprite(this.headImgIcon, data.avatar);
         this.nickNameLabel.string = StringHelper.LengthNick(data.nick_name || data.nickname || this._player.name || '', 16);
         this.maleNode.active = data.sex !== 1;
         this.femaleNode.active = data.sex === 1;
         this.playerIDLabel.string = `${rid || ''}`;
-        if (data.user_id) this._dbUserID = data.user_id;
-        let remark = UIPlayerInfo.savedRemarks.get(rid);
-        if (remark === undefined) remark = data.remark_name || '';
+        if (data.random_num) this._dbUserID = data.random_num;
+        const remark = data.remark_name || '';
         this._currentRemark = remark;
-        this.playerNoteLabel.string = remark || '点击添加备注';
+        this.playerNoteLabel.string = remark || i18nMgr.Get('UIUserRemarks_7S612w03');
     }
 
     private _refreshSelfState(): void {
@@ -513,14 +503,14 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
 
     private _refreshOpButtons(): void {
         const basic = this._roomData.basicInfo;
-        const isManager = !!this._permissions.isRoomManager;
-        this._setButtonActive('StandUpBtn', !this._isSelf && isManager && !!this._permissions.canStandUp);
-        this._setButtonActive('DissolveBtn', !this._isSelf && isManager && !!this._permissions.canLeave);
+        const mine = this._roomData.mine;
+        this._setButtonActive('StandUpBtn', !this._isSelf && mine.isRoomManager && mine.canAdminStandUp);
+        this._setButtonActive('DissolveBtn', !this._isSelf && mine.isRoomManager && mine.canAdminLeave);
         this._setButtonActive(
             'CreditBtn',
-            !this._isSelf && isManager && !!this._permissions.canCredit && basic.originType === RoomOriginType.CLUB && basic.goldType === 3
+            !this._isSelf && mine.isRoomManager && basic.originType === RoomOriginType.CLUB && basic.goldType === 3
         );
-        this._setButtonActive('chatCloseToggle', !this._isSelf && isManager && !!this._permissions.canMute);
+        this._setButtonActive('chatCloseToggle', !this._isSelf && mine.isRoomManager);
         this._setButtonActive('audioCloseToggle', !this._isSelf && (basic.antiCheatType === AntiCheatType.AUDIO || basic.antiCheatType === AntiCheatType.VIDEO));
         this._setButtonActive('videoCloseToggle', !this._isSelf && basic.antiCheatType === AntiCheatType.VIDEO);
         this._setButtonActive('shieldToggle', !this._isSelf && basic.antiCheatType < AntiCheatType.FACE_VERIFY && basic.chatType !== ChatType.CLOSE);
@@ -530,9 +520,9 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private async _loadMuteState(): Promise<void> {
-        if (!this._permissions.canMute || !this._permissions.isRoomManager) return;
+        if (!this._roomData.mine.isRoomManager) return;
         try {
-            this._isChatMuted = await PlayerInfoProvider.getMuteState(this._roomData, this._requestRID);
+            this._isChatMuted = await PlayerStoreUtils.getMuteState(this._roomData, this._requestRID);
             if (this._isCurrentRequest(this._requestRID)) this._refreshToggleVisual('chatCloseToggle', this._isChatMuted);
         } catch (error) {
             cc.warn('[UIPlayerInfo] load mute state failed', error);
@@ -568,13 +558,12 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private async _loadDiamondBalance(): Promise<void> {
+        this._refreshDiamondBalance();
+    }
+
+    private _refreshDiamondBalance(): void {
         const label = this.diamondNumNode.getComponent(cc.Label);
-        try {
-            const diamonds = await PlayerInfoProvider.getDiamondBalance();
-            if (this._isCurrentRequest(this._requestRID)) label.string = diamonds.toLocaleString('en-US');
-        } catch (error) {
-            cc.warn('[UIPlayerInfo] load diamond balance failed', error);
-        }
+        label.string = userStore.diamonds.toLocaleString('en-US');
     }
 
     private _refreshDiamondNotice(): void {
@@ -583,13 +572,14 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             return;
         }
         const remaining = Math.max(0, this._diamondConfig.limit_time_pre_day - this._diamondSentCount);
-        const text = i18nMgr.Get('GiftDiamondsTips') || '今日还可赠送 {0} 次，手续费 {1}';
+        const text = i18nMgr.Get('GiftDiamondsTips');
         this._noticeLabel.string = text.replace('{0}', `${remaining}`).replace('{1}', `${this._diamondConfig.fee_rate}%`);
     }
 
     private async _loadPropList(): Promise<void> {
         try {
-            this._propListData = await PlayerInfoProvider.getPropList();
+            await PlayerStoreUtils.preparePropList();
+            this._propListData = playerStore.getPropList();
             this._propListData.forEach((item, index) => {
                 const propNode = this.propOpNode.getChildByName('$propOp_' + (index + 1));
                 const label = cc.find('diamondCost/costNum', propNode).getComponent(cc.Label);
@@ -621,12 +611,12 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         const rid = this._requestRID;
         const targetUserID = this._dbUserID || rid;
         try {
-            const res: any = await PlayerInfoProvider.saveRemark(this._roomData, targetUserID, text);
+            const res: any = await PlayerStoreUtils.saveRemark(this._roomData, targetUserID, text);
             if (!this._isCurrentRequest(rid)) return;
             if (res?.code === 0) {
                 this._currentRemark = text;
-                UIPlayerInfo.savedRemarks.set(rid, text);
-                this.playerNoteLabel.string = text || '点击添加备注';
+                playerStore.updateRemark(rid, text);
+                this.playerNoteLabel.string = text || i18nMgr.Get('UIUserRemarks_7S612w03');
                 viewManager.showToast('备注修改成功');
                 return;
             }
@@ -634,15 +624,15 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         } catch (error) {
             if (this._isCurrentRequest(rid)) viewManager.showToast('备注修改失败');
         }
-        this.playerNoteLabel.string = this._currentRemark || '点击添加备注';
+        this.playerNoteLabel.string = this._currentRemark || i18nMgr.Get('UIUserRemarks_7S612w03');
     }
 
     private _clickStandUp(): void {
-        this._confirmAndRun(i18nMgr.Get('UITexasRoomManagerOpTips7') || '确认让该玩家站起？', () => PlayerInfoProvider.standUp(this._roomData, this._requestRID));
+        this._confirmAndRun(i18nMgr.Get('UITexasRoomManagerOpTips7') || '确认让该玩家站起？', () => PlayerStoreUtils.standUp(this._roomData, this._requestRID));
     }
 
     private _clickLeave(): void {
-        this._confirmAndRun(i18nMgr.Get('UITexasRoomManagerOpTips8') || '确认踢出该玩家？', () => PlayerInfoProvider.leaveRoom(this._roomData, this._requestRID));
+        this._confirmAndRun(i18nMgr.Get('UITexasRoomManagerOpTips8') || '确认踢出该玩家？', () => PlayerStoreUtils.leaveRoom(this._roomData, this._requestRID));
     }
 
     private _clickCredit(): void {
@@ -666,7 +656,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private async _clickChatClose(): Promise<void> {
-        if (!this._permissions.isRoomManager || !this._permissions.canMute) return;
+        if (!this._roomData.mine.isRoomManager) return;
         if (!this._roomData.basicInfo.clubID && !this._roomData.basicInfo.tribeID) {
             viewManager.showToast('当前房间不支持禁言操作');
             return;
@@ -675,7 +665,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this._isChatMuted = next;
         this._refreshToggleVisual('chatCloseToggle', next);
         try {
-            const res: any = await PlayerInfoProvider.setMuteState(this._roomData, this._requestRID, next);
+            const res: any = await PlayerStoreUtils.setMuteState(this._roomData, this._requestRID, next);
             if (res?.code !== 0) throw new Error(res?.message || '禁言失败');
         } catch (error: any) {
             this._isChatMuted = !next;
@@ -701,7 +691,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         }
         this._playClickScale(clickNode, false);
         try {
-            const res: any = await PlayerInfoProvider.sendDiamond(this._requestRID, amount);
+            const res: any = await PlayerStoreUtils.sendDiamond(this._requestRID, amount);
             if (res?.code === 0) {
                 this._diamondSentCount++;
                 this._refreshDiamondNotice();

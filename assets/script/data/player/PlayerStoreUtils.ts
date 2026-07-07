@@ -1,68 +1,32 @@
-import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
+import { traceClass, traceMethod } from '../../core/decorator/LogTrace';
+import TexasGameRoomData from '../room/texas/TexasGameRoomData';
+import TexasGameRoomDataPlayer from '../room/texas/TexasGameRoomDataPlayer';
 import {
     WebChatMessageReport,
     WebCmsExtUserComplaIntReport,
     WebMiscCombine,
     WebOrgClubUserRemaRks,
-    WebOtherUserInfo,
     WebPropChatPropList,
     WebRoomCenterRoomUserLeave,
     WebRoomCenterRoomUserStandUp,
     WebUserDiamondSend,
-    WebUserDiamondsWallet,
     WebUserMute,
     WebUserMuteList,
     WWW
-} from '../../../net/https/WebRequest';
+} from '../../net/https/WebRequest';
+import playerStore, { PlayerReportParam, PlayerPropData } from './PlayerStore';
 
 const CONSUME_TYPE_EMOJI_2 = 6;
 
-export interface PlayerInfoBasicData {
-    nick_name?: string;
-    nickname?: string;
-    avatar?: string;
-    sex?: number;
-    random_num?: number;
-    un_id?: number;
-    user_id?: number;
-    remark_name?: string;
-    remark_desc?: string;
-}
-
-export interface PlayerInfoDiamondConfig {
-    fee_rate: number;
-    limit_time_pre_day: number;
-    sentCount?: number;
-}
-
-export interface PlayerInfoReportParam {
-    roomID: number;
-    matchID?: number;
-    userRID?: number;
-    reportType: string;
-    other?: string;
-    type?: number;
-    handNum?: number;
-    roomUniqueID?: string;
-    userGameRecordID?: number;
-}
-
-export interface PlayerInfoPropData {
-    payPrice: number;
-    priceID: number;
-}
-
-export default class PlayerInfoProvider {
-    public static async getBasicInfo(userRID: number): Promise<PlayerInfoBasicData | null> {
-        const res: any = await WWW.Instance.CommonAPI({
-            web_class: WebOtherUserInfo,
-            api_id: userRID,
-            juhua: false,
-            useCache: true
+@traceClass()
+export default class PlayerStoreUtils {
+    public static syncSeatPlayer(player: TexasGameRoomDataPlayer): void {
+        if (!player.seated || !player.userID) return;
+        playerStore.updateBasicInfo({
+            nick_name: player.name,
+            avatar: player.avatar,
+            random_num: player.userID
         });
-        const data = res?.data;
-        if (Array.isArray(data)) return (data[0] as PlayerInfoBasicData) || null;
-        return (data as PlayerInfoBasicData) || null;
     }
 
     public static async getStats(roomData: TexasGameRoomData, userRID: number): Promise<any | null> {
@@ -125,14 +89,6 @@ export default class PlayerInfoProvider {
         });
     }
 
-    public static async getDiamondBalance(): Promise<number> {
-        const res: any = await WWW.Instance.CommonAPI({
-            web_class: WebUserDiamondsWallet,
-            juhua: false
-        });
-        return res?.data?.diamonds_wallet?.diamonds || 0;
-    }
-
     public static sendDiamond(targetUserRID: number, amount: number): Promise<any> {
         return WWW.Instance.CommonAPI({
             web_class: WebUserDiamondSend,
@@ -144,7 +100,8 @@ export default class PlayerInfoProvider {
         });
     }
 
-    public static async getPropList(): Promise<PlayerInfoPropData[]> {
+    @traceMethod()
+    public static async preparePropList(): Promise<void> {
         const res: any = await WWW.Instance.CommonAPI({
             web_class: WebPropChatPropList,
             body: {
@@ -156,10 +113,11 @@ export default class PlayerInfoProvider {
             juhua: false
         });
         const list: any[] = res?.data?.list || [];
-        return list.map(item => ({
+        const propList: PlayerPropData[] = list.map(item => ({
             payPrice: item?.pay_price || 0,
             priceID: item?.price_id || CONSUME_TYPE_EMOJI_2
         }));
+        playerStore.updatePropList(propList);
     }
 
     public static standUp(roomData: TexasGameRoomData, userRID: number): Promise<any> {
@@ -182,7 +140,7 @@ export default class PlayerInfoProvider {
         });
     }
 
-    public static report(param: PlayerInfoReportParam): Promise<any> {
+    public static report(param: PlayerReportParam): Promise<any> {
         if ((param.type || 1) === 1) {
             return WWW.Instance.CommonAPI({
                 web_class: WebChatMessageReport,
