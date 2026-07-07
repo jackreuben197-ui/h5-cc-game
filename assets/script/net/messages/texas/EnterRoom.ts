@@ -13,8 +13,8 @@ import {
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
-import VideoRoomManager from '../../../net/agora/VideoRoomManager';
 import roomReconnectManager from '../../../game/RoomReconnectManager';
+import VideoRoomManager from '../../../net/agora/VideoRoomManager';
 import viewManager from '../../../views/UIViewManager';
 
 const _plog = createLogger('ServerMessageEnterRoom');

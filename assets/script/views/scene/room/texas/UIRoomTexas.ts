@@ -49,8 +49,10 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private sideMenuNode: cc.Node = null;
     private _sideMenuTexasMenu: UITexasMenu = null;
     private _onSideMenuClicked: () => void = null!;
-    @property({ type: cc.Button, displayName: '战绩按钮 (side_btns/main_menu/btn_report)' })
+    @property({ type: cc.Button, displayName: '战绩按钮'})
     private btnReport: cc.Button = null!;
+    @property({ type: cc.Button, displayName: '牌谱按钮'})
+    private btnReplay: cc.Button = null!;
     @property({ type: cc.Node, displayName: '操作面板' })
     private opPannelNode: cc.Node = null!;
     private _opPannel: Operation = null!;
@@ -108,6 +110,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this._opPannel = this.opPannelNode.children[0].getComponent(Operation);
         //战绩按钮
         if (this.btnReport) this.btnReport.node.on('click', this._onClickReport, this);
+        //牌谱按钮
+        if (this.btnReplay) this.btnReplay.node.on('click', this._onClickReplay, this);
         //远端音视频控制子按钮
         if (this.muteMicNode) {
             const muteBg = this.muteMicNode.getChildByName('background');
@@ -135,6 +139,13 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private _onClickReport = () => {
         if (!this._mine) return;
         viewManager.openDialog('TexasReport', {
+            roomID: this._mine.roomData.roomID,
+            matchID: this._mine.roomData.matchID
+        });
+    };
+    private _onClickReplay = () => {
+        if (!this._mine) return;
+        viewManager.openDialog('TexasHistory', {
             roomID: this._mine.roomData.roomID,
             matchID: this._mine.roomData.matchID
         });

@@ -5,6 +5,7 @@ import TexasGameRoomDataPlayerMine from './TexasGameRoomDataPlayerMine';
 import TexasGameRoomDataPotInfo from './TexasGameRoomDataPotInfo';
 import TexasGameRoomDataPublicCards from './TexasGameRoomDataPublicCards';
 import TexasGameRoomDataReport from './TexasGameRoomDataReport';
+import TexasGameRoomDataReplay from './TexasGameRoomDataReplay';
 import TexasGameRoomDataRoundState from './TexasGameRoomDataRoundState';
 import TexasGameRoomDataSeatsStateManager from './TexasGameRoomDataSeatsStateManager';
 
@@ -26,4 +27,6 @@ export default class TexasGameRoomData extends RoomData {
     public readonly mine = new TexasGameRoomDataPlayerMine(this);
     // 牌桌战绩
     public readonly report = new TexasGameRoomDataReport(this);
+    // 牌谱回放
+    public readonly replay = new TexasGameRoomDataReplay(this);
 }

@@ -1,5 +1,6 @@
 import { ClientMessageSeated, Code, Def, PotInsuranceBuy, RoomInfo } from '@silenthill/agreement-web';
 import { traceClass } from '../../../../../core/decorator/LogTrace';
+import TexasGameRoomData from '../../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import userStore from '../../../../../data/user/UserStore';
 import UserStoreUtils from '../../../../../data/user/UserStoreUtils';
@@ -12,7 +13,7 @@ import { CPErrorCode } from '../../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../../i18n/i18nMgr';
 import { HttpRoomBringInByIDProtocol } from '../../../../../net/https/data/room/HttpRoomBringInByIDProtocol';
 import { HttpRoomBringOutProtocol } from '../../../../../net/https/data/room/HttpRoomBringOutProtocol';
-import { WebUserRoom, WebUserRoomBringin, WWW } from '../../../../../net/https/WebRequest';
+import { WebRoomCenterGameWatch, WebRoomCenterHistoryViewPublicCards, WebUserRoom, WebUserRoomBringin, WWW } from '../../../../../net/https/WebRequest';
 import ProtocolAgency from '../../../../../net/websocket/ProtocolAgency';
 import { BringInCommitFn } from '../../../../dialog/bringin/provider/BringInProvider';
 import viewManager from '../../../../UIViewManager';
@@ -503,5 +504,78 @@ export default class TexasTableEvent {
                 enable: true
             }
         });
+    }
+
+    /** 牌谱回放:内存缓存 → 持久缓存(H5 侧 game_replays) → 服务端(回包走 PublicReplay 1018 写数据) */
+    public static async RequestReplay(roomData: TexasGameRoomData, handNum: number): Promise<void> {
+        const cached = roomData.replay.getCached(handNum);
+        if (cached) {
+            roomData.replay.applyReplay(cached);
+            return;
+        }
+        const persisted = await roomData.replay.loadPersistent(handNum);
+        if (persisted) {
+            roomData.replay.applyReplay(persisted);
+            return;
+        }
+        roomData.replay.pendingHandNum = handNum;
+        ProtocolAgency.Send({
+            code: Code.MSG_D_PUBLIC_REPLAY,
+            roomID: roomData.roomID,
+            matchID: roomData.matchID,
+            body: {
+                room: {
+                    roomId: roomData.roomID,
+                    matchId: roomData.matchID
+                },
+                handNum: handNum,
+                uniqueId: roomData.basicInfo.roomUniqueID
+            }
+        });
+    }
+
+    /** 牌谱偷偷看:请求未亮牌玩家手牌,成功后合并进回放缓存(数据事件驱动视图刷新) */
+    public static async PeekReplayHands(roomData: TexasGameRoomData, handNum: number): Promise<{ code: number }> {
+        const cached = roomData.replay.getCached(handNum);
+        try {
+            const res: any = await WWW.Instance.CommonAPI({
+                web_class: WebRoomCenterGameWatch,
+                body: WebRoomCenterGameWatch.Request({
+                    room_id: cached?.s?.rid || roomData.roomID,
+                    room_unique_id: cached?.s?.unique || roomData.basicInfo.roomUniqueID,
+                    hand_num: handNum,
+                    be_watched_user_id: 0
+                })
+            });
+            if (res?.code === 0 && res?.data) {
+                roomData.replay.mergeWatchedHands(handNum, res.data.be_watched_user_hands);
+            }
+            return { code: res?.code ?? -1 };
+        } catch (e) {
+            return { code: -1 };
+        }
+    }
+
+    /** 牌谱发发看:请求揭示未发出的公共牌,成功后合并进回放缓存(数据事件驱动视图刷新) */
+    public static async RevealReplayPublicCards(roomData: TexasGameRoomData, handNum: number, round: number): Promise<{ code: number }> {
+        const cached = roomData.replay.getCached(handNum);
+        try {
+            const res: any = await WWW.Instance.CommonAPI({
+                web_class: WebRoomCenterHistoryViewPublicCards,
+                body: WebRoomCenterHistoryViewPublicCards.Request({
+                    room_id: cached?.s?.rid || roomData.roomID,
+                    hand_num: cached?.s?.hand || handNum,
+                    round: round
+                })
+            });
+            if (res?.code === 0 && res?.data) {
+                // 兼容 data 平铺/嵌套两种回包
+                const viewData = res.data.pub_cards != null ? res.data : (res.data.data ?? res.data);
+                roomData.replay.mergeViewedPublicCards(handNum, viewData);
+            }
+            return { code: res?.code ?? -1 };
+        } catch (e) {
+            return { code: -1 };
+        }
     }
 }
