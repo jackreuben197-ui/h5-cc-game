@@ -3,7 +3,7 @@ import { traceClass } from '../../core/decorator/LogTrace';
 const { ccclass, property } = cc._decorator;
 
 @ccclass
-@traceClass({ level: 'debug' })
+@traceClass()
 export default class AgoraVideoRender extends cc.Component {
     @property({ displayName: '镜像显示' })
     public mirror: boolean = false;
@@ -47,7 +47,7 @@ export default class AgoraVideoRender extends cc.Component {
     public async switchToOverlay(track: MediaStreamTrack): Promise<boolean> {
         if (track.readyState === 'ended') {
             this.stopOverlay();
-            this.tracelog.warn('[AgoraVideoRender] track 已结束');
+            this.tracelog.warn('track 已结束');
             return false;
         }
         const switchToken = ++this._switchToken;
@@ -61,7 +61,7 @@ export default class AgoraVideoRender extends cc.Component {
 
     private _bindPrefabNodes(): boolean {
         if (!this.videoSprite || !this.maskSprite) {
-            this.tracelog.warn('[AgoraVideoRender] prefab 节点未绑定');
+            this.tracelog.warn('prefab 节点未绑定');
             return false;
         }
         this.videoSprite.node.scaleX = 1;
@@ -73,7 +73,7 @@ export default class AgoraVideoRender extends cc.Component {
         this._stopOverlayRender();
         if (switchToken !== this._switchToken || track.readyState === 'ended') return false;
         const stream = new MediaStream([track]);
-        this.tracelog.debug('[AgoraVideoRender] _startVideoRender 开始, stream tracks:', stream.getTracks().length);
+        this.tracelog.debug('_startVideoRender 开始, stream tracks:', stream.getTracks().length);
         this._isCancelled = false;
         this._stream = stream;
         this._frameInterval = 1 / Math.max(1, this.targetFps || 30);
@@ -83,13 +83,13 @@ export default class AgoraVideoRender extends cc.Component {
         this._video.srcObject = stream;
         try {
             await Promise.race([this._video.play(), new Promise<void>((_, reject) => setTimeout(() => reject(new Error('play timeout')), 5000))]);
-            this.tracelog.debug('[AgoraVideoRender] play() 成功');
+            this.tracelog.debug('play() 成功');
         } catch (e: any) {
             if (this._isCancelled || switchToken !== this._switchToken) {
-                this.tracelog.debug('[AgoraVideoRender] play后已取消');
+                this.tracelog.debug('play后已取消');
                 return false;
             }
-            this.tracelog.warn('[AgoraVideoRender] playVideo失败或超时:', e?.message || e);
+            this.tracelog.warn('playVideo失败或超时:', e?.message || e);
             this._stopOverlayRender();
             return false;
         }
@@ -113,14 +113,7 @@ export default class AgoraVideoRender extends cc.Component {
         if (this._isCancelled || switchToken !== this._switchToken) {
             return false;
         }
-        this.tracelog.debug(
-            '[AgoraVideoRender] metadata 就绪, readyState:',
-            this._video.readyState,
-            'videoSize:',
-            this._video.videoWidth,
-            'x',
-            this._video.videoHeight
-        );
+        this.tracelog.debug('metadata 就绪, readyState:', this._video.readyState, 'videoSize:', this._video.videoWidth, 'x', this._video.videoHeight);
         await new Promise<void>(resolve => setTimeout(resolve, 100));
         if (this._isCancelled || switchToken !== this._switchToken) {
             return false;
@@ -145,7 +138,7 @@ export default class AgoraVideoRender extends cc.Component {
         this.videoSprite.node.active = true;
         this.videoSprite.node.scaleX = this.mirror ? -1 : 1;
         this._isRendering = true;
-        this.tracelog.info('[AgoraVideoRender] 开始渲染 (video material), video:', vw, 'x', vh, 'overlay:', cw, 'x', ch, 'fps:', this.targetFps);
+        this.tracelog.info('开始渲染 (video material), video:', vw, 'x', vh, 'overlay:', cw, 'x', ch, 'fps:', this.targetFps);
         return true;
     }
 
@@ -242,7 +235,7 @@ export default class AgoraVideoRender extends cc.Component {
         } catch (e) {
             this._consecutiveErrors++;
             if (this._consecutiveErrors >= AgoraVideoRender.MAX_CONSECUTIVE_ERRORS) {
-                this.tracelog.warn('[AgoraVideoRender] 连续渲染帧异常达', this._consecutiveErrors, '次，停止渲染:', (e as Error).message);
+                this.tracelog.warn('连续渲染帧异常达', this._consecutiveErrors, '次，停止渲染:', (e as Error).message);
                 this.stopOverlay();
             }
         }
@@ -257,7 +250,7 @@ export default class AgoraVideoRender extends cc.Component {
         const now = Date.now();
         if (now - this._lastLogTime > 10000) {
             this._lastLogTime = now;
-            this.tracelog.debug('[AgoraVideoRender] time:', this._video.currentTime.toFixed(2));
+            this.tracelog.debug('time:', this._video.currentTime.toFixed(2));
         }
     }
 

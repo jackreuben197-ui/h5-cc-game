@@ -15,7 +15,6 @@ import {
 } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
 import { ButtonState } from '../../../game/constant/Constants';
-import { MicrophoneIconState } from '../../../game/constant/MicrophoneIconState';
 import roomReconnectManager from '../../../game/RoomReconnectManager';
 import viewManager from '../../../views/UIViewManager';
 import agoraManager from '../../agora/AgoraManager';
@@ -149,6 +148,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
                 seatData.squidCount = player.squidCount;
                 //视频
                 seatData.videoMaskId = player.videoMaskId;
+                seatData.realShowMaskID = 0;
                 //获胜卡牌
                 if (player.winCardsInfo) {
                     seatData.winPercent100 = Math.min(10000, Math.round((player.winCardsInfo.wcCount * 10000) / player.winCardsInfo.lcCount));
@@ -220,11 +220,14 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             }
         });
     }
-    roomData.mine.localCameraEnabled = ButtonState.DISABLE;
-    roomData.mine.localCameraEnabledDelayed = ButtonState.DISABLE;
-    roomData.mine.localMicrophoneEnabled = ButtonState.DISABLE;
-    roomData.mine.remoteCameraEnabled = false;
-    roomData.mine.remoteMicrophoneEnabled = false;
+    roomData.mine.localCameraBtnState = ButtonState.DISABLE;
+    roomData.mine.localCameraEnabled = false;
+    roomData.mine.localCameraEnabledDelayed = false;
+    roomData.mine.localMicrophoneBtnState = ButtonState.DISABLE;
+    roomData.mine.localMicrophoneEnabled = false;
+    roomData.mine.maskBtnState = ButtonState.DISABLE;
+    roomData.mine.remoteCameraEnabled = ButtonState.HIDDEN;
+    roomData.mine.remoteMicrophoneEnabled = ButtonState.HIDDEN;
     roomData.mine.randomVideoActive = false;
     roomData.mine.randomVideoEndTime = 0;
     roomData.seatsStateManager.resetVideoAndAudioStates();
@@ -233,23 +236,43 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         const seatedConfig = roomData.basicInfo.antiCheatConfig.getSeatedSetting();
         const promise = [];
         try {
-            if (seatedConfig.showCamera) {
+            if (seatedConfig.enableCamera) {
                 promise.push(agoraManager.enableCamera());
             }
             promise.push(agoraManager.enableMicrophone());
             promise.push(TexasVideoMediaHelper.joinAgoraVideoChannelIfNeed(roomID, matchID));
             await Promise.all(promise);
-            // 如果在强制时间内强制打开
-            if (seatedConfig.showCamera && seatedConfig.timeLimit == -1 && roomData.basicInfo.antiCheatConfig.getDuration() < seatedConfig.timeLimit) {
-                roomData.mine.localCameraEnabled = ButtonState.ON;
-                roomData.mine.localMicrophoneEnabled = ButtonState.ON;
+            // 如果能操作摄像头,则根据状态变更
+            if (seatedConfig.canOpCamera) {
+                //能操作交给按钮操作
+                roomData.mine.localCameraBtnState = seatedConfig.openCamera ? ButtonState.ON : ButtonState.OFF;
             } else {
-                roomData.mine.localCameraEnabled = ButtonState.OFF;
-                roomData.mine.player.micIconState = MicrophoneIconState.MUTED;
-                roomData.mine.localMicrophoneEnabled = ButtonState.OFF;
+                roomData.mine.localCameraBtnState = ButtonState.DISABLE;
+                // 不能按钮操作 强制操作
+                roomData.mine.localCameraEnabled = seatedConfig.openCamera;
             }
-            roomData.mine.remoteCameraEnabled = seatedConfig.showCamera;
-            roomData.mine.remoteMicrophoneEnabled = true;
+            if (seatedConfig.canOpMicrophone) {
+                roomData.mine.localMicrophoneBtnState = seatedConfig.openMicrophone ? ButtonState.ON : ButtonState.OFF;
+            } else {
+                roomData.mine.localMicrophoneBtnState = ButtonState.DISABLE;
+                roomData.mine.localMicrophoneEnabled = seatedConfig.openMicrophone;
+            }
+            if (seatedConfig.enableCamera && seatedConfig.canSwitchPowerSaving) {
+                roomData.mine.maskBtnState = seatedConfig.openPowerSaving ? ButtonState.ON : ButtonState.DISABLE;
+            } else if (seatedConfig.enableCamera && !seatedConfig.canSwitchPowerSaving) {
+                roomData.mine.maskBtnState = ButtonState.DISABLE;
+                if (seatedConfig.openPowerSaving) {
+                    roomData.seatsStateManager.forEachPlayer(p => {
+                        p.realShowMaskID = p.videoMaskId == 0 ? 1 : p.videoMaskId;
+                    });
+                } else {
+                    roomData.seatsStateManager.forEachPlayer(p => {
+                        p.realShowMaskID = 0;
+                    });
+                }
+            }
+            roomData.mine.remoteCameraEnabled = seatedConfig.enableCamera ? ButtonState.ON : ButtonState.HIDDEN;
+            roomData.mine.remoteMicrophoneEnabled = ButtonState.ON;
         } catch (e) {
             _plog.error('加入视频桌失败', e);
             viewManager.showToast('无法开启摄像头，请检查浏览器权限后重新入座');

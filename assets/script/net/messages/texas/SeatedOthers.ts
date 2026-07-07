@@ -2,6 +2,7 @@ import { Def, ServerMessageSeatedOthers } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
+import { ButtonState } from '../../../game/constant/Constants';
 
 const _plog = createLogger('ServerMessageSeatedOthers');
 
@@ -32,6 +33,17 @@ export function SeatedOthers(data: ServerMessageSeatedOthers.AsObject, roomID: n
     seatData.subscriptionID = data.userSubscriptionId;
     seatData.squidIn = data.squidIn;
     seatData.videoMaskId = videoMaskId;
+    if (
+        roomData.mine.seatNo > 0 &&
+        roomData.basicInfo.antiCheatConfig &&
+        roomData.basicInfo.antiCheatConfig.getSeatedSetting().canSwitchPowerSaving &&
+        roomData.mine.remoteCameraEnabled == ButtonState.ON
+    ) {
+        // 如果我本人坐着 ，开着节能就显示他的mask
+        seatData.realShowMaskID = videoMaskId;
+    } else {
+        seatData.realShowMaskID = 0;
+    }
     // MTT
     seatData.mttHunterHeadValue = data.hunterHeadValue;
     seatData.mttHunterKill = data.hunterKill;

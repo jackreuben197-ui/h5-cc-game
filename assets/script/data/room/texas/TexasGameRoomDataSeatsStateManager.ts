@@ -1,9 +1,5 @@
 import { bindData, pureEvent } from '../../../core/decorator/DataBind';
-import { traceMethod } from '../../../core/decorator/LogTrace';
 import { AnimateDisplayTypeButton, AnimateDisplayTypeMushroomPool, AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
-import { ButtonState } from '../../../game/constant/Constants';
-import { MicrophoneIconState } from '../../../game/constant/MicrophoneIconState';
-import agoraManager from '../../../net/agora/AgoraManager';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';
 
@@ -215,35 +211,6 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
             }
         });
         return target;
-    }
-
-    // 同步
-    @traceMethod({ level: 'debug' })
-    public syncAllSeatVideoAndAudioStates() {
-        const remoteUserMap = agoraManager.getRemoteUserMap();
-        this._playerMap.forEach(async seat => {
-            if (seat.mine) {
-                seat.remoteVideoVisible = false;
-                seat.micIconState = seat.mine.localMicrophoneEnabled != ButtonState.OFF ? MicrophoneIconState.HIDDEN : MicrophoneIconState.MUTED;
-                // 还没有发布
-                if (agoraManager.localAudioTrack) {
-                    await agoraManager.localAudioTrack.setMuted(seat.mine.localMicrophoneEnabled != ButtonState.ON);
-                } else if (seat.mine.localMicrophoneEnabled) {
-                    await agoraManager.publishAudio();
-                }
-                if (agoraManager.localVideoTrack) {
-                    await agoraManager.localVideoTrack.setMuted(seat.mine.localCameraEnabled != ButtonState.ON);
-                } else if (seat.mine.localCameraEnabled) {
-                    await agoraManager.publishVidio();
-                }
-                return;
-            }
-            const remoteUser = remoteUserMap.get(seat.userID);
-            // 有视频，也订阅了，显示
-            seat.remoteVideoVisible = !!remoteUser && remoteUser.hasVideo;
-            // 没有音频/没有订阅 显示mute
-            seat.micIconState = !!remoteUser && (!remoteUser.hasAudio || !remoteUser.audioTrack) ? MicrophoneIconState.MUTED : MicrophoneIconState.HIDDEN;
-        });
     }
 
     public resetVideoAndAudioStates(): void {

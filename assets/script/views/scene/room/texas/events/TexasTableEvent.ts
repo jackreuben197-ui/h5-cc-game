@@ -44,7 +44,7 @@ export default class TexasTableEvent {
         // 视频房间：坐下前先请求浏览器摄像头权限（不依赖 Agora 频道状态）
         if (seatData.roomData.basicInfo.antiCheatConfig) {
             const seatedConfig = seatData.roomData.basicInfo.antiCheatConfig.getSeatedSetting();
-            const ok = await agoraManager.getMediaDevicesSupported(seatedConfig.showCamera, true);
+            const ok = await agoraManager.getMediaDevicesSupported(seatedConfig.enableCamera, true);
             if (!ok) {
                 viewManager.showToast('必须同意浏览器的音视频权限才能成功坐在视频桌');
                 setTimeout(() => {

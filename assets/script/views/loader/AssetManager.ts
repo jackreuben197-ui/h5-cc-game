@@ -123,6 +123,18 @@ export default class AssetManager {
         });
     }
 
+    public static mustGetLoaded<T extends cc.Asset>(bundleName: string, assetPath: string, te: AssetCtor<T>): T {
+        const bundle = bundleName == BUNDLE_RESOURCES || bundleName == null ? cc.resources : cc.assetManager.getBundle(bundleName);
+        if (!bundle) {
+            throw new Error(`[AssetManager] Bundle not loaded: ${bundleName}`);
+        }
+        const asset = bundle.get<T>(assetPath, te);
+        if (!asset) {
+            throw new Error(`[AssetManager] Asset not loaded: ${bundleName}/${assetPath}`);
+        }
+        return asset;
+    }
+
     public static getAsset<T extends AssetCollectionType>(collection: T, name: string): AssetTypeMapping[T] {
         const key = `${collection}|${name}`;
         if (AssetManager._map.has(key)) {

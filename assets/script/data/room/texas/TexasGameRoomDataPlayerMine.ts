@@ -26,8 +26,11 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public static readonly VALID_AUTO_OPERATIONS_CHANGE = 'VALID_AUTO_OPERATIONS_CHANGE';
     public static readonly SHOW_SQUID_IN = 'SHOW_SQUID_IN';
     public static readonly LOCAL_CAMERA_STATE_CHANGE = 'LOCAL_CAMERA_STATE_CHANGE';
+    public static readonly LOCAL_CAMERA_BTN_STATE_CHANGE = 'LOCAL_CAMERA_BTN_STATE_CHANGE';
     public static readonly LOCAL_CAMERA_STATE_CHANGE_DELAY = 'LOCAL_CAMERA_STATE_CHANGE_DELAY';
-    public static readonly LOCAL_MICROPHONE_ENABLED_CHANGE = 'LOCAL_MICROPHONE_ENABLED_CHANGE';
+    public static readonly LOCAL_MICROPHONE_STATE_CHANGE = 'LOCAL_MICROPHONE_STATE_CHANGE';
+    public static readonly LOCAL_MICROPHONE_BTN_STATE_CHANGE = 'LOCAL_MICROPHONE_BTN_STATE_CHANGE';
+    public static readonly VIDEO_MASK_BTN_STATE_CHAGE = 'VIDEO_MASK_BTN_STATE_CHAGE';
     public static readonly REMOTE_CAMERA_STATE_CHANGE = 'REMOTE_CAMERA_STATE_CHANGE';
     public static readonly REMOTE_MICROPHONE_ENABLED_CHANGE = 'REMOTE_MICROPHONE_ENABLED_CHANGE';
     public static readonly RANDOM_VIDEO_ACTIVE_CHANGE = 'RANDOM_VIDEO_ACTIVE_CHANGE';
@@ -54,16 +57,29 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     @pureEvent(TexasGameRoomDataPlayerMine.HIGHLIGHT_CARDS)
     public highlightCards(cards: number[]) {}
 
+    // 真实状态(摄像机)
     @observable(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE)
-    public localCameraEnabled: ButtonState = ButtonState.DISABLE;
+    public localCameraEnabled: boolean = false;
+    // 延迟渲染（摄像头)
     @observable(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE_DELAY)
-    public localCameraEnabledDelayed: ButtonState = ButtonState.DISABLE;
-    @observable(TexasGameRoomDataPlayerMine.LOCAL_MICROPHONE_ENABLED_CHANGE)
-    public localMicrophoneEnabled: ButtonState = ButtonState.DISABLE;
+    public localCameraEnabledDelayed: boolean = false;
+    // 按钮（摄像头）
+    @observable(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_BTN_STATE_CHANGE)
+    public localCameraBtnState: ButtonState = ButtonState.DISABLE;
+    // 真实状态（麦克风）
+    @observable(TexasGameRoomDataPlayerMine.LOCAL_MICROPHONE_STATE_CHANGE)
+    public localMicrophoneEnabled: boolean = false;
+    // 按钮（麦克风）
+    @observable(TexasGameRoomDataPlayerMine.LOCAL_MICROPHONE_BTN_STATE_CHANGE)
+    public localMicrophoneBtnState: ButtonState = ButtonState.DISABLE;
+    // 按钮（节能）
+    @observable(TexasGameRoomDataPlayerMine.VIDEO_MASK_BTN_STATE_CHAGE)
+    public maskBtnState: ButtonState = ButtonState.DISABLE;
+    //public maskBtnIncludeDisable: boolean = false;
     @observable(TexasGameRoomDataPlayerMine.REMOTE_CAMERA_STATE_CHANGE)
-    public remoteCameraEnabled: boolean = true;
+    public remoteCameraEnabled: ButtonState = ButtonState.HIDDEN;
     @observable(TexasGameRoomDataPlayerMine.REMOTE_MICROPHONE_ENABLED_CHANGE)
-    public remoteMicrophoneEnabled: boolean = true;
+    public remoteMicrophoneEnabled: ButtonState = ButtonState.HIDDEN;
 
     public async clearVideoAndAudio() {
         this.randomVideoActive = false;
@@ -71,10 +87,10 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
         await agoraManager.disableCamera();
         await agoraManager.disableMicrophone();
         this.muteEvents();
-        this.localCameraEnabled = ButtonState.DISABLE;
-        this.localMicrophoneEnabled = ButtonState.DISABLE;
-        this.remoteCameraEnabled = false;
-        this.remoteMicrophoneEnabled = false;
+        this.localCameraBtnState = ButtonState.DISABLE;
+        this.localMicrophoneBtnState = ButtonState.DISABLE;
+        this.remoteCameraEnabled = ButtonState.HIDDEN;
+        this.remoteMicrophoneEnabled = ButtonState.HIDDEN;
         this.unmuteEvents();
     }
     // ==================== 随机视频验证状态 ====================

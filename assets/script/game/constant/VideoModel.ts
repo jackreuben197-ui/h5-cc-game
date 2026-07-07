@@ -13,10 +13,12 @@ export enum VideoModel {
     RANDOM = 2,
     /** 麦序 */
     SEQUENCE = 3,
-    /** 真人 */
-    HUMAN = 4,
+    /** MTT强制 */
+    FORCE = 4,
     /** 特效 */
-    EFFECT = 5
+    EFFECT = 5,
+    /** 真人 */
+    HUMAN = 6
 }
 
 export interface AudioAntiCheatConfig {
@@ -24,28 +26,25 @@ export interface AudioAntiCheatConfig {
 }
 
 export interface IVASeatedSetting {
-    showCamera: boolean; // 是否显示摄像头
-    micOpen: boolean; // 麦克风是否开启
-    cameraOpen: boolean; // 摄像头是否开启
-    psOpen: boolean; // 节能模式是否开启
-    timeLimit: number; // 坐下后多久必须开启麦克风或摄像头(秒) -1 代表全时长
-}
-
-export interface IVAPlayingSetting {
-    showCamera: boolean; // 是否显示摄像头
-    micCanOp: boolean; // 麦克风是否可以操作
-    cameraCanOp: boolean; // 摄像头是否可以操作
-    psCanOp: boolean; // 节能模式是否可以操作
+    enableCamera: boolean; // 是否显示摄像头
+    canOpCamera: boolean;
+    canOpMicrophone: boolean;
+    canSwitchPowerSaving: boolean; // 能切mask
+    //canDisablePowerSaving: boolean; // 切换mask中有一个disable
+    openCamera: boolean; // 是否打开相机
+    openMicrophone: boolean; // 是否打开麦克风
+    openPowerSaving: boolean; // 打开mask
 }
 
 @traceClass()
 export class VideoAntiCheatConfig {
-    private _timelimit: number; // 视频防作弊时间限制(s) 全时长这个没有作用
-    private _mode: VideoModel; // 视频防作弊模式
+    private _timelimit: number = 0; // 视频防作弊时间限制(s) 全时长这个没有作用
+    private _mode: VideoModel; // 视频防作弊模式 // 视频模式 0 未知 1 全时长 2 随机验证 3 麦序, 5, 6
     private _micSeat: boolean;
     private _micMiddle: boolean;
     private _videoSeat: boolean;
     private _videoMiddle: boolean;
+    private _powerSaveing: boolean;
     private _powerSavingSeat: boolean; // 节能模式
     private _powerSavingMiddle: boolean; // 节能模式
     private _antiCheatType: number; // 防作弊类型 0 未知 1 无 2 实时语音 3 实时视频 4 人脸验证
@@ -61,6 +60,7 @@ export class VideoAntiCheatConfig {
         micMiddle: boolean,
         videoSeat: boolean,
         videoMiddle: boolean,
+        powerSaving: boolean,
         powerSavingSeat: boolean,
         powerSavingMiddle: boolean,
         normalAntiCheatOrderType: number,
@@ -77,6 +77,7 @@ export class VideoAntiCheatConfig {
         this._antiCheatType = antiCheatType;
         this._normalAntiCheatOrderType = normalAntiCheatOrderType;
         this._verifyType = verifyType;
+        this._powerSaveing = powerSaving;
         if (this._antiCheatType == 4) {
             this.tracelog.error('防作弊类型为人脸验证, 不支持');
         }
@@ -90,6 +91,9 @@ export class VideoAntiCheatConfig {
     }
     public get isInVideoRoom(): boolean {
         return this._antiCheatType > 1 && this._antiCheatType < 4;
+    }
+    public get isOrderMode(): boolean {
+        return this._antiCheatType == 3 && this._mode == 3;
     }
 
     public start() {
@@ -111,43 +115,8 @@ export class VideoAntiCheatConfig {
         return this._timelimit;
     }
 
-    /** 中途是否可以操作（自己） */
-    public getPlayingSetting(): IVAPlayingSetting {
-        // 实时语音
-        if (this._antiCheatType == 2) {
-            return {
-                showCamera: false,
-                micCanOp: false,
-                cameraCanOp: false,
-                psCanOp: false
-            };
-        }
-        switch (this._mode) {
-            case VideoModel.FULL_TIME:
-                return {
-                    showCamera: true,
-                    micCanOp: false,
-                    cameraCanOp: false,
-                    psCanOp: this._powerSavingMiddle
-                };
-            case VideoModel.RANDOM:
-            case VideoModel.SEQUENCE:
-                return {
-                    showCamera: true,
-                    micCanOp: false,
-                    cameraCanOp: false,
-                    psCanOp: this._powerSavingMiddle
-                };
-            case VideoModel.HUMAN:
-            case VideoModel.EFFECT:
-            default:
-                return {
-                    showCamera: true,
-                    micCanOp: this._micMiddle,
-                    cameraCanOp: this._videoMiddle,
-                    psCanOp: this._powerSavingMiddle
-                };
-        }
+    public getTimelimit(): number {
+        return this._timelimit;
     }
 
     /** 坐下后的默认开始配置（自己） */
@@ -155,40 +124,49 @@ export class VideoAntiCheatConfig {
         // 实时语音
         if (this._antiCheatType == 2) {
             return {
-                showCamera: false,
-                micOpen: true,
-                cameraOpen: false,
-                psOpen: false,
-                timeLimit: -1
+                enableCamera: false,
+                canOpCamera: false,
+                canOpMicrophone: false,
+                canSwitchPowerSaving: false,
+                openCamera: false,
+                openMicrophone: true,
+                openPowerSaving: false
             };
         }
         switch (this._mode) {
+            case VideoModel.FORCE:
             case VideoModel.FULL_TIME:
                 return {
-                    showCamera: true,
-                    micOpen: true,
-                    cameraOpen: true,
-                    psOpen: this._powerSavingSeat,
-                    timeLimit: -1
+                    enableCamera: true,
+                    canOpCamera: false,
+                    canOpMicrophone: false,
+                    canSwitchPowerSaving: this._powerSaveing,
+                    openCamera: true,
+                    openMicrophone: true,
+                    openPowerSaving: this._powerSaveing
                 };
             case VideoModel.RANDOM:
             case VideoModel.SEQUENCE:
                 return {
-                    showCamera: true,
-                    micOpen: false,
-                    cameraOpen: false,
-                    psOpen: this._powerSavingSeat,
-                    timeLimit: 0
+                    enableCamera: true,
+                    canOpCamera: false,
+                    canOpMicrophone: false,
+                    canSwitchPowerSaving: false,
+                    openCamera: false,
+                    openMicrophone: false,
+                    openPowerSaving: false
                 };
             case VideoModel.HUMAN:
             case VideoModel.EFFECT:
             default:
                 return {
-                    showCamera: true,
-                    micOpen: this._micSeat,
-                    cameraOpen: this._videoSeat,
-                    psOpen: this._powerSavingSeat,
-                    timeLimit: this._timelimit
+                    enableCamera: true,
+                    canOpCamera: this._videoMiddle,
+                    canOpMicrophone: this._micMiddle,
+                    canSwitchPowerSaving: this._powerSavingMiddle,
+                    openCamera: this._videoSeat,
+                    openMicrophone: this._micSeat,
+                    openPowerSaving: this._powerSavingSeat
                 };
         }
     }

@@ -253,6 +253,7 @@ export default class MttTexasGameplayEntrance extends AGameplayEntrance {
             false,
             false,
             false,
+            false,
             this._mttDetails.mtt.antiCheatOrderType,
             this._mttDetails.mtt.videoVerifyType
         );

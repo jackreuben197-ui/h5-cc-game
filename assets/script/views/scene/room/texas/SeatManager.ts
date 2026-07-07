@@ -84,7 +84,6 @@ export default class SeatManager extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataSeatsStateManager.SPEAKING_CHANGE, 'seats')
-    @traceMethod({ level: 'debug' })
     private onUpdateSpeaking(prevSeat: number, currentSeat: number) {
         if (prevSeat > 0) {
             const ps = this._seatNodesMap.get(prevSeat);

@@ -1,5 +1,5 @@
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
-import { traceClass } from '../../../../core/decorator/LogTrace';
+import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
@@ -52,7 +52,7 @@ export default class OtherBindings extends cc.Component {
 
     public onLoad() {
         // 如果绑定点击写这里
-        this.btnEffect.node.on('click', this._clickBtnEffect, this);
+        this.btnEffect.node.on('click', this.onClickMaskBtn, this);
         this.btnAudio.node.on('click', this.onClickLocalMicrophoneBtn, this);
         this.btnCamera.node.on('click', this.onClickLocalCameraBtn, this);
         // 远端音视频控制事件注册
@@ -77,62 +77,94 @@ export default class OtherBindings extends cc.Component {
         });
     }
 
-    /** 响应本地相机的开关（功能处理配合头像上的处理delayed开关）分开2个开关 */
     @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE, 'mine')
-    private async onLocalCameraStateChanged(val: ButtonState): Promise<void> {
-        if (val == ButtonState.DISABLE) {
-            this.hideVideoNode.active = false;
-            UIViewUtil.setNodeGray(this.btnCamera.node, true);
-            UIViewUtil.setNodeGray(this.btnEffect.node, true);
-            this.btnEffectIcon.changeSpriteFrame(1);
-            this.btnCameratIcon.changeSpriteFrame(1);
-            this.btnEffect.interactable = false;
-            this.btnCamera.interactable = false;
-            this._roomData.mine.localCameraEnabledDelayed = val;
-            return;
-        }
-        this.hideVideoNode.active = true;
-        UIViewUtil.setNodeGray(this.btnCamera.node, false);
-        UIViewUtil.setNodeGray(this.btnEffect.node, false);
-        this.btnEffect.interactable = true;
-        this.btnCamera.interactable = true;
-        let muted: boolean;
-        if (val == ButtonState.ON) {
-            muted = false;
-            this.btnEffectIcon.changeSpriteFrame(0);
-            this.btnCameratIcon.changeSpriteFrame(0);
-        } else {
-            muted = true;
-            this.btnEffectIcon.changeSpriteFrame(1);
-            this.btnCameratIcon.changeSpriteFrame(1);
-        }
+    private async onEnableDisableCamaera(enable: boolean) {
+        const muted = !enable;
         if (agoraManager.localVideoTrack) {
             if (muted) {
                 // 先关 再静音
-                this._roomData.mine.localCameraEnabledDelayed = val;
+                this._roomData.mine.localCameraEnabledDelayed = enable;
                 await agoraManager.localVideoTrack.setMuted(muted);
             } else {
                 // 先开, 再展示
                 await agoraManager.localVideoTrack.setMuted(muted);
-                this._roomData.mine.localCameraEnabledDelayed = val;
+                this._roomData.mine.localCameraEnabledDelayed = enable;
             }
         } else if (!muted) {
             // 先开, 再展示
             await agoraManager.publishVidio();
-            this._roomData.mine.localCameraEnabledDelayed = val;
+            this._roomData.mine.localCameraEnabledDelayed = enable;
         }
     }
 
-    @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_MICROPHONE_ENABLED_CHANGE, 'mine')
+    /** 响应本地相机的开关*/
+    @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_BTN_STATE_CHANGE, 'mine')
+    private onLocalCameraStateChanged(val: ButtonState): Promise<void> {
+        if (val == ButtonState.DISABLE) {
+            UIViewUtil.setNodeGray(this.btnCamera.node, true);
+            this.btnCameratIcon.changeSpriteFrame(1);
+            this.btnCamera.interactable = false;
+            return;
+        }
+        UIViewUtil.setNodeGray(this.btnCamera.node, false);
+        this.btnCamera.interactable = true;
+        let muted: boolean;
+        if (val == ButtonState.ON) {
+            muted = false;
+            this.btnCameratIcon.changeSpriteFrame(0);
+            if (this._roomData.basicInfo.antiCheatConfig.getSeatedSetting().canSwitchPowerSaving) {
+                this._roomData.mine.player.realShowMaskID = this._roomData.mine.player.videoMaskId == 0 ? 1 : this._roomData.mine.player.videoMaskId;
+            }
+            this._roomData.mine.maskBtnState = ButtonState.ON;
+        } else {
+            muted = true;
+            this.btnCameratIcon.changeSpriteFrame(1);
+            if (this._roomData.basicInfo.antiCheatConfig.getSeatedSetting().canSwitchPowerSaving) {
+                this._roomData.mine.player.realShowMaskID = 0;
+            }
+            this._roomData.mine.maskBtnState = ButtonState.DISABLE;
+        }
+        this._roomData.mine.localCameraEnabled = !muted;
+    }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.VIDEO_MASK_BTN_STATE_CHAGE, 'mine')
+    private onMaskBtnState(val: ButtonState) {
+        if (val == ButtonState.DISABLE) {
+            UIViewUtil.setNodeGray(this.btnEffect.node, true);
+            this.btnEffectIcon.changeSpriteFrame(1);
+            this.btnEffect.interactable = false;
+            return;
+        }
+        UIViewUtil.setNodeGray(this.btnEffect.node, false);
+        this.btnEffect.interactable = true;
+        if (val == ButtonState.ON) {
+            this.btnEffectIcon.changeSpriteFrame(0);
+        } else {
+            this.btnEffectIcon.changeSpriteFrame(1);
+        }
+    }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_MICROPHONE_STATE_CHANGE, 'mine')
+    private async onEnableDisableMicrophone(enable: boolean) {
+        const muted = !enable;
+        if (agoraManager.localAudioTrack) {
+            agoraManager.localAudioTrack.setMuted(muted);
+        } else if (!muted) {
+            agoraManager.publishAudio();
+        }
+        if (this._roomData.mine.player) {
+            this._roomData.mine.player.micIconState = muted ? MicrophoneIconState.MUTED : MicrophoneIconState.HIDDEN;
+        }
+    }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_MICROPHONE_BTN_STATE_CHANGE, 'mine')
     private onLocalMicrophoneEnabledChanged(val: ButtonState): Promise<void> {
         if (val == ButtonState.DISABLE) {
-            this.muteMicNode.active = false;
             UIViewUtil.setNodeGray(this.btnAudio.node, true);
             this.btnAudio.interactable = false;
             this.btnAudioIcon.changeSpriteFrame(1);
             return;
         }
-        this.muteMicNode.active = true;
         UIViewUtil.setNodeGray(this.btnAudio.node, false);
         this.btnAudio.interactable = true;
         let muted: boolean;
@@ -143,51 +175,69 @@ export default class OtherBindings extends cc.Component {
             muted = true;
             this.btnAudioIcon.changeSpriteFrame(1);
         }
-        if (agoraManager.localAudioTrack) {
-            agoraManager.localAudioTrack.setMuted(muted);
-        } else if (!muted) {
-            agoraManager.publishAudio();
-        }
+        this._roomData.mine.localMicrophoneEnabled = !muted;
     }
 
     /** 响应远程相机开关 */
     @bindEvent(TexasGameRoomDataPlayerMine.REMOTE_CAMERA_STATE_CHANGE, 'mine')
-    private async onRemoteCameraChanged(b: boolean): Promise<void> {
+    @traceMethod({ level: 'debug' })
+    private async onRemoteCameraChanged(st: ButtonState): Promise<void> {
+        if (st == ButtonState.HIDDEN) {
+            this.hideVideoNode.active = false;
+            return;
+        }
+        this.hideVideoNode.active = true;
         const pubUsersMap = agoraManager.getRemoteUserMap();
-        if (b) {
+        if (st == ButtonState.ON) {
             this._roomData.seatsStateManager.forEachPlayer(async player => {
+                if (player.mine) return;
                 const user = pubUsersMap.get(player.userID);
                 if (!user || !user.hasVideo) {
                     player.remoteVideoVisible = false;
+                    player.realShowMaskID = 0;
                     return;
                 }
                 if (!user.videoTrack) {
                     // 订阅后, user.videoTrack就存在了，可以renderFrame了
                     await agoraManager.subscribeOrUnsubscribeRemoteVideo(true, user);
-                    player.remoteVideoVisible = true;
+                }
+                player.remoteVideoVisible = true;
+                if (this._roomData.basicInfo.antiCheatConfig && this._roomData.basicInfo.antiCheatConfig.getSeatedSetting().canSwitchPowerSaving) {
+                    player.realShowMaskID = player.videoMaskId == 0 ? 1 : player.videoMaskId;
+                } else {
+                    player.realShowMaskID = 0;
                 }
             });
             return;
         }
         this._roomData.seatsStateManager.forEachPlayer(async player => {
+            if (player.mine) return;
             const user = pubUsersMap.get(player.userID);
             // 如果没有视频，且没有订阅直接隐藏
             if (!user || !user.hasVideo || !user.videoTrack) {
                 player.remoteVideoVisible = false;
+                player.realShowMaskID = 0;
                 return;
             }
             //先影藏，再关闭
             player.remoteVideoVisible = false;
+            player.realShowMaskID = 0;
             await agoraManager.subscribeOrUnsubscribeRemoteVideo(false, user);
         });
     }
 
     /** 响应远程相机开关 */
     @bindEvent(TexasGameRoomDataPlayerMine.REMOTE_MICROPHONE_ENABLED_CHANGE, 'mine')
-    private async onRemoteMicrophoneChanged(b: boolean): Promise<void> {
+    private async onRemoteMicrophoneChanged(st: ButtonState): Promise<void> {
+        if (st == ButtonState.HIDDEN) {
+            this.muteMicNode.active = false;
+            return;
+        }
+        this.muteMicNode.active = true;
         const pubUsersMap = agoraManager.getRemoteUserMap();
-        if (b) {
+        if (st == ButtonState.ON) {
             this._roomData.seatsStateManager.forEachPlayer(async player => {
+                if (player.mine) return;
                 const user = pubUsersMap.get(player.userID);
                 if (!user) {
                     player.micIconState = MicrophoneIconState.HIDDEN;
@@ -211,6 +261,7 @@ export default class OtherBindings extends cc.Component {
             return;
         }
         this._roomData.seatsStateManager.forEachPlayer(async player => {
+            if (player.mine) return;
             const user = pubUsersMap.get(player.userID);
             if (!user) {
                 player.micIconState = MicrophoneIconState.HIDDEN;
@@ -229,28 +280,25 @@ export default class OtherBindings extends cc.Component {
     /** 摄像头开关 */
     private onClickLocalCameraBtn() {
         let state = ButtonState.OFF;
-        if (this._roomData.mine.localCameraEnabled == ButtonState.OFF) {
+        if (this._roomData.mine.localCameraBtnState == ButtonState.OFF) {
             state = ButtonState.ON;
         }
-        this._roomData.mine.localCameraEnabled = state;
+        this._roomData.mine.localCameraBtnState = state;
     }
 
     /** 麦克风开关 */
     private onClickLocalMicrophoneBtn() {
         let state = ButtonState.OFF;
         let muted = true;
-        if (this._roomData.mine.localMicrophoneEnabled == ButtonState.OFF) {
+        if (this._roomData.mine.localMicrophoneBtnState == ButtonState.OFF) {
             muted = false;
             state = ButtonState.ON;
         }
-        if (this._roomData.mine.player) {
-            this._roomData.mine.player.micIconState = muted ? MicrophoneIconState.MUTED : MicrophoneIconState.HIDDEN;
-        }
-        this._roomData.mine.localMicrophoneEnabled = state;
+        this._roomData.mine.localMicrophoneBtnState = state;
     }
 
     /** 窗花效果切换 */
-    private async _clickBtnEffect(): Promise<void> {
+    private async onClickMaskBtn(): Promise<void> {
         const mine = this._roomData.mine.player;
         if (!mine) return;
         // videoMaskId 循环 +1，大于4回到1
@@ -259,6 +307,9 @@ export default class OtherBindings extends cc.Component {
         if (newMaskId > 4) newMaskId = 1;
         // 乐观更新本地数据和窗花显示
         mine.videoMaskId = newMaskId;
+        if (mine.realShowMaskID > 0) {
+            mine.realShowMaskID = newMaskId;
+        }
         // 请求服务器广播
         try {
             const response: any = await WWW.Instance.CommonAPI({
@@ -268,10 +319,21 @@ export default class OtherBindings extends cc.Component {
             if (response?.code !== 0) {
                 // 失败回滚
                 mine.videoMaskId = oldMaskId;
+                if (mine.realShowMaskID > 0) {
+                    mine.realShowMaskID = oldMaskId;
+                }
+                return;
+            }
+            //确定更换
+            if (mine.realShowMaskID > 0) {
+                mine.realShowMaskID = newMaskId;
             }
         } catch {
             // 异常回滚
             mine.videoMaskId = oldMaskId;
+            if (mine.realShowMaskID > 0) {
+                mine.realShowMaskID = oldMaskId;
+            }
         }
     }
 
@@ -279,27 +341,27 @@ export default class OtherBindings extends cc.Component {
     private onClickRemoteMicrophoneOn(): void {
         if (this.muteMicOpenBtn) this.muteMicOpenBtn.active = false;
         if (this.muteMicCloseBtn) this.muteMicCloseBtn.active = true;
-        this._roomData.mine.remoteMicrophoneEnabled = false;
+        this._roomData.mine.remoteMicrophoneEnabled = ButtonState.OFF;
     }
 
     /** 远端音频：closeBtn 被点击 → 开启（恢复声音） */
     private onClickReomteMicrophoneOff(): void {
         if (this.muteMicCloseBtn) this.muteMicCloseBtn.active = false;
         if (this.muteMicOpenBtn) this.muteMicOpenBtn.active = true;
-        this._roomData.mine.remoteMicrophoneEnabled = true;
+        this._roomData.mine.remoteMicrophoneEnabled = ButtonState.ON;
     }
 
     /** 远端视频：openBtn 被点击 → 关闭（隐藏远端视频） */
     private onClickRemoteCameraOn(): void {
         if (this.hideVideoOpenBtn) this.hideVideoOpenBtn.active = false;
         if (this.hideVideoCloseBtn) this.hideVideoCloseBtn.active = true;
-        this._roomData.mine.remoteCameraEnabled = false;
+        this._roomData.mine.remoteCameraEnabled = ButtonState.OFF;
     }
 
     /** 远端视频：closeBtn 被点击 → 开启（恢复远端视频） */
     private onClickRemoteCameraOff(): void {
         if (this.hideVideoCloseBtn) this.hideVideoCloseBtn.active = false;
         if (this.hideVideoOpenBtn) this.hideVideoOpenBtn.active = true;
-        this._roomData.mine.remoteCameraEnabled = true;
+        this._roomData.mine.remoteCameraEnabled = ButtonState.ON;
     }
 }

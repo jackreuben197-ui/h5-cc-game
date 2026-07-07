@@ -133,7 +133,6 @@ export default class SeatPlayer extends cc.Component {
     private _potNode: cc.Node = null!;
     // 发牌
     private _dealNode: cc.Node = null!;
-    private _maskLoadVersion: number = 0;
 
     public initData(seatPlayer: TexasGameRoomDataPlayer, potNode: cc.Node, dealNode: cc.Node) {
         this._seatPlayer = seatPlayer;
@@ -176,7 +175,6 @@ export default class SeatPlayer extends cc.Component {
 
     protected onDisable(): void {
         this.insuranceCountdownBubble.node.active = false;
-        this._maskLoadVersion++;
         this.avatarVideoRender.stopMask();
         this.avatarVideoRender.stopOverlay();
         this.setMicrophoneIconState(MicrophoneIconState.HIDDEN);
@@ -245,7 +243,6 @@ export default class SeatPlayer extends cc.Component {
         }
         if (!b) {
             this.insuranceCountdownBubble.node.active = false;
-            this._maskLoadVersion++;
             this.avatarVideoRender.stopMask();
             this.avatarVideoRender.stopOverlay();
             this.setMicrophoneIconState(MicrophoneIconState.HIDDEN);
@@ -258,7 +255,7 @@ export default class SeatPlayer extends cc.Component {
 
     @bindEvent(TexasGameRoomDataPlayer.REMOTE_VIDEO_VISIBLE_CHANGE, 'player')
     @traceMethod({ level: 'debug' })
-    private async onRemoteVideoVisibleChanged(visible: boolean): Promise<void> {
+    private onRemoteVideoVisibleChanged(visible: boolean) {
         if (this._seatPlayer.mine) return;
         if (!visible || !this._seatPlayer.userID) {
             this.avatarVideoRender.stopOverlay();
@@ -266,14 +263,9 @@ export default class SeatPlayer extends cc.Component {
         }
         try {
             let rawTrack = agoraManager.getRemoteVideoTrack(this._seatPlayer.userID);
-            // 不支持编码
-            // if (!agoraManager.isSupportedVideoTrack(this._seatPlayer.userID)) {
-            //     this.avatarVideoRender.stopOverlay();
-            //     return;
-            // }
             this.avatarVideoRender.mirror = false;
             this.avatarVideoRender.targetFps = 15;
-            await this.avatarVideoRender.switchToOverlay(rawTrack.getMediaStreamTrack());
+            this.avatarVideoRender.switchToOverlay(rawTrack.getMediaStreamTrack());
         } catch (e) {
             this.tracelog.error('agoraManager not supported:', this._seatPlayer.userID);
             this.avatarVideoRender.stopOverlay();
@@ -281,27 +273,23 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.VIDEO_MASK_CHANGE, 'player')
-    private async onVideoMaskChanged(maskId: number): Promise<void> {
-        if (!this.avatar?.node?.isValid) return;
-        this._maskLoadVersion++;
-        maskId = 0;
+    @traceMethod({ level: 'debug' })
+    private onVideoMaskChanged(maskId: number) {
+        if (this._seatPlayer.userID <= 0) return;
         if (maskId <= 0) {
             this.avatarVideoRender.stopMask();
             return;
         }
-        const version = this._maskLoadVersion;
         let spriteFrame: cc.SpriteFrame = null;
         try {
-            spriteFrame = await AssetManager.getOrLoad(BUNDLE_RESOURCES, `dynamic/videomask/vm${maskId}`, cc.SpriteFrame);
+            spriteFrame = AssetManager.mustGetLoaded(BUNDLE_RESOURCES, `rc/other/videomask/vm${maskId}`, cc.SpriteFrame);
+            this.avatarVideoRender.switchToMask(spriteFrame);
         } catch (err) {
             this.tracelog.warn('窗花纹理加载失败:', maskId, (err as Error)?.message);
-            return;
         }
-        if (!(this as any).isValid || version !== this._maskLoadVersion || this._seatPlayer?.videoMaskId !== maskId) return;
-        this.avatarVideoRender.switchToMask(spriteFrame);
     }
 
-    @bindEvent(TexasGameRoomDataPlayer.MIC_ICON_STATE_CHANGE, 'player')
+    @bindEvent(TexasGameRoomDataPlayer.MICROPHONE_ICON_STATE_CHANGE, 'player')
     @traceMethod({ level: 'debug' })
     private onMicrophoneIconStateChanged(state: MicrophoneIconState): void {
         this.setMicrophoneIconState(state);
@@ -309,7 +297,7 @@ export default class SeatPlayer extends cc.Component {
 
     @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE_DELAY, 'mine')
     @traceMethod({ level: 'debug' })
-    private async onLocalCameraStateChanged(state: ButtonState): Promise<void> {
+    private onLocalCameraStateChanged(state: ButtonState) {
         if (!this._seatPlayer.mine) return;
         if (state == ButtonState.DISABLE) {
             this.avatarVideoRender.stopOverlay();
@@ -324,7 +312,7 @@ export default class SeatPlayer extends cc.Component {
             const rawTrack = agoraManager.localVideoTrack.getMediaStreamTrack();
             this.avatarVideoRender.mirror = true;
             this.avatarVideoRender.targetFps = 15;
-            await this.avatarVideoRender.switchToOverlay(rawTrack);
+            this.avatarVideoRender.switchToOverlay(rawTrack);
         } catch (e) {
             this.tracelog.warn('agoraManager render video error', this._seatPlayer.userID, e);
             this.avatarVideoRender.stopOverlay();
@@ -354,7 +342,6 @@ export default class SeatPlayer extends cc.Component {
 
     @bindEvent(TexasGameRoomDataPlayer.CANPLAYSTATUS_CHANGE, 'player')
     private onUpdateCanPlayStatus(v: Def.CanPlayStatusMap[keyof Def.CanPlayStatusMap]) {
-        this.tracelog.debug(this._seatPlayer.seatNo, this._seatPlayer.cards, this._seatPlayer.status);
         switch (v) {
             case Def.CanPlayStatus.AGREE_POST:
             case Def.CanPlayStatus.DISABLE:

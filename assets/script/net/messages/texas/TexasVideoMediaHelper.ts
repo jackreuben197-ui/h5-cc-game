@@ -6,7 +6,7 @@ import { ButtonState } from '../../../game/constant/Constants';
 import { MicrophoneIconState } from '../../../game/constant/MicrophoneIconState';
 import agoraManager from '../../agora/AgoraManager';
 
-const _plog = createLogger('AgoraManagerCallback', 'debug');
+const _plog = createLogger('AgoraManagerCallback');
 
 @traceClass()
 export default class TexasVideoMediaHelper {
@@ -34,10 +34,12 @@ export default class TexasVideoMediaHelper {
 
     public static clearAllMediaStates(roomData: TexasGameRoomData | null): void {
         if (!roomData) return;
-        roomData.mine.localCameraEnabled = ButtonState.DISABLE;
-        roomData.mine.localMicrophoneEnabled = ButtonState.DISABLE;
-        roomData.mine.remoteCameraEnabled = false;
-        roomData.mine.remoteMicrophoneEnabled = false;
+        roomData.mine.localCameraBtnState = ButtonState.DISABLE;
+        roomData.mine.localCameraEnabled = false;
+        roomData.mine.localMicrophoneBtnState = ButtonState.DISABLE;
+        roomData.mine.localMicrophoneEnabled = false;
+        roomData.mine.remoteCameraEnabled = ButtonState.HIDDEN;
+        roomData.mine.remoteMicrophoneEnabled = ButtonState.HIDDEN;
         roomData.mine.randomVideoActive = false;
         roomData.mine.randomVideoEndTime = 0;
         roomData.seatsStateManager.resetVideoAndAudioStates();
@@ -55,9 +57,12 @@ export default class TexasVideoMediaHelper {
                     seat.remoteVideoVisible = false;
                     return;
                 }
-                if (roomData.mine.remoteCameraEnabled) {
+                if (roomData.mine.remoteCameraEnabled == ButtonState.ON) {
                     await agoraManager.subscribeOrUnsubscribeRemoteVideo(true, uid);
                     seat.remoteVideoVisible = true;
+                    if (roomData.basicInfo.antiCheatConfig && roomData.basicInfo.antiCheatConfig.getSeatedSetting().canSwitchPowerSaving) {
+                        seat.realShowMaskID = seat.videoMaskId == 0 ? 1 : seat.videoMaskId;
+                    }
                 }
                 return;
             }
@@ -71,7 +76,7 @@ export default class TexasVideoMediaHelper {
                 track.play();
             }
             // 如果本地静音, 马上把音量控制下
-            if (roomData.mine.remoteMicrophoneEnabled) {
+            if (roomData.mine.remoteMicrophoneEnabled == ButtonState.ON) {
                 track.setVolume(100);
                 seat.micIconState = MicrophoneIconState.HIDDEN;
             } else {
@@ -87,6 +92,7 @@ export default class TexasVideoMediaHelper {
             if (!seat) return;
             if (mediaType == 'video') {
                 seat.remoteVideoVisible = false;
+                seat.realShowMaskID = 0;
                 return;
             }
             seat.micIconState = MicrophoneIconState.MUTED;

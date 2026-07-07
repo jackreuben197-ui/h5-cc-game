@@ -30,6 +30,11 @@ export function ActionAll(data: ServerMessageActionAll.AsObject, roomID: number,
     }
     if (seatPlayer.mine) {
         seatPlayer.mine.operator = null;
+        //麦序关闭
+        if (roomData.basicInfo.antiCheatConfig && roomData.basicInfo.antiCheatConfig.isOrderMode) {
+            seatPlayer.mine.localCameraEnabled = false;
+            seatPlayer.mine.localMicrophoneEnabled = false;
+        }
     }
     //所有下注
     roomData.potInfo.allPot = data.allBet;

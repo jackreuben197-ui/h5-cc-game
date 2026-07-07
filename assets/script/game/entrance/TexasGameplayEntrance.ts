@@ -458,8 +458,15 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         //安全屋
         roomData.basicInfo.seatedMessage = this._roomInfo.seatedMessaging > 0;
         // mock video
-        this._roomInfo.antiCheatType = AntiCheatType.VIDEO;
-        this._roomInfo.antiCheatVideoType = 1;
+        // this._roomInfo.antiCheatType = AntiCheatType.VIDEO;
+        // this._roomInfo.antiCheatVideoType = 3;
+        // this._roomInfo.powerSaving = 0;
+        // this._roomInfo.videoSeatSwitch = 0;
+        // this._roomInfo.videoMiddleSwitch = 1,
+        // this._roomInfo.micSeatSwitch = 0;
+        // this._roomInfo.micMiddleSwitch = 1;
+        // this._roomInfo.powerSavingSeatSwitch = 0;
+        // this._roomInfo.powerSavingMiddleSwitch = 1;
         //video/audio
         if (this._roomInfo.antiCheatType == AntiCheatType.VIDEO || this._roomInfo.antiCheatType == AntiCheatType.AUDIO) {
             roomData.basicInfo.antiCheatConfig = new VideoAntiCheatConfig(
@@ -470,6 +477,7 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
                 this._roomInfo.micMiddleSwitch == 1,
                 this._roomInfo.videoSeatSwitch == 1,
                 this._roomInfo.videoMiddleSwitch == 1,
+                this._roomInfo.powerSaving == 1,
                 this._roomInfo.powerSavingSeatSwitch == 1,
                 this._roomInfo.powerSavingMiddleSwitch == 1,
                 this._roomInfo.antiCheatOrderType,

@@ -64,18 +64,43 @@ export async function Seated(data: ServerMessageSeated.AsObject, roomID: number,
         const seatedConfig = roomData.basicInfo.antiCheatConfig.getSeatedSetting();
         const promise = [];
         try {
-            let video = false;
-            if (seatedConfig.showCamera) {
-                video = true;
+            if (seatedConfig.enableCamera) {
                 promise.push(agoraManager.enableCamera());
             }
             promise.push(agoraManager.enableMicrophone());
             promise.push(TexasVideoMediaHelper.joinAgoraVideoChannelIfNeed(roomID, matchID));
             await Promise.all(promise);
-            mine.localCameraEnabled = seatedConfig.showCamera ? (seatedConfig.cameraOpen ? ButtonState.ON : ButtonState.OFF) : ButtonState.DISABLE;
-            mine.localMicrophoneEnabled = seatedConfig.micOpen ? ButtonState.ON : ButtonState.OFF;
-            mine.remoteCameraEnabled = seatedConfig.showCamera;
-            mine.remoteMicrophoneEnabled = true;
+            // 如果能操作摄像头,则根据状态变更
+            if (seatedConfig.canOpCamera) {
+                //能操作交给按钮操作
+                roomData.mine.localCameraBtnState = seatedConfig.openCamera ? ButtonState.ON : ButtonState.OFF;
+            } else {
+                roomData.mine.localCameraBtnState = ButtonState.DISABLE;
+                // 不能按钮操作 强制操作
+                roomData.mine.localCameraEnabled = seatedConfig.openCamera;
+            }
+            if (seatedConfig.canOpMicrophone) {
+                roomData.mine.localMicrophoneBtnState = seatedConfig.openMicrophone ? ButtonState.ON : ButtonState.OFF;
+            } else {
+                roomData.mine.localMicrophoneBtnState = ButtonState.DISABLE;
+                roomData.mine.localMicrophoneEnabled = seatedConfig.openMicrophone;
+            }
+            if (seatedConfig.enableCamera && seatedConfig.canSwitchPowerSaving) {
+                roomData.mine.maskBtnState = seatedConfig.openPowerSaving ? ButtonState.ON : ButtonState.DISABLE;
+            } else if (seatedConfig.enableCamera && !seatedConfig.canSwitchPowerSaving) {
+                roomData.mine.maskBtnState = ButtonState.DISABLE;
+                if (seatedConfig.openPowerSaving) {
+                    roomData.seatsStateManager.forEachPlayer(p => {
+                        p.realShowMaskID = p.videoMaskId == 0 ? 1 : p.videoMaskId;
+                    });
+                } else {
+                    roomData.seatsStateManager.forEachPlayer(p => {
+                        p.realShowMaskID = 0;
+                    });
+                }
+            }
+            mine.remoteCameraEnabled = seatedConfig.enableCamera ? ButtonState.ON : ButtonState.HIDDEN;
+            mine.remoteMicrophoneEnabled = ButtonState.ON;
             roomData.basicInfo.antiCheatConfig.start();
         } catch (e) {
             _plog.error('加入视频桌失败', e);

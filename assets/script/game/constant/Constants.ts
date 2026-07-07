@@ -54,5 +54,6 @@ export enum GamePlaySubType {
 export enum ButtonState {
     DISABLE = 0,
     ON = 1,
-    OFF = 2
+    OFF = 2,
+    HIDDEN = 3
 }

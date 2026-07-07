@@ -11,10 +11,6 @@ export function VideoMaskChange(data: ServerMessageVideoMaskChange.AsObject, roo
     _plog.info('userRid:', data.userRid, 'videoMaskId:', data.videoMaskId);
     // videoMaskId > 4 时客户端统一归为 1
     let maskId = data.videoMaskId;
-    if (typeof maskId !== 'number') {
-        _plog.warn('videoMaskId 非法:', data.videoMaskId);
-        return;
-    }
     if (maskId > 4) maskId = 1;
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     if (!roomData) return;
@@ -26,4 +22,7 @@ export function VideoMaskChange(data: ServerMessageVideoMaskChange.AsObject, roo
     }
     // 更新玩家数据
     seatData.videoMaskId = maskId;
+    if (seatData.realShowMaskID > 0) {
+        seatData.realShowMaskID = maskId;
+    }
 }

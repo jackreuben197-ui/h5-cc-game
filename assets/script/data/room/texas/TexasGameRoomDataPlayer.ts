@@ -49,7 +49,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public static readonly POPUP_CARDS = 'POPUP_CARDS';
     public static readonly VIDEO_MASK_CHANGE = 'VIDEO_MASK_CHANGE';
     public static readonly REMOTE_VIDEO_VISIBLE_CHANGE = 'REMOTE_VIDEO_VISIBLE_CHANGE';
-    public static readonly MIC_ICON_STATE_CHANGE = 'MIC_ICON_STATE_CHANGE';
+    public static readonly MICROPHONE_ICON_STATE_CHANGE = 'MICROPHONE_ICON_STATE_CHANGE';
     private _parentRoomData: TexasGameRoomData;
     public get roomData() {
         return this._parentRoomData;
@@ -111,10 +111,10 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public squidCount: number = 0;
     public videoMaskId: number = 0;
     @observable(TexasGameRoomDataPlayer.VIDEO_MASK_CHANGE)
-    public realChangeMaskID: number = 0;
+    public realShowMaskID: number = 0;
     @observable(TexasGameRoomDataPlayer.REMOTE_VIDEO_VISIBLE_CHANGE)
     public remoteVideoVisible: boolean = false;
-    @observable(TexasGameRoomDataPlayer.MIC_ICON_STATE_CHANGE)
+    @observable(TexasGameRoomDataPlayer.MICROPHONE_ICON_STATE_CHANGE)
     public micIconState: MicrophoneIconState = MicrophoneIconState.HIDDEN;
     //ALLIN胜率(目前只考虑第一套把) (0-10000)
     @observable(TexasGameRoomDataPlayer.ALLIN_WIN_PERCENT)
@@ -178,6 +178,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
         this.squidCount = 0;
         this.squidEscaped = false;
         this.videoMaskId = 0;
+        this.realShowMaskID = 0;
         this.unmuteEvents();
         // this.emit(TexasGameRoomDataPlayer.EMPTY_SEAT);
     }

@@ -312,6 +312,11 @@ export default class Operation extends cc.Component {
         }
         // 手动操作(声音提示)
         soundManager.playEffect(SoundEffectKey.MyTurn);
+        // 麦序模式
+        if (this._seatPlayer.roomData.basicInfo.antiCheatConfig && this._seatPlayer.roomData.basicInfo.antiCheatConfig.isOrderMode) {
+            this._seatPlayer.localCameraEnabled = true;
+            this._seatPlayer.localMicrophoneEnabled = true;
+        }
         // 先把自动操作面板隐藏
         this._seatPlayer.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
         this.rootNode.active = true;
