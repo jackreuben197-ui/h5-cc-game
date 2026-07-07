@@ -1,0 +1,138 @@
+import { createLogger, traceClass, traceMethod } from '../../../core/decorator/LogTrace';
+import roomDataManager from '../../../data/room/RoomDataManager';
+import type TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
+import userStore from '../../../data/user/UserStore';
+import { ButtonState } from '../../../game/constant/Constants';
+import { MicrophoneIconState } from '../../../game/constant/MicrophoneIconState';
+import agoraManager from '../../agora/AgoraManager';
+
+const _plog = createLogger('AgoraManagerCallback');
+
+@traceClass()
+export default class TexasVideoMediaHelper {
+    @traceMethod()
+    public static async joinAgoraVideoChannelIfNeed(roomID: number, matchID: number): Promise<void> {
+        const uid = userStore.userRID;
+        if (agoraManager.isJoined) {
+            await agoraManager.disableCamera();
+            agoraManager.disableMicrophone();
+            agoraManager.clearCallbacks();
+            agoraManager.stopVolumeMonitor();
+            await agoraManager.leave();
+        }
+        const roomData = TexasVideoMediaHelper.getAgoraCallbackRoomData(roomID, matchID, '加入房间', uid);
+        TexasVideoMediaHelper.bindAgoraCallbacks(roomID, matchID);
+        const channelName = 'rtc_d_' + roomData.basicInfo.tableCategory + '-' + matchID + '-' + roomID;
+        const ok = await agoraManager.join(channelName, uid);
+        if (!ok) {
+            agoraManager.clearCallbacks();
+            TexasVideoMediaHelper.tracelog.error('加入 Agora 频道失败');
+            return;
+        }
+        agoraManager.startVolumeMonitor();
+    }
+
+    public static clearAllMediaStates(roomData: TexasGameRoomData | null): void {
+        if (!roomData) return;
+        roomData.mine.localCameraBtnState = ButtonState.DISABLE;
+        roomData.mine.localCameraEnabled = false;
+        roomData.mine.localMicrophoneBtnState = ButtonState.DISABLE;
+        roomData.mine.localMicrophoneEnabled = false;
+        roomData.mine.remoteCameraEnabled = ButtonState.HIDDEN;
+        roomData.mine.remoteMicrophoneEnabled = ButtonState.HIDDEN;
+        roomData.mine.randomVideoActive = false;
+        roomData.mine.randomVideoEndTime = 0;
+        roomData.seatsStateManager.resetVideoAndAudioStates();
+    }
+
+    public static bindAgoraCallbacks(roomID: number, matchID: number): void {
+        agoraManager.onUserPublish = async (uid: number, mediaType: string) => {
+            _plog.debug('onUserPublish', uid);
+            const roomData = TexasVideoMediaHelper.getAgoraCallbackRoomData(roomID, matchID, '远端视频发布', uid);
+            if (!roomData) return;
+            const seat = roomData.seatsStateManager.getSeatPlayerByUserID(uid);
+            if (!seat) return;
+            if (mediaType == 'video') {
+                if (seat.mine) {
+                    seat.remoteVideoVisible = false;
+                    return;
+                }
+                if (roomData.mine.remoteCameraEnabled == ButtonState.ON) {
+                    await agoraManager.subscribeOrUnsubscribeRemoteVideo(true, uid);
+                    seat.remoteVideoVisible = true;
+                    if (roomData.basicInfo.antiCheatConfig && roomData.basicInfo.antiCheatConfig.getSeatedSetting().canSwitchPowerSaving) {
+                        seat.realShowMaskID = seat.videoMaskId == 0 ? 1 : seat.videoMaskId;
+                    }
+                }
+                return;
+            }
+            // 自己的话筒不做操作
+            if (seat.mine) {
+                return;
+            }
+            // 音频直接监听
+            const track = await agoraManager.subscribeOrUnsubscribeRemoteAudio(true, uid);
+            if (track) {
+                track.play();
+            }
+            // 如果本地静音, 马上把音量控制下
+            if (roomData.mine.remoteMicrophoneEnabled == ButtonState.ON) {
+                track.setVolume(100);
+                seat.micIconState = MicrophoneIconState.HIDDEN;
+            } else {
+                track.setVolume(0);
+                seat.micIconState = MicrophoneIconState.MUTED;
+            }
+        };
+        agoraManager.onUserUnpublish = (uid: number, mediaType: string) => {
+            _plog.debug('onUserUnpublish', uid);
+            const roomData = TexasVideoMediaHelper.getAgoraCallbackRoomData(roomID, matchID, '远端视频取消', uid);
+            if (!roomData) return;
+            const seat = roomData.seatsStateManager.getSeatPlayerByUserID(uid);
+            if (!seat) return;
+            if (mediaType == 'video') {
+                seat.remoteVideoVisible = false;
+                seat.realShowMaskID = 0;
+                return;
+            }
+            seat.micIconState = MicrophoneIconState.MUTED;
+        };
+        agoraManager.onUserLeft = (uid: number) => {
+            _plog.debug('onUserLeft', uid);
+            const roomData = TexasVideoMediaHelper.getAgoraCallbackRoomData(roomID, matchID, '远端用户离开', uid);
+            if (!roomData) return;
+            const seat = roomData.seatsStateManager.getSeatPlayerByUserID(uid);
+            if (seat) {
+                seat.remoteVideoVisible = false;
+                seat.micIconState = MicrophoneIconState.HIDDEN;
+            }
+        };
+        agoraManager.onReconnected = () => {
+            _plog.debug('onReconnected');
+            const roomData = TexasVideoMediaHelper.getAgoraCallbackRoomData(roomID, matchID, 'SDK 重连成功');
+            if (!roomData) return;
+        };
+        agoraManager.onError = (err: any) => {
+            _plog.debug('onError');
+            const roomData = TexasVideoMediaHelper.getAgoraCallbackRoomData(roomID, matchID, 'Agora 错误');
+            if (!roomData) return;
+            TexasVideoMediaHelper.tracelog.error('Agora 错误:', err && err.code ? err.code : err && err.message ? err.message : err);
+            //TexasVideoMediaHelper.applyAgoraError(roomData, err);
+        };
+        agoraManager.onActiveSpeaker = (uid: number) => {
+            _plog.debug('onActiveSpeaker', uid);
+            const roomData = TexasVideoMediaHelper.getAgoraCallbackRoomData(roomID, matchID, '当前说话者');
+            if (!roomData) return;
+            roomData.seatsStateManager.speakingUID = uid;
+        };
+    }
+
+    private static getAgoraCallbackRoomData(roomID: number, matchID: number, name: string, uid?: number): TexasGameRoomData | null {
+        const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
+        if (!roomData) {
+            TexasVideoMediaHelper.tracelog.warn(name + '时 roomData 不存在, roomID:', roomID, 'matchID:', matchID, 'uid:', uid);
+            return null;
+        }
+        return roomData;
+    }
+}

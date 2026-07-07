@@ -56,7 +56,6 @@ export default class StepSlider extends cc.Component {
         this._bgColor = val;
         this.updateColors();
     }
-
     @property({ visible: false })
     private _progressColor: cc.Color = cc.Color.fromHEX(new cc.Color(), '#f9ca24');
     @property({ type: cc.Color, displayName: '进度条亮色' })
@@ -67,10 +66,8 @@ export default class StepSlider extends cc.Component {
         this._progressColor = val;
         this.updateColors();
     }
-
     /** 归一化进度回调 (0~1)，供 Operation / BringIn 按比例自行换算金额 */
     public onValueChanged: (progress: number) => void = null;
-
     // ─── 绝对值区间模式（可选，show() 后启用）─────────────
     private _data: SliderData = null;
     private _curValue: number = 0;
@@ -183,7 +180,6 @@ export default class StepSlider extends cc.Component {
     public get value(): number {
         return this._curValue;
     }
-
     public set value(v: number) {
         const d = this._data;
         const k = !d || d.max_value === d.min_value ? 0 : (v - d.min_value) / (d.max_value - d.min_value);

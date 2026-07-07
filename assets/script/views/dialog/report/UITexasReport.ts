@@ -32,6 +32,7 @@ export type UITexasReportParam = {
 
 /** 战绩面板支持的子表（与 pokerqueen 保持一致：常规 / 鱿鱼/蘑菇）。*/
 type ReportSubType = 'none' | 'mush' | 'squid';
+
 type ReportBottomTab = 'battle' | 'insurance' | 'jackpot' | 'mode';
 
 /**
@@ -57,7 +58,6 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     private peopleItem: cc.Prefab = null;
     @property({ type: cc.Prefab, displayName: '战绩数据行 Prefab', tooltip: 'rc/scene/room/texas/widget/ReportDataItem' })
     private reportDataItem: cc.Prefab = null;
-
     // ─── 顶栏（layer/bg/$Top）──────────────────────────
     @property({ type: cc.Label, displayName: '[顶栏] 时间标签 time_text' })
     private timeText: cc.Label = null;
@@ -83,7 +83,6 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     private exitBtn: cc.Node = null;
     @property({ type: cc.Node, displayName: '[蒙层] 外部点击关闭区 bg_click' })
     private bgClickNode: cc.Node = null;
-
     // ─── 公共统计区（publicArea）──────────────────────
     @property({ type: cc.Node, displayName: '[公共] 容器 publicArea' })
     private publicAreaNode: cc.Node = null;
@@ -99,7 +98,6 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     private curTimeLabel: cc.Label = null;
     @property({ type: cc.Label, displayName: '[公共] 保险池 insurance_pool' })
     private insurancePoolLabel: cc.Label = null;
-
     // ─── 列表容器（4 个 tab 的 data_content）──────────
     @property({ type: cc.Node, displayName: '[列表] 战况/保险 容器 reportScrow' })
     private reportScrow: cc.Node = null;
@@ -119,7 +117,6 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     private jackpotContent: cc.Node = null;
     @property({ type: cc.Node, displayName: '[列表] 无数据提示 noData' })
     private noDataNode: cc.Node = null;
-
     // ─── 表头（dataList/header）────────────────────────
     @property({ type: cc.Node, displayName: '[表头] 战况通用 ListBar1' })
     private listBar1: cc.Node = null;
@@ -133,13 +130,11 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     private listBarJackpot: cc.Node = null;
     @property({ type: cc.Node, displayName: '[表头] 保险 ListBar4' })
     private listBar4: cc.Node = null;
-
     // ─── Jackpot 顶栏 ──────────────────────────────────
     @property({ type: cc.Node, displayName: '[Jackpot] 顶部 bar JackpotBar' })
     private jackpotBarNode: cc.Node = null;
     @property({ type: cc.Label, displayName: '[Jackpot] 池子总额标签 JackpotBar/JackpotNumber (Label)' })
     private jackpotTotalLabel: cc.Label = null;
-
     // ─── 观众（peopleNode / peopleScrow）──────────────
     @property({ type: cc.Node, displayName: '[观众] 容器 peopleNode' })
     private peopleNode: cc.Node = null;
@@ -149,7 +144,6 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     private peopleScrow: cc.Node = null;
     @property({ type: cc.Node, displayName: '[观众] 内容节点 peopleScrow/view/people_content' })
     private peopleContent: cc.Node = null;
-
     // ─── 鱿鱼分页（squidPageInfo）─────────────────────
     @property({ type: cc.Node, displayName: '[分页] 容器 squidPageInfo' })
     private pageInfoNode: cc.Node = null;
@@ -161,7 +155,6 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     private rightBtn: cc.Node = null;
     @property({ type: StepSlider, displayName: '[分页] 滑块 StepSlider' })
     private sliderPlus: StepSlider = null;
-
     // ─── 底部 tab 切换（bottomToggle）────────────────
     @property({ type: cc.Node, displayName: '[底部] 切换根 bottomToggle' })
     private bottomToggleRoot: cc.Node = null;
@@ -183,7 +176,6 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     private squidCheckmark: cc.Node = null;
     @property({ type: cc.Node, displayName: '[底部] 鱿鱼/蘑菇 文案节点 squidToggle/text' })
     private squidToggleTextNode: cc.Node = null;
-
     // ─── 数据源 ──────────────────────────────────────
     private _roomData: TexasGameRoomData = null;
     private _report: TexasGameRoomDataReport = null;
@@ -193,7 +185,6 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     private _squidCurRound: number = 0;
     private _isInsuranceFetched: boolean = false;
     private _isJackpotFetched: boolean = false;
-
     // ============================================================
     // 生命周期
     // ============================================================
@@ -268,7 +259,6 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         if (!this._report) return;
         autoBindEvents(this, { report: this._report });
     }
-
     // ============================================================
     // @bindEvent —— 数据驱动刷新
     // ============================================================
@@ -308,7 +298,6 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
             this._refreshPageText();
         }
     }
-
     // ============================================================
     // 渲染
     // ============================================================
@@ -346,9 +335,9 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         const avgStr =
             s.totalHand > 0
                 ? (() => {
-                    const avg = s.totalPot / s.totalHand / 100;
-                    return Number.isInteger(avg) ? `${avg}` : avg.toFixed(2);
-                })()
+                      const avg = s.totalPot / s.totalHand / 100;
+                      return Number.isInteger(avg) ? `${avg}` : avg.toFixed(2);
+                  })()
                 : '0';
         this.verBottomLabel.string = `${i18nMgr.Get('UISituationVerBottom')} ${avgStr}`;
         const used = s.startTime > 0 ? Math.floor(Date.now() / 1000) - s.startTime : 0;
@@ -413,13 +402,13 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         const textAllCol = ele.getChildByName('Text_All_Col');
         if (textAllCol) {
             const allLbl = textAllCol.getChildByName('Text_All')?.getComponent(cc.Label);
-            const all1Lbl = textAllCol.getChildByName('Text_All1')
+            const all1Lbl = textAllCol.getChildByName('Text_All1');
             if (allLbl) allLbl.string = StringHelper.GetLongString(p.bringInTotal);
             if (all1Lbl) {
                 if (p.storeChips) {
-                    all1Lbl.getComponent(cc.Label).string = StringHelper.GetLongString(p.storeChips)
+                    all1Lbl.getComponent(cc.Label).string = StringHelper.GetLongString(p.storeChips);
                 } else {
-                    all1Lbl.active = false
+                    all1Lbl.active = false;
                 }
             }
         }
@@ -611,7 +600,6 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
             if (own) own.active = r.user_random_id === userStore.userID;
         }
     }
-
     // ============================================================
     // Tab & Toggle
     // ============================================================
@@ -737,7 +725,6 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         else if (this._curTab === 'insurance') this._renderInsuranceList();
         else if (this._curTab === 'mode') this._renderSquidList();
     }
-
     // ============================================================
     // 分页 (squid/mush)
     // ============================================================
@@ -770,7 +757,6 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
                 .replace('{2}', `${snap.endHand || 0}`);
         }
     }
-
     // ============================================================
     // 网络请求
     // ============================================================
@@ -808,70 +794,65 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         const subType = this._resolveSubType();
         if (subType !== 'squid' && subType !== 'mush') return;
         const web_class = subType === 'mush' ? APITexasSituationMushRound : APITexasSituationSquidRound;
-        WWW.Instance
-            .CommonAPI({
-                web_class,
-                api_id: this._roomData.roomID,
-                club_id: this._roomData.basicInfo.clubID,
-                body: { round },
-                juhua: false
-            } as any)
-            .then(
-                (resp: any) => {
-                    const data = resp?.data;
-                    if (!data) {
-                        this._updateNoDataState();
-                        return;
-                    }
-                    const total = Number(data.total || 0);
-                    const r = Number(data.round || 0);
-                    const records = (data.records || []) as TexasReportSquidRecord[];
-                    if (this._squidCurRound === 0) {
-                        this._squidCurRound = total > 0 ? total : r > 0 ? r : 1;
-                    } else if (r > 0) {
-                        this._squidCurRound = r;
-                    }
-                    const saveRound = this._squidCurRound > 0 ? this._squidCurRound : 1;
-                    this._report.setSquidRound(saveRound, {
-                        totalRound: total,
-                        startHand: Number(data.start_hand || 0),
-                        endHand: Number(data.end_hand || 0),
-                        records
-                    });
-                    this._setupSlider();
-                    this._refreshPageText();
-                },
-                () => this._updateNoDataState()
-            );
+        WWW.Instance.CommonAPI({
+            web_class,
+            api_id: this._roomData.roomID,
+            club_id: this._roomData.basicInfo.clubID,
+            body: { round },
+            juhua: false
+        } as any).then(
+            (resp: any) => {
+                const data = resp?.data;
+                if (!data) {
+                    this._updateNoDataState();
+                    return;
+                }
+                const total = Number(data.total || 0);
+                const r = Number(data.round || 0);
+                const records = (data.records || []) as TexasReportSquidRecord[];
+                if (this._squidCurRound === 0) {
+                    this._squidCurRound = total > 0 ? total : r > 0 ? r : 1;
+                } else if (r > 0) {
+                    this._squidCurRound = r;
+                }
+                const saveRound = this._squidCurRound > 0 ? this._squidCurRound : 1;
+                this._report.setSquidRound(saveRound, {
+                    totalRound: total,
+                    startHand: Number(data.start_hand || 0),
+                    endHand: Number(data.end_hand || 0),
+                    records
+                });
+                this._setupSlider();
+                this._refreshPageText();
+            },
+            () => this._updateNoDataState()
+        );
     }
 
     private _fetchInsuranceHistory(): void {
         if (!this._roomData) return;
         this._isInsuranceFetched = true;
-        WWW.Instance
-            .CommonAPI({
-                web_class: WebStatsRoomInsuranceData,
-                club_id: this._roomData.basicInfo.clubID,
-                body: { room_id: this._roomData.roomID, limit: 200, offset: 0 },
-                juhua: false
-            } as any)
-            .then(
-                (resp: any) => {
-                    const list: any[] = (resp?.data?.list || []) as any[];
-                    const records: TexasReportInsuranceRecord[] = list.map(item => ({
-                        userRid: Number(item.user_rid || 0),
-                        name: `${item.nick_name || ''}`,
-                        handNum: Number(item.hand_num || 0),
-                        insurBet: Number(item.insur_bet || 0),
-                        insurWin: Number(item.insur_win || 0),
-                        createTime: Number(item.create_time || 0)
-                    }));
-                    this._report.setInsuranceRecords(records);
-                },
-                () => this._updateNoDataState()
-            );
+        WWW.Instance.CommonAPI({
+            web_class: WebStatsRoomInsuranceData,
+            club_id: this._roomData.basicInfo.clubID,
+            body: { room_id: this._roomData.roomID, limit: 200, offset: 0 },
+            juhua: false
+        } as any).then(
+            (resp: any) => {
+                const list: any[] = (resp?.data?.list || []) as any[];
+                const records: TexasReportInsuranceRecord[] = list.map(item => ({
+                    userRid: Number(item.user_rid || 0),
+                    name: `${item.nick_name || ''}`,
+                    handNum: Number(item.hand_num || 0),
+                    insurBet: Number(item.insur_bet || 0),
+                    insurWin: Number(item.insur_win || 0),
+                    createTime: Number(item.create_time || 0)
+                }));
+                this._report.setInsuranceRecords(records);
+            },
+            () => this._updateNoDataState()
+        );
     }
-
     // ============================================================
     // StepSlider 接线（对齐 pokerqueen UITexasReportComponent.setupSlider/sliderChange/onSliderTouchEnd）
     // ============================================================
@@ -906,8 +887,6 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
             this._fetchSquidRound(this._squidCurRound);
         }
     }
-
-
     // ============================================================
     // 玩家详情子窗口
     // ============================================================
@@ -923,7 +902,6 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
             avatar: ob?.avatar
         });
     }
-
     // ============================================================
     // 工具函数
     // ============================================================

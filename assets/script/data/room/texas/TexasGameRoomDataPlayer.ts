@@ -7,6 +7,7 @@ import {
     AnimateDisplayTypePosition,
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
+import { MicrophoneIconState } from '../../../game/constant/MicrophoneIconState';
 import { Operator } from './model/Operator';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from './TexasGameRoomDataPlayerMine';
@@ -46,6 +47,9 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public static readonly SQUID_ESCAPED = 'SQUID_ESCAPED';
     public static readonly MUSHROOM_COUNT = 'MUSHROOM_COUNT';
     public static readonly POPUP_CARDS = 'POPUP_CARDS';
+    public static readonly VIDEO_MASK_CHANGE = 'VIDEO_MASK_CHANGE';
+    public static readonly REMOTE_VIDEO_VISIBLE_CHANGE = 'REMOTE_VIDEO_VISIBLE_CHANGE';
+    public static readonly MICROPHONE_ICON_STATE_CHANGE = 'MICROPHONE_ICON_STATE_CHANGE';
     private _parentRoomData: TexasGameRoomData;
     public get roomData() {
         return this._parentRoomData;
@@ -105,8 +109,13 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public squidEscaped: boolean = false; // 鱿鱼是否已经标记
     @observable(TexasGameRoomDataPlayer.SQUID_COUNT)
     public squidCount: number = 0;
-    //videoMaskId
     public videoMaskId: number = 0;
+    @observable(TexasGameRoomDataPlayer.VIDEO_MASK_CHANGE)
+    public realShowMaskID: number = 0;
+    @observable(TexasGameRoomDataPlayer.REMOTE_VIDEO_VISIBLE_CHANGE)
+    public remoteVideoVisible: boolean = false;
+    @observable(TexasGameRoomDataPlayer.MICROPHONE_ICON_STATE_CHANGE)
+    public micIconState: MicrophoneIconState = MicrophoneIconState.HIDDEN;
     //ALLIN胜率(目前只考虑第一套把) (0-10000)
     @observable(TexasGameRoomDataPlayer.ALLIN_WIN_PERCENT)
     public winPercent100: number = -1;
@@ -156,6 +165,8 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     // 扑克核心桌面业务方法层实现
     // =========================================================================
     public clearData() {
+        this.remoteVideoVisible = false;
+        this.micIconState = MicrophoneIconState.HIDDEN;
         this.muteEvents();
         this.userID = 0;
         this.clubID = 0;
@@ -166,6 +177,8 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
         this.status = undefined;
         this.squidCount = 0;
         this.squidEscaped = false;
+        this.videoMaskId = 0;
+        this.realShowMaskID = 0;
         this.unmuteEvents();
         // this.emit(TexasGameRoomDataPlayer.EMPTY_SEAT);
     }
@@ -196,6 +209,12 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
                 this.mine.handStart();
             }
         }
+    }
+
+    /** 重置视频和音频状态 */
+    public resetVideoAndAudioStates() {
+        this.remoteVideoVisible = false;
+        this.micIconState = MicrophoneIconState.HIDDEN;
     }
 
     public handEnd() {

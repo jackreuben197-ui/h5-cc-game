@@ -96,17 +96,13 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
     public static readonly JACKPOT_CHANGE = 'REPORT_JACKPOT_CHANGE';
     public static readonly INSURANCE_CHANGE = 'REPORT_INSURANCE_CHANGE';
     public static readonly SQUID_ROUND_CHANGE = 'REPORT_SQUID_ROUND_CHANGE';
-
     private readonly _roomData: TexasGameRoomData;
-
     /** 玩家战绩列表 —— 数组实例每次刷新都会替换，触发 @observable emit。*/
     @observable(TexasGameRoomDataReport.PLAYERS_CHANGE, { forceEmit: true })
     public players: TexasReportPlayerInfo[] = [];
-
     /** 观众列表 */
     @observable(TexasGameRoomDataReport.OBSERVERS_CHANGE, { forceEmit: true })
     public observers: Roomer.AsObject[] = [];
-
     /** 牌桌总览数据（总底池/总带入/总手数/保险池/开桌时间）—— 公共区域。 */
     @observable(TexasGameRoomDataReport.SUMMARY_CHANGE, { forceEmit: true })
     public summary: {
@@ -116,19 +112,15 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
         insurance: number;
         startTime: number;
     } = { totalPot: 0, totalBringin: 0, totalHand: 0, insurance: 0, startTime: 0 };
-
     /** Jackpot 记录列表（来源：服务端 PlayerJackpotSummary 整表覆盖 + Winner 局部累加）。 */
     @observable(TexasGameRoomDataReport.JACKPOT_CHANGE, { forceEmit: true })
     public jackpotRecords: TexasReportJackpotRecord[] = [];
-
     /** 保险历史记录（HTTP 拉取），整表替换。 */
     @observable(TexasGameRoomDataReport.INSURANCE_CHANGE, { forceEmit: true })
     public insuranceRecords: TexasReportInsuranceRecord[] = [];
-
     /** 鱿鱼/蘑菇 按 round 缓存的分页数据。 */
     @observable(TexasGameRoomDataReport.SQUID_ROUND_CHANGE, { forceEmit: true })
     public squidRounds: Map<number, TexasReportSquidRoundSnapshot> = new Map();
-
     /** 标记 Roomers 是否已经从服务端拉过一次。面板根据它决定是否要等首屏数据。 */
     public roomersFetched: boolean = false;
 
@@ -136,7 +128,6 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
         super();
         this._roomData = roomData;
     }
-
     // ============================================================
     // 整表覆盖入口
     // ============================================================
@@ -196,7 +187,6 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
         next.set(round, snapshot);
         this.squidRounds = next;
     }
-
     // ============================================================
     // 增量更新入口（对应 Unity TexasSituationController.*）
     // ============================================================
@@ -211,7 +201,6 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
         let totalPot = this.summary.totalPot;
         let totalHand = response.handNum || this.summary.totalHand;
         const mushroomBase = this._roomData.basicInfo.mushroomBase || 0;
-
         for (const winner of response.resultsList || []) {
             let player = players.find(p => p.seatId != null && p.seatId === winner.seatId);
             if (!player) {
@@ -254,7 +243,6 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
             }
             player.poolRate = player.handNum > 0 ? Math.floor((player.poolCount * 1000) / player.handNum) : 0;
         }
-
         this.players = players;
         this.summary = { ...this.summary, totalPot, totalHand };
         this.jackpotRecords = this.jackpotRecords.slice();
@@ -347,7 +335,6 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
         this.squidRounds = new Map();
         this.roomersFetched = false;
     }
-
     // ============================================================
     // 内部辅助
     // ============================================================
@@ -373,10 +360,7 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
             squidCount: Number(p.squidCount || 0),
             squidPunishTotal: Number(p.squidPunishTotal || 0),
             // Unity: 优先按 handNum 计算入池率（PoolCount * 1000 / HandNum），否则用服务端给的 poolRate
-            poolRate:
-                Number(p.handNum || 0) > 0
-                    ? Math.floor((Number(p.poolCount || 0) * 1000) / Number(p.handNum))
-                    : Number(p.poolRate || 0)
+            poolRate: Number(p.handNum || 0) > 0 ? Math.floor((Number(p.poolCount || 0) * 1000) / Number(p.handNum)) : Number(p.poolRate || 0)
         };
     }
 

@@ -58,18 +58,16 @@ export default class UITexasReportPlayerInfo extends UIComponentBaseDialog<UITex
         this._applyAvatar(param.avatar || '');
         this._resetBottomLabels();
         const token = ++this._statsToken;
-        WWW.Instance
-            .CommonAPI({
-                web_class: WebStatsOtherUserStats,
-                api_id: this._userRid
-            } as any)
-            .then(
-                (resp: any) => {
-                    if (this._isClosing || !cc.isValid(this.node) || token !== this._statsToken) return;
-                    if (Number(resp?.code || 0) === 0) this._refreshStats(resp);
-                },
-                () => {}
-            );
+        WWW.Instance.CommonAPI({
+            web_class: WebStatsOtherUserStats,
+            api_id: this._userRid
+        } as any).then(
+            (resp: any) => {
+                if (this._isClosing || !cc.isValid(this.node) || token !== this._statsToken) return;
+                if (Number(resp?.code || 0) === 0) this._refreshStats(resp);
+            },
+            () => {}
+        );
     }
 
     public close(): void {

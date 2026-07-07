@@ -1,5 +1,6 @@
 import { Def, Player, ServerMessageEnterRoom } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
+import soundManager from '../../../core/SoundManager';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
@@ -13,9 +14,11 @@ import {
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
-import VideoRoomManager from '../../../net/agora/VideoRoomManager';
+import { ButtonState } from '../../../game/constant/Constants';
 import roomReconnectManager from '../../../game/RoomReconnectManager';
 import viewManager from '../../../views/UIViewManager';
+import agoraManager from '../../agora/AgoraManager';
+import TexasVideoMediaHelper from './TexasVideoMediaHelper';
 
 const _plog = createLogger('ServerMessageEnterRoom');
 
@@ -36,6 +39,9 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         return;
     }
     if (data.status != 0) return;
+    // 声音处理
+    soundManager.volumeOnOff(roomData.setting.soundOn);
+    soundManager.playBGM();
     roomReconnectManager.addContext({
         roomID: roomID,
         matchID: matchID
@@ -142,6 +148,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
                 seatData.squidCount = player.squidCount;
                 //视频
                 seatData.videoMaskId = player.videoMaskId;
+                seatData.realShowMaskID = 0;
                 //获胜卡牌
                 if (player.winCardsInfo) {
                     seatData.winPercent100 = Math.min(10000, Math.round((player.winCardsInfo.wcCount * 10000) / player.winCardsInfo.lcCount));
@@ -213,10 +220,66 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             }
         });
     }
+    roomData.mine.localCameraBtnState = ButtonState.DISABLE;
+    roomData.mine.localCameraEnabled = false;
+    roomData.mine.localCameraEnabledDelayed = false;
+    roomData.mine.localMicrophoneBtnState = ButtonState.DISABLE;
+    roomData.mine.localMicrophoneEnabled = false;
+    roomData.mine.maskBtnState = ButtonState.DISABLE;
+    roomData.mine.remoteCameraEnabled = ButtonState.HIDDEN;
+    roomData.mine.remoteMicrophoneEnabled = ButtonState.HIDDEN;
+    roomData.mine.randomVideoActive = false;
+    roomData.mine.randomVideoEndTime = 0;
+    roomData.seatsStateManager.resetVideoAndAudioStates();
+    // 视频房间：入房后加入 Agora 频道
+    if (roomData.mine.seatNo > 0 && roomData.basicInfo.antiCheatConfig) {
+        const seatedConfig = roomData.basicInfo.antiCheatConfig.getSeatedSetting();
+        const promise = [];
+        try {
+            if (seatedConfig.enableCamera) {
+                promise.push(agoraManager.enableCamera());
+            }
+            promise.push(agoraManager.enableMicrophone());
+            promise.push(TexasVideoMediaHelper.joinAgoraVideoChannelIfNeed(roomID, matchID));
+            await Promise.all(promise);
+            // 如果能操作摄像头,则根据状态变更
+            if (seatedConfig.canOpCamera) {
+                //能操作交给按钮操作
+                roomData.mine.localCameraBtnState = seatedConfig.openCamera ? ButtonState.ON : ButtonState.OFF;
+            } else {
+                roomData.mine.localCameraBtnState = ButtonState.DISABLE;
+                // 不能按钮操作 强制操作
+                roomData.mine.localCameraEnabled = seatedConfig.openCamera;
+            }
+            if (seatedConfig.canOpMicrophone) {
+                roomData.mine.localMicrophoneBtnState = seatedConfig.openMicrophone ? ButtonState.ON : ButtonState.OFF;
+            } else {
+                roomData.mine.localMicrophoneBtnState = ButtonState.DISABLE;
+                roomData.mine.localMicrophoneEnabled = seatedConfig.openMicrophone;
+            }
+            if (seatedConfig.enableCamera && seatedConfig.canSwitchPowerSaving) {
+                roomData.mine.maskBtnState = seatedConfig.openPowerSaving ? ButtonState.ON : ButtonState.DISABLE;
+            } else if (seatedConfig.enableCamera && !seatedConfig.canSwitchPowerSaving) {
+                roomData.mine.maskBtnState = ButtonState.DISABLE;
+                if (seatedConfig.openPowerSaving) {
+                    roomData.seatsStateManager.forEachPlayer(p => {
+                        p.realShowMaskID = p.videoMaskId == 0 ? 1 : p.videoMaskId;
+                    });
+                } else {
+                    roomData.seatsStateManager.forEachPlayer(p => {
+                        p.realShowMaskID = 0;
+                    });
+                }
+            }
+            roomData.mine.remoteCameraEnabled = seatedConfig.enableCamera ? ButtonState.ON : ButtonState.HIDDEN;
+            roomData.mine.remoteMicrophoneEnabled = ButtonState.ON;
+        } catch (e) {
+            _plog.error('加入视频桌失败', e);
+            viewManager.showToast('无法开启摄像头，请检查浏览器权限后重新入座');
+        }
+    }
     await viewManager.switchScene('TexasRoom', {
         roomID: roomData.roomID,
         matchID: roomData.matchID
     });
-    // 视频房间：检查是否已有远端视频流（解决时序竞争：joinVideoChannelIfNeed 可能在 EnterRoom 回包之前完成）
-    VideoRoomManager.Instance.renderExistingRemoteVideosIfJoined();
 }
