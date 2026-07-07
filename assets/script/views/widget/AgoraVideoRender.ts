@@ -3,7 +3,7 @@ import { traceClass } from '../../core/decorator/LogTrace';
 const { ccclass, property } = cc._decorator;
 
 @ccclass
-@traceClass()
+@traceClass({ level: 'debug' })
 export default class AgoraVideoRender extends cc.Component {
     @property({ displayName: '镜像显示' })
     public mirror: boolean = false;
@@ -16,12 +16,9 @@ export default class AgoraVideoRender extends cc.Component {
     private _video: HTMLVideoElement = null;
     private _texture: cc.Texture2D = null;
     private _spriteFrame: cc.SpriteFrame = null;
-    private _overlayNode: cc.Node = null;
-    private _maskNode: cc.Node = null;
     private _stream: MediaStream = null;
     private _isRendering: boolean = false;
     private _isCancelled: boolean = false;
-    private _ownsStream: boolean = false;
     private _gl: WebGLRenderingContext = null;
     private _frameInterval: number = 0;
     private _frameAccum: number = 0;
@@ -38,14 +35,13 @@ export default class AgoraVideoRender extends cc.Component {
     }
 
     public switchToMask(mask: cc.SpriteFrame): void {
+        if (!this.maskSprite) return;
         this.maskSprite.spriteFrame = mask;
         this.maskSprite.node.active = true;
     }
 
     public stopMask(): void {
-        if (this.maskSprite) {
-            this.maskSprite.node.active = false;
-        }
+        this.maskSprite.node.active = false;
     }
 
     public async switchToOverlay(track: MediaStreamTrack): Promise<boolean> {
@@ -68,12 +64,7 @@ export default class AgoraVideoRender extends cc.Component {
             this.tracelog.warn('[AgoraVideoRender] prefab 节点未绑定');
             return false;
         }
-        this._overlayNode = this.videoSprite.node;
-        this._maskNode = this.maskSprite.node;
-        const nodeSize = this.node.getContentSize();
-        this._overlayNode.setContentSize(nodeSize);
-        this._maskNode.setContentSize(nodeSize);
-        this._overlayNode.scaleX = 1;
+        this.videoSprite.node.scaleX = 1;
         this._gl = (cc.game as any)._renderContext;
         return true;
     }
@@ -88,18 +79,7 @@ export default class AgoraVideoRender extends cc.Component {
         this._frameInterval = 1 / Math.max(1, this.targetFps || 30);
         this._frameAccum = 0;
         this._consecutiveErrors = 0;
-        this._video = document.createElement('video');
-        this._video.setAttribute('playsinline', '');
-        this._video.setAttribute('autoplay', '');
-        this._video.muted = true;
-        this._video.style.position = 'fixed';
-        this._video.style.bottom = '0';
-        this._video.style.right = '0';
-        this._video.style.width = '1px';
-        this._video.style.height = '1px';
-        this._video.style.zIndex = '-9999';
-        this._video.style.pointerEvents = 'none';
-        document.body.appendChild(this._video);
+        this._ensureVideoElement();
         this._video.srcObject = stream;
         try {
             await Promise.race([this._video.play(), new Promise<void>((_, reject) => setTimeout(() => reject(new Error('play timeout')), 5000))]);
@@ -109,7 +89,7 @@ export default class AgoraVideoRender extends cc.Component {
                 this.tracelog.debug('[AgoraVideoRender] play后已取消');
                 return false;
             }
-            this.tracelog.warn('[AgoraVideoRender] play失败或超时:', e?.message || e);
+            this.tracelog.warn('[AgoraVideoRender] playVideo失败或超时:', e?.message || e);
             this._stopOverlayRender();
             return false;
         }
@@ -160,13 +140,12 @@ export default class AgoraVideoRender extends cc.Component {
         const cropX = (vw - cropSize) / 2;
         const cropY = (vh - cropSize) / 2;
         this._spriteFrame = new cc.SpriteFrame();
-        (this._spriteFrame as any).initWithTexture(this._texture, cc.rect(cropX, cropY, cropSize, cropSize), false, cc.v2(0, 0), cc.size(cw, ch));
-        this._overlayNode.setContentSize(cw, ch);
-        this._overlayNode.active = true;
+        this._spriteFrame.setTexture(this._texture);
         this.videoSprite.spriteFrame = this._spriteFrame;
-        this._overlayNode.scaleX = this.mirror ? -1 : 1;
+        this.videoSprite.node.active = true;
+        this.videoSprite.node.scaleX = this.mirror ? -1 : 1;
         this._isRendering = true;
-        this.tracelog.info('[AgoraVideoRender] 开始渲染 (video direct), video:', vw, 'x', vh, 'overlay:', cw, 'x', ch, 'fps:', this.targetFps);
+        this.tracelog.info('[AgoraVideoRender] 开始渲染 (video material), video:', vw, 'x', vh, 'overlay:', cw, 'x', ch, 'fps:', this.targetFps);
         return true;
     }
 
@@ -177,19 +156,11 @@ export default class AgoraVideoRender extends cc.Component {
             try {
                 this._video.pause();
             } catch (_) {}
-            if (this._video.parentNode) this._video.parentNode.removeChild(this._video);
             this._video.srcObject = null;
-            this._video = null;
         }
         if (this._stream) {
-            if (this._ownsStream) {
-                try {
-                    this._stream.getTracks().forEach(t => t.stop());
-                } catch (_) {}
-            }
             this._stream = null;
         }
-        this._ownsStream = false;
         if (this.videoSprite) {
             this.videoSprite.spriteFrame = null;
         }
@@ -203,10 +174,38 @@ export default class AgoraVideoRender extends cc.Component {
             this._spriteFrame = null;
         }
         this._frameAccum = 0;
-        if (this._overlayNode) {
-            this._overlayNode.active = false;
-            this._overlayNode.scaleX = 1;
+        if (this.videoSprite.node) {
+            this.videoSprite.node.active = false;
+            this.videoSprite.node.scaleX = 1;
         }
+    }
+
+    private _ensureVideoElement(): void {
+        if (this._video) return;
+        this._video = document.createElement('video');
+        this._video.setAttribute('playsinline', '');
+        this._video.setAttribute('autoplay', '');
+        this._video.muted = true;
+        this._video.style.position = 'fixed';
+        this._video.style.bottom = '0';
+        this._video.style.right = '0';
+        this._video.style.width = '1px';
+        this._video.style.height = '1px';
+        this._video.style.zIndex = '-9999';
+        this._video.style.pointerEvents = 'none';
+        document.body.appendChild(this._video);
+    }
+
+    private _releaseVideoElement(): void {
+        if (!this._video) return;
+        try {
+            this._video.pause();
+        } catch (_) {}
+        this._video.srcObject = null;
+        if (this._video.parentNode) {
+            this._video.parentNode.removeChild(this._video);
+        }
+        this._video = null;
     }
 
     private _deleteGLTextures(tex: cc.Texture2D): void {
@@ -265,7 +264,8 @@ export default class AgoraVideoRender extends cc.Component {
     protected onDestroy(): void {
         this.stopMask();
         this.stopOverlay();
-        this._overlayNode = null;
-        this._maskNode = null;
+        this._releaseVideoElement();
+        this.videoSprite = null;
+        this.maskSprite = null;
     }
 }

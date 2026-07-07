@@ -7,7 +7,7 @@ import {
     AnimateDisplayTypePosition,
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
-import { MicIconState } from '../../../game/constant/MicIconState';
+import { MicrophoneIconState } from '../../../game/constant/MicrophoneIconState';
 import { Operator } from './model/Operator';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from './TexasGameRoomDataPlayerMine';
@@ -109,12 +109,13 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public squidEscaped: boolean = false; // 鱿鱼是否已经标记
     @observable(TexasGameRoomDataPlayer.SQUID_COUNT)
     public squidCount: number = 0;
-    @observable(TexasGameRoomDataPlayer.VIDEO_MASK_CHANGE)
     public videoMaskId: number = 0;
+    @observable(TexasGameRoomDataPlayer.VIDEO_MASK_CHANGE)
+    public realChangeMaskID: number = 0;
     @observable(TexasGameRoomDataPlayer.REMOTE_VIDEO_VISIBLE_CHANGE)
     public remoteVideoVisible: boolean = false;
     @observable(TexasGameRoomDataPlayer.MIC_ICON_STATE_CHANGE)
-    public micIconState: MicIconState = MicIconState.HIDDEN;
+    public micIconState: MicrophoneIconState = MicrophoneIconState.HIDDEN;
     //ALLIN胜率(目前只考虑第一套把) (0-10000)
     @observable(TexasGameRoomDataPlayer.ALLIN_WIN_PERCENT)
     public winPercent100: number = -1;
@@ -165,7 +166,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     // =========================================================================
     public clearData() {
         this.remoteVideoVisible = false;
-        this.micIconState = MicIconState.HIDDEN;
+        this.micIconState = MicrophoneIconState.HIDDEN;
         this.muteEvents();
         this.userID = 0;
         this.clubID = 0;
@@ -212,7 +213,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     /** 重置视频和音频状态 */
     public resetVideoAndAudioStates() {
         this.remoteVideoVisible = false;
-        this.micIconState = MicIconState.HIDDEN;
+        this.micIconState = MicrophoneIconState.HIDDEN;
     }
 
     public handEnd() {

@@ -19,7 +19,7 @@ export interface IProtocolRpc {
 }
 
 @ccclass
-@traceClass({ level: 'debug' })
+@traceClass()
 export default class ProtocolAgency extends cc.Component {
     private static _codeNameMap: Record<number, string> | null = null;
     // 序列化的时候，如果找不到类定义用这个

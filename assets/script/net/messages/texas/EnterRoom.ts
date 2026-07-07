@@ -15,6 +15,7 @@ import {
 } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
 import { ButtonState } from '../../../game/constant/Constants';
+import { MicrophoneIconState } from '../../../game/constant/MicrophoneIconState';
 import roomReconnectManager from '../../../game/RoomReconnectManager';
 import viewManager from '../../../views/UIViewManager';
 import agoraManager from '../../agora/AgoraManager';
@@ -220,7 +221,10 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         });
     }
     roomData.mine.localCameraEnabled = ButtonState.DISABLE;
-    roomData.mine.localMicEnabled = ButtonState.DISABLE;
+    roomData.mine.localCameraEnabledDelayed = ButtonState.DISABLE;
+    roomData.mine.localMicrophoneEnabled = ButtonState.DISABLE;
+    roomData.mine.remoteCameraEnabled = false;
+    roomData.mine.remoteMicrophoneEnabled = false;
     roomData.mine.randomVideoActive = false;
     roomData.mine.randomVideoEndTime = 0;
     roomData.seatsStateManager.resetVideoAndAudioStates();
@@ -232,17 +236,20 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             if (seatedConfig.showCamera) {
                 promise.push(agoraManager.enableCamera());
             }
-            promise.push(agoraManager.enableMic());
+            promise.push(agoraManager.enableMicrophone());
             promise.push(TexasVideoMediaHelper.joinAgoraVideoChannelIfNeed(roomID, matchID));
+            await Promise.all(promise);
             // 如果在强制时间内强制打开
             if (seatedConfig.showCamera && seatedConfig.timeLimit == -1 && roomData.basicInfo.antiCheatConfig.getDuration() < seatedConfig.timeLimit) {
                 roomData.mine.localCameraEnabled = ButtonState.ON;
-                roomData.mine.localMicEnabled = ButtonState.ON;
+                roomData.mine.localMicrophoneEnabled = ButtonState.ON;
             } else {
                 roomData.mine.localCameraEnabled = ButtonState.OFF;
-                roomData.mine.localMicEnabled = ButtonState.OFF;
+                roomData.mine.player.micIconState = MicrophoneIconState.MUTED;
+                roomData.mine.localMicrophoneEnabled = ButtonState.OFF;
             }
-            await Promise.all(promise);
+            roomData.mine.remoteCameraEnabled = seatedConfig.showCamera;
+            roomData.mine.remoteMicrophoneEnabled = true;
         } catch (e) {
             _plog.error('加入视频桌失败', e);
             viewManager.showToast('无法开启摄像头，请检查浏览器权限后重新入座');

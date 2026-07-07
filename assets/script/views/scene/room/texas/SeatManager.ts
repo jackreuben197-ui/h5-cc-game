@@ -4,6 +4,7 @@ import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataSeatsStateManager from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
 import { AnimateDisplayTypeButton } from '../../../../game/constant/AnimateDisplayType';
+import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconState';
 import SeatPlayer from './SeatPlayer';
 
 const { ccclass, property, menu } = cc._decorator;
@@ -79,6 +80,25 @@ export default class SeatManager extends cc.Component {
             const cps = this._seatNodesMap.get(currentSeat);
             this.tracelog.debug(currentSeat, cps, this._seatNodesMap.size);
             cps.animateMushroomChange(true, cnt, pool);
+        }
+    }
+
+    @bindEvent(TexasGameRoomDataSeatsStateManager.SPEAKING_CHANGE, 'seats')
+    @traceMethod({ level: 'debug' })
+    private onUpdateSpeaking(prevSeat: number, currentSeat: number) {
+        if (prevSeat > 0) {
+            const ps = this._seatNodesMap.get(prevSeat);
+            ps.setMicrophoneIconState(MicrophoneIconState.HIDDEN, false);
+        }
+        if (currentSeat > 0) {
+            const ps = this._seatNodesMap.get(currentSeat);
+            ps.setMicrophoneIconState(MicrophoneIconState.SPEAKING, false);
+        }
+        // 初始化
+        if (currentSeat == 0 && prevSeat == 0) {
+            this._seatNodesMap.forEach(v => {
+                v.setMicrophoneIconState(MicrophoneIconState.HIDDEN, false);
+            });
         }
     }
 

@@ -1,7 +1,8 @@
 import { bindData, pureEvent } from '../../../core/decorator/DataBind';
+import { traceMethod } from '../../../core/decorator/LogTrace';
 import { AnimateDisplayTypeButton, AnimateDisplayTypeMushroomPool, AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
 import { ButtonState } from '../../../game/constant/Constants';
-import { MicIconState } from '../../../game/constant/MicIconState';
+import { MicrophoneIconState } from '../../../game/constant/MicrophoneIconState';
 import agoraManager from '../../../net/agora/AgoraManager';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';
@@ -117,21 +118,27 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     public buttonChangeEvent(prev: number, cur: number, bat: AnimateDisplayTypeButton) {}
 
     /** 当前说话者的座位号 */
-    private _speeking: number = 0;
+    private _speaking: number = 0;
     public set speakingUID(uid: number) {
-        const seat = this.getSeatPlayerByUserID(uid);
         let seatNo = 0;
-        if (seat) {
-            seatNo = seat.seatNo;
+        if (uid > 0) {
+            const seat = this.getSeatPlayerByUserID(uid);
+            if (seat) {
+                seatNo = seat.seatNo;
+            }
         }
-        if (seatNo == this._speeking) return;
-        const prev = this._speeking;
-        this._speeking = seatNo;
-        this.speakingChangeEvent(prev, this._speeking);
+        if (seatNo == this._speaking) return;
+        const prev = this._speaking;
+        this._speaking = seatNo;
+        this.speakingChangeEvent(prev, this._speaking);
     }
 
     /** 当前说话者 uid（0 = 无人说话），由 Texas 视频流程在 activeSpeaker 回调中设置 */
-    @pureEvent(TexasGameRoomDataSeatsStateManager.SPEAKING_CHANGE)
+    @pureEvent(TexasGameRoomDataSeatsStateManager.SPEAKING_CHANGE, {
+        initParams() {
+            return [0, this._speaking];
+        }
+    })
     public speakingChangeEvent(prev: number, cur: number) {}
 
     private _seatsCount: number;
@@ -192,6 +199,14 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
         return this._playerMap.get(s);
     }
 
+    public forEachPlayer(cb: (p: TexasGameRoomDataPlayer) => void) {
+        this._playerMap.forEach(p => {
+            if (p.userID > 0) {
+                cb(p);
+            }
+        });
+    }
+
     public getSeatPlayerByUserID(userID: number): TexasGameRoomDataPlayer | null {
         let target: TexasGameRoomDataPlayer = null;
         this._playerMap.forEach(player => {
@@ -203,23 +218,31 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     }
 
     // 同步
+    @traceMethod({ level: 'debug' })
     public syncAllSeatVideoAndAudioStates() {
         const remoteUserMap = agoraManager.getRemoteUserMap();
         this._playerMap.forEach(async seat => {
             if (seat.mine) {
                 seat.remoteVideoVisible = false;
-                seat.micIconState = seat.mine.localMicEnabled > 0 ? MicIconState.HIDDEN : MicIconState.MUTED;
+                seat.micIconState = seat.mine.localMicrophoneEnabled != ButtonState.OFF ? MicrophoneIconState.HIDDEN : MicrophoneIconState.MUTED;
+                // 还没有发布
                 if (agoraManager.localAudioTrack) {
-                    await agoraManager.localAudioTrack.setMuted(seat.mine.localMicEnabled != ButtonState.ON);
+                    await agoraManager.localAudioTrack.setMuted(seat.mine.localMicrophoneEnabled != ButtonState.ON);
+                } else if (seat.mine.localMicrophoneEnabled) {
+                    await agoraManager.publishAudio();
                 }
                 if (agoraManager.localVideoTrack) {
                     await agoraManager.localVideoTrack.setMuted(seat.mine.localCameraEnabled != ButtonState.ON);
+                } else if (seat.mine.localCameraEnabled) {
+                    await agoraManager.publishVidio();
                 }
                 return;
             }
             const remoteUser = remoteUserMap.get(seat.userID);
-            seat.remoteVideoVisible = !agoraManager.isRemoteVideoMuted && !!remoteUser && remoteUser.hasVideo;
-            seat.micIconState = !agoraManager.isRemoteAudioMuted && !!remoteUser && remoteUser.hasAudio ? MicIconState.HIDDEN : MicIconState.MUTED;
+            // 有视频，也订阅了，显示
+            seat.remoteVideoVisible = !!remoteUser && remoteUser.hasVideo;
+            // 没有音频/没有订阅 显示mute
+            seat.micIconState = !!remoteUser && (!remoteUser.hasAudio || !remoteUser.audioTrack) ? MicrophoneIconState.MUTED : MicrophoneIconState.HIDDEN;
         });
     }
 

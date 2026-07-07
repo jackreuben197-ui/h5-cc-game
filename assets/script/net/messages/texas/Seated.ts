@@ -28,12 +28,7 @@ export async function Seated(data: ServerMessageSeated.AsObject, roomID: number,
     if (data.videoMaskId > 4) data.videoMaskId = 1;
     const seatData = roomData.seatsStateManager.setMySeat(data.recvSeatId, AnimateDisplayTypePosition.ToTarget);
     const mine = roomData.mine;
-    const userRid = userStore.userRID;
-    if (typeof userRid !== 'number' || userRid <= 0) {
-        _plog.error('坐下成功但 userRID 非法:', userRid);
-        return;
-    }
-    seatData.userID = userRid;
+    seatData.userID = userStore.userRID;
     seatData.name = userStore.name;
     seatData.avatar = userStore.avatar;
     seatData.chip = data.chips;
@@ -74,11 +69,13 @@ export async function Seated(data: ServerMessageSeated.AsObject, roomID: number,
                 video = true;
                 promise.push(agoraManager.enableCamera());
             }
-            promise.push(agoraManager.enableMic());
+            promise.push(agoraManager.enableMicrophone());
             promise.push(TexasVideoMediaHelper.joinAgoraVideoChannelIfNeed(roomID, matchID));
             await Promise.all(promise);
-            mine.localCameraEnabled = seatedConfig.cameraOpen ? ButtonState.ON : ButtonState.OFF;
-            mine.localMicEnabled = seatedConfig.micOpen ? ButtonState.ON : ButtonState.OFF;
+            mine.localCameraEnabled = seatedConfig.showCamera ? (seatedConfig.cameraOpen ? ButtonState.ON : ButtonState.OFF) : ButtonState.DISABLE;
+            mine.localMicrophoneEnabled = seatedConfig.micOpen ? ButtonState.ON : ButtonState.OFF;
+            mine.remoteCameraEnabled = seatedConfig.showCamera;
+            mine.remoteMicrophoneEnabled = true;
             roomData.basicInfo.antiCheatConfig.start();
         } catch (e) {
             _plog.error('加入视频桌失败', e);

@@ -9,6 +9,7 @@ import { WWW } from '../https/WebRequest';
 @traceClass({ level: 'debug' })
 class AgoraManager {
     private static _instance: AgoraManager = null;
+    private static readonly WEB_VIDEO_CODEC_TYPES = ['H264', 'H265', 'VP8', 'VP9', 'AV1X', 'AV1'];
     // ==================== 连接状态追踪 ====================
     private _prevConnState: string = 'DISCONNECTED';
     /** SDK 重连成功回调（供 TexasGameProtocol 恢复远端视频渲染） */
@@ -30,10 +31,6 @@ class AgoraManager {
     private _joining: boolean = false;
     private _channelName: string = '';
     private _uid: number = 0;
-    /** 全局远端音频静音标记 */
-    private _allRemoteAudioMuted: boolean = false;
-    /** 全局远端视频隐藏标记 */
-    private _allRemoteVideoMuted: boolean = false;
     /** 音量监控定时器 */
     private _volumeMonitorTimer: number = null;
     /** 当前正在说话的用户 uid，null 表示无人说话 */
@@ -47,42 +44,27 @@ class AgoraManager {
     /** 远端用户离开回调 */
     public onUserLeft: (uid: number) => void = null;
     /** 远端音频轨道回调 */
-    public onRemoteAudioSubscribed: (uid: number, track: IRemoteAudioTrack) => void = null;
+    public onUserPublish: (uid: number, mediaType: string) => void = null;
     /** 远端音频轨道回调 */
-    public onRemoteAudioUnsubscribed: (uid: number) => void = null;
-    /** 远端视频轨道回调 */
-    public onRemoteVideoSubscribed: (uid: number, track: IRemoteVideoTrack) => void = null;
-    /** 远端视频被取消订阅回调（用于 UI 层清理渲染覆盖层） */
-    public onRemoteVideoUnsubscribed: (uid: number) => void = null;
+    public onUserUnpublish: (uid: number, mediaType: string) => void = null;
     /** 错误回调 */
     public onError: (err: any) => void = null;
     /** 当前说话者变化回调，uid 为 null 表示无人说话（包含自己） */
     public onActiveSpeaker: (uid: number) => void = null;
-    /** 远端音频是否全局静音 */
-    public get isRemoteAudioMuted(): boolean {
-        return this._allRemoteAudioMuted;
-    }
-    /** 远端视频是否全局隐藏 */
-    public get isRemoteVideoMuted(): boolean {
-        return this._allRemoteVideoMuted;
-    }
 
     private constructor() {}
 
-    /** Agora SDK 是否已加载 */
-    private get isSDKReady(): boolean {
-        return !!window.AgoraRTC;
-    }
-
     /** 浏览器是否支持摄像头/麦克风（需要 HTTPS 或 localhost） */
     public async getMediaDevicesSupported(video: boolean, audio: boolean): Promise<boolean> {
-        const ok = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+        const ok = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && navigator.mediaDevices.enumerateDevices);
         if (!ok) {
             return false;
         }
         try {
+            await navigator.mediaDevices.enumerateDevices();
+            await new Promise(resolve => setTimeout(resolve, 300));
             let config = { video: video, audio: audio };
-            this.tracelog.debug('览器权限...', config);
+            this.tracelog.debug('浏览器权限...', config);
             const stream = await navigator.mediaDevices.getUserMedia(config);
             // 权限通过，立即释放 stream（Agora 的 enableCamera 会自己创建 track）
             this.tracelog.debug('权限通过，释放 stream');
@@ -105,29 +87,28 @@ class AgoraManager {
     }
     /** 本地音频轨道是否存在（麦克风已创建） */
     public get localAudioTrack(): IMicrophoneAudioTrack {
-        return this._localAudioTrack;
+        if (this._client.localTracks.includes(this._localAudioTrack)) {
+            return this._localAudioTrack;
+        }
+        return null;
     }
     /** 本地视频轨道是否存在（摄像头已创建） */
     public get localVideoTrack(): ICameraVideoTrack {
-        return this._localVideoTrack;
+        if (this._client.localTracks.includes(this._localVideoTrack)) {
+            return this._localVideoTrack;
+        }
+        return null;
     }
     /** 当前频道名 */
     public get channelName(): string {
         return this._channelName;
-    }
-    public get isReady(): boolean {
-        return !!this._client;
     }
 
     /**
      * 初始化 Agora Client
      * 必须在 SDK 加载完成后调用
      */
-    private init(): void {
-        if (!this.isSDKReady) {
-            this.tracelog.error('SDK 未加载，无法初始化');
-            return;
-        }
+    public init(appKey: string): void {
         if (this._client) {
             this.tracelog.info('已初始化，跳过');
             return;
@@ -146,6 +127,7 @@ class AgoraManager {
             // 默认是error, (4: 是不输出任何日志)
             AgoraRTC.setLogLevel(3);
         }
+        this._appId = appKey;
         this._client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
         this._registerEvents();
         this.tracelog.info(
@@ -156,35 +138,21 @@ class AgoraManager {
         );
     }
 
-    public async ensureReadySDK(appKey: string, timeoutMs: number): Promise<boolean> {
-        this._appId = appKey;
-        if (this.isSDKReady) {
-            if (!this._client) {
-                this.init();
-            }
-            return !!this._client;
+    public async clear() {
+        if (this._joined) {
+            await agoraManager.disableCamera();
+            agoraManager.disableMicrophone();
+            agoraManager.clearCallbacks();
+            agoraManager.stopVolumeMonitor();
+            await agoraManager.leave();
         }
-        const startTime = Date.now();
-        while (Date.now() - startTime < timeoutMs) {
-            await new Promise<void>(resolve => setTimeout(resolve, 100));
-            if (this.isSDKReady) {
-                if (!this._client) {
-                    this.init();
-                }
-                return !!this._client;
-            }
-        }
-        this.tracelog.error('Agora SDK 加载超时, timeoutMs:', timeoutMs);
-        return false;
     }
 
     public clearCallbacks(): void {
         this.onUserJoined = null;
         this.onUserLeft = null;
-        this.onRemoteAudioSubscribed = null;
-        this.onRemoteAudioUnsubscribed = null;
-        this.onRemoteVideoSubscribed = null;
-        this.onRemoteVideoUnsubscribed = null;
+        this.onUserPublish = null;
+        this.onUserUnpublish = null;
         this.onReconnected = null;
         this.onError = null;
         this.onActiveSpeaker = null;
@@ -231,39 +199,11 @@ class AgoraManager {
         });
         this._client.on('user-published', async (user: IAgoraRTCRemoteUser, mediaType: string) => {
             this.tracelog.info('远端用户发布:', user.uid, mediaType);
-            try {
-                // 全局远端视频已隐藏时，跳过视频订阅
-                if (mediaType === 'video' && this._allRemoteVideoMuted) {
-                    this.tracelog.info('远端视频已全局隐藏，跳过订阅 uid:', user.uid);
-                    return;
-                }
-                if (mediaType === 'audio') {
-                    await this._client.subscribe(user, mediaType);
-                    const audioTrack: IRemoteAudioTrack = user.audioTrack;
-                    audioTrack.play();
-                    // 全局远端音频已静音时，立即设置音量为0
-                    if (this._allRemoteAudioMuted) {
-                        audioTrack.setVolume(0);
-                    }
-                    this.onRemoteAudioSubscribed?.(Number(user.uid), audioTrack);
-                }
-                if (mediaType === 'video') {
-                    await this._client.subscribe(user, mediaType);
-                    const videoTrack: IRemoteVideoTrack = user.videoTrack;
-                    this.onRemoteVideoSubscribed?.(Number(user.uid), videoTrack);
-                }
-            } catch (e) {
-                this.tracelog.error('订阅远端流失败:', e);
-            }
+            this.onUserPublish?.(Number(user.uid), mediaType);
         });
         this._client.on('user-unpublished', (user: IAgoraRTCRemoteUser, mediaType: string) => {
             this.tracelog.info('远端用户取消发布:', user.uid, mediaType);
-            if (mediaType === 'video') {
-                this.onRemoteVideoUnsubscribed?.(Number(user.uid));
-            }
-            if (mediaType === 'audio') {
-                this.onRemoteAudioUnsubscribed?.(Number(user.uid));
-            }
+            this.onUserUnpublish?.(Number(user.uid), mediaType);
         });
         this._client.on('connection-state-change', (curState: string, revState: string) => {
             this.tracelog.info('连接状态变化:', revState, '->', curState);
@@ -286,6 +226,40 @@ class AgoraManager {
                 }
             }
         });
+    }
+
+    public async subscribeOrUnsubscribeRemoteVideo(subscribe: boolean, uid: number | IAgoraRTCRemoteUser): Promise<IRemoteVideoTrack | null> {
+        let user: IAgoraRTCRemoteUser;
+        if (typeof uid == 'number') {
+            user = this._getRemoteUserByUid(uid);
+        } else {
+            user = uid;
+        }
+        if (!user) {
+            return null;
+        }
+        if (subscribe) {
+            return await this._client.subscribe(user, 'video');
+        }
+        await this._client.unsubscribe(user, 'video');
+        return null;
+    }
+
+    public async subscribeOrUnsubscribeRemoteAudio(subscribe: boolean, uid: number | IAgoraRTCRemoteUser): Promise<IRemoteAudioTrack | null> {
+        let user: IAgoraRTCRemoteUser;
+        if (typeof uid == 'number') {
+            user = this._getRemoteUserByUid(uid);
+        } else {
+            user = uid;
+        }
+        if (!user) {
+            return null;
+        }
+        if (subscribe) {
+            return await this._client.subscribe(user, 'audio');
+        }
+        await this._client.unsubscribe(user, 'audio');
+        return null;
     }
 
     /**
@@ -374,8 +348,6 @@ class AgoraManager {
         this._joined = false;
         this._channelName = '';
         this._uid = 0;
-        this._allRemoteAudioMuted = false;
-        this._allRemoteVideoMuted = false;
         this.stopVolumeMonitor();
         // 停止远端用户的音频播放（防止离开房间后仍在播放）
         try {
@@ -412,7 +384,7 @@ class AgoraManager {
     /**
      * 开启麦克风并发布音频
      */
-    public async enableMic(): Promise<boolean> {
+    public async enableMicrophone(): Promise<boolean> {
         try {
             if (!this._localAudioTrack) {
                 this._localAudioTrack = await window.AgoraRTC.createMicrophoneAudioTrack();
@@ -425,10 +397,26 @@ class AgoraManager {
         }
     }
 
+    public async publishAudio(): Promise<boolean> {
+        try {
+            if (!this._localAudioTrack) {
+                this.tracelog.warn('麦克风未开启');
+                return false;
+            }
+            await this._client.publish(this._localAudioTrack);
+            await this.localAudioTrack?.setMuted(false);
+            this.tracelog.info('音频流已经发布');
+            return true;
+        } catch (e) {
+            this.tracelog.error('音频流发布失败:', e);
+            return false;
+        }
+    }
+
     /**
      * 关闭麦克风
      */
-    public async disableMic(): Promise<void> {
+    public async disableMicrophone(): Promise<void> {
         if (this._localAudioTrack && this._joined && this._client) {
             try {
                 await this._client.unpublish([this._localAudioTrack]);
@@ -466,6 +454,22 @@ class AgoraManager {
         }
     }
 
+    public async publishVidio(): Promise<boolean> {
+        try {
+            if (!this._localVideoTrack) {
+                this.tracelog.warn('摄像头未开启');
+                return false;
+            }
+            await this._client.publish(this._localVideoTrack);
+            await this.localVideoTrack?.setMuted(false);
+            this.tracelog.info('视频流已经发布');
+            return true;
+        } catch (e) {
+            this.tracelog.error('视频流发布失败:', e);
+            return false;
+        }
+    }
+
     /**
      * 关闭摄像头（先取消发布，再关闭轨道）
      */
@@ -481,71 +485,69 @@ class AgoraManager {
         this._localVideoTrack = null;
         this.tracelog.info('摄像头已关闭');
     }
-
-    /**
-     * 开关远端用户的音频（静音/恢复）
-     * @param enabled true=恢复声音, false=静音
-     * @param uid 指定远端用户 uid，不传则对所有远端用户生效
-     */
-    public setRemoteAudioEnabled(enabled: boolean, uid?: number): void {
-        if (!this._client || !this._client.remoteUsers) return;
-        const remoteUsers = this._client.remoteUsers;
-        if (remoteUsers.length === 0) return;
-        if (uid === undefined) {
-            this._allRemoteAudioMuted = !enabled;
-        }
-        let targetUsers = remoteUsers;
-        if (uid !== undefined) {
-            const user = this._getRemoteUserByUid(uid);
-            targetUsers = user ? [user] : [];
-        }
-        targetUsers.forEach((user: IAgoraRTCRemoteUser) => {
-            if (user.audioTrack) {
-                user.audioTrack.setVolume(enabled ? 100 : 0);
-            }
-        });
-        this.tracelog.info('远端音频', enabled ? '已恢复' : '已静音', uid !== undefined ? 'uid:' + uid : '全部');
-    }
-
-    /**
-     * 开关远端用户的视频（隐藏/显示）
-     * @param enabled true=显示视频, false=隐藏视频
-     * @param uid 指定远端用户 uid，不传则对所有远端用户生效
-     */
-    public async setRemoteVideoEnabled(enabled: boolean, uid?: number): Promise<void> {
-        if (!this._client || !this._client.remoteUsers) return;
-        const remoteUsers = this._client.remoteUsers;
-        if (remoteUsers.length === 0) return;
-        if (uid === undefined) {
-            this._allRemoteVideoMuted = !enabled;
-        }
-        let targetUsers = remoteUsers;
-        if (uid !== undefined) {
-            const user = this._getRemoteUserByUid(uid);
-            targetUsers = user ? [user] : [];
-        }
-        for (const user of targetUsers) {
-            try {
-                if (enabled) {
-                    await this._client.subscribe(user, 'video');
-                    this.onRemoteVideoSubscribed?.(Number(user.uid), user.videoTrack);
-                } else {
-                    await this._client.unsubscribe(user, 'video');
-                    this.onRemoteVideoUnsubscribed?.(Number(user.uid));
-                }
-            } catch (e) {
-                this.tracelog.warn('[AgoraManager] 切换远端视频失败, uid:', Number(user.uid), e);
-            }
-        }
-        this.tracelog.info('远端视频', enabled ? '已恢复' : '已隐藏', uid !== undefined ? 'uid:' + uid : '全部');
-    }
+    // /**
+    //  * 开关远端用户的音频（静音/恢复）
+    //  * @param enabled true=恢复声音, false=静音
+    //  * @param uid 指定远端用户 uid，不传则对所有远端用户生效
+    //  */
+    // public setRemoteAudioEnabled(enabled: boolean, uid?: number): void {
+    //     if (!this._client || !this._client.remoteUsers) return;
+    //     const remoteUsers = this._client.remoteUsers;
+    //     if (remoteUsers.length === 0) return;
+    //     if (uid === undefined) {
+    //         this._allRemoteAudioMuted = !enabled;
+    //     }
+    //     let targetUsers = remoteUsers;
+    //     if (uid !== undefined) {
+    //         const user = this._getRemoteUserByUid(uid);
+    //         targetUsers = user ? [user] : [];
+    //     }
+    //     targetUsers.forEach((user: IAgoraRTCRemoteUser) => {
+    //         if (user.audioTrack) {
+    //             user.audioTrack.setVolume(enabled ? 100 : 0);
+    //         }
+    //     });
+    //     this.tracelog.info('远端音频', enabled ? '已恢复' : '已静音', uid !== undefined ? 'uid:' + uid : '全部');
+    // }
+    // /**
+    //  * 开关远端用户的视频（隐藏/显示）
+    //  * @param enabled true=显示视频, false=隐藏视频
+    //  * @param uid 指定远端用户 uid，不传则对所有远端用户生效
+    //  */
+    // public async setRemoteVideoEnabled(enabled: boolean, uid?: number): Promise<void> {
+    //     if (!this._client || !this._client.remoteUsers) return;
+    //     const remoteUsers = this._client.remoteUsers;
+    //     if (remoteUsers.length === 0) return;
+    //     if (uid === undefined) {
+    //         this._allRemoteVideoMuted = !enabled;
+    //     }
+    //     let targetUsers = remoteUsers;
+    //     if (uid !== undefined) {
+    //         const user = this._getRemoteUserByUid(uid);
+    //         targetUsers = user ? [user] : [];
+    //     }
+    //     for (const user of targetUsers) {
+    //         try {
+    //             if (enabled) {
+    //                 await this._client.subscribe(user, 'video');
+    //                 this.onRemoteVideoSubscribed?.(Number(user.uid), user.videoTrack);
+    //             } else {
+    //                 await this._client.unsubscribe(user, 'video');
+    //                 this.onRemoteVideoUnsubscribed?.(Number(user.uid));
+    //             }
+    //         } catch (e) {
+    //             this.tracelog.warn('[AgoraManager] 切换远端视频失败, uid:', Number(user.uid), e);
+    //         }
+    //     }
+    //     this.tracelog.info('远端视频', enabled ? '已恢复' : '已隐藏', uid !== undefined ? 'uid:' + uid : '全部');
+    // }
     // ==================== 说话者检测（音量监控） ====================
     /**
      * 启动音量监控，定时检测所有用户（含自己）的音量，找出当前说话者
      * @param interval 轮询间隔(ms)，默认 300
-     * @param threshold 判定正在说话的音量阈值(0~1)，默认 0.01
+     * @param threshold 判定正在说话的音量阈值(0~1)，默认 0.6 参考声网SDK
      */
-    public startVolumeMonitor(interval: number = 300, threshold: number = 0.01): void {
+    public startVolumeMonitor(interval: number = 300, threshold: number = 0.6): void {
         this.stopVolumeMonitor();
         this._volumeMonitorTimer = window.setInterval(() => this._checkVolumeLevels(threshold), interval);
         this.tracelog.info('音量监控已启动, 间隔:', interval, 'ms, 阈值:', threshold);
@@ -627,18 +629,22 @@ class AgoraManager {
      * 获取远端用户的视频 MediaStreamTrack
      * 需在远端用户发布视频后调用（onRemoteVideo 回调之后）
      */
-    public getRemoteVideoTrack(uid: number): MediaStreamTrack | null {
+    public getRemoteVideoTrack(uid: number): IRemoteVideoTrack | null {
         const user = this._getRemoteUserByUid(uid);
         if (!user || !user.videoTrack) {
             this.tracelog.warn('[AgoraManager] 远端用户视频Track不存在, uid:', uid);
             return null;
         }
-        const track = user.videoTrack.getMediaStreamTrack();
-        if (!track) {
-            this.tracelog.warn('[AgoraManager] 远端用户 MediaStreamTrack 不存在, uid:', uid);
-            return null;
+        return user.videoTrack;
+    }
+
+    public isSupportedVideoTrack(track: IRemoteVideoTrack): boolean {
+        const stats = track.getStats();
+        if (!stats.codecType || AgoraManager.WEB_VIDEO_CODEC_TYPES.indexOf(stats.codecType) < 0) {
+            this.tracelog.warn('[AgoraManager] 远端用户视频编码不支持. codec:', stats.codecType);
+            return false;
         }
-        return track;
+        return true;
     }
 
     private _getRemoteUserByUid(uid: number): IAgoraRTCRemoteUser | null {

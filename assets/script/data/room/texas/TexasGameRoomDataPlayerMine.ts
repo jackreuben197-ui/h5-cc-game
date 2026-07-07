@@ -10,14 +10,7 @@ import { OperatorMine } from './model/Operator';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';
 
-type PlayerMineBindings = {
-    localCameraState: [];
-    localMicEnabled: [];
-    randomVideoActive: [];
-    randomVideoEndTime: [];
-};
-
-interface TexasGameRoomDataPlayerMine extends IObservableBindings<TexasGameRoomDataPlayerMine, PlayerMineBindings> {}
+interface TexasGameRoomDataPlayerMine extends IObservableBindings<TexasGameRoomDataPlayerMine> {}
 
 @bindData()
 @traceClass()
@@ -33,7 +26,10 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public static readonly VALID_AUTO_OPERATIONS_CHANGE = 'VALID_AUTO_OPERATIONS_CHANGE';
     public static readonly SHOW_SQUID_IN = 'SHOW_SQUID_IN';
     public static readonly LOCAL_CAMERA_STATE_CHANGE = 'LOCAL_CAMERA_STATE_CHANGE';
-    public static readonly LOCAL_MIC_ENABLED_CHANGE = 'LOCAL_MIC_ENABLED_CHANGE';
+    public static readonly LOCAL_CAMERA_STATE_CHANGE_DELAY = 'LOCAL_CAMERA_STATE_CHANGE_DELAY';
+    public static readonly LOCAL_MICROPHONE_ENABLED_CHANGE = 'LOCAL_MICROPHONE_ENABLED_CHANGE';
+    public static readonly REMOTE_CAMERA_STATE_CHANGE = 'REMOTE_CAMERA_STATE_CHANGE';
+    public static readonly REMOTE_MICROPHONE_ENABLED_CHANGE = 'REMOTE_MICROPHONE_ENABLED_CHANGE';
     public static readonly RANDOM_VIDEO_ACTIVE_CHANGE = 'RANDOM_VIDEO_ACTIVE_CHANGE';
     public static readonly RANDOM_VIDEO_END_TIME_CHANGE = 'RANDOM_VIDEO_END_TIME_CHANGE';
     private _roomData: TexasGameRoomData;
@@ -60,17 +56,23 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
 
     @observable(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE)
     public localCameraEnabled: ButtonState = ButtonState.DISABLE;
-    @observable(TexasGameRoomDataPlayerMine.LOCAL_MIC_ENABLED_CHANGE)
-    public localMicEnabled: ButtonState = ButtonState.DISABLE;
+    @observable(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE_DELAY)
+    public localCameraEnabledDelayed: ButtonState = ButtonState.DISABLE;
+    @observable(TexasGameRoomDataPlayerMine.LOCAL_MICROPHONE_ENABLED_CHANGE)
+    public localMicrophoneEnabled: ButtonState = ButtonState.DISABLE;
+    @observable(TexasGameRoomDataPlayerMine.REMOTE_CAMERA_STATE_CHANGE)
+    public remoteCameraEnabled: boolean = true;
+    @observable(TexasGameRoomDataPlayerMine.REMOTE_MICROPHONE_ENABLED_CHANGE)
+    public remoteMicrophoneEnabled: boolean = true;
 
     public async clearVideoAndAudio() {
         this.randomVideoActive = false;
         this.randomVideoEndTime = 0;
         await agoraManager.disableCamera();
-        await agoraManager.disableMic();
+        await agoraManager.disableMicrophone();
         this.muteEvents();
         this.localCameraEnabled = ButtonState.DISABLE;
-        this.localMicEnabled = ButtonState.DISABLE;
+        this.localMicrophoneEnabled = ButtonState.DISABLE;
         this.unmuteEvents();
     }
     // ==================== 随机视频验证状态 ====================

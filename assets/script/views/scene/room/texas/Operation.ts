@@ -18,7 +18,7 @@ import BetButtonsContainer, { caculatePotsBet } from './widget/BetButtonContaine
 const { ccclass, property, menu } = cc._decorator;
 
 @ccclass
-@traceClass({ level: 'debug' })
+@traceClass()
 @menu('Scene/Room/Texas/Operation')
 export default class Operation extends cc.Component {
     @property({ type: cc.Node, displayName: '真正根节点,保证根节点永远不会Disable' })

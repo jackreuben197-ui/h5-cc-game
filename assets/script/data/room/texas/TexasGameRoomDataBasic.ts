@@ -2,6 +2,7 @@ import { Def, InsuranceOddsForPotsUserCount, RoomJackpotConfig, SquidCountRateCo
 import { bindData, IObservableBindings, observable, pureEvent } from '../../../core/decorator/DataBind';
 import { AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDisplayType';
 import { ChatType } from '../../../game/constant/ChatType';
+import { GameTypeToTableCategory } from '../../../game/constant/LogicTypeConf';
 import { MushroomMode } from '../../../game/constant/Mushroom';
 import { SquidLeaveMode, SquidMode } from '../../../game/constant/Squid';
 import { VideoAntiCheatConfig } from '../../../game/constant/VideoModel';
@@ -85,9 +86,14 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public get roomType() {
         return this._roomType;
     }
+    private _tableCategory: number;
+    public get tableCategory(): number {
+        return this._tableCategory;
+    }
     public set roomType(r: number) {
         const { gameType, pokerType, betType, isMTT } = GameplayUtil.RoomTypeExtract(r);
         this.gameType = gameType;
+        this._tableCategory = GameTypeToTableCategory(gameType);
         this.pokerType = pokerType;
         this.betType = betType;
         this.isMtt = isMTT;

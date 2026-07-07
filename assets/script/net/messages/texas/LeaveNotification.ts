@@ -8,7 +8,6 @@ import ProcedureManager from '../../../game/procedure/ProcedureManager';
 import { ProcedureReturnNavigateParam } from '../../../game/procedure/ProcedureReturn';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import viewManager from '../../../views/UIViewManager';
-import agoraManager from '../../agora/AgoraManager';
 import TexasVideoMediaHelper from './TexasVideoMediaHelper';
 
 const _glog = createLogger('LeaveNotification', 'debug');
@@ -17,9 +16,11 @@ const _glog = createLogger('LeaveNotification', 'debug');
 export function LeaveNotification(data: ServerMessageLeaveNotification.AsObject, roomID: number, matchID: number) {
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     roomDataManager.clearInternalLeave(roomID, matchID);
-    // 视频房间：离房前清理 Agora 频道
-    void leaveAgoraVideoChannel(roomData);
-    _glog.debug('leave', data.reason, roomData);
+    if (roomData) {
+        TexasVideoMediaHelper.clearAllMediaStates(roomData);
+    } else {
+        _glog.debug('leave', data.reason, roomData);
+    }
     switch (data.reason) {
         case Def.LeaveReason.LR_ACTIVE: // 主动退出
             break;
@@ -64,13 +65,4 @@ export function LeaveNotification(data: ServerMessageLeaveNotification.AsObject,
             });
             break;
     }
-}
-
-async function leaveAgoraVideoChannel(roomData: TexasGameRoomData | null): Promise<void> {
-    TexasVideoMediaHelper.clearAllMediaStates(roomData);
-    await agoraManager.disableCamera();
-    agoraManager.disableMic();
-    agoraManager.clearCallbacks();
-    agoraManager.stopVolumeMonitor();
-    await agoraManager.leave();
 }

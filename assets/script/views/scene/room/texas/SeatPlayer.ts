@@ -14,7 +14,8 @@ import {
     AnimateDisplayTypePosition,
     AnimateDisplayTypeRoundBet
 } from '../../../../game/constant/AnimateDisplayType';
-import { MicIconState } from '../../../../game/constant/MicIconState';
+import { ButtonState } from '../../../../game/constant/Constants';
+import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconState';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
@@ -138,6 +139,9 @@ export default class SeatPlayer extends cc.Component {
         this._seatPlayer = seatPlayer;
         this._potNode = potNode;
         this._dealNode = dealNode;
+        // 一些无法通过init初始化的状态在这里初始化
+        this.winBoard.node.active = false;
+        // 绑定数据
         if (this.node.activeInHierarchy) {
             this._bindEventsAndRefresh();
         }
@@ -175,7 +179,7 @@ export default class SeatPlayer extends cc.Component {
         this._maskLoadVersion++;
         this.avatarVideoRender.stopMask();
         this.avatarVideoRender.stopOverlay();
-        this.setMicIconState(MicIconState.HIDDEN);
+        this.setMicrophoneIconState(MicrophoneIconState.HIDDEN);
         unBindEventsAll(this);
     }
 
@@ -191,9 +195,12 @@ export default class SeatPlayer extends cc.Component {
      * 设置麦克风图标状态
      * @param state HIDDEN=不显示, SPEAKING=正在说话, MUTED=麦克风被禁止/未开启
      */
-    public setMicIconState(state: MicIconState): void {
+    public setMicrophoneIconState(state: MicrophoneIconState, force: boolean = true): void {
+        if (!force && this.micIconSprite.spriteFrame === this.micMutedIcon && this.micIconSprite.node.active) {
+            return;
+        }
         switch (state) {
-            case MicIconState.SPEAKING:
+            case MicrophoneIconState.SPEAKING:
                 if (this.speakingIcon) {
                     this.micIconSprite.spriteFrame = this.speakingIcon;
                     this.micIconSprite.node.active = true;
@@ -201,7 +208,7 @@ export default class SeatPlayer extends cc.Component {
                     this.micIconSprite.node.active = false;
                 }
                 break;
-            case MicIconState.MUTED:
+            case MicrophoneIconState.MUTED:
                 if (this.micMutedIcon) {
                     this.micIconSprite.spriteFrame = this.micMutedIcon;
                     this.micIconSprite.node.active = true;
@@ -209,7 +216,7 @@ export default class SeatPlayer extends cc.Component {
                     this.micIconSprite.node.active = false;
                 }
                 break;
-            case MicIconState.HIDDEN:
+            case MicrophoneIconState.HIDDEN:
             default:
                 this.micIconSprite.node.active = false;
                 break;
@@ -241,7 +248,7 @@ export default class SeatPlayer extends cc.Component {
             this._maskLoadVersion++;
             this.avatarVideoRender.stopMask();
             this.avatarVideoRender.stopOverlay();
-            this.setMicIconState(MicIconState.HIDDEN);
+            this.setMicrophoneIconState(MicrophoneIconState.HIDDEN);
         }
         //解绑(自己站起)
         if (mine) {
@@ -250,27 +257,42 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.REMOTE_VIDEO_VISIBLE_CHANGE, 'player')
+    @traceMethod({ level: 'debug' })
     private async onRemoteVideoVisibleChanged(visible: boolean): Promise<void> {
         if (this._seatPlayer.mine) return;
         if (!visible || !this._seatPlayer.userID) {
             this.avatarVideoRender.stopOverlay();
             return;
         }
-        const rawTrack = agoraManager.getRemoteVideoTrack(this._seatPlayer.userID);
-        if (!rawTrack) {
+        try {
+            let rawTrack = agoraManager.getRemoteVideoTrack(this._seatPlayer.userID);
+            // await GameplayUtil.waitForCondition(
+            //     () => {
+            //         rawTrack = agoraManager.getRemoteVideoTrack(this._seatPlayer.userID);
+            //         return rawTrack != null;
+            //     },
+            //     500,
+            //     5000
+            // );
+            // 不支持编码
+            if (!agoraManager.isSupportedVideoTrack(rawTrack)) {
+                this.avatarVideoRender.stopOverlay();
+                return;
+            }
+            this.avatarVideoRender.mirror = false;
+            this.avatarVideoRender.targetFps = 15;
+            await this.avatarVideoRender.switchToOverlay(rawTrack.getMediaStreamTrack());
+        } catch (e) {
             this.tracelog.warn('agoraManager no remote video track user:', this._seatPlayer.userID);
             this.avatarVideoRender.stopOverlay();
-            return;
         }
-        this.avatarVideoRender.mirror = false;
-        this.avatarVideoRender.targetFps = 15;
-        await this.avatarVideoRender.switchToOverlay(rawTrack);
     }
 
     @bindEvent(TexasGameRoomDataPlayer.VIDEO_MASK_CHANGE, 'player')
     private async onVideoMaskChanged(maskId: number): Promise<void> {
         if (!this.avatar?.node?.isValid) return;
         this._maskLoadVersion++;
+        maskId = 0;
         if (maskId <= 0) {
             this.avatarVideoRender.stopMask();
             return;
@@ -288,26 +310,33 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.MIC_ICON_STATE_CHANGE, 'player')
-    private onMicIconStateChanged(state: MicIconState): void {
-        this.setMicIconState(state);
+    @traceMethod({ level: 'debug' })
+    private onMicrophoneIconStateChanged(state: MicrophoneIconState): void {
+        this.setMicrophoneIconState(state);
     }
 
-    @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE, 'mine')
-    private async onLocalCameraStateChanged(enabled: boolean): Promise<void> {
+    @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE_DELAY, 'mine')
+    @traceMethod({ level: 'debug' })
+    private async onLocalCameraStateChanged(state: ButtonState): Promise<void> {
         if (!this._seatPlayer.mine) return;
-        if (!enabled) {
+        if (state == ButtonState.DISABLE) {
             this.avatarVideoRender.stopOverlay();
             return;
         }
-        if (!agoraManager.localVideoTrack) {
-            this.tracelog.warn('agoraManager no local video track user:', this._seatPlayer.userID);
+        if (state == ButtonState.OFF) {
             this.avatarVideoRender.stopOverlay();
             return;
         }
-        const rawTrack = agoraManager.localVideoTrack.getMediaStreamTrack();
-        this.avatarVideoRender.mirror = true;
-        this.avatarVideoRender.targetFps = 15;
-        await this.avatarVideoRender.switchToOverlay(rawTrack);
+        try {
+            //await GameplayUtil.waitForCondition( () => !!agoraManager.localVideoTrack, 500, 5000);
+            const rawTrack = agoraManager.localVideoTrack.getMediaStreamTrack();
+            this.avatarVideoRender.mirror = true;
+            this.avatarVideoRender.targetFps = 15;
+            await this.avatarVideoRender.switchToOverlay(rawTrack);
+        } catch (e) {
+            this.tracelog.warn('agoraManager render video error', this._seatPlayer.userID, e);
+            this.avatarVideoRender.stopOverlay();
+        }
     }
 
     @bindEvent(TexasGameRoomDataPlayer.NICKNAME_CHANGE, 'player')
