@@ -638,15 +638,6 @@ class AgoraManager {
         return user.videoTrack;
     }
 
-    public isSupportedVideoTrack(track: IRemoteVideoTrack): boolean {
-        const stats = track.getStats();
-        if (!stats.codecType || AgoraManager.WEB_VIDEO_CODEC_TYPES.indexOf(stats.codecType) < 0) {
-            this.tracelog.warn('[AgoraManager] 远端用户视频编码不支持. codec:', stats.codecType);
-            return false;
-        }
-        return true;
-    }
-
     private _getRemoteUserByUid(uid: number): IAgoraRTCRemoteUser | null {
         if (!this._client || !this._client.remoteUsers) {
             return null;

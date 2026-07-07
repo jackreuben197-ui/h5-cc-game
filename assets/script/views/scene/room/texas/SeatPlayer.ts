@@ -266,24 +266,16 @@ export default class SeatPlayer extends cc.Component {
         }
         try {
             let rawTrack = agoraManager.getRemoteVideoTrack(this._seatPlayer.userID);
-            // await GameplayUtil.waitForCondition(
-            //     () => {
-            //         rawTrack = agoraManager.getRemoteVideoTrack(this._seatPlayer.userID);
-            //         return rawTrack != null;
-            //     },
-            //     500,
-            //     5000
-            // );
             // 不支持编码
-            if (!agoraManager.isSupportedVideoTrack(rawTrack)) {
-                this.avatarVideoRender.stopOverlay();
-                return;
-            }
+            // if (!agoraManager.isSupportedVideoTrack(this._seatPlayer.userID)) {
+            //     this.avatarVideoRender.stopOverlay();
+            //     return;
+            // }
             this.avatarVideoRender.mirror = false;
             this.avatarVideoRender.targetFps = 15;
             await this.avatarVideoRender.switchToOverlay(rawTrack.getMediaStreamTrack());
         } catch (e) {
-            this.tracelog.warn('agoraManager no remote video track user:', this._seatPlayer.userID);
+            this.tracelog.error('agoraManager not supported:', this._seatPlayer.userID);
             this.avatarVideoRender.stopOverlay();
         }
     }

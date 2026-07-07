@@ -73,6 +73,8 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
         this.muteEvents();
         this.localCameraEnabled = ButtonState.DISABLE;
         this.localMicrophoneEnabled = ButtonState.DISABLE;
+        this.remoteCameraEnabled = false;
+        this.remoteMicrophoneEnabled = false;
         this.unmuteEvents();
     }
     // ==================== 随机视频验证状态 ====================
