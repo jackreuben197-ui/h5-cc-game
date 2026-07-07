@@ -7,9 +7,7 @@ import TexasGameRoomDataSeatsStateManager, {
     ThrowPropBroadcastData
 } from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
 import { AnimateDisplayTypeButton } from '../../../../game/constant/AnimateDisplayType';
-import { MicIconState } from '../../../../game/constant/MicIconState';
-import AgoraManager from '../../../../net/agora/AgoraManager';
-import VideoRoomManager from '../../../../net/agora/VideoRoomManager';
+import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconState';
 import throwPropManager from '../../../util/ThrowPropManager';
 import SeatPlayer from './SeatPlayer';
 
@@ -49,8 +47,6 @@ export default class SeatManager extends cc.Component {
 
     public onDisable(): void {
         unBindEventsAll(this);
-        // 清理视频座位头像注册
-        VideoRoomManager.Instance.clearSeatAvatars();
         throwPropManager.clearSeatNodes();
     }
 
@@ -105,6 +101,24 @@ export default class SeatManager extends cc.Component {
         }
     }
 
+    @bindEvent(TexasGameRoomDataSeatsStateManager.SPEAKING_CHANGE, 'seats')
+    private onUpdateSpeaking(prevSeat: number, currentSeat: number) {
+        if (prevSeat > 0) {
+            const ps = this._seatNodesMap.get(prevSeat);
+            ps.setMicrophoneIconState(MicrophoneIconState.HIDDEN, false);
+        }
+        if (currentSeat > 0) {
+            const ps = this._seatNodesMap.get(currentSeat);
+            ps.setMicrophoneIconState(MicrophoneIconState.SPEAKING, false);
+        }
+        // 初始化
+        if (currentSeat == 0 && prevSeat == 0) {
+            this._seatNodesMap.forEach(v => {
+                v.setMicrophoneIconState(MicrophoneIconState.HIDDEN, false);
+            });
+        }
+    }
+
     @bindEvent(TexasGameRoomDataSeatsStateManager.BUTTON_CHANGE, 'seats')
     private onUpdateButton(prevSeat: number, currentSeat: number, bat: AnimateDisplayTypeButton) {
         this._seatNodesMap.forEach(v => {
@@ -138,29 +152,6 @@ export default class SeatManager extends cc.Component {
         }
     }
 
-    /** 说话者变化：刷新所有座位头像的麦克风图标（对齐 pokerqueen 三分支逻辑） */
-    @bindEvent(TexasGameRoomDataSeatsStateManager.SPEAKING_CHANGE, { dataSource: 'seats', initIgnore: true })
-    @traceMethod()
-    private onUpdateSpeaking(speakingUid: number) {
-        const agora = AgoraManager.Instance;
-        if (!agora.isJoined) return;
-        const remoteUsers = agora.getRemoteUsers();
-        this._seatNodesMap.forEach((seatPlayer, seatNo) => {
-            const seatData = this._seatManager.getSeatPlayer(seatNo);
-            if (!seatData?.userID) return; // 空座位跳过
-            let state: MicIconState;
-            if (speakingUid !== 0 && speakingUid === seatData.userID) {
-                state = MicIconState.SPEAKING;
-            } else if (seatData.mine) {
-                state = agora.localAudioTrack ? MicIconState.HIDDEN : MicIconState.MUTED;
-            } else {
-                const ru = remoteUsers.find(u => u.uid === seatData.userID);
-                state = ru?.hasAudio ? MicIconState.HIDDEN : MicIconState.MUTED;
-            }
-            seatPlayer.setMicIconState(state);
-        });
-    }
-
     // onUpdateSeats 座位数调整, 这个优先度必须提前要创建座位的Node
     @bindEvent(TexasGameRoomDataSeatsStateManager.SEATS_CHANGE, { dataSource: 'seats', initPriority: 10 })
     @traceMethod()
@@ -171,7 +162,8 @@ export default class SeatManager extends cc.Component {
                 let nd = cc.instantiate(this.seatPrefab);
                 nd.parent = this.node;
                 this._seatNodes.push(nd);
-                this._seatNodesMap.set(i + 1, nd.getComponent(SeatPlayer));
+                const comp = nd.getComponent(SeatPlayer);
+                this._seatNodesMap.set(i + 1, comp);
             }
         }
         const cl = this._seatNodes.length;
@@ -183,8 +175,6 @@ export default class SeatManager extends cc.Component {
                 let comp = this._seatNodesMap.get(i + 1);
                 comp.initData(seatData, this.potNot, this.dealNode);
                 node.active = true;
-                // 注册头像节点到视频管理器
-                VideoRoomManager.Instance.registerSeatAvatar(i + 1, comp.avatarNode);
                 if (seatData?.userID) throwPropManager.registerSeat(seatData.userID, comp.avatarNode);
             }
         }

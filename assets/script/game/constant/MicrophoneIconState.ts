@@ -1,8 +1,8 @@
 /**
- * @module MicIconState
+ * @module MicrophoneIconState
  * @description 视频桌座位头像的麦克风图标状态
  */
-export enum MicIconState {
+export enum MicrophoneIconState {
     /** 不显示图标 */
     HIDDEN = 0,
     /** 正在说话（喇叭图标） */

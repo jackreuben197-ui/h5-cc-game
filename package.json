@@ -20,6 +20,7 @@
   "devDependencies": {
     "@types/node": "^18.0.4",
     "@typescript-eslint/typescript-estree": "^8.60.0",
+    "agora-rtc-sdk-ng": "4.24.5",
     "agora-token": "^2.0.5",
     "prettier": "^3.8.3",
     "typescript": "^6.0.3"

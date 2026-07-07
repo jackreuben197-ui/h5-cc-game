@@ -101,5 +101,7 @@ export function Winner(data: ServerMessageWinner.AsObject, roomID: number, match
         roomData.basicInfo.setSquidStatusEnabled(false, AnimateDisplayTypePlayType.Start);
         roomData.basicInfo.squiedResultsEmit(squidResult);
     }
+    // 战绩面板：按 Unity TexasSituationController.HandResult 增量累加 win/handNum/poolCount/mushroom/jackpot
+    roomData.report.applyWinnerResult(data);
     roomData.seatsStateManager.handEnd();
 }

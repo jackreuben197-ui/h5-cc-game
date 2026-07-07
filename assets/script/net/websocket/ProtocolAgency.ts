@@ -19,7 +19,7 @@ export interface IProtocolRpc {
 }
 
 @ccclass
-@traceClass({ level: 'debug' })
+@traceClass()
 export default class ProtocolAgency extends cc.Component {
     private static _codeNameMap: Record<number, string> | null = null;
     // 序列化的时候，如果找不到类定义用这个
@@ -326,6 +326,7 @@ export default class ProtocolAgency extends cc.Component {
         }
         if (
             code < 1000 &&
+            code != Code.MSG_D_REGISTER &&
             code != Code.MSG_R_ROOMS &&
             code != Code.MSG_R_MTT_DETAIL &&
             code != Code.MSG_S_ROOM_USER_SEND_DIAMOND &&

@@ -3,7 +3,6 @@ import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { VideoModel } from '../../../game/constant/VideoModel';
-import VideoRoomManager from '../../../net/agora/VideoRoomManager';
 import viewManager from '../../../views/UIViewManager';
 
 const _plog = createLogger('AntiCheatRoomVideo');
@@ -17,7 +16,7 @@ export function AntiCheatRoomVideo(data: ServerMessageUtilAntiCheatRoomVideo.AsO
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     if (!roomData) return;
     // 仅随机验证模式处理
-    if (roomData.basicInfo.videoModel !== VideoModel.RANDOM) {
+    if (roomData.basicInfo.antiCheatConfig && roomData.basicInfo.antiCheatConfig.mode != VideoModel.RANDOM) {
         _plog.warn('当前不是随机验证模式，忽略');
         return;
     }
@@ -32,22 +31,13 @@ export function AntiCheatRoomVideo(data: ServerMessageUtilAntiCheatRoomVideo.AsO
         _plog.info('未入座，跳过');
         return;
     }
-    const overtime = roomData.basicInfo.antiCheatTimeLimit > 0 ? roomData.basicInfo.antiCheatTimeLimit : DEFAULT_OVERTIME_SECONDS;
+    const overtime = roomData.basicInfo.antiCheatConfig.randomTimeLimit > 0 ? roomData.basicInfo.antiCheatConfig.randomTimeLimit : DEFAULT_OVERTIME_SECONDS;
     // 标记开始验证
     mine.randomVideoActive = true;
     mine.randomVideoEndTime = Date.now() + overtime * 1000;
     _plog.info('开始随机视频验证，持续', overtime, '秒');
     // Toast 提示
     viewManager.showToast(`视频验证已开启，请保持摄像头开启 ${overtime} 秒`);
-    // 强制开启摄像头并渲染到自己的头像
-    const avatarNode = VideoRoomManager.Instance.getSeatAvatarNode(mine.seatNo);
-    if (avatarNode) {
-        VideoRoomManager.Instance.renderLocalVideoOnMySeat(avatarNode).then(ok => {
-            if (!ok) {
-                _plog.warn('随机验证渲染本地视频失败');
-            }
-        });
-    }
     // 设置超时自动结束验证
     setTimeout(() => {
         if (mine.randomVideoActive) {
