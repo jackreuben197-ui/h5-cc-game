@@ -2,13 +2,17 @@ import { StringHelper } from '../../../helper/StringHelper';
 import { ensureRows, refreshTitleCards, setChildLabel } from './HistoryCardHelper';
 import { formatRaiseTimes, HistoryActionInfo, HistoryActionType, HistoryStreetModel, PLAYER_ACTION_ABBR, PLAYER_POSITION_ABBR } from './HistoryReplayModel';
 
-const COLOR_GREEN = cc.color(86, 181, 87);
+// 对齐 h5 UGUIUtil 常量：TEXT_GREEN / TEXT_RED / TEXT_GREEN_DEEP / TEXT_GRAY
+const COLOR_GREEN = cc.color(128, 205, 16);    // #80CD10
 
-const COLOR_RED = cc.color(230, 68, 85);
+const COLOR_RED = cc.color(255, 67, 104);      // #FF4368
 
-const COLOR_YELLOW = cc.color(255, 184, 83);
+const COLOR_TEAL = cc.color(57, 194, 178);     // #39C2B2
 
-const COLOR_GRAY = cc.color(198, 198, 198);
+const COLOR_GRAY = cc.color(157, 157, 157);    // #9D9D9D
+
+// Unity Color32(198,198,198,160)：仅用于 AllIn 时 win 标签
+const COLOR_GRAY_ALLIN = cc.color(198, 198, 198);
 
 const { ccclass, property, menu } = cc._decorator;
 
@@ -83,25 +87,35 @@ export default class HistoryStreetSection extends cc.Component {
         setChildLabel(go, 'CC/action', actionStr);
         setChildLabel(go, 'CC/chip', StringHelper.GetLongString(row.actionChip));
         const bg = cc.find('CC/BG', go);
+        const actionBadge = cc.find('CC', go);
+        // actionBadge (CC 节点 47×47) 自带 Sprite；fold 时 BG opacity<255 会透出小正方形，需同步染色
+        let bgColor: cc.Color;
+        let isFold = false;
+        if (row.action > HistoryActionType.None && row.action < HistoryActionType.Straddle) {
+            // SB/BB/C/X → green
+            bgColor = COLOR_GREEN;
+        } else if (row.action > HistoryActionType.Check && row.action < HistoryActionType.Fold) {
+            // S/B/R/3B/A → red
+            bgColor = COLOR_RED;
+        } else if (row.action === HistoryActionType.Insure) {
+            // INS → teal
+            bgColor = COLOR_TEAL;
+        } else {
+            // Fold（或 None）→ gray
+            bgColor = COLOR_GRAY;
+            isFold = true;
+        }
         if (bg) {
-            if (row.action > HistoryActionType.None && row.action < HistoryActionType.Straddle) {
-                bg.color = COLOR_GREEN;
-                bg.opacity = 255;
-            } else if (row.action > HistoryActionType.Check && row.action < HistoryActionType.Fold) {
-                bg.color = COLOR_RED;
-                bg.opacity = 255;
-            } else if (row.action === HistoryActionType.Insure) {
-                bg.color = COLOR_YELLOW;
-                bg.opacity = 255;
-            } else {
-                bg.color = COLOR_GRAY;
-                bg.opacity = 198;
-            }
+            bg.color = bgColor;
+            bg.opacity = isFold ? 198 : 255;
+        }
+        if (actionBadge) {
+            actionBadge.color = isFold ? bgColor : cc.Color.WHITE;
         }
         const win = go.getChildByName('win');
         if (win) {
             if (row.action === HistoryActionType.AllIn) {
-                win.color = COLOR_GRAY;
+                win.color = COLOR_GRAY_ALLIN;
                 win.opacity = 160;
             } else {
                 win.color = cc.Color.WHITE;
