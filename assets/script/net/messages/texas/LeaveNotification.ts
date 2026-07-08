@@ -7,20 +7,19 @@ import ProcedureDefine from '../../../game/procedure/ProcedureDefine';
 import ProcedureManager from '../../../game/procedure/ProcedureManager';
 import { ProcedureReturnNavigateParam } from '../../../game/procedure/ProcedureReturn';
 import { i18nMgr } from '../../../i18n/i18nMgr';
-import VideoRoomManager from '../../../net/agora/VideoRoomManager';
 import viewManager from '../../../views/UIViewManager';
+import TexasVideoMediaHelper from './TexasVideoMediaHelper';
 
 const _glog = createLogger('LeaveNotification', 'debug');
 
 // LeaveNotification 1114
 export function LeaveNotification(data: ServerMessageLeaveNotification.AsObject, roomID: number, matchID: number) {
-    roomDataManager.clearInternalLeave(roomID, matchID);
-    // 视频房间：离房前清理 Agora 频道
-    VideoRoomManager.Instance.leaveVideoChannel();
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
-    if (roomData == null) {
-        _glog.debug('leave', data.reason, 'roomData is null, roomID:', roomID, 'matchID:', matchID);
-        return;
+    roomDataManager.clearInternalLeave(roomID, matchID);
+    if (roomData) {
+        TexasVideoMediaHelper.clearAllMediaStates(roomData);
+    } else {
+        _glog.debug('leave', data.reason, roomData);
     }
     switch (data.reason) {
         case Def.LeaveReason.LR_ACTIVE: // 主动退出

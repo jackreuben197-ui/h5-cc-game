@@ -3,10 +3,10 @@ import { traceClass } from '../../core/decorator/LogTrace';
 import roomDataManager from '../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../data/room/texas/TexasGameRoomData';
 import { i18nMgr } from '../../i18n/i18nMgr';
-import VideoRoomManager from '../../net/agora/VideoRoomManager';
 import ProtocolAgency from '../../net/websocket/ProtocolAgency';
 import viewManager from '../../views/UIViewManager';
 import { AntiCheatType } from '../constant/AntiCheatType';
+import { VideoAntiCheatConfig } from '../constant/VideoModel';
 import AGameplayEntrance, { LoadIndicator } from './AGameplayEntrance';
 
 /**
@@ -131,7 +131,6 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
      */
     public override messageLayerLeave(): void {
         // 视频房间：离开时清理 Agora 频道
-        VideoRoomManager.Instance.leaveVideoChannel();
         // TODO: 发送离开房间消息
     }
 
@@ -426,6 +425,7 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         roomData.basicInfo.callTimeWinline = this._roomInfo.calltimeWinLine;
         roomData.basicInfo.callTimeLimit = this._roomInfo.calltimeLimit;
         roomData.basicInfo.handNum = this._roomInfo.handNum;
+        roomData.basicInfo.playDuration = this._roomInfo.playDuration;
         roomData.basicInfo.goldType = this._roomInfo.goldType;
         //jackpot
         roomData.basicInfo.jackpot = this._roomInfo.jackpot == 1;
@@ -458,19 +458,34 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         roomData.basicInfo.randomSeated = this._roomInfo.randomSeat == 1; // 2 关闭
         //安全屋
         roomData.basicInfo.seatedMessage = this._roomInfo.seatedMessaging > 0;
-        //video
-        roomData.basicInfo.antiCheatType = this._roomInfo.antiCheatType;
-        roomData.basicInfo.normalAntiCheatOrderType = this._roomInfo.antiCheatOrderType;
-        roomData.basicInfo.normalAntiCheatOrderMicType = this._roomInfo.antiCheatOrderMicType;
-        roomData.basicInfo.antiCheatTimeLimit = this._roomInfo.antiCheatTimelimit;
-        roomData.basicInfo.videoEffectType = this._roomInfo.videoEffectType;
-        roomData.basicInfo.videoPowerSaving = this._roomInfo.powerSaving;
-        //this.tracelog.info('[VideoMask] 节能模式(窗花) power_saving:', roomData.basicInfo.videoPowerSaving, '(1=开,2=关)');
-        roomData.basicInfo.videoVerifyType = this._roomInfo.videoVerifyType;
-        if (this._roomInfo.antiCheatType == AntiCheatType.VIDEO) {
-            roomData.basicInfo.videoModel = this._roomInfo.antiCheatVideoType;
+        // mock video
+        // this._roomInfo.antiCheatType = AntiCheatType.VIDEO;
+        // this._roomInfo.antiCheatVideoType = 3;
+        // this._roomInfo.powerSaving = 0;
+        // this._roomInfo.videoSeatSwitch = 0;
+        // this._roomInfo.videoMiddleSwitch = 1,
+        // this._roomInfo.micSeatSwitch = 0;
+        // this._roomInfo.micMiddleSwitch = 1;
+        // this._roomInfo.powerSavingSeatSwitch = 0;
+        // this._roomInfo.powerSavingMiddleSwitch = 1;
+        //video/audio
+        if (this._roomInfo.antiCheatType == AntiCheatType.VIDEO || this._roomInfo.antiCheatType == AntiCheatType.AUDIO) {
+            roomData.basicInfo.antiCheatConfig = new VideoAntiCheatConfig(
+                this._roomInfo.antiCheatType,
+                this._roomInfo.antiCheatTimelimit,
+                this._roomInfo.antiCheatVideoType, // 视频模式 0 未知 1 全时长 2 随机验证 3 麦序, 5, 6
+                this._roomInfo.micSeatSwitch == 1,
+                this._roomInfo.micMiddleSwitch == 1,
+                this._roomInfo.videoSeatSwitch == 1,
+                this._roomInfo.videoMiddleSwitch == 1,
+                this._roomInfo.powerSaving == 1,
+                this._roomInfo.powerSavingSeatSwitch == 1,
+                this._roomInfo.powerSavingMiddleSwitch == 1,
+                this._roomInfo.antiCheatOrderType,
+                this._roomInfo.videoVerifyType
+            );
         } else {
-            roomData.basicInfo.videoModel = 0;
+            roomData.basicInfo.antiCheatConfig = null;
         }
         roomData.seatsStateManager.seatsCount = this._roomInfo.seatCount;
         roomDataManager.setRoomData(this._roomId, this.matchId, roomData);
@@ -487,10 +502,6 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
             matchID: this.matchId,
             body: body
         });
-        // 视频房间：入房后加入 Agora 频道
-        if (roomData.basicInfo.videoModel !== 0) {
-            VideoRoomManager.Instance.joinVideoChannelIfNeed(this._roomId, this.matchId);
-        }
         return 0;
     }
 }

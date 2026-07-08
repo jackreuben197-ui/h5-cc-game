@@ -47,6 +47,18 @@ export default class StorageKey {
     // 热更新配置缓存
     static HOT_UPDATE_GLOBAL_CONFIG_CACHE = 'HOT_UPDATE_GLOBAL_CONFIG_CACHE';
     static HOT_UPDATE_ROOM_TEMPLATE_CACHE = 'HOT_UPDATE_ROOM_TEMPLATE_CACHE';
+    // H5 侧 IndexedDB 表名
+    static readonly STORE_TABLE_USER_BASE_INFO = 'table_user_base_info';
+    static readonly STORE_TABLE_USER_DATA_INFO = 'table_user_data_info';
+    static readonly STORE_GAME_REPLAYS = 'game_replays';
+
+    static getReplayRoomKey(userId: number, roomId: number, handNum: number): string {
+        return `${userId}_${roomId}_${handNum}`;
+    }
+
+    static getReplayMatchKey(userId: number, matchId: number, handNum: number): string {
+        return `${userId}_m${matchId}_${handNum}`;
+    }
     // static OpenBarrage: string = 'OpenBarrage'; //是否打开弹幕 1 关闭，0 打开
     // //=======================设置相关========================
     static SHOW_BB = 'SHOW_BB';

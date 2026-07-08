@@ -53,3 +53,50 @@ export enum PokerType {
      */
     SIX_PLUS = 2
 }
+
+export function GameTypeToTableCategory(code: GameType): number {
+    switch (code) {
+        case GameType.HOLDEM:
+        case GameType.OMAHA4:
+        case GameType.OMAHA5:
+        case GameType.OMAHA6:
+            return TableCategory.TEXAS;
+        case GameType.FANTASY:
+            return TableCategory.FANTASY;
+        case GameType.COWBOY:
+            return TableCategory.COWBOY;
+        case GameType.MAHJONG:
+            return TableCategory.MAHJONG;
+        case GameType.EGG:
+            return TableCategory.EGG;
+        default:
+            return 0;
+    }
+}
+
+enum TableCategory {
+    /// <summary>
+    /// 默认, 非法值
+    /// </summary>
+    UNKNOWN = 0,
+    /// <summary>
+    /// 德州 (统一表示大类德州玩法, 包括但不限于 普通德州, Omaha, 短牌等)
+    /// </summary>
+    TEXAS = 1,
+    /// <summary>
+    /// 12 fantasy
+    /// </summary>
+    FANTASY,
+    /// <summary>
+    /// 牛仔
+    /// </summary>
+    COWBOY,
+    /// <summary>
+    /// 麻将
+    /// </summary>
+    MAHJONG,
+    /// <summary>
+    /// 掼蛋
+    /// </summary>
+    EGG
+}

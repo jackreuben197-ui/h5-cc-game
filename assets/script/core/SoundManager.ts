@@ -38,7 +38,7 @@ export enum SoundMusicKey {
     BgmGame = 'bgm_game'
 }
 
-@traceClass({ level: 'debug' })
+@traceClass()
 export class SoundManager {
     private _soundOn: boolean = false;
     private _playingMusic: number = -1;
@@ -86,13 +86,6 @@ export class SoundManager {
         return cc.audioEngine.playEffect(clip, loop);
     }
 
-    /** 停止所有音频 */
-    stopAll(): void {
-        this._playingMusic = -1;
-        cc.audioEngine.stopAll();
-        cc.audioEngine.stopAllEffects();
-    }
-
     /** 声音开关，持久化到 localStorage */
     volumeOnOff(onoff: boolean): void {
         this._soundOn = onoff;
@@ -100,7 +93,9 @@ export class SoundManager {
             this.playMusic(this._lastMusicKey, true, this._lastMusicVolume);
         }
         if (!onoff) {
+            this._playingMusic = -1;
             cc.audioEngine.stopAll();
+            cc.audioEngine.stopAllEffects();
         }
     }
 

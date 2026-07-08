@@ -13,8 +13,6 @@ import {
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
-import { VideoModel } from '../../../game/constant/VideoModel';
-import VideoRoomManager from '../../../net/agora/VideoRoomManager';
 
 const _plog = createLogger('ServerMessageStartInfo');
 
@@ -22,6 +20,8 @@ const _plog = createLogger('ServerMessageStartInfo');
 export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number, matchID: number) {
     let roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     roomData.basicInfo.gameStatus = Def.GameStatus.HAND_PREFLOP;
+    // 战绩面板：第一次 StartInfo 时补写开桌时间（对应 Unity TexasSituationController.OnStartInfo）
+    roomData.report.applyStartInfo();
     const defaultHandCards = new Array(roomData.basicInfo.handCardNum).fill(0);
     if (data.handInfo) {
         if (data.handInfo.pools) {
@@ -140,10 +140,5 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
             }
             seatData.operator = op;
         }
-    }
-    // 麦序模式：新手牌开始时同步视频可见性
-    if (roomData.basicInfo.videoModel === VideoModel.SEQUENCE) {
-        const opSeatId = data.nextOperator ? data.nextOperator.seatId : 0;
-        VideoRoomManager.Instance.sequenceSyncRemoteVideos(opSeatId);
     }
 }

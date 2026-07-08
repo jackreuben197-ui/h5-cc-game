@@ -6,12 +6,14 @@
  */
 import { GameConfig } from './config/GameConfig';
 import { createLogger } from './core/decorator/LogTrace';
+import bridgeStorage from './data/BridgeStorage';
+import diamondModel from './data/trade/DiamondModel';
 import userStore from './data/user/UserStore';
 import ProcedureDefine from './game/procedure/ProcedureDefine';
 import ProcedureManager from './game/procedure/ProcedureManager';
 import roomReconnectManager from './game/RoomReconnectManager';
 import h5MessageManager, { EnterMttMatchInfo, EnterTableRoomInfo, SyncUserClubResponse, SyncUserInfo } from './H5MsgMgr';
-import AgoraManager from './net/agora/AgoraManager';
+import agoraManager from './net/agora/AgoraManager';
 import ProtocolAgency from './net/websocket/ProtocolAgency';
 
 const _ploger = createLogger('[MainUtils]');
@@ -25,7 +27,7 @@ export function loadWebSDK(): void {
         _ploger.info('[WebSDK] 声网已禁用（enableAgora=false），跳过加载');
         return;
     }
-    const sdkList = [{ name: 'AgoraRTC', src: 'https://download.agora.io/sdk/release/AgoraRTC_N-4.24.3.js' }];
+    const sdkList = [{ name: 'AgoraRTC', src: 'https://download.agora.io/sdk/release/AgoraRTC_N-4.24.5.js' }];
     sdkList.forEach(sdk => {
         if ((window as unknown as Record<string, unknown>)[sdk.name]) {
             _ploger.info(`[WebSDK] ${sdk.name} 已存在，跳过加载`);
@@ -37,7 +39,7 @@ export function loadWebSDK(): void {
         script.onload = () => {
             _ploger.info(`[WebSDK] ${sdk.name} 声网sdk加载完成`);
             if (sdk.name === 'AgoraRTC') {
-                AgoraManager.Instance.init();
+                agoraManager.init(GameConfig.agoraKey);
             }
         };
         script.onerror = () => {
@@ -131,6 +133,8 @@ export async function registerH5Listeners(): Promise<void> {
     // H5 桥接模式下，提前完成数据层初始化（含 i18n），避免跳过大厅导致懒初始化未执行
     // await initH5BridgeDependencies();
     // initH5BridgeDependencies();
+    // 持久化存储桥:注册 ccStorageResult / ccStorageSnapshot 监听
+    bridgeStorage.install();
     h5MessageManager.on('enterTable', async payload => {
         _ploger.info('[H5Bridge] 收到 enterTable:', payload);
         // bridge 协议 roomInfo 为 unknown（兼容 H5 端较宽松的 RoomRecord），
@@ -282,10 +286,21 @@ export async function registerH5Listeners(): Promise<void> {
         for (const configType of DIAMOND_PRELOAD_TYPES) {
             const typeMap = map[configType];
             if (typeMap && typeof typeMap === 'object') {
-                // DiamondModel.Instance.setFromH5Sync(configType, typeMap as Record<number, unknown>);
+                diamondModel.setFromH5Sync(configType, typeMap as Record<number, any>);
             }
         }
         _ploger.info('[H5Bridge] syncDiamondConfig 预填完成');
+    });
+    // syncToken：H5 在登录/续期/登出后把最新 token 推过来，写入 userStore，避免 H5/CC 两端 token 错开。
+    h5MessageManager.on('syncToken', payload => {
+        const token = typeof payload?.token === 'string' ? payload.token.trim() : '';
+        if (!token) {
+            userStore.token = '';
+            _ploger.info('[H5Bridge] syncToken 清空登录态');
+            return;
+        }
+        userStore.token = token;
+        _ploger.info('[H5Bridge] syncToken 更新完成, expireAt:', payload?.expireAt || 0);
     });
     // h5MessageManager.on('syncRoomsList', (payload) => {
     //     _ploger.info('[H5Bridge] 同步房间列表:', payload);

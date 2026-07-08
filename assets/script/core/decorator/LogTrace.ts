@@ -90,6 +90,50 @@ const WEIGHT_TO_LEVEL: Record<number, LogLevel> = {
     4: 'error'
 };
 
+type TraceContext = {
+    owner: any;
+    classPrefix: string;
+    methodPrefix: string;
+    levelWeight?: number;
+};
+
+let currentTraceContext: TraceContext = null;
+
+let promiseThenPatched = false;
+
+let nativePromiseThen: any = null;
+
+function ensurePromiseThenPatched(): void {
+    if (promiseThenPatched) return;
+    if (typeof Promise === 'undefined' || !Promise.prototype) return;
+    nativePromiseThen = Promise.prototype.then;
+    Promise.prototype.then = function (onFulfilled?: any, onRejected?: any) {
+        const context = currentTraceContext;
+        if (!context) {
+            return nativePromiseThen.call(this, onFulfilled, onRejected);
+        }
+        const wrapCallback = (callback: any) => {
+            if (typeof callback !== 'function') return callback;
+            return function (this: any, ...args: any[]) {
+                return runWithTraceContext(context, () => callback.apply(this, args));
+            };
+        };
+        return nativePromiseThen.call(this, wrapCallback(onFulfilled), wrapCallback(onRejected));
+    };
+    promiseThenPatched = true;
+}
+
+function runWithTraceContext<T>(context: TraceContext, callback: () => T): T {
+    ensurePromiseThenPatched();
+    const previousContext = currentTraceContext;
+    currentTraceContext = context;
+    try {
+        return callback();
+    } finally {
+        currentTraceContext = previousContext;
+    }
+}
+
 // 全局静态总门禁线权重数值
 let currentGlobalLogLevel: number = LOG_LEVEL_WEIGHTS['debug'];
 
@@ -156,13 +200,16 @@ function ensureTracelog(target: any, className: string, traceLocalLevelWeight?: 
     }
     Object.defineProperty(target, 'tracelog', {
         get: function () {
-            const methodPrefix = this._activeMethodPrefix || '';
-            const currentFullTag = `${finalClassPrefix}${methodPrefix}`;
+            const context = currentTraceContext && currentTraceContext.owner === this ? currentTraceContext : null;
+            const methodPrefix = context ? context.methodPrefix : this._activeMethodPrefix || '';
+            const currentFullTag = `${context ? context.classPrefix : finalClassPrefix}${methodPrefix}`;
             const createLogWrapper = (level: LogLevel, nativeLogMethod: Function) => {
                 return (...args: any[]) => {
                     const currentLineWeight = LOG_LEVEL_WEIGHTS[level];
                     let targetThreshold = currentGlobalLogLevel;
-                    if (this._activeMethodLevelWeight !== undefined) {
+                    if (context && context.levelWeight !== undefined) {
+                        targetThreshold = context.levelWeight;
+                    } else if (this._activeMethodLevelWeight !== undefined) {
                         targetThreshold = this._activeMethodLevelWeight;
                     } else if (this._traceLocalLevelWeight !== undefined) {
                         targetThreshold = this._traceLocalLevelWeight;
@@ -210,22 +257,14 @@ export function traceMethod(options?: TraceMethodOptions) {
             if (activeThreshold <= LOG_LEVEL_WEIGHTS['debug']) {
                 console.log(`${fullPrefix} [Method Enter] -> arguments:`, args);
             }
-            const prevMethodPrefix = (this as any)?._activeMethodPrefix;
             const instance = this as any;
-            if (instance) {
-                instance._activeMethodPrefix = finalMethodPrefix;
-                if (options && options.level) {
-                    instance._activeMethodLevelWeight = LOG_LEVEL_WEIGHTS[options.level];
-                }
-            }
-            try {
-                return originalMethod.apply(this, args);
-            } finally {
-                if (instance) {
-                    instance._activeMethodPrefix = prevMethodPrefix;
-                    delete instance._activeMethodLevelWeight;
-                }
-            }
+            const context: TraceContext = {
+                owner: instance,
+                classPrefix,
+                methodPrefix: finalMethodPrefix,
+                levelWeight: options && options.level ? LOG_LEVEL_WEIGHTS[options.level] : undefined
+            };
+            return runWithTraceContext(context, () => originalMethod.apply(this, args));
         };
     };
 }

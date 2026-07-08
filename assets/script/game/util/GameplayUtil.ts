@@ -113,4 +113,58 @@ export default class GameplayUtil {
             return true;
         }
     }
+
+    /**
+     * 通用异步等待与轮询函数
+     * @param {Function} checkFn - 每次轮询执行的检查函数，返回 true 表示条件满足，结束等待
+     * @param {number} interval - 轮询间隔时间（毫秒），默认 500ms
+     * @param {number} maxTimeout - 最大等待时间（毫秒），默认 5000ms
+     * @returns {Promise<boolean>} - 返回 Promise，成功返回 true，超时返回 false 或抛出错误
+     */
+    public static waitForCondition(checkFn: () => boolean, interval = 500, maxTimeout = 5000) {
+        return new Promise<boolean>(function (resolve, reject) {
+            let intervalId: number = null;
+            let timeoutId: number = null;
+            // 统一的清理函数：无论成功还是失败，都必须把两个定时器彻底杀掉
+
+            function cleanup() {
+                if (intervalId) {
+                    clearInterval(intervalId);
+                    intervalId = null;
+                }
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                    timeoutId = null;
+                }
+            }
+
+            // 1. 设置超时定时器
+            timeoutId = setTimeout(function () {
+                cleanup(); // 先清理，防止内存泄漏
+                reject(new Error('等待超时，已达到最大时间: ' + maxTimeout + 'ms'));
+            }, maxTimeout);
+            // 启动时立刻先手动检查一次
+            try {
+                if (checkFn()) {
+                    cleanup();
+                    return resolve(true);
+                }
+            } catch (e) {
+                cleanup();
+                return reject(e);
+            }
+            // 2. 设置轮询定时器
+            intervalId = setInterval(function () {
+                try {
+                    if (checkFn()) {
+                        cleanup(); // 成功了，立刻清理所有定时器
+                        resolve(true);
+                    }
+                } catch (error) {
+                    cleanup(); // 如果 checkFn 报错，也视为失败并清理
+                    reject(error);
+                }
+            }, interval);
+        });
+    }
 }
