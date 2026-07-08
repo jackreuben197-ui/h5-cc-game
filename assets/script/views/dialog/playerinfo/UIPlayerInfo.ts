@@ -18,6 +18,7 @@ import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import { UIComfirmDialogType } from '../confirm/UIConfirmDialog';
 import viewManager from '../../UIViewManager';
 import agoraManager from '../../../net/agora/AgoraManager';
+import TexasVideoMediaHelper from '../../../net/messages/texas/TexasVideoMediaHelper';
 
 const { ccclass, menu, property } = cc._decorator;
 const VIEW_MANAGER_MASK_NODE = 'ithinktisinotshouldbedupilcatednodename';
@@ -705,7 +706,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private _clickAudioClose(): void {
         if (!this._hasAudioTrack) return;
         this._isAudioClosed = !this._isAudioClosed;
-        agoraManager.setRemoteAudioEnabled(!this._isAudioClosed, this._requestRID);
+        TexasVideoMediaHelper.setRemoteAudioStatus(this._roomData, !this._isAudioClosed, this._requestRID);
         this._setSetMember(UIPlayerInfo.audioClosedUsers, this._requestRID, this._isAudioClosed);
         this._updateAudioVideoVisuals();
     }
@@ -713,7 +714,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private _clickVideoClose(): void {
         if (!this._hasVideoTrack) return;
         this._isVideoClosed = !this._isVideoClosed;
-        agoraManager.setRemoteVideoEnabled(!this._isVideoClosed, this._requestRID);
+        TexasVideoMediaHelper.setRemoteVideoStatus(this._roomData, !this._isVideoClosed, this._requestRID);
         this._setSetMember(UIPlayerInfo.videoClosedUsers, this._requestRID, this._isVideoClosed);
         this._updateAudioVideoVisuals();
     }
