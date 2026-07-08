@@ -3,8 +3,10 @@ import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { ThrowPropBroadcastData } from '../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
 
-const BROADCAST_MSG_CODE = 10001;
+const BROADCAST_MSG_CODE = 1000;
+
 const PROP_TYPE_BASE = 600;
+
 const PROP_TYPE_COUNT = 12;
 
 // BroadcastMsg 1019

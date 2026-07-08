@@ -1,7 +1,9 @@
-import userStore from '../../data/user/UserStore';
 import { DiamondGiftBroadcastData, ThrowPropBroadcastData } from '../../data/room/texas/TexasGameRoomDataSeatsStateManager';
+import userStore from '../../data/user/UserStore';
+import AssetManager, { BUNDLE_RESOURCES } from '../loader/AssetManager';
 
 type PropPattern = 'A' | 'B' | 'C' | 'D';
+
 type PropRole = 'sender' | 'receiver' | 'bystander';
 
 interface PropAnimConfig {
@@ -14,15 +16,15 @@ class ThrowPropManager {
     private static readonly PROP_TYPE_BASE = 600;
     private static readonly SOUND_PREFIX = 'sound/PropOp/';
     private static readonly SOUND_MAP: Record<number, string> = {
-        0: 'sfx_tomato_mus',
-        1: 'sfx_rose_mus',
-        2: 'sfx_kiss_mus',
-        3: 'sfx_like_mus',
-        4: 'sfx_cheers_mus',
-        5: 'sfx_touch_mus',
-        6: 'sfx_shark_mus',
-        7: 'sfx_zhuaji_mus',
-        11: 'sfx_baseball'
+        0: 'sfx_tomato_mus', // 番茄
+        1: 'sfx_rose_mus', // 花环
+        2: 'sfx_kiss_mus', // 亲吻
+        3: 'sfx_like_mus', // 大拇指
+        4: 'sfx_cheers_mus', // 干杯-旁观者
+        5: 'sfx_touch_mus', // 摸头
+        6: 'sfx_shark_mus', // 鲨鱼
+        7: 'sfx_zhuaji_mus', // 抓鸡
+        11: 'sfx_baseball' // 棒球
     };
     private static readonly CONFIGS: PropAnimConfig[] = [
         { pattern: 'A', spines: ['spine/expressionTomato/skeleton'], anims: ['1'] },
@@ -51,15 +53,11 @@ class ThrowPropManager {
             anims: []
         }
     ];
-
     private _root: cc.Node = null;
     private _seatNodes: Map<number, cc.Node> = new Map();
-    private _skeletonCache: Map<string, sp.SkeletonData> = new Map();
-    private _preloadStarted = false;
 
     public initialize(root: cc.Node): void {
         this._root = root;
-        this._preloadSkeletons();
     }
 
     public registerSeat(userID: number, avatarNode: cc.Node): void {
@@ -129,72 +127,69 @@ class ThrowPropManager {
     private _playPatternA(offset: number, config: PropAnimConfig, senderNode: cc.Node, targetNode: cc.Node): void {
         const soundName = ThrowPropManager.SOUND_MAP[offset];
         if (offset === 2) this._playSound(soundName);
-        this._loadSkeleton(config.spines[0]).then(skeletonData => {
-            if (!this._isRootValid()) return;
-            const node = this._createSpineNode(skeletonData, '', false, this._getLocalPos(senderNode));
-            const skeleton = node.getComponent(sp.Skeleton);
-            const endPos = this._getLocalPos(targetNode);
-            cc.tween(node)
-                .to(0.5, this._toTweenPos(endPos), { easing: 'quadInOut' })
-                .call(() => {
-                    if (!cc.isValid(node)) return;
-                    skeleton.setAnimation(0, config.anims[0], false);
-                    this._destroyAfterComplete(node, 4);
-                    if (soundName) this._playSoundDelay(soundName, 1);
-                })
-                .start();
-        });
+        const skeletonData = this._getSkeleton(config.spines[0]);
+        if (!this._isRootValid()) return;
+        const node = this._createSpineNode(skeletonData, '', false, this._getLocalPos(senderNode));
+        const skeleton = node.getComponent(sp.Skeleton);
+        const endPos = this._getLocalPos(targetNode);
+        cc.tween(node)
+            .to(0.5, this._toTweenPos(endPos), { easing: 'quadInOut' })
+            .call(() => {
+                if (!cc.isValid(node)) return;
+                skeleton.setAnimation(0, config.anims[0], false);
+                this._destroyAfterComplete(node, 4);
+                if (soundName) this._playSoundDelay(soundName, 1);
+            })
+            .start();
     }
 
     private _playPatternB(offset: number, config: PropAnimConfig, senderNode: cc.Node, targetNode: cc.Node): void {
         const soundName = ThrowPropManager.SOUND_MAP[offset];
-        this._loadSkeleton(config.spines[0]).then(skeletonData => {
-            if (!this._isRootValid()) return;
-            const node = this._createSpineNode(skeletonData, '', false, this._getLocalPos(senderNode));
-            const skeleton = node.getComponent(sp.Skeleton);
-            const endPos = this._getLocalPos(targetNode);
-            cc.tween(node)
-                .to(0.5, this._toTweenPos(endPos), { easing: 'quadInOut' })
-                .call(() => {
-                    if (!cc.isValid(node)) return;
-                    skeleton.setAnimation(0, config.anims[0], true);
-                    this._playSound(soundName);
-                    this._destroyAfterDelay(node, 3);
-                })
-                .start();
-        });
+        const skeletonData = this._getSkeleton(config.spines[0]);
+        if (!this._isRootValid()) return;
+        const node = this._createSpineNode(skeletonData, '', false, this._getLocalPos(senderNode));
+        const skeleton = node.getComponent(sp.Skeleton);
+        const endPos = this._getLocalPos(targetNode);
+        cc.tween(node)
+            .to(0.5, this._toTweenPos(endPos), { easing: 'quadInOut' })
+            .call(() => {
+                if (!cc.isValid(node)) return;
+                skeleton.setAnimation(0, config.anims[0], true);
+                this._playSound(soundName);
+                this._destroyAfterDelay(node, 3);
+            })
+            .start();
     }
 
     private _playPatternC(offset: number, config: PropAnimConfig, senderNode: cc.Node, targetNode: cc.Node, data: ThrowPropBroadcastData): void {
         const targetPos = this._getLocalPos(targetNode);
         const soundName = ThrowPropManager.SOUND_MAP[offset];
-        this._loadSkeletons(config.spines).then(allData => {
-            if (!this._isRootValid()) return;
-            if (config.anims.length === 1) {
-                const node = this._createSpineNode(allData[0], config.anims[0], false, targetPos);
-                this._destroyAfterComplete(node, 4);
-                if (offset === 9) {
-                    this._playSound(this._getRole(data.userID, data.targetUserID) === 'receiver' ? 'sfx_touch_mus' : 'sfx_money');
-                } else {
-                    this._playSound(soundName);
-                }
-                return;
-            }
-            const senderPos = this._getLocalPos(senderNode);
-            if (offset === 7) {
-                const handNode = this._createSpineNode(allData[0], config.anims[0], false, senderPos);
-                this._destroyAfterComplete(handNode, 4);
-                cc.tween(handNode).to(0.5, this._toTweenPos(targetPos), { easing: 'quadInOut' }).start();
-                const targetEffect = this._createSpineNode(allData[0], config.anims[1], false, targetPos);
-                this._destroyAfterComplete(targetEffect, 4);
+        const allData = this._getSkeletons(config.spines);
+        if (!this._isRootValid()) return;
+        if (config.anims.length === 1) {
+            const node = this._createSpineNode(allData[0], config.anims[0], false, targetPos);
+            this._destroyAfterComplete(node, 4);
+            if (offset === 9) {
+                this._playSound(this._getRole(data.userID, data.targetUserID) === 'receiver' ? 'sfx_touch_mus' : 'sfx_money');
             } else {
-                const senderEffect = this._createSpineNode(allData[0], config.anims[0], false, senderPos);
-                const targetEffect = this._createSpineNode(allData[0], config.anims[1], false, targetPos);
-                this._destroyAfterComplete(senderEffect, 4);
-                this._destroyAfterComplete(targetEffect, 4);
+                this._playSound(soundName);
             }
-            this._playSound(soundName);
-        });
+            return;
+        }
+        const senderPos = this._getLocalPos(senderNode);
+        if (offset === 7) {
+            const handNode = this._createSpineNode(allData[0], config.anims[0], false, senderPos);
+            this._destroyAfterComplete(handNode, 4);
+            cc.tween(handNode).to(0.5, this._toTweenPos(targetPos), { easing: 'quadInOut' }).start();
+            const targetEffect = this._createSpineNode(allData[0], config.anims[1], false, targetPos);
+            this._destroyAfterComplete(targetEffect, 4);
+        } else {
+            const senderEffect = this._createSpineNode(allData[0], config.anims[0], false, senderPos);
+            const targetEffect = this._createSpineNode(allData[0], config.anims[1], false, targetPos);
+            this._destroyAfterComplete(senderEffect, 4);
+            this._destroyAfterComplete(targetEffect, 4);
+        }
+        this._playSound(soundName);
     }
 
     private _playPatternD(offset: number, senderNode: cc.Node, targetNode: cc.Node, data: ThrowPropBroadcastData): void {
@@ -206,50 +201,48 @@ class ThrowPropManager {
     }
 
     private _playBeer(senderNode: cc.Node, targetNode: cc.Node, role: PropRole): void {
-        this._loadSkeletons(['spine/expressionBeer/cheers_2', 'spine/expressionBeerScreen/cheers_1']).then(([beerData, screenData]) => {
-            if (!this._isRootValid()) return;
-            const senderPos = this._getLocalPos(senderNode);
-            const targetPos = this._getLocalPos(targetNode);
-            if (role === 'sender' || role === 'receiver') {
-                this._playSound('sfx_beer_screen');
-                this._destroyAfterComplete(this._createSpineNode(screenData, '1', false, this._getScreenCenter()), 5);
-                this._destroyAfterComplete(this._createSpineNode(beerData, '3', false, senderPos), 5);
-                this._destroyAfterComplete(this._createSpineNode(beerData, '3', false, targetPos), 5);
-                return;
-            }
-            this._playSound(ThrowPropManager.SOUND_MAP[4]);
-            this._destroyAfterComplete(this._createSpineNode(beerData, '2', false, senderPos), 5);
-            this._destroyAfterComplete(this._createSpineNode(beerData, '2', false, targetPos), 5);
-        });
+        const [beerData, screenData] = this._getSkeletons(['spine/expressionBeer/cheers_2', 'spine/expressionBeerScreen/cheers_1']);
+        if (!this._isRootValid()) return;
+        const senderPos = this._getLocalPos(senderNode);
+        const targetPos = this._getLocalPos(targetNode);
+        if (role === 'sender' || role === 'receiver') {
+            this._playSound('sfx_beer_screen');
+            this._destroyAfterComplete(this._createSpineNode(screenData, '1', false, this._getScreenCenter()), 5);
+            this._destroyAfterComplete(this._createSpineNode(beerData, '3', false, senderPos), 5);
+            this._destroyAfterComplete(this._createSpineNode(beerData, '3', false, targetPos), 5);
+            return;
+        }
+        this._playSound(ThrowPropManager.SOUND_MAP[4]);
+        this._destroyAfterComplete(this._createSpineNode(beerData, '2', false, senderPos), 5);
+        this._destroyAfterComplete(this._createSpineNode(beerData, '2', false, targetPos), 5);
     }
 
     private _playBoxing(senderNode: cc.Node, targetNode: cc.Node, role: PropRole): void {
-        this._loadSkeletons(['spine/expressionBox/box_local', 'spine/expressionBoxScreen/box_full']).then(([boxData, screenData]) => {
-            if (!this._isRootValid()) return;
-            const senderPos = this._getLocalPos(senderNode);
-            const targetPos = this._getLocalPos(targetNode);
-            const screenCenter = this._getScreenCenter();
-            if (role === 'sender') {
-                this._playSound('sfx_boxing_sender1');
-                this._chainSpine(this._createSpineNode(screenData, 'box_full_1', false, screenCenter), () => {
-                    this._playSound('sfx_boxing_sender2');
-                    this._destroyAfterComplete(this._createSpineNode(boxData, 'box_local_1', false, targetPos), 4);
-                });
-                return;
-            }
-            if (role === 'receiver') {
-                this._playSound('sfx_boxing_beaten1');
-                this._chainSpine(this._createSpineNode(boxData, 'box_local_2', false, senderPos), () => {
-                    this._playSound('sfx_boxing_beaten2');
-                    this._destroyAfterComplete(this._createSpineNode(screenData, 'box_full_2', false, screenCenter), 5);
-                });
-                return;
-            }
-            this._playSound('sfx_boxing_beaten1');
-            this._chainSpine(this._createSpineNode(boxData, 'box_local_2', false, senderPos), () => {
+        const [boxData, screenData] = this._getSkeletons(['spine/expressionBox/box_local', 'spine/expressionBoxScreen/box_full']);
+        if (!this._isRootValid()) return;
+        const senderPos = this._getLocalPos(senderNode);
+        const targetPos = this._getLocalPos(targetNode);
+        const screenCenter = this._getScreenCenter();
+        if (role === 'sender') {
+            this._playSound('sfx_boxing_sender1');
+            this._chainSpine(this._createSpineNode(screenData, 'box_full_1', false, screenCenter), () => {
                 this._playSound('sfx_boxing_sender2');
                 this._destroyAfterComplete(this._createSpineNode(boxData, 'box_local_1', false, targetPos), 4);
             });
+            return;
+        }
+        if (role === 'receiver') {
+            this._playSound('sfx_boxing_beaten1');
+            this._chainSpine(this._createSpineNode(boxData, 'box_local_2', false, senderPos), () => {
+                this._playSound('sfx_boxing_beaten2');
+                this._destroyAfterComplete(this._createSpineNode(screenData, 'box_full_2', false, screenCenter), 5);
+            });
+            return;
+        }
+        this._playSound('sfx_boxing_beaten1');
+        this._chainSpine(this._createSpineNode(boxData, 'box_local_2', false, senderPos), () => {
+            this._playSound('sfx_boxing_sender2');
+            this._destroyAfterComplete(this._createSpineNode(boxData, 'box_local_1', false, targetPos), 4);
         });
     }
 
@@ -260,60 +253,58 @@ class ThrowPropManager {
             'spine/expressionFishScreenReceiver/sy',
             'spine/expressionFishWave/hl'
         ];
-        this._loadSkeletons(paths).then(([fishData, senderScreenData, receiverScreenData, waveData]) => {
-            if (!this._isRootValid()) return;
-            const senderPos = this._getLocalPos(senderNode);
-            const targetPos = this._getLocalPos(targetNode);
-            const center = this._getScreenCenter();
-            if (role === 'sender') {
-                this._playSound('sfx_fish2');
-                this._destroyAfterComplete(this._createSpineNode(senderScreenData, 'sy2', false, center), 6);
-                this._destroyAfterComplete(this._createSpineNode(waveData, 'hl1', false, center), 6);
-                return;
-            }
-            if (role === 'receiver') {
-                this._playSound('sfx_fish');
-                this._destroyAfterComplete(this._createSpineNode(receiverScreenData, 'sy', false, center), 6);
-                this._destroyAfterComplete(this._createSpineNode(waveData, 'hl2', false, center), 6);
-                return;
-            }
+        const [fishData, senderScreenData, receiverScreenData, waveData] = this._getSkeletons(paths);
+        if (!this._isRootValid()) return;
+        const senderPos = this._getLocalPos(senderNode);
+        const targetPos = this._getLocalPos(targetNode);
+        const center = this._getScreenCenter();
+        if (role === 'sender') {
+            this._playSound('sfx_fish2');
+            this._destroyAfterComplete(this._createSpineNode(senderScreenData, 'sy2', false, center), 6);
+            this._destroyAfterComplete(this._createSpineNode(waveData, 'hl1', false, center), 6);
+            return;
+        }
+        if (role === 'receiver') {
             this._playSound('sfx_fish');
-            const fishNode = this._createSpineNode(fishData, 'sy3_1', true, senderPos);
-            const skeleton = fishNode.getComponent(sp.Skeleton);
-            const dir = cc.v2(targetPos.x - senderPos.x, targetPos.y - senderPos.y);
-            fishNode.angle = (-cc.v2(0, 1).signAngle(dir) * 180) / Math.PI;
-            fishNode.scaleX = dir.x > 0 ? -Math.abs(fishNode.scaleX || 1) : Math.abs(fishNode.scaleX || 1);
-            cc.tween(fishNode)
-                .to(2, this._toTweenPos(targetPos), { easing: 'sineInOut' })
-                .call(() => {
-                    if (!cc.isValid(fishNode)) return;
-                    skeleton.setAnimation(0, 'sy3_2', false);
-                    this._destroyAfterComplete(this._createSpineNode(fishData, 'bl', false, targetPos), 4);
-                })
-                .delay(1)
-                .call(() => {
-                    if (cc.isValid(fishNode)) fishNode.destroy();
-                })
-                .start();
-            this._destroyAfterComplete(this._createSpineNode(waveData, 'hl3', false, center), 6);
-        });
+            this._destroyAfterComplete(this._createSpineNode(receiverScreenData, 'sy', false, center), 6);
+            this._destroyAfterComplete(this._createSpineNode(waveData, 'hl2', false, center), 6);
+            return;
+        }
+        this._playSound('sfx_fish');
+        const fishNode = this._createSpineNode(fishData, 'sy3_1', true, senderPos);
+        const skeleton = fishNode.getComponent(sp.Skeleton);
+        const dir = cc.v2(targetPos.x - senderPos.x, targetPos.y - senderPos.y);
+        fishNode.angle = (-cc.v2(0, 1).signAngle(dir) * 180) / Math.PI;
+        fishNode.scaleX = dir.x > 0 ? -Math.abs(fishNode.scaleX || 1) : Math.abs(fishNode.scaleX || 1);
+        cc.tween(fishNode)
+            .to(2, this._toTweenPos(targetPos), { easing: 'sineInOut' })
+            .call(() => {
+                if (!cc.isValid(fishNode)) return;
+                skeleton.setAnimation(0, 'sy3_2', false);
+                this._destroyAfterComplete(this._createSpineNode(fishData, 'bl', false, targetPos), 4);
+            })
+            .delay(1)
+            .call(() => {
+                if (cc.isValid(fishNode)) fishNode.destroy();
+            })
+            .start();
+        this._destroyAfterComplete(this._createSpineNode(waveData, 'hl3', false, center), 6);
     }
 
     private _playBaseball(senderNode: cc.Node, targetNode: cc.Node, role: PropRole): void {
         const paths = ['spine/expressionBaseballSender/skeleton', 'spine/expressionBaseballReceiver/ballfolder1', 'spine/expressionBaseballOther/skeleton'];
         this._playSound(ThrowPropManager.SOUND_MAP[11]);
-        this._loadSkeletons(paths).then(([senderData, receiverData, otherData]) => {
-            if (!this._isRootValid()) return;
-            const senderPos = this._getLocalPos(senderNode);
-            const targetPos = this._getLocalPos(targetNode);
-            if (role === 'sender') {
-                this._playBaseballSequence(senderData, senderPos, targetPos, false);
-            } else if (role === 'receiver') {
-                this._playBaseballSequence(receiverData, senderPos, targetPos, false);
-            } else {
-                this._playBaseballSequence(otherData, senderPos, targetPos, true);
-            }
-        });
+        const [senderData, receiverData, otherData] = this._getSkeletons(paths);
+        if (!this._isRootValid()) return;
+        const senderPos = this._getLocalPos(senderNode);
+        const targetPos = this._getLocalPos(targetNode);
+        if (role === 'sender') {
+            this._playBaseballSequence(senderData, senderPos, targetPos, false);
+        } else if (role === 'receiver') {
+            this._playBaseballSequence(receiverData, senderPos, targetPos, false);
+        } else {
+            this._playBaseballSequence(otherData, senderPos, targetPos, true);
+        }
     }
 
     private _playBaseballSequence(skeletonData: sp.SkeletonData, startPos: cc.Vec3, targetPos: cc.Vec3, exitAfterHit: boolean): void {
@@ -351,37 +342,12 @@ class ThrowPropManager {
         this._destroyAfterDelay(node, exitAfterHit ? 10 : 8);
     }
 
-    private _loadSkeleton(path: string): Promise<sp.SkeletonData> {
-        const cached = this._skeletonCache.get(path);
-        if (cached) return Promise.resolve(cached);
-        return new Promise<sp.SkeletonData>((resolve, reject) => {
-            cc.resources.load(path, sp.SkeletonData, (err, skeletonData: sp.SkeletonData) => {
-                if (err || !skeletonData) {
-                    reject(err);
-                    return;
-                }
-                this._skeletonCache.set(path, skeletonData);
-                resolve(skeletonData);
-            });
-        });
+    private _getSkeleton(path: string): sp.SkeletonData {
+        return AssetManager.mustGetLoaded(BUNDLE_RESOURCES, path, sp.SkeletonData);
     }
 
-    private _loadSkeletons(paths: string[]): Promise<sp.SkeletonData[]> {
-        return Promise.all(paths.map(path => this._loadSkeleton(path)));
-    }
-
-    private _preloadSkeletons(): void {
-        if (this._preloadStarted) return;
-        this._preloadStarted = true;
-        const paths: string[] = [];
-        ThrowPropManager.CONFIGS.forEach(config => {
-            config.spines.forEach(path => {
-                if (paths.indexOf(path) < 0) paths.push(path);
-            });
-        });
-        paths.forEach(path => {
-            this._loadSkeleton(path).catch(error => cc.warn('[ThrowPropManager] preload skeleton failed', path, error));
-        });
+    private _getSkeletons(paths: string[]): sp.SkeletonData[] {
+        return paths.map(path => this._getSkeleton(path));
     }
 
     private _createSpineNode(skeletonData: sp.SkeletonData, animName: string, loop: boolean, localPos: cc.Vec3): cc.Node {
@@ -501,4 +467,5 @@ class ThrowPropManager {
 }
 
 const throwPropManager = new ThrowPropManager();
+
 export default throwPropManager;

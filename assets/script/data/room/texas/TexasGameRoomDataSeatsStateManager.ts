@@ -145,23 +145,6 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     @pureEvent(TexasGameRoomDataSeatsStateManager.DIAMOND_GIFT)
     public diamondGiftEvent(data: DiamondGiftBroadcastData): void {}
 
-    public setPendingThrowProp(data: ThrowPropBroadcastData): void {
-        this._pendingThrowPropData = data;
-    }
-
-    public confirmPendingThrowProp(status: number): void {
-        const data = this._pendingThrowPropData;
-        this._pendingThrowPropData = null;
-        if (status !== 0 || !data) return;
-        this.throwPropEvent(data);
-    }
-
-    @pureEvent(TexasGameRoomDataSeatsStateManager.THROW_PROP)
-    public throwPropEvent(data: ThrowPropBroadcastData): void {}
-
-    @pureEvent(TexasGameRoomDataSeatsStateManager.DIAMOND_GIFT)
-    public diamondGiftEvent(data: DiamondGiftBroadcastData): void {}
-
     /** 当前说话者的座位号 */
     private _speaking: number = 0;
     public set speakingUID(uid: number) {

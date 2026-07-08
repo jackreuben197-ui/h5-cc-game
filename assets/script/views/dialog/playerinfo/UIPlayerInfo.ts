@@ -1,29 +1,33 @@
-import { Code } from '@silenthill/agreement-web';
+import { ClientMessageBroadcastMsg, Code } from '@silenthill/agreement-web';
+import playerStore, { PlayerBasicData, PlayerDiamondConfig, PlayerPropData } from '../../../data/player/PlayerStore';
+import PlayerStoreUtils from '../../../data/player/PlayerStoreUtils';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayer from '../../../data/room/texas/TexasGameRoomDataPlayer';
-import playerStore, { PlayerBasicData, PlayerDiamondConfig, PlayerPropData } from '../../../data/player/PlayerStore';
-import PlayerStoreUtils from '../../../data/player/PlayerStoreUtils';
 import userStore, { UserStore } from '../../../data/user/UserStore';
 import { AntiCheatType } from '../../../game/constant/AntiCheatType';
 import { ChatType } from '../../../game/constant/ChatType';
 import { RoomOriginType } from '../../../game/constant/RoomOriginType';
 import { StringHelper } from '../../../helper/StringHelper';
-import { i18nMgr } from '../../../i18n/i18nMgr';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
+import { i18nMgr } from '../../../i18n/i18nMgr';
+import agoraManager from '../../../net/agora/AgoraManager';
 import { WebResponseDataBase } from '../../../net/https/data/other/WebResponseDataBase';
 import { HttpStatsOtherUserStats } from '../../../net/https/data/stats/HttpStatsOtherUserStats';
+import TexasVideoMediaHelper from '../../../net/messages/texas/TexasVideoMediaHelper';
 import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
-import { UIComfirmDialogType } from '../confirm/UIConfirmDialog';
 import viewManager from '../../UIViewManager';
-import agoraManager from '../../../net/agora/AgoraManager';
-import TexasVideoMediaHelper from '../../../net/messages/texas/TexasVideoMediaHelper';
+import { UIComfirmDialogType } from '../confirm/UIConfirmDialog';
 
 const { ccclass, menu, property } = cc._decorator;
+
 const VIEW_MANAGER_MASK_NODE = 'ithinktisinotshouldbedupilcatednodename';
+
 const CONSUME_TYPE_EMOJI_2 = 6;
+
 const BROADCAST_MSG_TYPE_THROW = 4;
+
 const OTHER_DATA_TAB_Y = -163.5;
 
 export interface UIPlayerInfoParam {
@@ -44,7 +48,6 @@ interface DataLabelItem {
 export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoParam> {
     @property({ type: cc.SpriteFrame, displayName: '开关选中背景' })
     public toggleOnBg: cc.SpriteFrame = null;
-
     @property({ type: cc.Node, displayName: '关闭触摸遮罩' })
     private panelClick: cc.Node = null;
     @property({ type: cc.Node, displayName: '弹窗主体' })
@@ -81,13 +84,11 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private diamondNumNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '数据页签根节点' })
     private dataTabNode: cc.Node = null;
-
     private static readonly PROP_TYPE_BASE = CONSUME_TYPE_EMOJI_2 * 100;
     private static readonly PROP_TYPE_MAP: number[] = [602, 609, 608, 605, 600, 610, 611, 603, 604, 607, 601, 606];
     private static readonly shieldUsers: Set<number> = new Set();
     private static readonly audioClosedUsers: Set<number> = new Set();
     private static readonly videoClosedUsers: Set<number> = new Set();
-
     private _param: UIPlayerInfoParam = null;
     private _roomData: TexasGameRoomData = null;
     private _player: TexasGameRoomDataPlayer = null;
@@ -96,7 +97,6 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private _currentRemark = '';
     private _tabIndex = 0;
     private _requestRID = 0;
-
     private _tabNodes: cc.Node[] = [];
     private _underlineNodes: cc.Node[] = [];
     private _contentNodes: cc.Node[] = [];
@@ -333,7 +333,6 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private _applyTargetLayout(): void {
         this.node.setPosition(0, 0);
         this.node.setContentSize(1242, 2688);
-
         const mask = this.node.getChildByName(VIEW_MANAGER_MASK_NODE);
         if (mask) {
             mask.setPosition(0, 0);
@@ -424,7 +423,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             `${roomStats.prf || 0}%`,
             `${roomStats.total_hand || 0}`,
             `${roomStats.wins || 0}%`,
-            `${(data.pool_rate / 1000) * 100}%`
+            `${((data.pool_rate / 1000) * 100).toFixed(0)}%`
         ];
         for (let i = 0; i < this._dataLabels.length; i++) {
             const item = this._dataLabels[i];
@@ -501,12 +500,12 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         const mine = this._roomData.mine;
         this._setButtonActive('StandUpBtn', !this._isSelf && mine.isRoomManager && mine.canAdminStandUp);
         this._setButtonActive('DissolveBtn', !this._isSelf && mine.isRoomManager && mine.canAdminLeave);
-        this._setButtonActive(
-            'CreditBtn',
-            !this._isSelf && mine.isRoomManager && basic.originType === RoomOriginType.CLUB && basic.goldType === 3
-        );
+        this._setButtonActive('CreditBtn', !this._isSelf && mine.isRoomManager && basic.originType === RoomOriginType.CLUB && basic.goldType === 3);
         this._setButtonActive('chatCloseToggle', !this._isSelf && mine.isRoomManager);
-        this._setButtonActive('audioCloseToggle', !this._isSelf && (basic.antiCheatType === AntiCheatType.AUDIO || basic.antiCheatType === AntiCheatType.VIDEO));
+        this._setButtonActive(
+            'audioCloseToggle',
+            !this._isSelf && (basic.antiCheatType === AntiCheatType.AUDIO || basic.antiCheatType === AntiCheatType.VIDEO)
+        );
         this._setButtonActive('videoCloseToggle', !this._isSelf && basic.antiCheatType === AntiCheatType.VIDEO);
         this._setButtonActive('shieldToggle', !this._isSelf && basic.antiCheatType < AntiCheatType.FACE_VERIFY && basic.chatType !== ChatType.CLOSE);
         this._setButtonActive('ReportBtn', !this._isSelf);
@@ -722,38 +721,36 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private _clickProp(propIndex: number, clickNode: cc.Node): void {
         this._playClickScale(clickNode, true);
         const propData = this._propListData[propIndex - 1];
-        const consume = propData ? propData.priceID : CONSUME_TYPE_EMOJI_2;
+        const consume = (propData ? propData.priceID : CONSUME_TYPE_EMOJI_2) as ClientMessageBroadcastMsg.AsObject['consume'];
         const propType = UIPlayerInfo.PROP_TYPE_MAP[propIndex - 1] || UIPlayerInfo.PROP_TYPE_BASE;
         this._roomData.seatsStateManager.setPendingThrowProp({
             type: propType,
-            userID: userStore.userRID || userStore.userID,
+            userID: userStore.userRID,
             targetUserID: this._requestRID
         });
         const inner = JSON.stringify({
             name: userStore.name,
             target_user_id: this._requestRID,
-            user_id: userStore.userRID || userStore.userID,
+            user_id: userStore.userRID,
             type: propType,
-            msgType: 1,
-            time: Math.floor(Date.now() / 1000),
-            headUrl: userStore.avatar
         });
-        const extra = JSON.stringify({ code: 10001, data: inner });
+        const extra = JSON.stringify({ code: 1000, data: inner });
+        const body: ClientMessageBroadcastMsg.AsObject = {
+            room: {
+                roomId: this._roomData.roomID,
+                matchId: this._roomData.matchID
+            },
+            consume,
+            message: '',
+            extra: this._stringToBytes(extra),
+            msgType: BROADCAST_MSG_TYPE_THROW
+        };
         ProtocolAgency.Send({
             code: Code.MSG_D_BROADCAST_MSG,
             roomID: this._roomData.roomID,
             matchID: this._roomData.matchID,
-            body: {
-                room: {
-                    roomId: this._roomData.roomID,
-                    matchId: this._roomData.matchID
-                },
-                consume,
-                message: '',
-                extra: this._stringToBytes(extra),
-                msgType: BROADCAST_MSG_TYPE_THROW
-            } as any
-        } as any);
+            body: body
+        });
     }
 
     private _clickReport(): void {
@@ -857,5 +854,4 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         for (let i = 0; i < encoded.length; i++) bytes[i] = encoded.charCodeAt(i);
         return bytes;
     }
-
 }

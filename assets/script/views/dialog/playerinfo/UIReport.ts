@@ -1,11 +1,12 @@
+import PlayerStoreUtils from '../../../data/player/PlayerStoreUtils';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import viewManager from '../../UIViewManager';
-import PlayerStoreUtils from '../../../data/player/PlayerStoreUtils';
 
 const { ccclass, menu, property } = cc._decorator;
 
 const REPORT_TYPES = [1, 2, 3, 4, 5];
+
 const VIEW_MANAGER_MASK_NODE = 'ithinktisinotshouldbedupilcatednodename';
 
 export interface UIReportParam {
@@ -25,10 +26,8 @@ export interface UIReportParam {
 export default class UIReport extends UIComponentBaseDialog<UIReportParam> {
     @property(cc.SpriteFrame)
     public checkedFrame: cc.SpriteFrame = null;
-
     @property(cc.SpriteFrame)
     public uncheckedFrame: cc.SpriteFrame = null;
-
     private _panelClick: cc.Node = null;
     private _dialogNode: cc.Node = null;
     private _reasonNodes: cc.Node[] = [];

@@ -54,7 +54,6 @@ class AgoraManager {
     /** 错误回调 */
     public onError: (err: any) => void = null;
     /** 当前说话者变化回调，uid 为 null 表示无人说话（包含自己） */
-
     public onActiveSpeaker: (uid: number) => void = null;
 
     private constructor() {}

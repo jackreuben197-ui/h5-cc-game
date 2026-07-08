@@ -5,7 +5,7 @@ import texasGamePersonalSettings from '../../data/room/texas/TexasGamePersonalSe
 import h5MessageManager from '../../H5MsgMgr';
 import { i18nMgr } from '../../i18n/i18nMgr';
 import * as MainUtils from '../../MainUtils';
-import { DynamicLoadDefinition, PreloadDefinitionGame, PreloadDefinitionSound } from '../../views/loader/AssetManager';
+import { DynamicLoadDefinition, PreloadDefinitionGame, PreloadDefinitionSound, PreloadDefinitionSpine } from '../../views/loader/AssetManager';
 import viewManager from '../../views/UIViewManager';
 import ProcedureBase from './ProcedureBase';
 
@@ -38,7 +38,7 @@ export default class ProcedureInit extends ProcedureBase {
         };
         //显示房间进入loading
         viewManager.showPreloading({
-            preloadDefinition: [PreloadDefinitionGame, PreloadDefinitionSound, loadTexasBg],
+            preloadDefinition: [PreloadDefinitionGame, PreloadDefinitionSpine, PreloadDefinitionSound, loadTexasBg],
             complete: () => {
                 this.tracelog.debug('ProcedureInit 结束，资源加载完全');
                 this._resolveDone(true);

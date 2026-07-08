@@ -91,7 +91,6 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public remoteCameraEnabled: ButtonState = ButtonState.HIDDEN;
     @observable(TexasGameRoomDataPlayerMine.REMOTE_MICROPHONE_ENABLED_CHANGE)
     public remoteMicrophoneEnabled: ButtonState = ButtonState.HIDDEN;
-    
     public get needVideoPermision() {
         return this._roomData.basicInfo.antiCheatConfig.isInVideoRoom;
     }

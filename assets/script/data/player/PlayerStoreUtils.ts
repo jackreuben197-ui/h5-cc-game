@@ -1,6 +1,4 @@
 import { traceClass, traceMethod } from '../../core/decorator/LogTrace';
-import TexasGameRoomData from '../room/texas/TexasGameRoomData';
-import TexasGameRoomDataPlayer from '../room/texas/TexasGameRoomDataPlayer';
 import {
     WebChatMessageReport,
     WebCmsExtUserComplaIntReport,
@@ -17,8 +15,8 @@ import {
 import { HttpChatMessageReport } from '../../net/https/data/chat/HttpChatMessageReport';
 import { HttpCmsExtUserComplaintReport } from '../../net/https/data/cmsext/HttpCmsExtUserComplaintReport';
 import { HttpMiscCombine } from '../../net/https/data/misc/HttpMiscCombine';
-import { WebResponseDataBase } from '../../net/https/data/other/WebResponseDataBase';
 import { HttpOrgClubUserUpdate } from '../../net/https/data/org/HttpOrgClubUserUpdate';
+import { WebResponseDataBase } from '../../net/https/data/other/WebResponseDataBase';
 import { HttpPropChatPropList } from '../../net/https/data/prop/HttpPropChatPropList';
 import { HttpRoomUserMuteProtocol } from '../../net/https/data/room/HttpRoomUserMuteProtocol';
 import { HttpRoomCenterRoomUserLeave } from '../../net/https/data/roomcenter/HttpRoomCenterRoomUserLeave';
@@ -26,9 +24,12 @@ import { HttpRoomCenterRoomUserStandUp } from '../../net/https/data/roomcenter/H
 import { HttpStatsOtherUserStats } from '../../net/https/data/stats/HttpStatsOtherUserStats';
 import { HttpUserDiamondSend } from '../../net/https/data/user/HttpUserDiamondSend';
 import { HttpUserMuteList } from '../../net/https/data/user/HttpUserMuteList';
-import playerStore, { PlayerReportParam, PlayerPropData } from './PlayerStore';
+import TexasGameRoomData from '../room/texas/TexasGameRoomData';
+import TexasGameRoomDataPlayer from '../room/texas/TexasGameRoomDataPlayer';
+import playerStore, { PlayerPropData, PlayerReportParam } from './PlayerStore';
 
 const CONSUME_TYPE_EMOJI_2 = 6;
+
 type StatsCombineResult = HttpStatsOtherUserStats.Data | HttpStatsOtherUserStats.ResponseData;
 
 @traceClass()

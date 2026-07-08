@@ -135,12 +135,13 @@ export default class TexasVideoMediaHelper {
         }
         return roomData;
     }
+
     /**
      * 开关远端用户的音频（静音/恢复）
      * @param st true=恢复声音, false=静音
      * @param uid 指定远端用户 uid
      */
-    public static async setRemoteAudioStatus(roomData: TexasGameRoomData,st: boolean, uid: number): Promise<void> {
+    public static async setRemoteAudioStatus(roomData: TexasGameRoomData, st: boolean, uid: number): Promise<void> {
         const pubUsersMap = agoraManager.getRemoteUserMap();
         const user = pubUsersMap.get(uid);
         const player = roomData.seatsStateManager.getSeatPlayerByUserID(uid);
@@ -150,7 +151,7 @@ export default class TexasVideoMediaHelper {
             return;
         }
         if (!user || !user.hasAudio) return;
-        if (st ==true) {
+        if (st == true) {
             if (!user.audioTrack) {
                 // 订阅后, user.videoTrack就存在了，可以renderFrame了
                 const track = await agoraManager.subscribeOrUnsubscribeRemoteAudio(true, user);
@@ -167,16 +168,17 @@ export default class TexasVideoMediaHelper {
             player.micIconState = MicrophoneIconState.MUTED;
             return;
         }
-        //先影藏，再关闭
+        //先隐藏，再关闭
         player.micIconState = MicrophoneIconState.MUTED;
         user.audioTrack.setVolume(0);
     }
+
     /**
      * 开关远端用户的视频（隐藏/显示）
      * @param st true=显示视频, false=隐藏视频
      * @param uid 指定远端用户 uid
      */
-    public static async setRemoteVideoStatus(roomData: TexasGameRoomData,st: boolean, uid: number): Promise<void> {
+    public static async setRemoteVideoStatus(roomData: TexasGameRoomData, st: boolean, uid: number): Promise<void> {
         const pubUsersMap = agoraManager.getRemoteUserMap();
         const user = pubUsersMap.get(uid);
         if (!user || !user.hasVideo) return;

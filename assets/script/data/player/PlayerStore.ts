@@ -39,7 +39,6 @@ export interface PlayerPropData {
 export class PlayerStore extends cc.EventTarget {
     public static readonly BASIC_INFO_CHANGE = 'BASIC_INFO_CHANGE';
     public static readonly PROP_LIST_CHANGE = 'PROP_LIST_CHANGE';
-
     private readonly _basicInfoMap: Map<number, PlayerBasicData> = new Map();
     private _propList: PlayerPropData[] = [];
 
