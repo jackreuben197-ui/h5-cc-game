@@ -38,7 +38,7 @@ export enum SoundMusicKey {
     BgmGame = 'bgm_game'
 }
 
-@traceClass({ level: 'debug' })
+@traceClass()
 export class SoundManager {
     private _soundOn: boolean = false;
     private _playingMusic: number = -1;

@@ -17,6 +17,7 @@
 7. [UI 资源管线：UIViewManager + UIPrefabDefinition](#7-ui-资源管线uiviewmanager--uiprefabdefinition)
 8. [H5 桥接层：H5MsgMgr](#8-h5-桥接层h5msgmgr)
 9. [进房 / 离房流程](#9-进房--离房流程)
+   - 9.4 [Agora 音视频链路](#94-agora-音视频链路)
 10. [三层协作示例：ChipsChange](#10-三层协作示例chipschange)
 11. [目录结构速查](#11-目录结构速查)
 12. [添加新功能的标准步骤](#12-添加新功能的标准步骤)
@@ -48,14 +49,15 @@
 │  数据层  data/                                                  │
 │  · TexasGameRoomData（聚合根）                                  │
 │    ├─ basicInfo         : TexasGameRoomDataBasic                │
-│    ├─ setting           : TexasGameRoomDataSetting              │
+│    ├─ setting           : TexasGamePersonalSettings（全局单例） │
 │    ├─ potInfo           : TexasGameRoomDataPotInfo              │
 │    ├─ publicCards       : TexasGameRoomDataPublicCards          │
 │    ├─ roundState        : TexasGameRoomDataRoundState           │
 │    ├─ seatsStateManager : TexasGameRoomDataSeatsStateManager    │
 │    │     └─ TexasGameRoomDataPlayer × N (cc.EventTarget)        │
-│    └─ mine              : TexasGameRoomDataPlayerMine           │
-│  · 全局：userStore / tradeStore（用户/交易数据，同样响应式）    │
+│    ├─ mine              : TexasGameRoomDataPlayerMine           │
+│    └─ report            : TexasGameRoomDataReport               │
+│  · 全局：userStore / tradeStore / texasGamePersonalSettings      │
 │  · 字段用 @observable 装饰，赋值即 emit；@pureEvent 用于纯通知  │
 └──────────────────────────┬─────────────────────────────────────┘
                            │ on/off 事件订阅（@bindEvent + autoBindEvents）
@@ -103,18 +105,20 @@
 export default class TexasGameRoomData extends RoomData {
     public closed: boolean;
     public readonly basicInfo         = new TexasGameRoomDataBasic(this);
-    public readonly setting           = new TexasGameRoomDataSetting(this);
+    public readonly setting           = texasGamePersonalSettings;
     public readonly potInfo           = new TexasGameRoomDataPotInfo();
     public readonly publicCards       = new TexasGameRoomDataPublicCards();
     public readonly roundState        = new TexasGameRoomDataRoundState();
     public readonly seatsStateManager = new TexasGameRoomDataSeatsStateManager(this);
     public readonly mine              = new TexasGameRoomDataPlayerMine(this);
+    public readonly report            = new TexasGameRoomDataReport(this);
 }
 ```
 
-新增的两个子对象：
-- **`setting`** — 视图相关的本地设置（如 `showBB` 是否用大盲展示数字）。视图层订阅它实现"显示模式切换"，与服务端数据完全解耦。
+几个关键子对象：
+- **`setting`** — 指向全局单例 `texasGamePersonalSettings`，保存跨牌桌共享的个人设置（如 `showBB`、桌布、牌面、声音、快捷下注）。视图层订阅它实现"显示模式切换"，与服务端数据完全解耦。
 - **`mine`** — 当前玩家的全局状态（钱包、藏钱、保险、坐下后绑定到对应 `TexasGameRoomDataPlayer.mine`）。独立于座位列表，避免坐下/站起反复重建。
+- **`report`** — 牌桌战绩面板数据，聚合 `Roomers`、`Winner`、`PlayerJackpotSummary` 以及本地坐下/站起/筹码变动产生的统计。
 
 ### 2.3 数据对象的响应式声明
 
@@ -392,12 +396,11 @@ export function ActionAll(data: ServerMessageActionAll.AsObject, roomID: number,
 
 ### 5.1 模式结构（以 `SeatPlayer.ts` 为例）
 
-`Seat.ts` 已更名为 **`SeatPlayer.ts`**。同一组件可同时订阅多个数据源 —— `player`（座位玩家）、`setting`（显示设置）、`mine`（坐下后的本人数据）：
+`Seat.ts` 已更名为 **`SeatPlayer.ts`**。同一组件可同时订阅多个数据源 —— `player`（座位玩家）、`setting`（全局个人设置 `texasGamePersonalSettings`）、`mine`（坐下后的本人数据）：
 
 ```typescript
 public initData(seatPlayer: TexasGameRoomDataPlayer, potNode: cc.Node, dealNode: cc.Node) {
     this._seatPlayer = seatPlayer;
-    this._setting    = seatPlayer.roomData.setting;
     this._potNode    = potNode;
     this._dealNode   = dealNode;
     if (this.node.activeInHierarchy) this._bindEventsAndRefresh();
@@ -413,7 +416,7 @@ protected onDisable() {
 }
 
 private _bindEventsAndRefresh() {
-    autoBindEvents(this, { player: this._seatPlayer, setting: this._setting });
+    autoBindEvents(this, { player: this._seatPlayer, setting: texasGamePersonalSettings });
 }
 
 // 一旦坐下，再追加绑定 mine（站起则只解 mine 这一个 tag）
@@ -430,13 +433,14 @@ private onUpdateSeated(b: boolean, mine: TexasGameRoomDataPlayer) {
 
 @bindEvent(TexasGameRoomDataPlayer.CHIPS_CHANGE, 'player')
 private onUpdateChip(chip: number) {
-    this.chips.string = this._setting.showNumberWithShowBB(chip);  // setting 与 player 联动
+    this.chips.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(chip);
 }
 
-@bindEvent(TexasGameRoomDataSetting.SHOW_BB, { dataSource: 'setting', initPriority: 99 })
+@bindEvent(TexasGamePersonalSettings.SHOW_BB, { dataSource: 'setting', initPriority: 99 })
 private onUpdateShowBB() {
-    this.chips.string = this._setting.showNumberWithShowBB(this._seatPlayer.chip);
-    this.roundBetLabel.string = this._setting.showNumberWithShowBB(this._seatPlayer.roundBet);
+    const basicInfo = this._seatPlayer.roomData.basicInfo;
+    this.chips.string = basicInfo.showNumberWithShowBB(this._seatPlayer.chip);
+    this.roundBetLabel.string = basicInfo.showNumberWithShowBB(this._seatPlayer.roundBet);
 }
 ```
 
@@ -814,12 +818,13 @@ h5-game 也走 npm git 依赖，但 import 自 `@silenthill/h5-cc-bridge/h5-side
 
 ### 8.6 其他外部 npm 依赖
 
-除 `@silenthill/h5-cc-bridge` 外，项目还有两个从老项目提取的 npm 包依赖：
+除 `@silenthill/h5-cc-bridge` 外，项目还有两个从老项目提取的运行时 npm 包依赖，以及一个只用于类型提示的 Agora SDK 包：
 
-| 包名 | 用途 | 老项目对应 |
+| 包名 | 用途 | 运行时约束 |
 |------|------|-----------|
-| `@silenthill/agreement-web` | 协议 Code 枚举 + protobuf 类型定义 | 老项目本地 `protobuf/` 目录（400+ 生成文件） |
-| `@silenthill/h5-cc-i18n` | 多语言运行时 + 翻译资源 | 老项目本地 `i18n/` 资源文件 |
+| `@silenthill/agreement-web` | 协议 Code 枚举 + protobuf 类型定义 | 运行时可 import，包已构建为 UMD/CJS 可用格式 |
+| `@silenthill/h5-cc-i18n` | 多语言运行时 + 翻译资源 | 运行时可 import |
+| `agora-rtc-sdk-ng` | Agora Web SDK 类型定义 | 只允许 `import type`，运行时不从 `node_modules` 加载 |
 
 ```jsonc
 // package.json
@@ -827,12 +832,17 @@ h5-game 也走 npm git 依赖，但 import 自 `@silenthill/h5-cc-bridge/h5-side
     "@silenthill/agreement-web": "github:kingofake/agreement-web#master",
     "@silenthill/h5-cc-bridge":  "github:soolary/h5-cc-bridge#main",
     "@silenthill/h5-cc-i18n":    "github:guysoup027/h5-cc-i18n#main"
+},
+"devDependencies": {
+    "agora-rtc-sdk-ng": "4.24.5"
 }
 ```
 
-**`@silenthill/agreement-web`**：消息层通过 `import { Code } from '@silenthill/agreement-web'` 引用协议码枚举，`TexasMessageHandler.ts` 的 `switch(code)` 用的就是这里的 `Code.MSG_D_ENTER_ROOM` 等常量。同样遵循 type-only import 原则——运行时值（`Code` 枚举是值）通过 Cocos 的 `require` 解析（`agreement-web` 已构建为 UMD/CJS 可用格式）。
+**`@silenthill/agreement-web`**：消息层通过 `import { Code } from '@silenthill/agreement-web'` 引用协议码枚举，`TexasMessageHandler.ts` 的 `switch(code)` 用的就是这里的 `Code.MSG_D_ENTER_ROOM` 等常量。`Code` 是运行时值，可通过 Cocos 的 `require` 解析（`agreement-web` 已构建为 UMD/CJS 可用格式）。
 
 **`@silenthill/h5-cc-i18n`**：提供 `i18n` 翻译函数和语言资源，`i18n/i18nMgr.ts` 内部调用。
+
+**`agora-rtc-sdk-ng`**：只作为 TypeScript 类型来源。Cocos Creator 运行时不能直接解析 `node_modules` 里的 Agora SDK，因此实际 SDK 仍由 `MainUtils.loadWebSDK()` 注入 `https://download.agora.io/sdk/release/AgoraRTC_N-4.24.5.js`，`AgoraManager.init()` 通过 `window.AgoraRTC` 创建 client。`assets/custom.d.ts` 使用 `import type AgoraRTC from 'agora-rtc-sdk-ng'` 给 `Window.AgoraRTC` 做全局类型增强，业务代码不要写运行时 `import AgoraRTC from 'agora-rtc-sdk-ng'`。
 
 ---
 
@@ -953,6 +963,168 @@ SyncEnter.ts (纯写数据)
 
 **关键设计动机**：`RoomReconnectManager` 通过 `SNAPSHOT_APPLIED` 事件订阅来感知"sync 完成"，而不是让 `SyncEnter.ts` 直接调它的方法。这样 `SyncEnter` handler 保持"消息函数 = 纯数据写入"的契约（§4.2），将来若服务端引入"每 N 手主动 sync"或"切桌回前台 sync"等场景（参见 Unity 端 `_isEnableRtsEnterRoomMsg` 设计），同一个 handler 不需要任何改动。
 
+### 9.4 Agora 音视频链路
+
+Agora 只服务视频/语音防作弊房间。`GameConfig.agoraKey` 非空时 `enableAgora` 为 true，`ProcedureInit.lateEnter()` 会调用 `MainUtils.loadWebSDK()` 动态插入 Agora Web SDK 脚本；脚本加载完成后执行 `agoraManager.init(GameConfig.agoraKey)`。如果 `agoraKey` 为空，SDK 加载和初始化都会跳过。
+
+运行时链路：
+
+```
+ProcedureInit.lateEnter()
+    └─ MainUtils.loadWebSDK()
+          ├─ 注入 AgoraRTC_N-4.24.5.js
+          └─ onload → agoraManager.init(GameConfig.agoraKey)
+                    ├─ window.AgoraRTC.createClient({ mode:'rtc', codec:'vp8' })
+                    └─ 注册 user-published / user-unpublished / user-left / connection-state-change 等事件
+
+TexasGameplayEntrance.requestEnterAsync()
+    └─ antiCheatType 为 VIDEO/AUDIO 时写入 roomData.basicInfo.antiCheatConfig
+
+EnterRoom.ts / Seated.ts
+    ├─ getSeatedSetting()
+    ├─ enableCamera() / enableMicrophone()
+    └─ TexasVideoMediaHelper.joinAgoraVideoChannelIfNeed(roomID, matchID)
+          ├─ 旧频道未退出时先 disableCamera / disableMicrophone / clearCallbacks / leave
+          ├─ 绑定 Agora 回调到当前 roomID + matchID
+          ├─ channelName = rtc_d_{tableCategory}-{matchID}-{roomID}
+          ├─ fetchToken() → WebMiscAgoraToken
+          ├─ client.join(appId, channelName, token, userRID)
+          └─ startVolumeMonitor()
+```
+
+`AgoraManager` 是 SDK 适配层：负责 client 生命周期、token 获取与续期、join/leave、本地音视频 track 创建与发布、远端音视频 subscribe/unsubscribe、SDK 事件转发、音量轮询和 SDK 内置重连状态处理。当前保留既有方法名 `publishVidio()`，只作为文档记录，不在这里做 API 清理。
+
+`TexasVideoMediaHelper` 是德州房间和 Agora 之间的数据落点。SDK 回调不直接控制节点，只更新 `RoomData`：
+
+- `user-published(video)`：如果本地远端视频开关为 ON，订阅远端视频并设置对应座位 `remoteVideoVisible = true`；节能/窗花开启时设置 `realShowMaskID`。
+- `user-published(audio)`：订阅远端音频并 `track.play()`，按本地远端麦克风开关设置音量和 `micIconState`。
+- `user-unpublished(video)` / `user-left`：清掉 `remoteVideoVisible`、`realShowMaskID`、`micIconState`。
+- `onActiveSpeaker`：写入 `roomData.seatsStateManager.speakingUID`。
+
+#### 9.4.1 视频/语音状态变量
+
+音视频不是单一开关，而是“按钮状态 → 期望状态 → Agora 操作 → 渲染状态”的数据链。不同变量控制不同层，不能混用：
+
+| 数据字段 | 所属对象 | 主要写入方 | 主要消费方 | 控制内容 |
+|----------|----------|------------|------------|----------|
+| `localCameraBtnState` | `TexasGameRoomDataPlayerMine` | `EnterRoom.ts` / `Seated.ts` 初始化，`OtherBindings.onClickLocalCameraBtn()` 点击切换 | `OtherBindings.onLocalCameraStateChanged()` | 本地摄像头按钮是否可点、图标 ON/OFF/DISABLE；同时派生 `localCameraEnabled` 和 `maskBtnState` |
+| `localCameraEnabled` | `TexasGameRoomDataPlayerMine` | `localCameraBtnState` 变化、强制视频配置、麦序结束 `ActionAll.ts` | `OtherBindings.onEnableDisableCamaera()` | 本地摄像头的期望状态；调用 `agoraManager.localVideoTrack.setMuted()` 或 `agoraManager.publishVidio()` |
+| `localCameraEnabledDelayed` | `TexasGameRoomDataPlayerMine` | `OtherBindings.onEnableDisableCamaera()` 在 Agora mute/publish 前后更新 | `SeatPlayer.onLocalCameraStateChanged()` | 本地头像视频的真实渲染开关；true 才从 `localVideoTrack` 取 track 渲染，false 立即 `stopOverlay()` |
+| `localMicrophoneBtnState` | `TexasGameRoomDataPlayerMine` | `EnterRoom.ts` / `Seated.ts` 初始化，`OtherBindings.onClickLocalMicrophoneBtn()` 点击切换 | `OtherBindings.onLocalMicrophoneEnabledChanged()` | 本地麦克风按钮是否可点、图标 ON/OFF/DISABLE；派生 `localMicrophoneEnabled` |
+| `localMicrophoneEnabled` | `TexasGameRoomDataPlayerMine` | `localMicrophoneBtnState` 变化、强制语音配置、麦序结束 `ActionAll.ts` | `OtherBindings.onEnableDisableMicrophone()` | 本地麦克风的期望状态；调用 `setMuted()` 或 `publishAudio()`，并更新本人座位 `micIconState` |
+| `remoteCameraEnabled` | `TexasGameRoomDataPlayerMine` | `EnterRoom.ts` / `Seated.ts` 初始化，远端视频开关按钮 | `OtherBindings.onRemoteCameraChanged()`、`TexasVideoMediaHelper.onUserPublish(video)` | 远端视频总开关；ON 时订阅远端 video 并写 `remoteVideoVisible`，OFF 时先隐藏头像视频和 mask 再 unsubscribe，HIDDEN 时隐藏 UI 控件 |
+| `remoteMicrophoneEnabled` | `TexasGameRoomDataPlayerMine` | `EnterRoom.ts` / `Seated.ts` 初始化，远端语音开关按钮 | `OtherBindings.onRemoteMicrophoneChanged()`、`TexasVideoMediaHelper.onUserPublish(audio)` | 远端语音总开关；ON 时订阅/播放并设音量 100，OFF 时音量设 0 并显示静音图标，HIDDEN 时隐藏 UI 控件 |
+| `videoMaskId` | `TexasGameRoomDataPlayer` | `EnterRoom.ts` / `Seated.ts` / `SeatedOthers.ts` / `VideoMaskChange.ts` / 本地窗花按钮 | `realShowMaskID` 的计算逻辑 | 用户选择的窗花编号；不是渲染开关，变化本身不会直接刷新 UI |
+| `realShowMaskID` | `TexasGameRoomDataPlayer` | 视频开关、远端发布/隐藏、坐下广播、窗花变更 | `SeatPlayer.onVideoMaskChanged()` | 当前真正显示的窗花编号；大于 0 时 `switchToMask()`，等于 0 时 `stopMask()` |
+| `remoteVideoVisible` | `TexasGameRoomDataPlayer` | `TexasVideoMediaHelper`、`OtherBindings.onRemoteCameraChanged()`、离开/站起清理 | `SeatPlayer.onRemoteVideoVisibleChanged()` | 远端头像视频 overlay 的渲染开关；true 渲染远端 track，false `stopOverlay()` |
+| `micIconState` | `TexasGameRoomDataPlayer` | 本地/远端麦克风开关、远端 publish/unpublish/left | `SeatPlayer.onMicrophoneIconStateChanged()` | 座位麦克风图标显示状态 |
+| `maskBtnState` | `TexasGameRoomDataPlayerMine` | 视频桌初始化、本地摄像头按钮变化 | `OtherBindings.onMaskBtnState()` | 只控制窗花/节能按钮 UI 是否可点和图标，不直接控制窗花显示 |
+| `randomVideoActive` / `randomVideoEndTime` | `TexasGameRoomDataPlayerMine` | `AntiCheatRoomVideo.ts` 随机验证消息、清理流程 | 随机验证 UI/提示 | 随机视频验证状态，与头像视频渲染不是同一个开关 |
+
+本地摄像头开启/关闭的完整链路：
+
+```
+点击摄像头按钮
+    └─ localCameraBtnState = ON/OFF
+          └─ OtherBindings.onLocalCameraStateChanged()
+                ├─ 刷新摄像头按钮图标/灰态
+                ├─ 按 canSwitchPowerSaving 设置本人 realShowMaskID 或清 0
+                ├─ 设置 maskBtnState
+                └─ localCameraEnabled = true/false
+                      └─ OtherBindings.onEnableDisableCamaera()
+                            ├─ 已有 localVideoTrack → setMuted(!enable)
+                            ├─ 没有 track 且开启 → publishVidio()
+                            └─ localCameraEnabledDelayed = enable
+                                  └─ SeatPlayer.onLocalCameraStateChanged()
+                                        ├─ true  → localVideoTrack.getMediaStreamTrack() → switchToOverlay()
+                                        └─ false → stopOverlay()
+```
+
+这里 `localCameraEnabledDelayed` 是本地视频 render gate：关闭时先把它置 false，让头像视频立即停止，再静音 Agora track；开启时先让 Agora track 恢复/发布成功，再置 true 触发渲染。这样 UI 不会抢在 track 可用前去取 `getMediaStreamTrack()`。
+
+远端视频开启/关闭的完整链路：
+
+```
+点击远端视频按钮
+    └─ remoteCameraEnabled = ON/OFF
+          └─ OtherBindings.onRemoteCameraChanged()
+                ├─ ON  → 遍历 remoteUsers，必要时 subscribe video
+                │        ├─ player.remoteVideoVisible = true
+                │        └─ 可节能时 player.realShowMaskID = videoMaskId || 1
+                └─ OFF → player.remoteVideoVisible = false
+                         player.realShowMaskID = 0
+                         subscribeOrUnsubscribeRemoteVideo(false, user)
+
+远端新发布视频
+    └─ Agora user-published(video)
+          └─ TexasVideoMediaHelper
+                ├─ remoteCameraEnabled == ON 才 subscribe video
+                ├─ seat.remoteVideoVisible = true
+                └─ 可节能时 seat.realShowMaskID = videoMaskId || 1
+```
+
+所以 `remoteCameraEnabled` 管的是“是否订阅/显示所有远端视频”，`remoteVideoVisible` 管的是“某个座位现在是否渲染头像视频”。`SeatPlayer` 不直接看 `remoteCameraEnabled`，它只看自己绑定的 `player.remoteVideoVisible`。
+
+mask 和视频的关系：
+
+- `videoMaskId` 是选择值，来自服务端座位数据、`VideoMaskChange` 广播或本地窗花按钮；`videoMaskId > 4` 会归一为 1。
+- `realShowMaskID` 是显示值。只有当视频处于可显示场景且节能/窗花逻辑允许时，才把 `realShowMaskID` 设置为 `videoMaskId || 1`；视频关闭、远端隐藏、远端取消发布时统一清 0。
+- `VideoMaskChange.ts` 只更新 `videoMaskId`；如果该玩家当前 `realShowMaskID > 0`，才同步更新 `realShowMaskID` 触发 UI 切换。也就是说，未显示 mask 时换窗花不会突然把 mask 打开。
+- `SeatPlayer.onVideoMaskChanged()` 只响应 `realShowMaskID`。大于 0 时从 `rc/other/videomask/vm{maskId}` 同步取已加载 `SpriteFrame` 并 `switchToMask()`，小于等于 0 时 `stopMask()`。
+- `maskBtnState` 不是 mask 渲染开关，它只控制操作区窗花按钮的可用状态和图标；真正是否显示窗花只看座位上的 `realShowMaskID`。
+- mask 是 `AgoraVideoRender` 内的独立 sprite 覆盖层，`stopMask()` 不会停止 Agora track；头像视频 overlay 的启停仍由 `localCameraEnabledDelayed` 或 `remoteVideoVisible` 控制。
+
+清理/结束路径也要走数据：
+
+- `TexasVideoMediaHelper.clearAllMediaStates()` 在离桌/被动离开时禁用本地摄像头、麦克风、远端音视频开关，清随机视频状态，并重置所有座位的 `remoteVideoVisible` / `micIconState`。
+- `SeatPlayer.onDisable()` 和座位 `SEATED_CHANGE=false` 时会 `stopMask()`、`stopOverlay()` 并隐藏麦克风图标，避免节点复用时残留上一位玩家的视频或窗花。
+- `AgoraManager.leave()` 会停止远端音视频 track、关闭本地 track、停止音量监控；`joinAgoraVideoChannelIfNeed()` 在重新入会前也会先清旧频道、旧回调和旧 track。
+
+#### 9.4.2 AgoraVideoRender 渲染链路
+
+项目没有使用 Agora 的 DOM 容器直接播放视频，而是把 Agora track 转成 `MediaStreamTrack` 后渲染进 Cocos 头像节点：
+
+```
+本地视频：
+TexasGameRoomDataPlayerMine.localCameraEnabledDelayed
+    └─ SeatPlayer.onLocalCameraStateChanged()
+          ├─ agoraManager.localVideoTrack.getMediaStreamTrack()
+          ├─ avatarVideoRender.mirror = true
+          ├─ avatarVideoRender.targetFps = 15
+          └─ avatarVideoRender.switchToOverlay(track)
+
+远端视频：
+TexasGameRoomDataPlayer.remoteVideoVisible
+    └─ SeatPlayer.onRemoteVideoVisibleChanged()
+          ├─ agoraManager.getRemoteVideoTrack(userID).getMediaStreamTrack()
+          ├─ avatarVideoRender.mirror = false
+          ├─ avatarVideoRender.targetFps = 15
+          └─ avatarVideoRender.switchToOverlay(track)
+```
+
+`AgoraVideoRender.switchToOverlay(track)` 的内部步骤：
+
+1. 用递增的 `switchToken` 取消旧渲染，避免异步 `play()` 回来后覆盖新 track。
+2. 创建 `MediaStream([track])`，绑定到隐藏的 `HTMLVideoElement`，设置 `playsinline`、`autoplay`、`muted`。
+3. 等待 `video.play()` 和 metadata 就绪，读取视频尺寸，创建 `cc.Texture2D` 和 `cc.SpriteFrame`。
+4. `videoSprite.spriteFrame = spriteFrame`，显示头像视频层，并按 `mirror` 设置 `scaleX`。
+5. `update(dt)` 按 `targetFps` 节流，循环 `texture.initWithElement(video)` + `handleLoadedTexture()`，再标记 sprite 顶点脏；连续渲染异常达到阈值后自动 `stopOverlay()`。
+
+停止或切换视频时，`stopOverlay()` 会递增 `switchToken`、暂停 video、断开 `srcObject`、清空 `videoSprite.spriteFrame`，并销毁当前 `Texture2D` / `SpriteFrame`；组件销毁时还会移除隐藏的 video element。这个清理顺序很重要，否则旧 track 或旧纹理容易残留在头像区域。
+
+窗花/节能是独立覆盖层：`TexasGameRoomDataPlayer.realShowMaskID` 变化触发 `SeatPlayer.onVideoMaskChanged()`，从 `rc/other/videomask/vm{maskId}` 取 `SpriteFrame` 后调用 `avatarVideoRender.switchToMask()`。`stopMask()` 只隐藏窗花 sprite，不影响 Agora track 和头像视频 overlay。
+
+#### 9.4.3 手动验证要点
+
+当前没有自动化音视频测试，验证以浏览器权限和双客户端实测为主：
+
+- 初始化：确认 `[WebSDK]`、`Client 初始化完成`、安全上下文和媒体设备日志正常。
+- 入会：视频/语音防作弊房间坐下后确认 `加入频道成功`，token 获取和续期无报错。
+- 本地发布：切换摄像头/麦克风按钮，观察 `localCameraEnabledDelayed`、`localMicrophoneEnabled`、本地头像视频和麦克风图标。
+- 远端订阅：双客户端测试 `远端用户发布` / `远端用户取消发布` / `远端用户离开`，确认 `remoteVideoVisible`、`micIconState` 和头像视频同步变化。
+- 渲染：确认 `AgoraVideoRender` 开始渲染、头像视频更新、窗花覆盖可切换，本地镜像、远端不镜像。
+- 清理：站起、离桌、断线重连后确认视频 overlay、窗花、音量监控和 Agora 回调不会残留。
+
 ---
 
 ## 10. 三层协作示例：ChipsChange
@@ -995,6 +1167,7 @@ h5-cc-game/assets/script/
 │       ├── PoerkCard.ts                 # 扑克牌数据结构
 │       └── PokerUtil.ts                 # 牌型判断工具
 ├── data/
+│   ├── BridgeStorage.ts                         # H5/CC 持久化桥接
 │   ├── LocalStorage.ts / StorageKey.ts
 │   ├── room/
 │   │   ├── RoomData.ts                  # 基类（roomID/matchID）
@@ -1006,16 +1179,18 @@ h5-cc-game/assets/script/
 │   │   └── texas/
 │   │       ├── TexasGameRoomData.ts             # 聚合根
 │   │       ├── TexasGameRoomDataBasic.ts        # 房间基础信息 + 玩法开关（含原 TexasGameplayData）
-│   │       ├── TexasGameRoomDataSetting.ts      # 视图设置（showBB）
+│   │       ├── TexasGamePersonalSettings.ts     # 全局个人设置（showBB/桌布/牌面/声音/快捷下注）
 │   │       ├── TexasGameRoomDataPotInfo.ts      # 底池
 │   │       ├── TexasGameRoomDataPublicCards.ts   # 公共牌
+│   │       ├── TexasGameRoomDataReport.ts       # 战绩面板数据
 │   │       ├── TexasGameRoomDataRoundState.ts   # 回合状态
 │   │       ├── TexasGameRoomDataSeatsStateManager.ts # 座位管理（seatsCount/重排/button）
 │   │       ├── TexasGameRoomDataPlayer.ts       # 单座位数据
 │   │       ├── TexasGameRoomDataPlayerMine.ts   # 本人全局状态
+│   │       ├── load/DLTexasRoomBacground.ts     # 德州桌布动态加载
 │   │       └── model/Operator.ts                # 操作倒计时模型
 │   ├── trade/
-│   │   └── TradeStore.ts / TradeStoreUtils.ts   # 商城（USDT 价格/支付方式）
+│   │   └── DiamondModel.ts / TradeStore.ts / TradeStoreUtils.ts # 商城/钻石配置/USDT 支付
 │   └── user/
 │       └── UserStore.ts / UserStoreUtils.ts     # 用户基础信息 + 钱包/信用列表
 ├── game/
@@ -1041,16 +1216,17 @@ h5-cc-game/assets/script/
 │   │   ├── ProcedureIdle.ts                     # 空闲流程
 │   │   ├── ProcedureEnterRoom.ts                # 进房流程
 │   │   └── ProcedureReturn.ts                   # 离桌回 H5（h5Navigate / h5Show）
+│   ├── RoomReconnectManager.ts                  # H5 WS 重连后请求 SyncEnter
 │   └── util/GameplayUtil.ts
 ├── net/
 │   ├── agora/
-│   │   ├── AgoraManager.ts                      # Agora 音视频管理
-│   │   └── AgoraVideoRender.ts                  # 视频渲染组件
+│   │   └── AgoraManager.ts                      # Agora 音视频管理
 │   ├── messages/
 │   │   ├── MessageHandler.ts                    # 按 code 范围分发到各游戏类型
-│   │   ├── texas/                               # 德州消息（63 个文件）
+│   │   ├── texas/                               # 德州消息（65 个文件）
 │   │   │   ├── TexasMessageHandler.ts           #   switch + leaving 锁防护
 │   │   │   ├── EnterRoom.ts                     #   进房（异步，负责场景切换）
+│   │   │   ├── SyncEnter.ts / SyncHand.ts       #   断线重连/手牌同步快照
 │   │   │   ├── Seated.ts / SeatedOthers.ts      #   坐下
 │   │   │   ├── Standup.ts / StandupActive.ts    #   站起
 │   │   │   ├── Leave.ts / LeaveNotification.ts  #   离桌
@@ -1061,7 +1237,8 @@ h5-cc-game/assets/script/
 │   │   │   ├── KeepSeat.ts / KeepSeatActive.ts  #   留座
 │   │   │   ├── BuyInsurance.ts / BuyInsuranceActive.ts / InsuranceOutsCards.ts / InsuranceTrigged.ts
 │   │   │   ├── Winner.ts / Showdown.ts / SidePots.ts
-│   │   │   └── …（每条服务端消息一个文件，共 63 个）
+│   │   │   ├── ForceVideo.ts / VideoMaskChange.ts / TexasVideoMediaHelper.ts
+│   │   │   └── …（每条服务端消息一个文件，共 65 个）
 │   │   ├── fantasy/                             # 幻想扑克消息（35 个文件）
 │   │   │   └── FantasyMessageHandler.ts + FT*.ts
 │   │   ├── cowboy/                              # 牛仔消息（23 个文件）
@@ -1111,7 +1288,9 @@ h5-cc-game/assets/script/
 │   ├── widget/                                  # 通用 UI 组件
 │   │   ├── CardView.ts / RemoteSprite.ts / SwitchNode.ts / ToastNode.ts
 │   │   ├── ShiningPathTimer.ts / CountDownLabel.ts / StepSlider.ts
-│   │   ├── ToggleButton.ts / DisplayNode.ts / Mask.ts
+│   │   ├── ToggleButton.ts / DisplayNode.ts / Mask.ts / CustomButton.ts
+│   │   ├── SpriteSwitcher.ts
+│   │   ├── AgoraVideoRender.ts                  # 头像视频渲染组件
 │   │   └── …
 │   ├── dialog/
 │   │   ├── bringin/
@@ -1124,6 +1303,8 @@ h5-cc-game/assets/script/
 │   │   ├── confirm/UIConfirmDialog.ts
 │   │   ├── insurance/UIInsuranceNewPanel.ts     # 保险购买面板
 │   │   ├── mushroomandcriticalhit/UIGuideDialog.ts  # 蘑菇/暴击介绍
+│   │   ├── personalsettings/UIPersonalSettings.ts / DeskTypeItem.ts / PokerCardTypeItem.ts
+│   │   ├── report/UITexasReport.ts / UITexasReportPlayerInfo.ts
 │   │   ├── squid/UIDialogSquid.ts               # 鱿鱼介绍
 │   │   ├── squidover/UISquidEnd.ts / UISquidEndItem.ts  # 鱿鱼结算
 │   │   ├── security/UIGameplaySecuritySetting.ts
@@ -1139,6 +1320,7 @@ h5-cc-game/assets/script/
 │           ├── SeatPlayer.ts                    # 单座位（旧名 Seat.ts）
 │           ├── SeatAction.ts                    # 操作浮窗（fold/call/raise 标签）
 │           ├── Operation.ts                     # 玩家操作面板（自治组件，详见 §5.5）
+│           ├── OtherBindings.ts                 # 牌桌杂项绑定（音视频/窗花/远端开关等）
 │           ├── InsuranceOperation.ts            # 保险操作面板
 │           ├── MorePlayTypeInfo.ts              # 多玩法信息展示
 │           ├── PublicCardsInfo.ts / PotsInfo.ts / RoomInfo.ts

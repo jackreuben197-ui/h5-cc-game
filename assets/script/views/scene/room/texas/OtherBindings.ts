@@ -180,7 +180,6 @@ export default class OtherBindings extends cc.Component {
 
     /** 响应远程相机开关 */
     @bindEvent(TexasGameRoomDataPlayerMine.REMOTE_CAMERA_STATE_CHANGE, 'mine')
-    @traceMethod({ level: 'debug' })
     private async onRemoteCameraChanged(st: ButtonState): Promise<void> {
         if (st == ButtonState.HIDDEN) {
             this.hideVideoNode.active = false;

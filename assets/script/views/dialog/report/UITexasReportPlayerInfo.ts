@@ -23,7 +23,7 @@ export type UITexasReportPlayerInfoParam = {
  */
 @ccclass
 @menu('Dialog/Report/UITexasReportPlayerInfo')
-@traceClass({ level: 'debug' })
+@traceClass()
 export default class UITexasReportPlayerInfo extends UIComponentBaseDialog<UITexasReportPlayerInfoParam> {
     private _userRid: number = 0;
     private _statsToken: number = 0;

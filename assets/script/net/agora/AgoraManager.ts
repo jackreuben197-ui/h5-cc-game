@@ -6,7 +6,7 @@ import { IAgoraRTCClient, IAgoraRTCRemoteUser, ICameraVideoTrack, IMicrophoneAud
 import { ITraceLog, traceClass } from '../../core/decorator/LogTrace';
 import { WWW } from '../https/WebRequest';
 
-@traceClass({ level: 'debug' })
+@traceClass()
 class AgoraManager {
     private static _instance: AgoraManager = null;
     private static readonly WEB_VIDEO_CODEC_TYPES = ['H264', 'H265', 'VP8', 'VP9', 'AV1X', 'AV1'];

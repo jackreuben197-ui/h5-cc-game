@@ -141,7 +141,6 @@ export default class RoomInfo extends cc.Component {
     }
 
     @bindEvent(TexasGamePersonalSettings.DESK_TYPE_CHANGE, 'setting')
-    @traceMethod({ level: 'debug' })
     private async onUpdateBg(deskType: number, bat: AnimateDisplayBackground = AnimateDisplayBackground.Static) {
         const bgData = await dlTexasRoomBackground.getBackground(deskType);
         this._fitDeskCover(bgData.SpriteFrame);
