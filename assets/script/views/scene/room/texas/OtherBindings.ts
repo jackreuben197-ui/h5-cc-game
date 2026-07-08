@@ -1,5 +1,5 @@
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
-import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
+import { traceClass } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
@@ -180,7 +180,6 @@ export default class OtherBindings extends cc.Component {
 
     /** 响应远程相机开关 */
     @bindEvent(TexasGameRoomDataPlayerMine.REMOTE_CAMERA_STATE_CHANGE, 'mine')
-    @traceMethod({ level: 'debug' })
     private async onRemoteCameraChanged(st: ButtonState): Promise<void> {
         if (st == ButtonState.HIDDEN) {
             this.hideVideoNode.active = false;

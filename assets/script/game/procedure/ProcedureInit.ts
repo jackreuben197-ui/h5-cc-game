@@ -38,7 +38,7 @@ export default class ProcedureInit extends ProcedureBase {
         };
         //显示房间进入loading
         viewManager.showPreloading({
-            preloadDefinition: [PreloadDefinitionGame, PreloadDefinitionSound],
+            preloadDefinition: [PreloadDefinitionGame, PreloadDefinitionSound, loadTexasBg],
             complete: () => {
                 this.tracelog.debug('ProcedureInit 结束，资源加载完全');
                 this._resolveDone(true);

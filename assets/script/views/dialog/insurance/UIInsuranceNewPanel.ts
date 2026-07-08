@@ -124,7 +124,7 @@ export type UIGameplaySecuritySettingParam = {
  */
 @ccclass
 @menu('Scene/Room/Texas/Insurance/UIInsuranceNewPanel')
-@traceClass({ level: 'debug' })
+@traceClass()
 export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGameplaySecuritySettingParam> {
     // ─── 数据源句柄 ──────────────────────────────────────
     private _player: TexasGameRoomDataPlayerMine = null;

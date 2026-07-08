@@ -277,7 +277,6 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.REMOTE_VIDEO_VISIBLE_CHANGE, 'player')
-    @traceMethod({ level: 'debug' })
     private onRemoteVideoVisibleChanged(visible: boolean) {
         if (this._seatPlayer.mine) return;
         if (!visible || !this._seatPlayer.userID) {
@@ -296,7 +295,6 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.VIDEO_MASK_CHANGE, 'player')
-    @traceMethod({ level: 'debug' })
     private onVideoMaskChanged(maskId: number) {
         if (this._seatPlayer.userID <= 0) return;
         if (maskId <= 0) {
@@ -313,13 +311,11 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.MICROPHONE_ICON_STATE_CHANGE, 'player')
-    @traceMethod({ level: 'debug' })
     private onMicrophoneIconStateChanged(state: MicrophoneIconState): void {
         this.setMicrophoneIconState(state);
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE_DELAY, 'mine')
-    @traceMethod({ level: 'debug' })
     private onLocalCameraStateChanged(state: ButtonState) {
         if (!this._seatPlayer.mine) return;
         if (state == ButtonState.DISABLE) {

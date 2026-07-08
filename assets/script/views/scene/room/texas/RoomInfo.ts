@@ -1,6 +1,6 @@
 import { RoomInfo as RoomInfoPb } from '@silenthill/agreement-web';
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
-import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
+import { traceClass } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import texasGamePersonalSettings, { TexasGamePersonalSettings } from '../../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
@@ -141,7 +141,6 @@ export default class RoomInfo extends cc.Component {
     }
 
     @bindEvent(TexasGamePersonalSettings.DESK_TYPE_CHANGE, 'setting')
-    @traceMethod({ level: 'debug' })
     private async onUpdateBg(deskType: number, bat: AnimateDisplayBackground = AnimateDisplayBackground.Static) {
         const bgData = await dlTexasRoomBackground.getBackground(deskType);
         this._fitDeskCover(bgData.SpriteFrame);

@@ -49,7 +49,7 @@ type ReportBottomTab = 'battle' | 'insurance' | 'jackpot' | 'mode';
  */
 @ccclass
 @menu('Dialog/Report/UITexasReport')
-@traceClass({ level: 'debug' })
+@traceClass()
 export default class UITexasReport extends UIComponentBaseDialog<UITexasReportParam> {
     // ============================================================
     // @property —— prefab 模板（从 Assets 拖入）
