@@ -137,12 +137,14 @@ export function getCardTypeName(cardType: number): string {
     return '';
 }
 
-/** 按庄位把座位号映射为位置序号(下标对应 PLAYER_POSITION_ABBR) */
-export function getPositionNumByButton(seatIds: number[], buttonSeatId: number, seatId: number): number {
+/** 按庄位把所有座位号一趟排序并映射为位置序号(值对应 PLAYER_POSITION_ABBR 下标) */
+export function buildPositionMap(seatIds: number[], buttonSeatId: number): Map<number, number> {
     const sorted = [...seatIds].sort((a, b) => a - b);
     const buttonIndex = sorted.indexOf(buttonSeatId);
     const rotated = [...sorted.slice(buttonIndex), ...sorted.slice(0, buttonIndex)];
-    return rotated.indexOf(seatId);
+    const map = new Map<number, number>();
+    rotated.forEach((seat, index) => map.set(seat, index));
+    return map;
 }
 
 function findPlayerBySeat(players: HistoryPlayerInfo[], seatID: number): HistoryPlayerInfo {
@@ -152,20 +154,19 @@ function findPlayerBySeat(players: HistoryPlayerInfo[], seatID: number): History
     return null;
 }
 
-/** 从 be_watched_user_hands(偷偷看)取指定玩家的手牌 */
-export function getWatchedHandCards(data: ReplayHandData, playerId: number): number[] {
+/** be_watched_user_hands(偷偷看)一趟解析成 user_rid → 手牌 的映射(避免逐玩家重复 split) */
+function buildWatchedHandsMap(data: ReplayHandData): Map<number, number[]> {
+    const map = new Map<number, number[]>();
     const hands = data?.be_watched_user_hands;
-    if (!hands) return null;
+    if (!hands) return map;
     for (const h of hands) {
-        if (h.user_rid === playerId) {
-            const cards = h.data
-                .split(',')
-                .map(s => parseInt(s))
-                .filter(n => !isNaN(n));
-            return cards.length > 0 ? cards : null;
-        }
+        const cards = h.data
+            .split(',')
+            .map(s => parseInt(s))
+            .filter(n => !isNaN(n));
+        if (cards.length > 0) map.set(h.user_rid, cards);
     }
-    return null;
+    return map;
 }
 
 function overlayViewedPublicCards(target: number[], pubCardsStr: string) {
@@ -197,12 +198,12 @@ export function hasHiddenPublicCards(publicCards: number[]): boolean {
 
 /** 是否还有未亮出的他人手牌(控制偷偷看按钮) */
 export function hasHiddenCards(data: ReplayHandData, model: HistoryHandModel, myRID: number): boolean {
+    const watchedHands = buildWatchedHandsMap(data);
     for (const result of data.s.result) {
         if (result.card == null || result.card.length === 0 || result.card[0] <= 0) {
             const player = findPlayerBySeat(model.players, result.sn);
             if (player && player.playerId !== myRID) {
-                const watched = getWatchedHandCards(data, player.playerId);
-                if (!watched) return true;
+                if (!watchedHands.has(player.playerId)) return true;
             }
         }
     }
@@ -231,16 +232,14 @@ function parseLastActions(procedure: typeof WebRoomCenterHistoryReplay.Procedure
 
 function parseStreet(
     pls: ProcedurePl[],
-    players: HistoryPlayerInfo[],
-    tableSeatIds: number[],
-    buttonSeatId: number,
+    playerBySeat: Map<number, HistoryPlayerInfo>,
     myRID: number,
     potRef: { pot: number }
 ): HistoryStreetModel {
     const rows: HistoryActionInfo[] = [];
     let raiseTimes = 0;
     for (const pl of pls ?? []) {
-        const player = findPlayerBySeat(players, pl.sn);
+        const player = playerBySeat.get(pl.sn);
         if (!player) continue;
         const action = getActionNumByName(pl.act);
         if (action === HistoryActionType.Bet || action === HistoryActionType.Raise) {
@@ -254,7 +253,8 @@ function parseStreet(
             playerId: player.playerId,
             nickName: player.userName,
             headPic: player.headPic,
-            playerPosition: getPositionNumByButton(tableSeatIds, buttonSeatId, pl.sn),
+            // 位置序号在 players 构建时已算好,直接复用避免逐行重排序
+            playerPosition: player.playerPosition,
             action,
             actionChip: pl.act_amt,
             leftChips: pl.c,
@@ -310,8 +310,12 @@ export function parseHistoryHand(data: ReplayHandData, myRID: number): HistoryHa
         overlayViewedPublicCards(secondPublicCards, data.pub_cards2);
     }
     // ---------- 参与玩家 ----------
-    const tableSeatIds = s.table.pl.map(p => p.sn);
-    const buttonSeatId = s.table.btn;
+    // 座位→位置序号 / 座位→玩家 / user_rid→偷看手牌 都在此一趟建好,后续查表 O(1)
+    const positionBySeat = buildPositionMap(
+        s.table.pl.map(p => p.sn),
+        s.table.btn
+    );
+    const watchedHands = buildWatchedHandsMap(data);
     let hasMe = false;
     const players: HistoryPlayerInfo[] = s.table.pl.map(pl => {
         const isMine = pl.uid === myRID;
@@ -322,7 +326,7 @@ export function parseHistoryHand(data: ReplayHandData, myRID: number): HistoryHa
             headPic: pl.avatar,
             seatID: pl.sn,
             initChip: pl.c,
-            playerPosition: getPositionNumByButton(tableSeatIds, buttonSeatId, pl.sn),
+            playerPosition: positionBySeat.get(pl.sn) ?? -1,
             isMine,
             handCards: isMine && data.d != null ? data.d : [],
             handBet: 0,
@@ -335,16 +339,20 @@ export function parseHistoryHand(data: ReplayHandData, myRID: number): HistoryHa
             winAnte2: null as number[]
         };
     });
+    const playerBySeat = new Map<number, HistoryPlayerInfo>();
+    for (const player of players) {
+        playerBySeat.set(player.seatID, player);
+    }
     // ---------- 结算结果写入玩家(含偷偷看手牌回填) ----------
     let insurancePool = 0;
     for (const result of s.result) {
         insurancePool -= result.ins;
-        const player = findPlayerBySeat(players, result.sn);
+        const player = playerBySeat.get(result.sn);
         if (!player) continue;
         if (!player.isMine) {
             player.handCards = result.card ?? [];
             if (!player.handCards.length || player.handCards[0] <= 0) {
-                const watched = getWatchedHandCards(data, player.playerId);
+                const watched = watchedHands.get(player.playerId);
                 if (watched) player.handCards = watched;
             }
         }
@@ -357,20 +365,20 @@ export function parseHistoryHand(data: ReplayHandData, myRID: number): HistoryHa
     const potRef = { pot: 0 };
     if (procedure.ante?.pl) {
         for (const pl of procedure.ante.pl) {
-            const player = findPlayerBySeat(players, pl.sn);
+            const player = playerBySeat.get(pl.sn);
             if (!player) continue;
             player.handBet += pl.act_amt;
             if (pl.pot_out > 0) potRef.pot = pl.pot_out;
         }
     }
-    const preflop = parseStreet(procedure.preflop?.pl, players, tableSeatIds, buttonSeatId, myRID, potRef);
-    const flop = parseStreet(procedure.flop?.pl, players, tableSeatIds, buttonSeatId, myRID, potRef);
-    const turn = parseStreet(procedure.turn?.pl, players, tableSeatIds, buttonSeatId, myRID, potRef);
-    const river = parseStreet(procedure.river?.pl, players, tableSeatIds, buttonSeatId, myRID, potRef);
+    const preflop = parseStreet(procedure.preflop?.pl, playerBySeat, myRID, potRef);
+    const flop = parseStreet(procedure.flop?.pl, playerBySeat, myRID, potRef);
+    const turn = parseStreet(procedure.turn?.pl, playerBySeat, myRID, potRef);
+    const river = parseStreet(procedure.river?.pl, playerBySeat, myRID, potRef);
     // ---------- Showdown / 双套结算 ----------
     const winners: HistoryPlayerInfo[] = [];
     for (const result of s.result) {
-        const player = findPlayerBySeat(players, result.sn);
+        const player = playerBySeat.get(result.sn);
         if (!player) continue;
         if (haveSecondCard && result.sp_detail?.length > 1) {
             const isWin1 = result.sp_detail[0].is_winner;

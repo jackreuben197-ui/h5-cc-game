@@ -95,6 +95,20 @@ export default class HistoryPlayerCardItem extends cc.Component {
 
     protected onLoad(): void {
         this.playHeadImg = this.headNode.getComponent(RemoteSprite) || this.headNode.addComponent(RemoteSprite);
+        this._disableCardWidgets();
+    }
+
+    /**
+     * 卡牌位置全部由代码按牌数动态排布,但 prefab 卡牌节点残留了 cc.Widget(alignMode=ON_WINDOW_RESIZE):
+     * 首次激活时它会按设计位(6 张密排)整一次,覆盖代码排好的间距,导致首次进入时手牌叠在一起
+     * (翻页后 Widget 不再重整,代码间距才生效)。禁用这些 Widget 让代码坐标始终唯一有效。
+     */
+    private _disableCardWidgets() {
+        const nodes = [...this.handCardNodes, ...this.publicCardNodes, ...this.publicCardNodesB];
+        for (const node of nodes) {
+            const widget = node?.getComponent(cc.Widget);
+            if (widget) widget.enabled = false;
+        }
     }
 
     public setData(data: HistoryPlayerCardData) {

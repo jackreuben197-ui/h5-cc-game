@@ -59,6 +59,10 @@ export function layoutDetailHandCards(handCardsNode: cc.Node, cardCount: number,
     const spacing = cardCount > 1 ? Math.min(cardWidth + CARD_VISIBLE_GAP, (rightX - leftX) / (cardCount - 1)) : 0;
     for (let i = 0; i < children.length; i++) {
         const item = children[i];
+        // 牌位置由代码按牌数动态排布,禁用 prefab 残留的 cc.Widget:
+        // 否则克隆行首次激活时 Widget 会按设计位(密排)整一次,覆盖代码间距 → 首次两张手牌挤在一起
+        const widget = item.getComponent(cc.Widget);
+        if (widget) widget.enabled = false;
         if (i < cardCount) {
             item.active = true;
             item.x = cardCount === 1 ? leftX : leftX + i * spacing;

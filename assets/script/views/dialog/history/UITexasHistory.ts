@@ -323,8 +323,13 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         this._renderSections();
         this._refreshPeekButton();
         this._refreshViewPubButton();
-        this._refreshCollectShow(false);
-        this._reqCollectStatus();
+        // 收藏态随牌谱一起缓存(replay.collected):命中缓存直接同步点亮,避免"先置白再异步点亮"的闪烁;
+        // 仅未缓存过(null)才发起查询兜底
+        const cachedCollected = this._roomData.replay.getCollected(this._currentPage);
+        this._refreshCollectShow(cachedCollected ?? false);
+        if (cachedCollected == null) {
+            this._reqCollectStatus();
+        }
     }
 
     private _renderDashboard() {
@@ -433,6 +438,20 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         this.riverSection.node.active = model.river.rows.length > 0;
         this.showdownSection.node.active = model.hasResult;
         this.showdown2Section.node.active = model.hasResult && model.haveSecondCard;
+        this._relayoutContent();
+    }
+
+    /**
+     * 首次展开详情时,内层区块(Score/街道/结算)的 Layout 冷启动会晚一帧算高度,
+     * 导致 $content 先按旧高度排、下一帧再回弹(视觉上"向上凸一下")。
+     * 这里在激活后立即从内到外强制重排,消除首帧跳变。
+     */
+    private _relayoutContent() {
+        // getComponentsInChildren 深度优先(父在前),逆序让内层子 Layout 先算好尺寸,外层再据此重排
+        const layouts = this.contentNode.getComponentsInChildren(cc.Layout);
+        for (let i = layouts.length - 1; i >= 0; i--) {
+            if (layouts[i].node.activeInHierarchy) layouts[i].updateLayout();
+        }
     }
 
     private onDetailsClicked() {
@@ -465,11 +484,13 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         // 合并写数据在 TexasTableEvent → replay 数据层,视图经 REPLAY_DATA_CHANGE 自动刷新
         const result = await TexasTableEvent.PeekReplayHands(this._roomData, this._currentPage);
         if (!cc.isValid(this.node)) return;
-        this._setButtonEnabled(this.peekBtnNode, true);
         if (result.code === 0) {
+            // 成功后合并数据已同步触发 REPLAY_DATA_CHANGE → _refreshPeekButton,
+            // 按是否还有未亮牌决定按钮态(全看完则保持置灰),此处不再强制恢复高亮
             this._reqPeekPrice();
             this._reqDiamondBalance();
         } else {
+            this._setButtonEnabled(this.peekBtnNode, true);
             viewManager.showToast(CPErrorCode.ServerErrorDescription(result.code));
         }
     }
@@ -520,13 +541,15 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         // 合并写数据在 TexasTableEvent → replay 数据层,视图经 REPLAY_DATA_CHANGE 自动刷新
         const result = await TexasTableEvent.RevealReplayPublicCards(this._roomData, this._currentPage, round);
         if (!cc.isValid(this.node)) return;
-        this._setButtonEnabled(this.viewPubBtnNode, true);
         if (result.code === 0) {
+            // 成功后合并数据已同步触发 REPLAY_DATA_CHANGE → _refreshViewPubButton 决定按钮态,此处不强制恢复高亮
             this._reqDiamondBalance();
         } else if (result.code === 90003) {
             // 该手牌尚未同步到历史记录(无专用 i18n key,用通用"服务器正忙,请稍后再试")
+            this._setButtonEnabled(this.viewPubBtnNode, true);
             viewManager.showToast(i18nMgr.Get('error997'));
         } else {
+            this._setButtonEnabled(this.viewPubBtnNode, true);
             viewManager.showToast(CPErrorCode.ServerErrorDescription(result.code));
         }
     }

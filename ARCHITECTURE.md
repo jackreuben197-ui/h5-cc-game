@@ -15,6 +15,7 @@
    - 5.5 [自治组件模式：Operation 面板的演进](#55-自治组件模式operation-面板的演进)
 6. [AnimateDisplayType：让同一数据触发不同动画](#6-animatedisplaytype让同一数据触发不同动画)
 7. [UI 资源管线：UIViewManager + UIPrefabDefinition](#7-ui-资源管线uiviewmanager--uiprefabdefinition)
+   - 7.4 [资源加载管线：AssetManager + 预加载体系](#74-资源加载管线assetmanager--预加载体系)
 8. [H5 桥接层：H5MsgMgr](#8-h5-桥接层h5msgmgr)
 9. [进房 / 离房流程](#9-进房--离房流程)
    - 9.4 [Agora 音视频链路](#94-agora-音视频链路)
@@ -698,6 +699,58 @@ export type UIBringInParam = { [K in keyof RoomPlayerGC]: UIBringInParamBase<K>;
 
 `BringInProvider` 抽象类把"德州/麻将"等差异封装，`BringInProviderTexas` 提供德州的 min/max/默认值计算。`CommitFn` 回调由 `TexasTableEvent._commitBringInCallback` 构造，最终发送 `MSG_D_SEATED` 或 `MSG_D_BRING_IN`。
 
+### 7.4 资源加载管线：AssetManager + 预加载体系
+
+`views/loader/AssetManager.ts` 是 Prefab 之外所有零散资源（贴图 / 音效 / Spine）的统一入口。核心是**三个语义不同的访问 API**，调用方按"资源何时进内存"选用，不能混用：
+
+| API | 同步/异步 | 语义 | 资源未加载时 |
+|-----|----------|------|--------------|
+| `getOrLoad(bundle, path, type)` | async | 按需动态加载（bundle 未加载会先 `loadBundle`） | 走 `bundle.load` 拉取 |
+| `mustGetLoaded(bundle, path, type)` | sync | **断言**该资源已在预加载阶段进入内存 | `throw`（属于编程错误，说明预加载清单漏配） |
+| `getAsset(collection, name)` | sync | 从 `AssetCollectionType` 集合索引取 | `throw` |
+
+`mustGetLoaded` 服务于**同步渲染路径**：`@bindEvent` 回调里刷 UI 不能 `await`（例如 `SeatPlayer.onVideoMaskChanged` 取 `rc/other/videomask/vm{maskId}` 窗花贴图）。这类资源必须放进 `rc/` 预加载目录；如果想"顺手动态加载"，应改用 `getOrLoad` 并接受异步时序。
+
+#### 7.4.1 启动预加载：PreloadDefinition / DynamicLoadDefinition
+
+`ProcedureInit.lateEnter()` 通过 `viewManager.showPreloading(params)` 触发首屏预加载，实际执行者是 `UIPreloadingComponent.onShow`。清单项有两种形态：
+
+```typescript
+// 目录全量预载（带进度条）
+export const PreloadDefinitionGame:  PreloadDefinition = { bundle: BUNDLE_RESOURCES, dir: 'rc',    collection: true };
+export const PreloadDefinitionSound: PreloadDefinition = { bundle: BUNDLE_RESOURCES, dir: 'sound', collection: true };
+
+// 任意异步任务（无进度，并行执行）
+const loadTexasBg: DynamicLoadDefinition = {
+    AsyncFunc: async () => { dlTexasRoomBackground.getBackground(texasGamePersonalSettings.deskType); }
+};
+
+viewManager.showPreloading({
+    preloadDefinition: [PreloadDefinitionGame, PreloadDefinitionSound, loadTexasBg],
+    complete: () => this._resolveDone(true),
+});
+```
+
+`UIPreloadingComponent.onShow` 的调度策略：**`DynamicLoadDefinition` 立即全部触发（并行轨道）；`PreloadDefinition` 逐个 `loadDir` 串行排队（进度条按份数均分）**；两条轨道 `Promise.all` 汇合后才回调 `complete`。`ProcedureInit.Leave()` 会 `await` 这个完成信号，保证进入后续流程时 `rc/`、`sound/` 已全量在内存。
+
+#### 7.4.2 AssetCollectionType 集合索引
+
+`collection: true` 的目录加载完成后，`AssetManager.assetForeach()` 扫描其中的 Prefab：凡挂了 `AssetLoader` 组件（`views/loader/AssetLoader.ts`，只有一个 `collection` 枚举属性）的 Prefab，其**子节点上的 `cc.Sprite.spriteFrame` / `cc.AudioSource.clip` 会以 `` `${collection}|${子节点名}` `` 为 key 存入静态 Map**。
+
+这套机制把"一批同类资源"（两套牌面、桌面小图标、全部音效）在编辑器里组织成一个 collection Prefab，运行时用 `getAsset(AssetCollectionType.Xxx, name)` 同步索引，避免逐张 load 也避免手工维护路径表。`AssetTypeMapping` 泛型映射让每个 collection 的返回类型自动收窄（`AudioSourceSound → cc.AudioClip`）。
+
+当前消费方：`SoundManager`（音效 clip）、`CardView` / `PokerCardTypeItem`（牌面 SpriteFrame）、保险/战绩等面板的桌面小图标。
+
+#### 7.4.3 resources bundle 目录约定
+
+| 目录 | 加载策略 | 内容 |
+|------|---------|------|
+| `rc/` | 启动预加载（`PreloadDefinitionGame`） | UI Prefab、常驻贴图（含 `rc/other/videomask/` 窗花）——`mustGetLoaded` 只允许指向这里 |
+| `sound/` | 启动预加载（`PreloadDefinitionSound`） | 音效 collection Prefab |
+| `dynamic/` | 不预加载，按需 `getOrLoad` | 大体积可选资源，如桌布 `dynamic/table/desk*` 及其 Spine 动画 |
+
+桌布是"按需 + 预热"结合的例子：`DLTexasRoomBackground.getBackground(deskType)` 用 `getOrLoad` 动态拉取 `dynamic/table/desk{n}`（可带 Spine `animationPath`）；同时 `ProcedureInit` 把**当前设置的桌布**作为 `DynamicLoadDefinition` 混入启动预加载并行预热，进桌时通常已就绪，切换桌布才产生真实的动态加载等待。
+
 ---
 
 ## 8. H5 桥接层：H5MsgMgr
@@ -992,6 +1045,17 @@ EnterRoom.ts / Seated.ts
           └─ startVolumeMonitor()
 ```
 
+**模式配置：VideoAntiCheatConfig**（`game/constant/VideoModel.ts`）。入口层把服务端防作弊配置解析成 `VideoAntiCheatConfig` 写入 `roomData.basicInfo.antiCheatConfig`，它是音视频所有初始状态的唯一来源：
+
+| `VideoModel` | 语义 | 坐下时的默认行为（`getSeatedSetting()`） |
+|--------------|------|------------------------------------------|
+| `FULL_TIME` (1) / `FORCE` (4) | 全时长 / MTT 强制 | 摄像头+麦克风强制开启且不可关，节能（窗花）按服务端配置 |
+| `RANDOM` (2) | 随机验证 | 默认全关，由 `AntiCheatRoomVideo` 消息触发临时开启（`randomVideoActive`） |
+| `SEQUENCE` (3) | 麦序 | 默认全关，轮到操作时由 `ActionAll.ts` 开/关（`isOrderMode` 判定） |
+| `HUMAN` (6) / `EFFECT` (5) | 真人 / 特效 | 开关初值与可操作性全部来自服务端逐项配置（micSeat/videoSeat/powerSaving…） |
+
+`antiCheatType` 区分实时语音（2，只开麦）与实时视频（3）；`getSeatedSetting()` 的返回值由 `EnterRoom.ts` / `Seated.ts` 消费，落到 §9.4.1 表中的 `localCameraBtnState` / `localMicrophoneBtnState` / `maskBtnState` 等初值——之后的一切状态变化都走那张表的数据链，模式配置本身不再被 UI 直接读取。
+
 `AgoraManager` 是 SDK 适配层：负责 client 生命周期、token 获取与续期、join/leave、本地音视频 track 创建与发布、远端音视频 subscribe/unsubscribe、SDK 事件转发、音量轮询和 SDK 内置重连状态处理。当前保留既有方法名 `publishVidio()`，只作为文档记录，不在这里做 API 清理。
 
 `TexasVideoMediaHelper` 是德州房间和 Agora 之间的数据落点。SDK 回调不直接控制节点，只更新 `RoomData`：
@@ -1070,7 +1134,7 @@ mask 和视频的关系：
 - `videoMaskId` 是选择值，来自服务端座位数据、`VideoMaskChange` 广播或本地窗花按钮；`videoMaskId > 4` 会归一为 1。
 - `realShowMaskID` 是显示值。只有当视频处于可显示场景且节能/窗花逻辑允许时，才把 `realShowMaskID` 设置为 `videoMaskId || 1`；视频关闭、远端隐藏、远端取消发布时统一清 0。
 - `VideoMaskChange.ts` 只更新 `videoMaskId`；如果该玩家当前 `realShowMaskID > 0`，才同步更新 `realShowMaskID` 触发 UI 切换。也就是说，未显示 mask 时换窗花不会突然把 mask 打开。
-- `SeatPlayer.onVideoMaskChanged()` 只响应 `realShowMaskID`。大于 0 时从 `rc/other/videomask/vm{maskId}` 同步取已加载 `SpriteFrame` 并 `switchToMask()`，小于等于 0 时 `stopMask()`。
+- `SeatPlayer.onVideoMaskChanged()` 只响应 `realShowMaskID`。大于 0 时用 `AssetManager.mustGetLoaded` 从 `rc/other/videomask/vm{maskId}` 同步取已预加载的 `SpriteFrame` 并 `switchToMask()`（同步渲染路径不能 await，见 §7.4），小于等于 0 时 `stopMask()`。
 - `maskBtnState` 不是 mask 渲染开关，它只控制操作区窗花按钮的可用状态和图标；真正是否显示窗花只看座位上的 `realShowMaskID`。
 - mask 是 `AgoraVideoRender` 内的独立 sprite 覆盖层，`stopMask()` 不会停止 Agora track；头像视频 overlay 的启停仍由 `localCameraEnabledDelayed` 或 `remoteVideoVisible` 控制。
 
@@ -1187,7 +1251,7 @@ h5-cc-game/assets/script/
 │   │       ├── TexasGameRoomDataSeatsStateManager.ts # 座位管理（seatsCount/重排/button）
 │   │       ├── TexasGameRoomDataPlayer.ts       # 单座位数据
 │   │       ├── TexasGameRoomDataPlayerMine.ts   # 本人全局状态
-│   │       ├── load/DLTexasRoomBacground.ts     # 德州桌布动态加载
+│   │       ├── load/DLTexasRoomBacground.ts     # 德州桌布动态加载（getOrLoad + 启动预热，§7.4.3）
 │   │       └── model/Operator.ts                # 操作倒计时模型
 │   ├── trade/
 │   │   └── DiamondModel.ts / TradeStore.ts / TradeStoreUtils.ts # 商城/钻石配置/USDT 支付
@@ -1278,8 +1342,8 @@ h5-cc-game/assets/script/
 │   │   ├── UIComponentBase.ts                   # 组件基类
 │   │   └── UIComponentDialogBase.ts             # 对话框基类
 │   ├── loader/
-│   │   ├── AssetManager.ts                      # 资源管理
-│   │   └── AssetLoader.ts                       # 资源加载器
+│   │   ├── AssetManager.ts                      # 资源统一入口：getOrLoad/mustGetLoaded/getAsset + 预加载清单（§7.4）
+│   │   └── AssetLoader.ts                       # collection Prefab 标记组件（AssetCollectionType）
 │   ├── animate/
 │   │   └── SpriteAnimationHelper.ts             # 帧动画辅助
 │   ├── util/
@@ -1311,7 +1375,7 @@ h5-cc-game/assets/script/
 │   │   ├── texassettings/UIGameplayTableSetting.ts
 │   │   └── rechargediamond/UIRechargeDiamond.ts
 │   └── scene/
-│       ├── UIPreloadingComponent.ts             # 加载进度
+│       ├── UIPreloadingComponent.ts             # 预加载执行器（串行 loadDir + 并行 AsyncFunc，§7.4.1）
 │       ├── UIPromptComponent.ts                 # 网络提示
 │       └── room/texas/
 │           ├── UIRoomTexas.ts                   # 牌桌场景根
