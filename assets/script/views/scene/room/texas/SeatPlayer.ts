@@ -14,11 +14,15 @@ import {
     AnimateDisplayTypePosition,
     AnimateDisplayTypeRoundBet
 } from '../../../../game/constant/AnimateDisplayType';
-import { MicIconState } from '../../../../game/constant/MicIconState';
+import { ButtonState } from '../../../../game/constant/Constants';
+import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconState';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
+import agoraManager from '../../../../net/agora/AgoraManager';
+import AssetManager, { BUNDLE_RESOURCES } from '../../../loader/AssetManager';
 import UIViewUtil from '../../../util/UIViewUtil';
+import AgoraVideoRender from '../../../widget/AgoraVideoRender';
 import CardView from '../../../widget/CardView';
 import CountDownLabel, { CountDownFormat } from '../../../widget/CountDownLabel';
 import { DisplayNode } from '../../../widget/DisplayNode';
@@ -61,6 +65,8 @@ export default class SeatPlayer extends cc.Component {
     private nickNameSplash: cc.Node = null!; // 分割线
     @property(RemoteSprite)
     private avatar: RemoteSprite = null!;
+    @property({ type: AgoraVideoRender, displayName: '头像视频渲染组件' })
+    private avatarVideoRender: AgoraVideoRender = null;
     @property(cc.Label)
     private chips: cc.Label = null!;
     @property(cc.Button)
@@ -112,13 +118,14 @@ export default class SeatPlayer extends cc.Component {
     private squidMaskNode: cc.Node = null;
     @property({ type: DisplayNode, displayName: '获胜者的筹码牌型' })
     private winBoard: DisplayNode = null!; // text 0 handVuleType 1: chip, node 0 handValue 1: slash 2: space(for no handValue )
-    @property({ tooltip: '正在说话时显示的喇叭图标', type: cc.SpriteFrame })
+    @property({ displayName: '正在说话时显示的喇叭图标', type: cc.SpriteFrame })
     private speakingIcon: cc.SpriteFrame = null;
-    @property({ tooltip: '麦克风被禁止时显示的图标', type: cc.SpriteFrame })
+    @property({ displayName: '麦克风被禁止时显示的图标', type: cc.SpriteFrame })
     private micMutedIcon: cc.SpriteFrame = null;
-    // 麦克风状态图标（动态创建）
-    private _micIcon: cc.Node = null;
-    private _micIconSprite: cc.Sprite = null;
+    // @property({ displayName: '麦克风可以是用的图标', type: cc.SpriteFrame })
+    // private soundIcon: cc.SpriteFrame = null;
+    @property({ type: cc.Sprite, displayName: '麦克风图标' })
+    private micIconSprite: cc.Sprite = null;
     private _seatPlayer: TexasGameRoomDataPlayer = null!;
     private _cardBacks: cc.Node[] = [];
     private _bigCards: CardView[] = [];
@@ -126,15 +133,14 @@ export default class SeatPlayer extends cc.Component {
     private _potNode: cc.Node = null!;
     // 发牌
     private _dealNode: cc.Node = null!;
-    /** 暴露头像节点供视频渲染使用 */
-    public get avatarNode(): cc.Node {
-        return this.avatar.node;
-    }
 
     public initData(seatPlayer: TexasGameRoomDataPlayer, potNode: cc.Node, dealNode: cc.Node) {
         this._seatPlayer = seatPlayer;
         this._potNode = potNode;
         this._dealNode = dealNode;
+        // 一些无法通过init初始化的状态在这里初始化
+        this.winBoard.node.active = false;
+        // 绑定数据
         if (this.node.activeInHierarchy) {
             this._bindEventsAndRefresh();
         }
@@ -160,8 +166,6 @@ export default class SeatPlayer extends cc.Component {
         this.emptySeat.node.on('click', this._clickEmptySeat, this);
         this.insuranceCountdownBubble.node.active = false;
         this.returnToGameButton.node.on('click', this._clickReturnToGame, this);
-        // 动态创建麦克风状态图标
-        this._createMicIcon();
     }
 
     protected onEnable(): void {
@@ -171,6 +175,9 @@ export default class SeatPlayer extends cc.Component {
 
     protected onDisable(): void {
         this.insuranceCountdownBubble.node.active = false;
+        this.avatarVideoRender.stopMask();
+        this.avatarVideoRender.stopOverlay();
+        this.setMicrophoneIconState(MicrophoneIconState.HIDDEN);
         unBindEventsAll(this);
     }
 
@@ -181,65 +188,36 @@ export default class SeatPlayer extends cc.Component {
         // 统一激活绑定，注入强类型 tag 推导过滤机制
         autoBindEvents(this, { player: this._seatPlayer, setting: texasGamePersonalSettings });
     }
-    // ==================== 麦克风状态图标（视频房间用） ====================
-    /** 动态创建麦克风状态图标节点，挂在 avatar 父级（与头像同坐标系，便于定位） */
-    private _createMicIcon(): void {
-        if (this._micIcon) return;
-        const parent = this.avatar.node.parent || this.userSeat || this.node;
-        this._micIcon = new cc.Node('MicIcon');
-        this._micIconSprite = this._micIcon.addComponent(cc.Sprite);
-        this._micIcon.setContentSize(82, 82);
-        this._micIcon.active = false;
-        parent.addChild(this._micIcon);
-    }
 
     /**
      * 设置麦克风图标状态
      * @param state HIDDEN=不显示, SPEAKING=正在说话, MUTED=麦克风被禁止/未开启
      */
-    public setMicIconState(state: MicIconState): void {
-        if (!this._micIcon) return;
-        switch (state) {
-            case MicIconState.SPEAKING:
-                if (this.speakingIcon) {
-                    this._micIconSprite.spriteFrame = this.speakingIcon;
-                    this._micIcon.active = true;
-                } else {
-                    this._micIcon.active = false;
-                }
-                break;
-            case MicIconState.MUTED:
-                if (this.micMutedIcon) {
-                    this._micIconSprite.spriteFrame = this.micMutedIcon;
-                    this._micIcon.active = true;
-                } else {
-                    this._micIcon.active = false;
-                }
-                break;
-            case MicIconState.HIDDEN:
-            default:
-                this._micIcon.active = false;
-                break;
+    public setMicrophoneIconState(state: MicrophoneIconState, force: boolean = true): void {
+        if (!force && this.micIconSprite.spriteFrame === this.micMutedIcon && this.micIconSprite.node.active) {
+            return;
         }
-        this._updateMicIconPosition();
-    }
-
-    /** 根据座位左右侧更新话筒图标位置（基于 avatar 节点坐标，避免被头像裁剪） */
-    private _updateMicIconPosition(): void {
-        if (!this._micIcon || !this.avatar?.node) return;
-        const headPos = this.avatar.node.getPosition();
-        const headSize = this.avatar.node.getContentSize();
-        const iconSize = this._micIcon.getContentSize();
-        const gap = 4;
-        const arrange = seatArrange[this._seatPlayer.position];
-        const isRight = arrange ? arrange.x > 0 : false;
-        this._micIcon.y = headPos.y;
-        if (isRight) {
-            // 右侧座位：图标放在头像左侧
-            this._micIcon.x = headPos.x - headSize.width / 2 - iconSize.width / 2 - gap;
-        } else {
-            // 左侧/中：图标放在头像右侧
-            this._micIcon.x = headPos.x + headSize.width / 2 + iconSize.width / 2 + gap;
+        switch (state) {
+            case MicrophoneIconState.SPEAKING:
+                if (this.speakingIcon) {
+                    this.micIconSprite.spriteFrame = this.speakingIcon;
+                    this.micIconSprite.node.active = true;
+                } else {
+                    this.micIconSprite.node.active = false;
+                }
+                break;
+            case MicrophoneIconState.MUTED:
+                if (this.micMutedIcon) {
+                    this.micIconSprite.spriteFrame = this.micMutedIcon;
+                    this.micIconSprite.node.active = true;
+                } else {
+                    this.micIconSprite.node.active = false;
+                }
+                break;
+            case MicrophoneIconState.HIDDEN:
+            default:
+                this.micIconSprite.node.active = false;
+                break;
         }
     }
 
@@ -265,10 +243,75 @@ export default class SeatPlayer extends cc.Component {
         }
         if (!b) {
             this.insuranceCountdownBubble.node.active = false;
+            this.avatarVideoRender.stopMask();
+            this.avatarVideoRender.stopOverlay();
+            this.setMicrophoneIconState(MicrophoneIconState.HIDDEN);
         }
         //解绑(自己站起)
         if (mine) {
             unBindEvents(this, 'mine');
+        }
+    }
+
+    @bindEvent(TexasGameRoomDataPlayer.REMOTE_VIDEO_VISIBLE_CHANGE, 'player')
+    private onRemoteVideoVisibleChanged(visible: boolean) {
+        if (this._seatPlayer.mine) return;
+        if (!visible || !this._seatPlayer.userID) {
+            this.avatarVideoRender.stopOverlay();
+            return;
+        }
+        try {
+            let rawTrack = agoraManager.getRemoteVideoTrack(this._seatPlayer.userID);
+            this.avatarVideoRender.mirror = false;
+            this.avatarVideoRender.targetFps = 15;
+            this.avatarVideoRender.switchToOverlay(rawTrack.getMediaStreamTrack());
+        } catch (e) {
+            this.tracelog.error('agoraManager not supported:', this._seatPlayer.userID);
+            this.avatarVideoRender.stopOverlay();
+        }
+    }
+
+    @bindEvent(TexasGameRoomDataPlayer.VIDEO_MASK_CHANGE, 'player')
+    private onVideoMaskChanged(maskId: number) {
+        if (this._seatPlayer.userID <= 0) return;
+        if (maskId <= 0) {
+            this.avatarVideoRender.stopMask();
+            return;
+        }
+        let spriteFrame: cc.SpriteFrame = null;
+        try {
+            spriteFrame = AssetManager.mustGetLoaded(BUNDLE_RESOURCES, `rc/other/videomask/vm${maskId}`, cc.SpriteFrame);
+            this.avatarVideoRender.switchToMask(spriteFrame);
+        } catch (err) {
+            this.tracelog.warn('窗花纹理加载失败:', maskId, (err as Error)?.message);
+        }
+    }
+
+    @bindEvent(TexasGameRoomDataPlayer.MICROPHONE_ICON_STATE_CHANGE, 'player')
+    private onMicrophoneIconStateChanged(state: MicrophoneIconState): void {
+        this.setMicrophoneIconState(state);
+    }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE_DELAY, 'mine')
+    private onLocalCameraStateChanged(state: ButtonState) {
+        if (!this._seatPlayer.mine) return;
+        if (state == ButtonState.DISABLE) {
+            this.avatarVideoRender.stopOverlay();
+            return;
+        }
+        if (state == ButtonState.OFF) {
+            this.avatarVideoRender.stopOverlay();
+            return;
+        }
+        try {
+            //await GameplayUtil.waitForCondition( () => !!agoraManager.localVideoTrack, 500, 5000);
+            const rawTrack = agoraManager.localVideoTrack.getMediaStreamTrack();
+            this.avatarVideoRender.mirror = true;
+            this.avatarVideoRender.targetFps = 15;
+            this.avatarVideoRender.switchToOverlay(rawTrack);
+        } catch (e) {
+            this.tracelog.warn('agoraManager render video error', this._seatPlayer.userID, e);
+            this.avatarVideoRender.stopOverlay();
         }
     }
 
@@ -295,7 +338,6 @@ export default class SeatPlayer extends cc.Component {
 
     @bindEvent(TexasGameRoomDataPlayer.CANPLAYSTATUS_CHANGE, 'player')
     private onUpdateCanPlayStatus(v: Def.CanPlayStatusMap[keyof Def.CanPlayStatusMap]) {
-        this.tracelog.debug(this._seatPlayer.seatNo, this._seatPlayer.cards, this._seatPlayer.status);
         switch (v) {
             case Def.CanPlayStatus.AGREE_POST:
             case Def.CanPlayStatus.DISABLE:
@@ -372,6 +414,7 @@ export default class SeatPlayer extends cc.Component {
                 this.squidNode.node.setPosition(75, 70);
                 this.squidNode.node.scaleX = 1;
                 this.squidNode.getOpNode(0).scaleX = 1;
+                this.micIconSprite.node.setPosition(90, 0);
                 break;
             case SeatPosition.BottomLeft:
             case SeatPosition.MiddleLeft:
@@ -391,6 +434,7 @@ export default class SeatPlayer extends cc.Component {
                 this.squidNode.node.scaleX = 1;
                 this.squidNode.getOpNode(0).scaleX = 1;
                 this.winPercentNode.node.active = false;
+                this.micIconSprite.node.setPosition(-90, 0);
                 break;
             case SeatPosition.TopLeft1:
                 this.buttonIcon.setPosition(65, -220);
@@ -407,6 +451,7 @@ export default class SeatPlayer extends cc.Component {
                 this.squidNode.node.scaleX = 1;
                 this.squidNode.getOpNode(0).scaleX = 1;
                 this.winPercentNode.node.active = false;
+                this.micIconSprite.node.setPosition(-90, 0);
                 break;
             case SeatPosition.TopMiddle:
             case SeatPosition.TopRight1:
@@ -424,6 +469,7 @@ export default class SeatPlayer extends cc.Component {
                 this.squidNode.node.scaleX = -1; // 先反转
                 this.squidNode.getOpNode(0).scaleX = -1; // 文本再转回去
                 this.winPercentNode.node.active = false;
+                this.micIconSprite.node.setPosition(90, 0);
                 break;
             case SeatPosition.TopRight:
             case SeatPosition.MiddleRight:
@@ -443,6 +489,7 @@ export default class SeatPlayer extends cc.Component {
                 this.squidNode.node.scaleX = -1; // 先反转
                 this.squidNode.getOpNode(0).scaleX = -1; // 文本再转回去
                 this.winPercentNode.node.active = false;
+                this.micIconSprite.node.setPosition(90, 0);
                 break;
         }
         const realPos = seatArrange[pos];

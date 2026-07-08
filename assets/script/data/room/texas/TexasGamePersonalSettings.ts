@@ -66,7 +66,7 @@ type DataSettingBindings = {
 export interface TexasGamePersonalSettings extends IObservableBindings<TexasGamePersonalSettings, DataSettingBindings> {}
 
 @bindData()
-@traceClass({ level: 'debug' })
+@traceClass()
 export class TexasGamePersonalSettings extends cc.EventTarget {
     public static readonly SHOW_BB = 'SHOW_BB';
     public static readonly DESK_TYPE_CHANGE = 'DESK_TYPE_CHANGE';

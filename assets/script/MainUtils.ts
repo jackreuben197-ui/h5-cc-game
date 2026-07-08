@@ -13,7 +13,7 @@ import ProcedureDefine from './game/procedure/ProcedureDefine';
 import ProcedureManager from './game/procedure/ProcedureManager';
 import roomReconnectManager from './game/RoomReconnectManager';
 import h5MessageManager, { EnterMttMatchInfo, EnterTableRoomInfo, SyncUserClubResponse, SyncUserInfo } from './H5MsgMgr';
-import AgoraManager from './net/agora/AgoraManager';
+import agoraManager from './net/agora/AgoraManager';
 import ProtocolAgency from './net/websocket/ProtocolAgency';
 
 const _ploger = createLogger('[MainUtils]');
@@ -27,7 +27,7 @@ export function loadWebSDK(): void {
         _ploger.info('[WebSDK] 声网已禁用（enableAgora=false），跳过加载');
         return;
     }
-    const sdkList = [{ name: 'AgoraRTC', src: 'https://download.agora.io/sdk/release/AgoraRTC_N-4.24.3.js' }];
+    const sdkList = [{ name: 'AgoraRTC', src: 'https://download.agora.io/sdk/release/AgoraRTC_N-4.24.5.js' }];
     sdkList.forEach(sdk => {
         if ((window as unknown as Record<string, unknown>)[sdk.name]) {
             _ploger.info(`[WebSDK] ${sdk.name} 已存在，跳过加载`);
@@ -39,7 +39,7 @@ export function loadWebSDK(): void {
         script.onload = () => {
             _ploger.info(`[WebSDK] ${sdk.name} 声网sdk加载完成`);
             if (sdk.name === 'AgoraRTC') {
-                AgoraManager.Instance.init();
+                agoraManager.init(GameConfig.agoraKey);
             }
         };
         script.onerror = () => {
@@ -290,6 +290,17 @@ export async function registerH5Listeners(): Promise<void> {
             }
         }
         _ploger.info('[H5Bridge] syncDiamondConfig 预填完成');
+    });
+    // syncToken：H5 在登录/续期/登出后把最新 token 推过来，写入 userStore，避免 H5/CC 两端 token 错开。
+    h5MessageManager.on('syncToken', payload => {
+        const token = typeof payload?.token === 'string' ? payload.token.trim() : '';
+        if (!token) {
+            userStore.token = '';
+            _ploger.info('[H5Bridge] syncToken 清空登录态');
+            return;
+        }
+        userStore.token = token;
+        _ploger.info('[H5Bridge] syncToken 更新完成, expireAt:', payload?.expireAt || 0);
     });
     // h5MessageManager.on('syncRoomsList', (payload) => {
     //     _ploger.info('[H5Bridge] 同步房间列表:', payload);

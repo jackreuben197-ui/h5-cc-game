@@ -1,4 +1,4 @@
-import { bindData, observable, pureEvent } from '../../../core/decorator/DataBind';
+import { bindData, pureEvent } from '../../../core/decorator/DataBind';
 import { AnimateDisplayTypeButton, AnimateDisplayTypeMushroomPool, AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';
@@ -113,9 +113,30 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     })
     public buttonChangeEvent(prev: number, cur: number, bat: AnimateDisplayTypeButton) {}
 
-    /** 当前说话者 uid（0 = 无人说话），由 VideoRoomManager 在 activeSpeaker 回调中设置 */
-    @observable(TexasGameRoomDataSeatsStateManager.SPEAKING_CHANGE)
-    public speakingUid: number = 0;
+    /** 当前说话者的座位号 */
+    private _speaking: number = 0;
+    public set speakingUID(uid: number) {
+        let seatNo = 0;
+        if (uid > 0) {
+            const seat = this.getSeatPlayerByUserID(uid);
+            if (seat) {
+                seatNo = seat.seatNo;
+            }
+        }
+        if (seatNo == this._speaking) return;
+        const prev = this._speaking;
+        this._speaking = seatNo;
+        this.speakingChangeEvent(prev, this._speaking);
+    }
+
+    /** 当前说话者 uid（0 = 无人说话），由 Texas 视频流程在 activeSpeaker 回调中设置 */
+    @pureEvent(TexasGameRoomDataSeatsStateManager.SPEAKING_CHANGE, {
+        initParams() {
+            return [0, this._speaking];
+        }
+    })
+    public speakingChangeEvent(prev: number, cur: number) {}
+
     private _seatsCount: number;
 
     public getSeatPlayer(i: number) {
@@ -174,31 +195,29 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
         return this._playerMap.get(s);
     }
 
-    /**
-     * 通过 userID 查找座位数据
-     * @returns 匹配的 TexasGameRoomDataPlayer，未找到返回 null
-     */
-    public findSeatByUserId(userId: number): TexasGameRoomDataPlayer | null {
-        let found: TexasGameRoomDataPlayer = null;
-        this._playerMap.forEach((p: TexasGameRoomDataPlayer) => {
-            if (!found && p.userID === userId) {
-                found = p;
+    public forEachPlayer(cb: (p: TexasGameRoomDataPlayer) => void) {
+        this._playerMap.forEach(p => {
+            if (p.userID > 0) {
+                cb(p);
             }
         });
-        return found;
     }
 
-    /**
-     * 获取所有已入座的座位数据
-     */
-    public getAllSeats(): TexasGameRoomDataPlayer[] {
-        const result: TexasGameRoomDataPlayer[] = [];
-        this._playerMap.forEach((p: TexasGameRoomDataPlayer) => {
-            if (p.userID) {
-                result.push(p);
+    public getSeatPlayerByUserID(userID: number): TexasGameRoomDataPlayer | null {
+        let target: TexasGameRoomDataPlayer = null;
+        this._playerMap.forEach(player => {
+            if (player.userID == userID) {
+                target = player;
             }
         });
-        return result;
+        return target;
+    }
+
+    public resetVideoAndAudioStates(): void {
+        this.speakingUID = 0;
+        this._playerMap.forEach(p => {
+            p.resetVideoAndAudioStates();
+        });
     }
 
     public roundReset() {

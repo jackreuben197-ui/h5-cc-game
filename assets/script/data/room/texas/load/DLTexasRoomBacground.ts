@@ -94,7 +94,6 @@ export class DLTexasRoomBackground {
             };
         }
         const [ap] = await Promise.all(promises);
-        console.log('sp', ap);
         return {
             SpriteFrame: ap as cc.SpriteFrame
         };

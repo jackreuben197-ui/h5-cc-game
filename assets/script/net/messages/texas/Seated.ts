@@ -7,14 +7,16 @@ import UserStoreUtils from '../../../data/user/UserStoreUtils';
 import { AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
 import { BringInMode } from '../../../game/constant/BringInMode';
+import { ButtonState } from '../../../game/constant/Constants';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
-import VideoRoomManager from '../../../net/agora/VideoRoomManager';
 import viewManager from '../../../views/UIViewManager';
+import agoraManager from '../../agora/AgoraManager';
+import TexasVideoMediaHelper from './TexasVideoMediaHelper';
 
 const _plog = createLogger('ServerMessageSeated');
 
 // Seated 1003
-export function Seated(data: ServerMessageSeated.AsObject, roomID: number, matchID: number) {
+export async function Seated(data: ServerMessageSeated.AsObject, roomID: number, matchID: number) {
     _plog.info('seated', data, roomID, matchID);
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     if (data.status != 0) {
@@ -26,7 +28,7 @@ export function Seated(data: ServerMessageSeated.AsObject, roomID: number, match
     if (data.videoMaskId > 4) data.videoMaskId = 1;
     const seatData = roomData.seatsStateManager.setMySeat(data.recvSeatId, AnimateDisplayTypePosition.ToTarget);
     const mine = roomData.mine;
-    seatData.userID = userStore.userID;
+    seatData.userID = userStore.userRID;
     seatData.name = userStore.name;
     seatData.avatar = userStore.avatar;
     seatData.chip = data.chips;
@@ -60,95 +62,51 @@ export function Seated(data: ServerMessageSeated.AsObject, roomID: number, match
     // 操作面板(不显示)
     mine.autoOperationType = AutoOperationTypeTexas.NO;
     mine.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
-    // this.game.mainPlayer.chips = data.chips;
-    // this.game.mainPlayer.leavelChips = data.accountChips;
-    // // GameCache.Instance.gold = data.accountChips;
-    // GC.data.user.info.gold = data.accountChips;
-    // this.game.mainPlayer.cacheStoreChips = data.storeChips;
-    // this.game.mainPlayer.actionStatus = Def.Action.NONE;
-    // this.game.mainPlayer.canPlayStatus = data.postStatus;
-    // this.game.mainPlayer.IsAutoOp = false;
-    // this.game.mainPlayer.ante = 0;
-    // this.game.mainPlayer.anteNumber = 0;
-    // this.game.mainPlayer.cards = this.game.GetEmptyHandCards();
-    // this.game.mainPlayer.inSquid = rec.squidIn || false;
-    // this.game.mainPlayer.squidRoundSeated = rec.squidRoundSeated || this.game.mainPlayer.inSquid;
-    // this.game.mainPlayer.squidEscaped = false;
-    // this.game.mainPlayer.squidCount = 0;
-    // this.game.mainPlayer.videoMaskId = rec.videoMaskId || 0;
-    // this.game.squidTotalLimit = rec.squidTotalLimit || this.game.squidTotalLimit;
-    // this.game.mainPlayer.KeepSeatLeftTime = rec.keepSeatLeftTime;
-    // if (rec.keepSeatLeftTime > 0) {
-    //     UIComponent.Instance.Toast(`${i18nMgr.Get('UITexas_FriendtableapplyBringinTips001')}${rec.keepSeatLeftTime}s`);
-    //     //记录这个需要申请审核的房间
-    //     GameCache.Instance.BringCheckRoomIdMap[GameCache.Instance.room_id] = true;
-    // }
-    // let seat: Seat = null;
-    // //服务器记录的id
-    // let me_seat_id: number = this.game.GetLocalSeatID(rec.recvSeatId);
-    // seat = this.game.GetSeatByLocalSeatID(me_seat_id);
-    // if (null == seat) return;
-    // //设置自己的座位id
-    // this.game.mainPlayer.seatID = me_seat_id;
-    // seat.Player = this.game.mainPlayer;
-    // seat.isBank = false;
-    // if (!this.game.mainPlayer.isParticipateInTheGame) {
-    //     seat.UpdateWaiteNextTips(true);
-    // }
-    // this.game.HideWaitBlindBtn();
-    // if (seat.Player.chips > this.game.GetMinPlayChips() && seat.seatID == this.game.mainPlayer.seatID) {
-    //     if (this.game.mainPlayer.canPlayStatus == Def.CanPlayStatus.NEED_POST) {
-    //         // 需要补盲
-    //         this.game.ShowWaitBlindBtn();
-    //         seat.FsmLogicComponent.SM.ChangeState(SeatWaitBlind.Instance);
-    //     }
-    //     // else {
-    //     //     mSeat.FsmLogicComponent.SM.ChangeState(SeatWaitStart.Instance);
-    //     // }
-    // }
-    // //翻转动画
-    // seat.FsmLogicComponent.SM.ChangeState(SeatSitAnimation.Instance);
-    // // todo 这里要搞十分十分十分酷炫的动画，把自己位移到最下方，0号位
-    // //判断自己的方位id不在最下方,进行位移动画
-    // // if (seat.ClientSeatId > 0) {
-    // //     this.game.ResetSeatUIInfo(seat.ClientSeatId);
-    // // }
-    // this.game.ResetSeatUIInfo(seat.ClientSeatId);
-    // this.game.uirc.refreshViewOnSitAndStandup(true);
-    // if (this.game.squidEnabled) {
-    //     this.game.RefreshSquidMarks();
-    //     this.game.UpdateRoomDes();
-    // }
-    // if (GameCache.Instance.Vip == 1) {
-    //     //ShowVipSeatDownTips(GameCache.Instance.nick);
-    // }
-    // 视频房间：坐下后渲染本地摄像头到自己的头像
-    const videoMgr = VideoRoomManager.Instance;
-    if (videoMgr.isVideoRoom && videoMgr.currentVideoModel !== 0) {
-        const avatarNode = videoMgr.getSeatAvatarNode(seatData.seatNo);
-        if (avatarNode) {
-            videoMgr.renderLocalVideoOnMySeat(avatarNode).then(ok => {
-                if (!ok) {
-                    viewManager.showToast('无法开启摄像头，请检查浏览器权限后重新入座');
+    if (roomData.basicInfo.antiCheatConfig) {
+        const seatedConfig = roomData.basicInfo.antiCheatConfig.getSeatedSetting();
+        const promise = [];
+        try {
+            if (seatedConfig.enableCamera) {
+                promise.push(agoraManager.enableCamera());
+            }
+            promise.push(agoraManager.enableMicrophone());
+            promise.push(TexasVideoMediaHelper.joinAgoraVideoChannelIfNeed(roomID, matchID));
+            await Promise.all(promise);
+            // 如果能操作摄像头,则根据状态变更
+            if (seatedConfig.canOpCamera) {
+                //能操作交给按钮操作
+                roomData.mine.localCameraBtnState = seatedConfig.openCamera ? ButtonState.ON : ButtonState.OFF;
+            } else {
+                roomData.mine.localCameraBtnState = ButtonState.DISABLE;
+                // 不能按钮操作 强制操作
+                roomData.mine.localCameraEnabled = seatedConfig.openCamera;
+            }
+            if (seatedConfig.canOpMicrophone) {
+                roomData.mine.localMicrophoneBtnState = seatedConfig.openMicrophone ? ButtonState.ON : ButtonState.OFF;
+            } else {
+                roomData.mine.localMicrophoneBtnState = ButtonState.DISABLE;
+                roomData.mine.localMicrophoneEnabled = seatedConfig.openMicrophone;
+            }
+            if (seatedConfig.enableCamera && seatedConfig.canSwitchPowerSaving) {
+                roomData.mine.maskBtnState = seatedConfig.openPowerSaving ? ButtonState.ON : ButtonState.DISABLE;
+            } else if (seatedConfig.enableCamera && !seatedConfig.canSwitchPowerSaving) {
+                roomData.mine.maskBtnState = ButtonState.DISABLE;
+                if (seatedConfig.openPowerSaving) {
+                    roomData.seatsStateManager.forEachPlayer(p => {
+                        p.realShowMaskID = p.videoMaskId == 0 ? 1 : p.videoMaskId;
+                    });
+                } else {
+                    roomData.seatsStateManager.forEachPlayer(p => {
+                        p.realShowMaskID = 0;
+                    });
                 }
-            });
+            }
+            mine.remoteCameraEnabled = seatedConfig.enableCamera ? ButtonState.ON : ButtonState.HIDDEN;
+            mine.remoteMicrophoneEnabled = ButtonState.ON;
+            roomData.basicInfo.antiCheatConfig.start();
+        } catch (e) {
+            _plog.error('加入视频桌失败', e);
+            viewManager.showToast('无法开启摄像头，请检查浏览器权限后重新入座');
         }
     }
-    //房间坐下时时添加firebase事件触发
-    // Dictionary < string, string > paramMap = new Dictionary<string, string>();
-    // paramMap.Add("game_type", GameCache.Instance.game_type + "");//游戏类型
-    // paramMap.Add("roomId", GameCache.Instance.room_id + "");//房间id
-    // paramMap.Add("roomName", GameCache.Instance.roomName + "");//房间名称
-    // paramMap.Add("room_type", GameCache.Instance.room_type + "");//房间类型
-    // GoogleFirebaseHelper.LevelStartEvent(paramMap);
-    // //添加到appsFlyer统计进入金币房间消息
-    // Dictionary < string, string > valuesMap = new Dictionary<string, string>();
-    // valuesMap.Add("game_type", GameCache.Instance.game_type + "");//游戏类型
-    // valuesMap.Add("roomId", GameCache.Instance.room_id + "");//房间id
-    // valuesMap.Add("roomName", GameCache.Instance.roomName + "");//房间名称
-    // valuesMap.Add("room_type", GameCache.Instance.room_type + "");//房间类型
-    // AppsFlyerHelper.GameEnterEvent(valuesMap);
-    // this.game.UpdateStartGameState();
-    // // 刷新麦克风图标（自己坐下后更新静音/喇叭状态）
-    // this._refreshAllMicIcons();
 }

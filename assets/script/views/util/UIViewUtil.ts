@@ -30,4 +30,13 @@ export default class UIViewUtil {
             complete = null;
         };
     }
+
+    public static setNodeGray(node: cc.Node, gray: boolean) {
+        const sprite = node.getComponent(cc.Sprite);
+        if (sprite) {
+            const mat = gray ? cc.Material.getBuiltinMaterial('2d-gray-sprite') : cc.Material.getBuiltinMaterial('2d-sprite');
+            sprite.setMaterial(0, mat);
+        }
+        node.opacity = gray ? 128 : 255;
+    }
 }
