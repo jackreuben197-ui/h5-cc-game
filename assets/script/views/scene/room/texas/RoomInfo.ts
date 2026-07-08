@@ -1,6 +1,6 @@
 import { RoomInfo as RoomInfoPb } from '@silenthill/agreement-web';
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
-import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
+import { traceClass } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import texasGamePersonalSettings, { TexasGamePersonalSettings } from '../../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
