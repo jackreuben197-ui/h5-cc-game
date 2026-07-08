@@ -92,7 +92,7 @@ export default class OtherBindings extends cc.Component {
             }
         } else if (!muted) {
             // 先开, 再展示
-            await agoraManager.publishVidio();
+            await agoraManager.publishVideo();
             this._roomData.mine.localCameraEnabledDelayed = enable;
         }
     }

@@ -11,13 +11,13 @@ import { RoomOriginType } from '../../../game/constant/RoomOriginType';
 import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
-import AgoraManager from '../../../net/agora/AgoraManager';
 import { WebResponseDataBase } from '../../../net/https/data/other/WebResponseDataBase';
 import { HttpStatsOtherUserStats } from '../../../net/https/data/stats/HttpStatsOtherUserStats';
 import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import { UIComfirmDialogType } from '../confirm/UIConfirmDialog';
 import viewManager from '../../UIViewManager';
+import agoraManager from '../../../net/agora/AgoraManager';
 
 const { ccclass, menu, property } = cc._decorator;
 const VIEW_MANAGER_MASK_NODE = 'ithinktisinotshouldbedupilcatednodename';
@@ -524,14 +524,14 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _loadAudioVideoState(): void {
-        const agora = AgoraManager.Instance;
+        const agora = agoraManager;
         if (!agora.isJoined) {
             this._hasAudioTrack = false;
             this._hasVideoTrack = false;
             this._updateAudioVideoVisuals();
             return;
         }
-        const remote = agora.getRemoteUsers().find(item => item.uid === this._requestRID);
+        const remote = agora.getRemoteUserMap().get(this._requestRID);
         this._hasAudioTrack = !!remote?.hasAudio || UIPlayerInfo.audioClosedUsers.has(this._requestRID);
         this._hasVideoTrack = !!remote?.hasVideo || UIPlayerInfo.videoClosedUsers.has(this._requestRID);
         this._isAudioClosed = UIPlayerInfo.audioClosedUsers.has(this._requestRID);
@@ -705,7 +705,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private _clickAudioClose(): void {
         if (!this._hasAudioTrack) return;
         this._isAudioClosed = !this._isAudioClosed;
-        AgoraManager.Instance.setRemoteAudioEnabled(!this._isAudioClosed, this._requestRID);
+        agoraManager.setRemoteAudioEnabled(!this._isAudioClosed, this._requestRID);
         this._setSetMember(UIPlayerInfo.audioClosedUsers, this._requestRID, this._isAudioClosed);
         this._updateAudioVideoVisuals();
     }
@@ -713,7 +713,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private _clickVideoClose(): void {
         if (!this._hasVideoTrack) return;
         this._isVideoClosed = !this._isVideoClosed;
-        AgoraManager.Instance.setRemoteVideoEnabled(!this._isVideoClosed, this._requestRID);
+        agoraManager.setRemoteVideoEnabled(!this._isVideoClosed, this._requestRID);
         this._setSetMember(UIPlayerInfo.videoClosedUsers, this._requestRID, this._isVideoClosed);
         this._updateAudioVideoVisuals();
     }

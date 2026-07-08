@@ -93,7 +93,7 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public remoteMicrophoneEnabled: ButtonState = ButtonState.HIDDEN;
     
     public get needVideoPermision() {
-        return this._roomData.basicInfo.videoModel !== VideoModel.NONE;
+        return this._roomData.basicInfo.antiCheatConfig.isInVideoRoom;
     }
 
     public async clearVideoAndAudio() {
