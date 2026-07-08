@@ -10,7 +10,7 @@ export interface DLItem {
 
 export interface BackgroundData {
     SpriteFrame: cc.SpriteFrame;
-    Animataion?: sp.SkeletonData;
+    Animation?: sp.SkeletonData;
 }
 
 const defaultDynamicLoadingPrefx = 'dynamic/';
@@ -90,7 +90,7 @@ export class DLTexasRoomBackground {
             const [ap, sp2] = await Promise.all(promises);
             return {
                 SpriteFrame: ap as cc.SpriteFrame,
-                Animataion: sp2 as sp.SkeletonData
+                Animation: sp2 as sp.SkeletonData
             };
         }
         const [ap] = await Promise.all(promises);

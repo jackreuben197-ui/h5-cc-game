@@ -9,7 +9,6 @@ import { WWW } from '../https/WebRequest';
 @traceClass()
 class AgoraManager {
     private static _instance: AgoraManager = null;
-    private static readonly WEB_VIDEO_CODEC_TYPES = ['H264', 'H265', 'VP8', 'VP9', 'AV1X', 'AV1'];
     // ==================== 连接状态追踪 ====================
     private _prevConnState: string = 'DISCONNECTED';
     /** SDK 重连成功回调（供 TexasGameProtocol 恢复远端视频渲染） */

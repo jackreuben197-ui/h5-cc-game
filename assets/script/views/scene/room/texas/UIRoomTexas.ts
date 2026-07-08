@@ -30,15 +30,6 @@ const ADAPTIVE_LIMIT_HEIGHT = 2400;
 
 const ADAPTIVE_MAIN_HEIGHT = 2688;
 
-const ADAPTIVE_SEAT_MARGIN = 30;
-
-const ADAPTIVE_SETTING_BUTTON_GAP = 280;
-
-type AdaptiveOffsetNode = {
-    node: cc.Node;
-    originY: number;
-};
-
 @ccclass
 @menu('Scene/Room/Texas/UIRoomTexas')
 @traceClass()
@@ -77,9 +68,6 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     //数据绑定
     private _mine: TexasGameRoomDataPlayerMine = null;
     private _mainNode: cc.Node = null;
-    // private _mainMenuNode: cc.Node = null;
-    // private _btnImNode: cc.Node = null;
-    // private _adaptiveOffsetNodes: AdaptiveOffsetNode[] = [];
 
     protected onLoad(): void {
         this._mainNode = this.node.getChildByName('main');
@@ -98,6 +86,14 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         // main_menu 按钮事件注册
         this.btnEmoji.on('click', this.onClickBtnEmoji, this);
         this.chatBtn.on('click', this.onClickChatBtn, this);
+    }
+
+    protected onEnable(): void {
+        cc.view.on('canvas-resize', this._adaptiveMain, this);
+    }
+
+    protected onDisable(): void {
+        cc.view.off('canvas-resize', this._adaptiveMain, this);
     }
 
     private onClickReport = () => {
@@ -133,6 +129,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private _adaptiveMain(): void {
         if (!this._mainNode) return;
         const viewHeight = cc.view.getVisibleSize().height;
+        // console.log('visible size', cc.view.getVisibleSize(), cc.view.getFrameSize());
+        this._mainNode.y = viewHeight / 2;
         if (viewHeight <= ADAPTIVE_LIMIT_HEIGHT) {
             this._mainNode.height = ADAPTIVE_MAIN_HEIGHT;
             const scale = viewHeight / ADAPTIVE_MAIN_HEIGHT;
@@ -141,10 +139,6 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
             this._mainNode.setScale(1, 1);
             this._mainNode.height = viewHeight;
         }
-        this.scheduleOnce(() => {
-            // const seatYOffset = this._calculateSeatYOffset();
-            this.seatManager.setSeatYOffset(0);
-        }, 0);
     }
 
     private async _showSquidIntroDialog(roomData: TexasGameRoomData): Promise<boolean> {

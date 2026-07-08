@@ -49,11 +49,6 @@ const seatArrange: Record<SeatPosition, cc.Vec3> = {
     [SeatPosition.TopRight7]: cc.v3(480, -1065) // 9 7 人桌的修正
 };
 
-export function getSeatArrangePosition(pos: SeatPosition): cc.Vec3 {
-    const arrange = seatArrange[pos] || seatArrange[SeatPosition.Default];
-    return cc.v3(arrange.x, arrange.y, arrange.z);
-}
-
 const redColor = cc.Color.fromHEX(new cc.Color(), '#FA2B4B');
 
 const greenColor = cc.Color.fromHEX(new cc.Color(), '#78E4E4');
@@ -134,7 +129,6 @@ export default class SeatPlayer extends cc.Component {
     private _seatPlayer: TexasGameRoomDataPlayer = null!;
     private _cardBacks: cc.Node[] = [];
     private _bigCards: CardView[] = [];
-    private _layoutYOffset: number = 0;
     // 动画的池的位置（可能是发起，也可能是结尾,计算坐标使用)
     private _potNode: cc.Node = null!;
     // 发牌
@@ -150,12 +144,6 @@ export default class SeatPlayer extends cc.Component {
         if (this.node.activeInHierarchy) {
             this._bindEventsAndRefresh();
         }
-    }
-
-    public setLayoutYOffset(offset: number): void {
-        this._layoutYOffset = offset;
-        if (!this._seatPlayer) return;
-        this.onUpdatePosition(this._seatPlayer.position, AnimateDisplayTypePosition.Static);
     }
 
     // 防止内存泄露(简单说就是防止this丢失)
@@ -504,7 +492,7 @@ export default class SeatPlayer extends cc.Component {
                 this.micIconSprite.node.setPosition(90, 0);
                 break;
         }
-        const realPos = this._getRealSeatPosition(pos);
+        const realPos = seatArrange[pos];
         if (pat == AnimateDisplayTypePosition.ToTarget) {
             this.node.opacity = 0;
             cc.tween(this.node)
@@ -513,12 +501,6 @@ export default class SeatPlayer extends cc.Component {
             return;
         }
         this.node.setPosition(realPos);
-    }
-
-    private _getRealSeatPosition(pos: SeatPosition): cc.Vec3 {
-        const realPos = getSeatArrangePosition(pos);
-        realPos.y += this._layoutYOffset;
-        return realPos;
     }
 
     @bindEvent(TexasGameRoomDataPlayer.ROUND_BET_CHANGE, 'player', AnimateDisplayTypeRoundBet.Static)
