@@ -29,12 +29,13 @@ interface QuickMessageRecord {
 /** 当前快捷语显示的语言（与 pokerqueen 保持一致：中文，取不到回退 us_name） */
 const QUICK_MESSAGE_LANG_FIELD = 'cn_name';
 
+type ChatMode = 'chatOnly' | 'danmuAndChat';
+
 /**
  * 牌桌聊天对话框（对应 pokerqueen UIChatDlg）。
  *
  * 与 pokerqueen 的差异：
  *  - 消息缓存/实时推送走 roomData.chat（TexasGameRoomDataChat），本组件只 @bindEvent 订阅。
- *  - 弹幕（DanmakuNode / danmuAndChat 模式）不在本次迁移范围，prefab 中该节点已隐藏。
  *  - 快捷语从 HTTP 全局配置 WebConfigGlobalConfig 的 game_quick_message_config 字段读取。
  */
 @ccclass
@@ -67,19 +68,27 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
     private chatItemTemplate: cc.Node = null;
     @property({ type: cc.Prefab, displayName: '聊天条目 Prefab ChatMsgItem' })
     private chatMsgItemPrefab: cc.Prefab = null;
-
+    @property({ type: cc.Node, displayName: '只发聊天 chatOnly' })
+    private chatOnlyNode: cc.Node = null;
+    @property({ type: cc.Node, displayName: '同时发送弹幕 danmuAndChat' })
+    private danmuAndChatNode: cc.Node = null;
     private _roomData: TexasGameRoomData = null;
     private _chat: TexasGameRoomDataChat = null;
     /** ChatList Widget 原始 top（开场白显示时的位置），隐藏开场白时改为 welcomeNode 的 top 以回收空间 */
     private _chatListOriginTop: number = 0;
     private _chatTemplatePanelActive: boolean = false;
     private _chatTemplateLoaded: boolean = false;
+    private _chatMode: ChatMode = 'chatOnly';
+    private _checkedFrame: cc.SpriteFrame = null;
+    private _uncheckedFrame: cc.SpriteFrame = null;
 
     protected onLoad(): void {
         this.panelClickNode.on(cc.Node.EventType.TOUCH_END, this.onClickClose, this);
         this.closeBtn.on(cc.Node.EventType.TOUCH_END, this.onClickClose, this);
         this.sendBtn.on(cc.Node.EventType.TOUCH_END, this.onClickSendMsg, this);
         this.chatTemplateBtn.on(cc.Node.EventType.TOUCH_END, this.onClickToggleChatTemplate, this);
+        this.chatOnlyNode.on(cc.Node.EventType.TOUCH_END, () => this.onClickChatMode('chatOnly'), this);
+        this.danmuAndChatNode.on(cc.Node.EventType.TOUCH_END, () => this.onClickChatMode('danmuAndChat'), this);
         // 阻止面板区域触摸冒泡，防止误触背景关闭
         this.dlgNode.on(cc.Node.EventType.TOUCH_START, (e: cc.Event.EventTouch) => e.stopPropagation());
         this.dlgNode.on(cc.Node.EventType.TOUCH_END, (e: cc.Event.EventTouch) => e.stopPropagation());
@@ -87,9 +96,16 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
         // 修复 WebH5 构建后原生 <input> 被 H5 层 #app(z-index:10) 遮挡导致输入不可见
         this.chatEditBox.node.on('editing-did-began', (editbox: cc.EditBox) => {
             if (cc.sys.isBrowser && (editbox as any)._impl && (editbox as any)._impl._elem) {
-                ((editbox as any)._impl._elem as HTMLElement).style.zIndex = '20';
+                const elem = (editbox as any)._impl._elem as HTMLElement;
+                elem.style.zIndex = '20';
+                elem.style.paddingLeft = '40px';
+                elem.style.boxSizing = 'border-box';
             }
         });
+        const checkedSprite = this.chatOnlyNode.getChildByName('checkSpr').getComponent(cc.Sprite);
+        const uncheckedSprite = this.danmuAndChatNode.getChildByName('checkSpr').getComponent(cc.Sprite);
+        this._checkedFrame = checkedSprite.spriteFrame;
+        this._uncheckedFrame = uncheckedSprite.spriteFrame;
         const chatListWidget = this.chatListScroll.node.getComponent(cc.Widget);
         if (chatListWidget) {
             this._chatListOriginTop = chatListWidget.top;
@@ -110,7 +126,9 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
         this.dlgTitleLabel.string = `${this._roomData.basicInfo.roomName || ''}\n#${this._roomData.roomID}`;
         this.chatEditBox.string = '';
         this._chatTemplatePanelActive = false;
+        this._chatMode = 'chatOnly';
         this.chatTemplateNode.active = false;
+        this._updateChatModeUI();
         this._bindEventsAndRefresh();
         this._renderAllMessages();
         this._refreshWelcome();
@@ -200,7 +218,7 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
     private onClickSendMsg(): void {
         const text = this.chatEditBox.string.trim();
         if (!text || !this._roomData) return;
-        TexasTableEvent.SendChatMessage(this._roomData, text);
+        TexasTableEvent.SendChatMessage(this._roomData, text, this._chatMode === 'danmuAndChat');
         this.chatEditBox.string = '';
     }
     // ============================================================
@@ -334,6 +352,21 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
         if (!this._chatTemplateLoaded) return;
         this._chatTemplatePanelActive = !this._chatTemplatePanelActive;
         this.chatTemplateNode.active = this._chatTemplatePanelActive;
+    }
+
+    private onClickChatMode(mode: ChatMode): void {
+        this._chatMode = mode;
+        this._updateChatModeUI();
+    }
+
+    private _updateChatModeUI(): void {
+        this._setCheckFrame(this.chatOnlyNode, this._chatMode === 'chatOnly');
+        this._setCheckFrame(this.danmuAndChatNode, this._chatMode === 'danmuAndChat');
+    }
+
+    private _setCheckFrame(node: cc.Node, checked: boolean): void {
+        const checkSpr = node.getChildByName('checkSpr').getComponent(cc.Sprite);
+        checkSpr.spriteFrame = checked ? this._checkedFrame : this._uncheckedFrame;
     }
 
     /** 点击快捷语：填入输入框（不直接发送，留给用户确认/修改），并收起面板 */

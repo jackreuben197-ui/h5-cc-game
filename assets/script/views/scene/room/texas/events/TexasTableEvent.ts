@@ -683,11 +683,12 @@ export default class TexasTableEvent {
             (): number | null => null
         );
     }
+
     /**
      * 发送牌桌聊天消息（对应 pokerqueen UIChatDlg.click_sendMsg）。
      * 先写 pending 等 1019 status=0 确认（BroadcastMsg.ts → chat.confirmPendingMessage）后才落聊天记录。
      */
-    public static SendChatMessage(roomData: TexasGameRoomData, text: string): void {
+    public static SendChatMessage(roomData: TexasGameRoomData, text: string, sendDanmu: boolean = false): void {
         const content = (text || '').trim();
         if (!content) return;
         roomData.chat.setPendingMessage({
@@ -697,7 +698,31 @@ export default class TexasTableEvent {
             sex: userStore.sex || 0,
             time: TexasGameRoomDataChat.formatNowTime()
         });
-        const broadcastMsgData = JSON.stringify({
+        this._sendChatBroadcast(roomData, content, Def.BroadcastMsgType.BC_MSG_AVATAR, false);
+        if (sendDanmu) {
+            this._sendChatBroadcast(roomData, content, Def.BroadcastMsgType.BC_MSG_BULLET, true);
+        }
+    }
+
+    private static _sendChatBroadcast(
+        roomData: TexasGameRoomData,
+        content: string,
+        msgType: Def.BroadcastMsgTypeMap[keyof Def.BroadcastMsgTypeMap],
+        isDanmu: boolean
+    ): void {
+        const data: {
+            name: string;
+            type: number;
+            user_id: number;
+            target_user_id: number;
+            message: string;
+            msgType: number;
+            time: number;
+            sex: number;
+            headUrl: string;
+            isDanmu?: boolean;
+            danmuType?: number;
+        } = {
             name: userStore.name || '',
             type: 0,
             user_id: userStore.userID,
@@ -707,7 +732,12 @@ export default class TexasTableEvent {
             time: Date.now(),
             sex: userStore.sex || 0,
             headUrl: userStore.avatar || ''
-        });
+        };
+        if (isDanmu) {
+            data.isDanmu = true;
+            data.danmuType = 1;
+        }
+        const broadcastMsgData = JSON.stringify(data);
         const extraJson = JSON.stringify({ code: 1000, data: broadcastMsgData });
         ProtocolAgency.Send({
             code: Code.MSG_D_BROADCAST_MSG,
@@ -716,7 +746,7 @@ export default class TexasTableEvent {
             body: {
                 room: { roomId: roomData.roomID, matchId: roomData.matchID },
                 consume: Def.ConsumeType.CT_NONE,
-                msgType: Def.BroadcastMsgType.BC_MSG_AVATAR,
+                msgType,
                 message: content,
                 extra: new TextEncoder().encode(extraJson)
             }

@@ -25,7 +25,6 @@ export interface TexasChatMessage {
 export default class TexasGameRoomDataChat extends cc.EventTarget {
     public static readonly MESSAGE_ADDED = 'MESSAGE_ADDED';
     public static readonly MESSAGES_RESET = 'MESSAGES_RESET';
-
     public readonly roomData: TexasGameRoomData;
     private _messages: TexasChatMessage[] = [];
     /** 本人发送后等待服务端 1019 确认的消息 */
