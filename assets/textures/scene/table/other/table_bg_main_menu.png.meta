@@ -8,8 +8,8 @@
   "premultiplyAlpha": false,
   "genMipmaps": false,
   "packable": true,
-  "width": 1242,
-  "height": 202,
+  "width": 402,
+  "height": 56,
   "platformSettings": {},
   "subMetas": {
     "table_bg_main_menu": {
@@ -28,10 +28,10 @@
       "height": 56,
       "rawWidth": 402,
       "rawHeight": 56,
-      "borderTop": 0,
-      "borderBottom": 0,
-      "borderLeft": 0,
-      "borderRight": 0,
+      "borderTop": 26,
+      "borderBottom": 26,
+      "borderLeft": 26,
+      "borderRight": 26,
       "subMetas": {}
     }
   }
