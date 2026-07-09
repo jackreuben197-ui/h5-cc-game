@@ -187,8 +187,12 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         // TODO: 接入表情/弹幕系统
     }
 
-    /** 聊天按钮（桩实现，后续接入聊天系统） */
+    /** 聊天按钮：打开牌桌聊天对话框 */
     private onClickChatBtn(): void {
-        // TODO: 接入聊天系统
+        if (!this._mine) return;
+        viewManager.openDialog('TexasChat', {
+            roomID: this._mine.roomData.roomID,
+            matchID: this._mine.roomData.matchID
+        });
     }
 }

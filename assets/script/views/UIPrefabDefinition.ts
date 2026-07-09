@@ -1,6 +1,7 @@
 // import UIBringIn from './dialog/bringin/UIBringIn';
 import UIBringIn from './dialog/bringin/UIBringIn';
 import UIBringOut from './dialog/bringout/UIBringInOut';
+import UIChatDlg from './dialog/chat/UIChatDlg';
 import UIConfirmDialog from './dialog/confirm/UIConfirmDialog';
 import UITexasHistory from './dialog/history/UITexasHistory';
 import UIInsuranceNewPanel from './dialog/insurance/UIInsuranceNewPanel';
@@ -115,6 +116,12 @@ export const UIPrefabDialog = {
         Name: '牌谱回放',
         Bundle: BUNDLE_RESOURCES,
         Path: 'rc/scene/room/texas/UITexasHistory'
+    },
+    TexasChat: {
+        UIType: UIChatDlg,
+        Name: '牌桌聊天',
+        Bundle: BUNDLE_RESOURCES,
+        Path: 'rc/scene/room/texas/UIChatDlg'
     }
 } as const;
 

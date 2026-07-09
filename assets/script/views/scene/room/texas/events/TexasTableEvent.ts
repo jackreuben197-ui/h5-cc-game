@@ -1,6 +1,7 @@
 import { ClientMessageSeated, Code, Def, PotInsuranceBuy, RoomInfo } from '@silenthill/agreement-web';
 import { traceClass } from '../../../../../core/decorator/LogTrace';
 import TexasGameRoomData from '../../../../../data/room/texas/TexasGameRoomData';
+import TexasGameRoomDataChat from '../../../../../data/room/texas/TexasGameRoomDataChat';
 import TexasGameRoomDataPlayerMine from '../../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import userStore from '../../../../../data/user/UserStore';
 import UserStoreUtils from '../../../../../data/user/UserStoreUtils';
@@ -682,6 +683,46 @@ export default class TexasTableEvent {
             (): number | null => null
         );
     }
+    /**
+     * 发送牌桌聊天消息（对应 pokerqueen UIChatDlg.click_sendMsg）。
+     * 先写 pending 等 1019 status=0 确认（BroadcastMsg.ts → chat.confirmPendingMessage）后才落聊天记录。
+     */
+    public static SendChatMessage(roomData: TexasGameRoomData, text: string): void {
+        const content = (text || '').trim();
+        if (!content) return;
+        roomData.chat.setPendingMessage({
+            name: userStore.name || '',
+            content,
+            headUrl: userStore.avatar || '',
+            sex: userStore.sex || 0,
+            time: TexasGameRoomDataChat.formatNowTime()
+        });
+        const broadcastMsgData = JSON.stringify({
+            name: userStore.name || '',
+            type: 0,
+            user_id: userStore.userID,
+            target_user_id: 0,
+            message: content,
+            msgType: 2,
+            time: Date.now(),
+            sex: userStore.sex || 0,
+            headUrl: userStore.avatar || ''
+        });
+        const extraJson = JSON.stringify({ code: 1000, data: broadcastMsgData });
+        ProtocolAgency.Send({
+            code: Code.MSG_D_BROADCAST_MSG,
+            roomID: roomData.roomID,
+            matchID: roomData.matchID,
+            body: {
+                room: { roomId: roomData.roomID, matchId: roomData.matchID },
+                consume: Def.ConsumeType.CT_NONE,
+                msgType: Def.BroadcastMsgType.BC_MSG_AVATAR,
+                message: content,
+                extra: new TextEncoder().encode(extraJson)
+            }
+        });
+    }
+
     public static PrefetchhReportRoomers(roomID: number, matchID: number): void {
         if (!roomID) return;
         ProtocolAgency.Send({

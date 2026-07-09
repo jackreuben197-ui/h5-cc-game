@@ -12,7 +12,7 @@
   "height": 32,
   "platformSettings": {},
   "subMetas": {
-    "checkbox (1)": {
+    "uncheck": {
       "ver": "1.0.6",
       "uuid": "624d47fe-d821-43d0-a067-734d972bccfe",
       "importer": "sprite-frame",

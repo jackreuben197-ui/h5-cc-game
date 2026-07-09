@@ -18,6 +18,7 @@ export class UserStore extends cc.EventTarget {
     public userID: number;
     public userRID: number;
     public token: string;
+    public sex: number = 0;
     @observable(UserStore.DIAMONDS_CHANGE)
     public diamonds: number = 0;
     @observable(UserStore.NICKNAME_CHANGE)

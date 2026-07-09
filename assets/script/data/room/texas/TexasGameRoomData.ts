@@ -1,6 +1,7 @@
 import RoomData from '../RoomData';
 import texasGamePersonalSettings from './TexasGamePersonalSettings';
 import TexasGameRoomDataBasic from './TexasGameRoomDataBasic';
+import TexasGameRoomDataChat from './TexasGameRoomDataChat';
 import TexasGameRoomDataPlayerMine from './TexasGameRoomDataPlayerMine';
 import TexasGameRoomDataPotInfo from './TexasGameRoomDataPotInfo';
 import TexasGameRoomDataPublicCards from './TexasGameRoomDataPublicCards';
@@ -29,4 +30,6 @@ export default class TexasGameRoomData extends RoomData {
     public readonly report = new TexasGameRoomDataReport(this);
     // 牌谱回放
     public readonly replay = new TexasGameRoomDataReplay(this);
+    // 牌桌聊天
+    public readonly chat = new TexasGameRoomDataChat(this);
 }
