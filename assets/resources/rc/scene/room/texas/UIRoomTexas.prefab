@@ -17897,6 +17897,9 @@
     "btnReport": {
       "__id__": 64
     },
+    "btnReplay": {
+      "__id__": 75
+    },
     "opPannelNode": {
       "__id__": 449
     },
@@ -17915,6 +17918,13 @@
     "chatBtn": {
       "__id__": 88
     },
+    "btnEmoji": null,
+    "btnEffect": null,
+    "btnAudio": null,
+    "btnCamera": null,
+    "chatBtn": null,
+    "muteMicNode": null,
+    "hideVideoNode": null,
     "_id": ""
   },
   {

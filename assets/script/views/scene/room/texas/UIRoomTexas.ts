@@ -5,6 +5,7 @@ import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
+import ProtocolAgency from '../../../../net/websocket/ProtocolAgency';
 import UIComponentBase from '../../../base/UIComponentBase';
 import { UIGuideDialogType } from '../../../dialog/mushroomandcriticalhit/UIGuideDialog';
 import viewManager from '../../../UIViewManager';
@@ -44,8 +45,10 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private sideMenuNode: cc.Node = null;
     private _sideMenuTexasMenu: UITexasMenu = null;
     private _onSideMenuClicked: () => void = null!;
-    @property({ type: cc.Button, displayName: '战绩按钮 (side_btns/main_menu/btn_report)' })
+    @property({ type: cc.Button, displayName: '战绩按钮' })
     private btnReport: cc.Button = null!;
+    @property({ type: cc.Button, displayName: '牌谱按钮' })
+    private btnReplay: cc.Button = null!;
     @property({ type: cc.Node, displayName: '操作面板' })
     private opPannelNode: cc.Node = null!;
     private _opPannel: Operation = null!;
@@ -75,6 +78,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this._opPannel = this.opPannelNode.children[0].getComponent(Operation);
         //战绩按钮
         if (this.btnReport) this.btnReport.node.on('click', this.onClickReport, this);
+        //牌谱按钮
+        if (this.btnReplay) this.btnReplay.node.on('click', this.onClickReplay, this);
         //其他状态
         this._otherBindings = this.otherBindings.getComponent(OtherBindings);
         // main_menu 按钮事件注册
@@ -85,6 +90,13 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private onClickReport = () => {
         if (!this._mine) return;
         viewManager.openDialog('TexasReport', {
+            roomID: this._mine.roomData.roomID,
+            matchID: this._mine.roomData.matchID
+        });
+    };
+    private onClickReplay = () => {
+        if (!this._mine) return;
+        viewManager.openDialog('TexasHistory', {
             roomID: this._mine.roomData.roomID,
             matchID: this._mine.roomData.matchID
         });
