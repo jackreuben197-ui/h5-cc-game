@@ -33,12 +33,6 @@ export const PreloadDefinitionSound: PreloadDefinition = {
     dir: 'sound',
     collection: true
 };
-
-export const PreloadDefinitionSpine: PreloadDefinition = {
-    bundle: BUNDLE_RESOURCES,
-    dir: 'spine',
-    collection: false
-};
 // AssetCollectionType 加载素材的时候会把一些spriteframe, sound打包到一个prefab里，然后用于快速索引
 // 应该每一个Prefab对应一个enum索引,这样保证不会重复
 export type AssetTypeMapping = {

@@ -27,29 +27,33 @@ class ThrowPropManager {
         11: 'sfx_baseball' // 棒球
     };
     private static readonly CONFIGS: PropAnimConfig[] = [
-        { pattern: 'A', spines: ['spine/expressionTomato/skeleton'], anims: ['1'] },
-        { pattern: 'A', spines: ['spine/expressionFlower/skeleton'], anims: ['animation'] },
-        { pattern: 'A', spines: ['spine/expressionKiss/kiss'], anims: ['1'] },
-        { pattern: 'A', spines: ['spine/expressionGood/skeleton'], anims: ['animation'] },
-        { pattern: 'D', spines: ['spine/expressionBeer/cheers_2', 'spine/expressionBeerScreen/cheers_1'], anims: [] },
-        { pattern: 'B', spines: ['spine/expressionTouch/touch'], anims: ['animation'] },
-        { pattern: 'C', spines: ['spine/expressionShark/shark'], anims: ['shark_set', 'shark_receive'] },
-        { pattern: 'C', spines: ['spine/expressionChicken/chicken_spine'], anims: ['chicken_set', 'chicken_receive'] },
-        { pattern: 'D', spines: ['spine/expressionBox/box_local', 'spine/expressionBoxScreen/box_full'], anims: [] },
-        { pattern: 'C', spines: ['spine/expressionMoney/attachments'], anims: ['attachments_1_receive'] },
+        { pattern: 'A', spines: ['rc/other/effect/expressionTomato/skeleton'], anims: ['1'] },
+        { pattern: 'A', spines: ['rc/other/effect/expressionFlower/skeleton'], anims: ['animation'] },
+        { pattern: 'A', spines: ['rc/other/effect/expressionKiss/kiss'], anims: ['1'] },
+        { pattern: 'A', spines: ['rc/other/effect/expressionGood/skeleton'], anims: ['animation'] },
+        { pattern: 'D', spines: ['rc/other/effect/expressionBeer/cheers_2', 'rc/other/effect/expressionBeerScreen/cheers_1'], anims: [] },
+        { pattern: 'B', spines: ['rc/other/effect/expressionTouch/touch'], anims: ['animation'] },
+        { pattern: 'C', spines: ['rc/other/effect/expressionShark/shark'], anims: ['shark_set', 'shark_receive'] },
+        { pattern: 'C', spines: ['rc/other/effect/expressionChicken/chicken_spine'], anims: ['chicken_set', 'chicken_receive'] },
+        { pattern: 'D', spines: ['rc/other/effect/expressionBox/box_local', 'rc/other/effect/expressionBoxScreen/box_full'], anims: [] },
+        { pattern: 'C', spines: ['rc/other/effect/expressionMoney/attachments'], anims: ['attachments_1_receive'] },
         {
             pattern: 'D',
             spines: [
-                'spine/expressionFish/sy3',
-                'spine/expressionFishScreenSender/sy2',
-                'spine/expressionFishScreenReceiver/sy',
-                'spine/expressionFishWave/hl'
+                'rc/other/effect/expressionFish/sy3',
+                'rc/other/effect/expressionFishScreenSender/sy2',
+                'rc/other/effect/expressionFishScreenReceiver/sy',
+                'rc/other/effect/expressionFishWave/hl'
             ],
             anims: []
         },
         {
             pattern: 'D',
-            spines: ['spine/expressionBaseballSender/skeleton', 'spine/expressionBaseballReceiver/ballfolder1', 'spine/expressionBaseballOther/skeleton'],
+            spines: [
+                'rc/other/effect/expressionBaseballSender/skeleton',
+                'rc/other/effect/expressionBaseballReceiver/ballfolder1',
+                'rc/other/effect/expressionBaseballOther/skeleton'
+            ],
             anims: []
         }
     ];
@@ -201,7 +205,7 @@ class ThrowPropManager {
     }
 
     private _playBeer(senderNode: cc.Node, targetNode: cc.Node, role: PropRole): void {
-        const [beerData, screenData] = this._getSkeletons(['spine/expressionBeer/cheers_2', 'spine/expressionBeerScreen/cheers_1']);
+        const [beerData, screenData] = this._getSkeletons(['rc/other/effect/expressionBeer/cheers_2', 'rc/other/effect/expressionBeerScreen/cheers_1']);
         if (!this._isRootValid()) return;
         const senderPos = this._getLocalPos(senderNode);
         const targetPos = this._getLocalPos(targetNode);
@@ -218,7 +222,7 @@ class ThrowPropManager {
     }
 
     private _playBoxing(senderNode: cc.Node, targetNode: cc.Node, role: PropRole): void {
-        const [boxData, screenData] = this._getSkeletons(['spine/expressionBox/box_local', 'spine/expressionBoxScreen/box_full']);
+        const [boxData, screenData] = this._getSkeletons(['rc/other/effect/expressionBox/box_local', 'rc/other/effect/expressionBoxScreen/box_full']);
         if (!this._isRootValid()) return;
         const senderPos = this._getLocalPos(senderNode);
         const targetPos = this._getLocalPos(targetNode);
@@ -248,10 +252,10 @@ class ThrowPropManager {
 
     private _playFish(senderNode: cc.Node, targetNode: cc.Node, role: PropRole): void {
         const paths = [
-            'spine/expressionFish/sy3',
-            'spine/expressionFishScreenSender/sy2',
-            'spine/expressionFishScreenReceiver/sy',
-            'spine/expressionFishWave/hl'
+            'rc/other/effect/expressionFish/sy3',
+            'rc/other/effect/expressionFishScreenSender/sy2',
+            'rc/other/effect/expressionFishScreenReceiver/sy',
+            'rc/other/effect/expressionFishWave/hl'
         ];
         const [fishData, senderScreenData, receiverScreenData, waveData] = this._getSkeletons(paths);
         if (!this._isRootValid()) return;
@@ -292,7 +296,11 @@ class ThrowPropManager {
     }
 
     private _playBaseball(senderNode: cc.Node, targetNode: cc.Node, role: PropRole): void {
-        const paths = ['spine/expressionBaseballSender/skeleton', 'spine/expressionBaseballReceiver/ballfolder1', 'spine/expressionBaseballOther/skeleton'];
+        const paths = [
+            'rc/other/effect/expressionBaseballSender/skeleton',
+            'rc/other/effect/expressionBaseballReceiver/ballfolder1',
+            'rc/other/effect/expressionBaseballOther/skeleton'
+        ];
         this._playSound(ThrowPropManager.SOUND_MAP[11]);
         const [senderData, receiverData, otherData] = this._getSkeletons(paths);
         if (!this._isRootValid()) return;
