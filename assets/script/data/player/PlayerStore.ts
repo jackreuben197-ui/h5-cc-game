@@ -1,15 +1,14 @@
 import { bindData, IObservableBindings, pureEvent } from '../../core/decorator/DataBind';
+import { HttpStatsOtherUserStats } from '../../net/https/data/stats/HttpStatsOtherUserStats';
 
 export interface PlayerStore extends IObservableBindings<PlayerStore> {}
 
 export interface PlayerBasicData {
     nick_name?: string;
-    nickname?: string;
     avatar?: string;
     sex?: number;
     random_num?: number;
     remark_name?: string;
-    remark_desc?: string;
 }
 
 export interface PlayerDiamondConfig {
@@ -35,11 +34,15 @@ export interface PlayerPropData {
     priceID: number;
 }
 
+export type PlayerStatsData = HttpStatsOtherUserStats.Data;
+
 @bindData()
 export class PlayerStore extends cc.EventTarget {
     public static readonly BASIC_INFO_CHANGE = 'BASIC_INFO_CHANGE';
+    public static readonly STATS_CHANGE = 'STATS_CHANGE';
     public static readonly PROP_LIST_CHANGE = 'PROP_LIST_CHANGE';
     private readonly _basicInfoMap: Map<number, PlayerBasicData> = new Map();
+    private readonly _statsMap: Map<number, PlayerStatsData> = new Map();
     private _propList: PlayerPropData[] = [];
 
     public getBasicInfo(userRID: number): PlayerBasicData {
@@ -62,6 +65,16 @@ export class PlayerStore extends cc.EventTarget {
         this._sendBasicInfoChangeEvent(userRID, newData);
     }
 
+    public getStats(userRID: number): PlayerStatsData {
+        return this._statsMap.get(userRID) || null;
+    }
+
+    public updateStats(userRID: number, data: PlayerStatsData): void {
+        if (!userRID || !data) return;
+        this._statsMap.set(userRID, data);
+        this._sendStatsChangeEvent(userRID, data);
+    }
+
     public getPropList(): PlayerPropData[] {
         return this._propList;
     }
@@ -73,6 +86,9 @@ export class PlayerStore extends cc.EventTarget {
 
     @pureEvent(PlayerStore.BASIC_INFO_CHANGE)
     private _sendBasicInfoChangeEvent(userRID: number, data: PlayerBasicData): void {}
+
+    @pureEvent(PlayerStore.STATS_CHANGE)
+    private _sendStatsChangeEvent(userRID: number, data: PlayerStatsData): void {}
 
     @pureEvent(PlayerStore.PROP_LIST_CHANGE, {
         initParams() {

@@ -38,6 +38,7 @@ export default class UserStoreUtils {
         userStore.diamonds = data.data.user.diamonds;
         userStore.avatar = data.data.user.avatar;
         userStore.name = data.data.user.nickname;
+        userStore.sex = data.data.user.sex;
         userStore.forbid = data.data.user.forbid == 0;
     }
 

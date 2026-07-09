@@ -26,7 +26,7 @@ import { HttpUserDiamondSend } from '../../net/https/data/user/HttpUserDiamondSe
 import { HttpUserMuteList } from '../../net/https/data/user/HttpUserMuteList';
 import TexasGameRoomData from '../room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayer from '../room/texas/TexasGameRoomDataPlayer';
-import playerStore, { PlayerPropData, PlayerReportParam } from './PlayerStore';
+import playerStore, { PlayerBasicData, PlayerPropData, PlayerReportParam } from './PlayerStore';
 
 const CONSUME_TYPE_EMOJI_2 = 6;
 
@@ -34,44 +34,120 @@ type StatsCombineResult = HttpStatsOtherUserStats.Data | HttpStatsOtherUserStats
 
 @traceClass()
 export default class PlayerStoreUtils {
-    public static syncSeatPlayer(player: TexasGameRoomDataPlayer): void {
-        if (!player.seated || !player.userID) return;
-        playerStore.updateBasicInfo({
-            nick_name: player.name,
-            avatar: player.avatar,
-            random_num: player.userID
+    public static syncSeatPlayer(player: TexasGameRoomDataPlayer, roomData?: TexasGameRoomData): void {
+        PlayerStoreUtils.syncSeatPlayers(roomData, [player]);
+    }
+
+    public static syncSeatPlayers(roomData: TexasGameRoomData, players: TexasGameRoomDataPlayer[]): void {
+        const userRIDs = PlayerStoreUtils._syncBasicInfoFromSeatPlayers(players);
+        if (!roomData || userRIDs.length <= 0) return;
+        PlayerStoreUtils._loadPlayerCombineData(roomData, userRIDs).catch(error => {
+            PlayerStoreUtils.tracelog.error('sync seat player data error', error);
         });
     }
 
     public static async getStats(roomData: TexasGameRoomData, userRID: number): Promise<HttpStatsOtherUserStats.Data | null> {
+        const cached = playerStore.getStats(userRID);
+        if (cached) return cached;
+        await PlayerStoreUtils._loadPlayerCombineData(roomData, [userRID]);
+        return playerStore.getStats(userRID);
+    }
+
+    public static async refreshStats(roomData: TexasGameRoomData, userRID: number): Promise<HttpStatsOtherUserStats.Data | null> {
+        await PlayerStoreUtils._loadPlayerCombineData(roomData, [userRID], false);
+        return playerStore.getStats(userRID);
+    }
+
+    private static _syncBasicInfoFromSeatPlayers(players: TexasGameRoomDataPlayer[]): number[] {
+        const userRIDs: number[] = [];
+        players.forEach(player => {
+            if (!player.seated || !player.userID) return;
+            playerStore.updateBasicInfo({
+                nick_name: player.name,
+                avatar: player.avatar,
+                random_num: player.userID,
+                sex: player.sex
+            });
+            userRIDs.push(player.userID);
+        });
+        return PlayerStoreUtils._uniqueUserRIDs(userRIDs);
+    }
+
+    private static async _loadPlayerCombineData(roomData: TexasGameRoomData, userRIDs: number[], useCache = true): Promise<void> {
+        const ids = PlayerStoreUtils._uniqueUserRIDs(userRIDs);
+        if (ids.length <= 0) return;
+        const body = PlayerStoreUtils._createPlayerCombineRequest(roomData, ids);
+        const res = await WWW.Instance.CommonAPI<HttpMiscCombine.ResponseData>({
+            web_class: WebMiscCombine,
+            body,
+            juhua: false,
+            useCache
+        });
+        if (res.code != 0) {
+            PlayerStoreUtils.tracelog.error('get HttpMiscCombine player data error', res.code);
+            return;
+        }
+        PlayerStoreUtils._applyUserPublicInfoList(res.data?.user_info_by_rid_resp || []);
+        PlayerStoreUtils._normalizeStatsList(res.data?.user_stats_by_user_rid_resp).forEach(stats => {
+            playerStore.updateStats(stats.user_random_id, stats);
+        });
+    }
+
+    private static _createPlayerCombineRequest(roomData: TexasGameRoomData, userRIDs: number[]): HttpMiscCombine.RequestData {
         const statsBody = new HttpStatsOtherUserStats.RequestData();
         statsBody.game_type = roomData.basicInfo.gameType;
         statsBody.poker_type = roomData.basicInfo.pokerType;
         statsBody.gold_type = roomData.basicInfo.goldType;
         statsBody.origin_type = roomData.basicInfo.originType;
         statsBody.room_id = roomData.roomID;
-        statsBody.user_random_id = [userRID];
+        statsBody.user_random_id = userRIDs;
+        const userInfoBody = new HttpMiscCombine.UserInfoByRidRequest();
+        userInfoBody.user_random_id = userRIDs;
         const body = new HttpMiscCombine.RequestData();
-        body.api_list = [WebMiscCombine.ApiType.OTHER_USER_STATS];
+        body.api_list = [WebMiscCombine.ApiType.USER_PUBLIC_INFO, WebMiscCombine.ApiType.OTHER_USER_STATS];
+        body.user_info_by_rid_req = userInfoBody;
         body.user_stats_by_user_rid_req = statsBody;
-        const res = await WWW.Instance.CommonAPI<HttpMiscCombine.ResponseData>({
-            web_class: WebMiscCombine,
-            body,
-            juhua: false,
-            useCache: true
+        return body;
+    }
+
+    private static _applyUserPublicInfoList(list: HttpMiscCombine.UserPublicInfo[]): void {
+        list.forEach(item => {
+            if (!item?.random_num) return;
+            const data: PlayerBasicData = {
+                random_num: item.random_num
+            };
+            if (item.nick_name != null) data.nick_name = item.nick_name;
+            if (item.avatar != null) data.avatar = item.avatar;
+            if (item.sex != null) data.sex = item.sex;
+            if (item.remark_name != null) data.remark_name = item.remark_name;
+            playerStore.updateBasicInfo(data);
         });
-        if (res.code != 0) {
-            PlayerStoreUtils.tracelog.error('get HttpMiscCombine other user stats error', res.code);
-            return null;
-        }
-        const data = res.data.user_stats_by_user_rid_resp;
-        const first = Array.isArray(data) ? data[0] : data;
-        return PlayerStoreUtils._normalizeStatsData(first);
+    }
+
+    private static _normalizeStatsList(data: HttpMiscCombine.StatsResponse[] | HttpMiscCombine.StatsResponse): HttpStatsOtherUserStats.Data[] {
+        const list = Array.isArray(data) ? data : data ? [data] : [];
+        const result: HttpStatsOtherUserStats.Data[] = [];
+        list.forEach(item => {
+            const stats = PlayerStoreUtils._normalizeStatsData(item);
+            if (stats?.user_random_id) result.push(stats);
+        });
+        return result;
     }
 
     private static _normalizeStatsData(data: StatsCombineResult): HttpStatsOtherUserStats.Data | null {
         if (!data) return null;
         return (data as HttpStatsOtherUserStats.ResponseData).data || (data as HttpStatsOtherUserStats.Data);
+    }
+
+    private static _uniqueUserRIDs(userRIDs: number[]): number[] {
+        const map: Record<number, boolean> = {};
+        const result: number[] = [];
+        userRIDs.forEach(userRID => {
+            if (!userRID || map[userRID]) return;
+            map[userRID] = true;
+            result.push(userRID);
+        });
+        return result;
     }
 
     public static async saveRemark(roomData: TexasGameRoomData, dbUserID: number, remark: string): Promise<HttpOrgClubUserUpdate.ResponseData> {

@@ -1,5 +1,5 @@
 import { ClientMessageBroadcastMsg, Code } from '@silenthill/agreement-web';
-import playerStore, { PlayerBasicData, PlayerDiamondConfig, PlayerPropData } from '../../../data/player/PlayerStore';
+import playerStore, { PlayerBasicData, PlayerDiamondConfig, PlayerPropData, PlayerStore } from '../../../data/player/PlayerStore';
 import PlayerStoreUtils from '../../../data/player/PlayerStoreUtils';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
@@ -130,10 +130,14 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this._refreshBasicInfo({
             nick_name: this._player.name || '',
             avatar: this._player.avatar || '',
-            random_num: this._requestRID
+            random_num: this._requestRID,
+            sex: this._player.sex || 1
         });
         const cachedBasicInfo = playerStore.getBasicInfo(this._requestRID);
         if (cachedBasicInfo) this._refreshBasicInfo(cachedBasicInfo);
+        playerStore.targetOff(this);
+        playerStore.on(PlayerStore.BASIC_INFO_CHANGE, this._onStoreBasicInfoChange, this);
+        playerStore.on(PlayerStore.STATS_CHANGE, this._onStoreStatsChange, this);
         this._refreshSelfState();
         this._refreshOpButtons();
         this._switchTab(0);
@@ -158,6 +162,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this.propOpNode.children.forEach(node => node.targetOff(this));
         this.noteEditBox.node.targetOff(this);
         userStore.targetOff(this);
+        playerStore.targetOff(this);
     }
 
     private _bindStaticEvents(): void {
@@ -204,17 +209,31 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         try {
             const data = playerStore.getBasicInfo(rid);
             const statsRID = data?.random_num || rid;
-            const stats = await PlayerStoreUtils.getStats(this._roomData, statsRID);
-            if (this._isCurrentRequest(rid) && stats) this._refreshDataPanel(stats);
+            const cachedStats = playerStore.getStats(statsRID);
+            if (cachedStats) {
+                this._refreshDataPanel(cachedStats);
+            }
+            const stats = await PlayerStoreUtils.refreshStats(this._roomData, statsRID);
+            if (!cachedStats && this._isCurrentRequest(rid) && stats) this._refreshDataPanel(stats);
         } catch (error) {
             cc.warn('[UIPlayerInfo] load player info failed', error);
         }
     }
 
+    private _onStoreBasicInfoChange(userRID: number, data: PlayerBasicData): void {
+        if (!this._isCurrentRequest(userRID)) return;
+        this._refreshBasicInfo(data);
+    }
+
+    private _onStoreStatsChange(userRID: number, data: HttpStatsOtherUserStats.Data): void {
+        if (!this._isCurrentRequest(userRID)) return;
+        this._refreshDataPanel(data);
+    }
+
     private _refreshBasicInfo(data: PlayerBasicData): void {
         const rid = data.random_num || this._requestRID;
         if (data.avatar) this._loadRemoteSprite(this.headImgIcon, data.avatar);
-        this.nickNameLabel.string = StringHelper.LengthNick(data.nick_name || data.nickname || this._player.name || '', 16);
+        this.nickNameLabel.string = StringHelper.LengthNick(data.nick_name, 16);
         this.maleNode.active = data.sex !== 1;
         this.femaleNode.active = data.sex === 1;
         this.playerIDLabel.string = `${rid || ''}`;
@@ -732,7 +751,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             name: userStore.name,
             target_user_id: this._requestRID,
             user_id: userStore.userRID,
-            type: propType,
+            type: propType
         });
         const extra = JSON.stringify({ code: 1000, data: inner });
         const body: ClientMessageBroadcastMsg.AsObject = {

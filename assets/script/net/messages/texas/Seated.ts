@@ -1,5 +1,6 @@
 import { Def, ServerMessageSeated } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
+import PlayerStoreUtils from '../../../data/player/PlayerStoreUtils';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import userStore from '../../../data/user/UserStore';
@@ -31,6 +32,7 @@ export async function Seated(data: ServerMessageSeated.AsObject, roomID: number,
     seatData.userID = userStore.userRID;
     seatData.name = userStore.name;
     seatData.avatar = userStore.avatar;
+    seatData.sex = userStore.sex;
     seatData.chip = data.chips;
     seatData.status = data.postStatus;
     // 货币桌,顺带更新下钱包
@@ -62,6 +64,7 @@ export async function Seated(data: ServerMessageSeated.AsObject, roomID: number,
     // 操作面板(不显示)
     mine.autoOperationType = AutoOperationTypeTexas.NO;
     mine.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
+    PlayerStoreUtils.syncSeatPlayer(seatData, roomData);
     if (roomData.basicInfo.antiCheatConfig) {
         const seatedConfig = roomData.basicInfo.antiCheatConfig.getSeatedSetting();
         const promise = [];
