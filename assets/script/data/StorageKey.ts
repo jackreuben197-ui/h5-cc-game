@@ -59,6 +59,14 @@ export default class StorageKey {
     static getReplayMatchKey(userId: number, matchId: number, handNum: number): string {
         return `${userId}_m${matchId}_${handNum}`;
     }
+
+    static getReplayPeekTimesKey(userId: number, roomId: number): string {
+        return `replay_peek_times_${userId}_${roomId}`;
+    }
+
+    static getReplayViewPubFreeKey(userId: number): string {
+        return `replay_viewpub_free_${userId}`;
+    }
     // static OpenBarrage: string = 'OpenBarrage'; //是否打开弹幕 1 关闭，0 打开
     // //=======================设置相关========================
     static SHOW_BB = 'SHOW_BB';

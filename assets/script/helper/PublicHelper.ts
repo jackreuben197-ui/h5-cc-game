@@ -68,6 +68,31 @@ export default class PublicHelper {
         return +Number(num).toFixed(1);
     }
 
+    public static Uint8ArrayToString(bytes: Uint8Array): string {
+        let str = '';
+        for (let i = 0; i < bytes.length; i++) {
+            str += String.fromCharCode(bytes[i]);
+        }
+        return str;
+    }
+
+    //base64 to json (UTF-8 安全,浏览器环境无 Buffer)
+    public static Base64ToJsonString(str: string): string {
+        const bin = atob(str);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) {
+            bytes[i] = bin.charCodeAt(i);
+        }
+        if (typeof TextDecoder !== 'undefined') {
+            return new TextDecoder('utf-8').decode(bytes);
+        }
+        let encoded = '';
+        for (let i = 0; i < bytes.length; i++) {
+            encoded += '%' + ('0' + bytes[i].toString(16)).slice(-2);
+        }
+        return decodeURIComponent(encoded);
+    }
+
     //不带透明度的颜色转换
     public static GetColorArr(color: string, opacity: number = 255): number[] {
         let color_value = parseInt(color, 16);
