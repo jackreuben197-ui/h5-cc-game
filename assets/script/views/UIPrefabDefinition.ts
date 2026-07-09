@@ -2,6 +2,7 @@
 import UIBringIn from './dialog/bringin/UIBringIn';
 import UIBringOut from './dialog/bringout/UIBringInOut';
 import UIConfirmDialog from './dialog/confirm/UIConfirmDialog';
+import UITexasHistory from './dialog/history/UITexasHistory';
 import UIInsuranceNewPanel from './dialog/insurance/UIInsuranceNewPanel';
 import UIGuideDialog from './dialog/mushroomandcriticalhit/UIGuideDialog';
 import UIPersonalSettings from './dialog/personalsettings/UIPersonalSettings';
@@ -110,6 +111,12 @@ export const UIPrefabDialog = {
         Name: '个性设置',
         Bundle: BUNDLE_RESOURCES,
         Path: 'rc/dialog/personalsettings/UIPersonalSettings'
+    },
+    TexasHistory: {
+        UIType: UITexasHistory,
+        Name: '牌谱回放',
+        Bundle: BUNDLE_RESOURCES,
+        Path: 'rc/scene/room/texas/UITexasHistory'
     },
     PlayerInfo: {
         UIType: UIPlayerInfo,
