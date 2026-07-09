@@ -37,8 +37,6 @@ export default class UITexasMenu extends cc.Component {
     public btnLeaveGame: cc.Button = null;
     @property(cc.Button)
     public btnDissolve: cc.Button = null;
-    @property({ type: cc.Button, displayName: '牌谱回放按钮' })
-    public btnHistory: cc.Button = null;
     //按钮模板节点
     //Menu_Button: cc.Node = null;
     outTipNode: cc.Node = null;
@@ -117,7 +115,6 @@ export default class UITexasMenu extends cc.Component {
         this.btnInsure.node.on('click', this.click_insurance, this);
         this.btnLeaveGame.node.on('click', this.click_leave, this);
         this.btnShowBB.node.on('click', this.click_bb, this);
-        if (this.btnHistory) this.btnHistory.node.on('click', this.click_history, this);
         this.showBBSwitch.onSwitchCallback = v => {
             this._roomData.setting.showBB = v;
         };
@@ -374,14 +371,5 @@ export default class UITexasMenu extends cc.Component {
 
     click_bb() {
         this.showBBSwitch.onoff(!this.showBBSwitch.isOn, true);
-    }
-
-    //牌谱回放
-    click_history() {
-        this.click_black();
-        viewManager.openDialog('TexasHistory', {
-            roomID: this._roomData.roomID,
-            matchID: this._roomData.matchID
-        });
     }
 }
