@@ -1,66 +1,8 @@
 import { bindData, pureEvent } from '../../../core/decorator/DataBind';
 import { AnimateDisplayTypeButton, AnimateDisplayTypeMushroomPool, AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
+import seatPostionCaculator from '../../../views/scene/room/texas/widget/SeatPositionCaculator';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';
-
-//   4 5 6
-// 3       7
-// 2       8
-// 1       9
-//     0
-export enum SeatPosition {
-    Default = 99,
-    BottomMiddle = 0,
-    BottomLeft,
-    MiddleLeft,
-    TopLeft,
-    TopLeft1,
-    TopMiddle,
-    TopRight1,
-    TopRight,
-    MiddleRight,
-    BottomRight,
-    TopLeft7, // 7人桌的修正
-    TopRight7 // 7人桌的修正
-}
-
-const SeatsArrange: Record<number, SeatPosition[]> = {
-    2: [SeatPosition.BottomMiddle, SeatPosition.TopMiddle],
-    3: [SeatPosition.BottomMiddle, SeatPosition.TopLeft, SeatPosition.TopRight],
-    4: [SeatPosition.BottomMiddle, SeatPosition.MiddleLeft, SeatPosition.TopMiddle, SeatPosition.MiddleRight],
-    5: [SeatPosition.BottomMiddle, SeatPosition.MiddleLeft, SeatPosition.TopLeft1, SeatPosition.TopRight1, SeatPosition.MiddleRight],
-    6: [SeatPosition.BottomMiddle, SeatPosition.BottomLeft, SeatPosition.TopLeft, SeatPosition.TopMiddle, SeatPosition.TopRight, SeatPosition.BottomRight],
-    7: [
-        SeatPosition.BottomMiddle,
-        SeatPosition.BottomLeft,
-        SeatPosition.TopLeft7,
-        SeatPosition.TopLeft1,
-        SeatPosition.TopRight1,
-        SeatPosition.TopRight7,
-        SeatPosition.BottomRight
-    ],
-    8: [
-        SeatPosition.BottomMiddle,
-        SeatPosition.BottomLeft,
-        SeatPosition.MiddleLeft,
-        SeatPosition.TopLeft,
-        SeatPosition.TopMiddle,
-        SeatPosition.TopRight,
-        SeatPosition.MiddleRight,
-        SeatPosition.BottomRight
-    ],
-    9: [
-        SeatPosition.BottomMiddle,
-        SeatPosition.BottomLeft,
-        SeatPosition.MiddleLeft,
-        SeatPosition.TopLeft,
-        SeatPosition.TopLeft1,
-        SeatPosition.TopRight1,
-        SeatPosition.TopRight,
-        SeatPosition.MiddleRight,
-        SeatPosition.BottomRight
-    ]
-} as const;
 
 @bindData()
 export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
@@ -149,7 +91,7 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     public set seatsCount(c: number) {
         if (this._seatsCount == c) return;
         this._seatsCount = c;
-        const arrage = SeatsArrange[this._seatsCount];
+        const arrage = seatPostionCaculator.getPositions(c);
         for (let i = 1; i <= 9; i++) {
             if (i <= this._seatsCount) {
                 if (this._playerMap.has(i)) {
@@ -177,7 +119,7 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
             return null;
         }
         //重排
-        const arrage = SeatsArrange[this._seatsCount];
+        const arrage = seatPostionCaculator.getPositions(this._seatsCount);
         let j = 0;
         for (let i = s; i < s + this._seatsCount; i++) {
             let ss = i % this.seatsCount == 0 ? this.seatsCount : i % this.seatsCount;

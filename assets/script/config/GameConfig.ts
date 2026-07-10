@@ -35,10 +35,8 @@ class GameConfig {
     static get enableAgora(): boolean {
         return !!GameConfig.AGOROKEY?.trim();
     }
-    //是否使用新域名
-    //static IsNewArea: boolean = false;
     //设计分辨率
-    static DesignResolution = cc.size(1242, 2688);
+    static readonly DESIGN_RESOLUTION = cc.size(1242, 2688);
     //fps
     static readonly FRAME_RATE = 60;
     //多点触摸

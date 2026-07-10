@@ -1,7 +1,8 @@
 import { GameConfig } from '../../config/GameConfig';
-import { traceClass } from '../../core/decorator/LogTrace';
+import { traceClass, traceMethod } from '../../core/decorator/LogTrace';
 import dlTexasRoomBackground from '../../data/room/texas/load/DLTexasRoomBacground';
 import texasGamePersonalSettings from '../../data/room/texas/TexasGamePersonalSettings';
+import ccviewData from '../../data/system/CCViewData';
 import h5MessageManager from '../../H5MsgMgr';
 import { i18nMgr } from '../../i18n/i18nMgr';
 import * as MainUtils from '../../MainUtils';
@@ -62,6 +63,7 @@ export default class ProcedureInit extends ProcedureBase {
         ProcedureInit.updateFitMode();
     }
 
+    @traceMethod({ level: 'debug' })
     static updateFitMode(): void {
         const w = window.innerWidth;
         const h = window.innerHeight;
@@ -73,12 +75,12 @@ export default class ProcedureInit extends ProcedureBase {
         const canvas = cc.Canvas.instance;
         const designW = canvas.designResolution.width;
         const designH = canvas.designResolution.height;
-        if (w_h_r > 0.63) {
+        if (w_h_r > 0.75) {
             cc.view.setDesignResolutionSize(designW, designH, cc.ResolutionPolicy.FIXED_HEIGHT);
         } else {
             cc.view.setDesignResolutionSize(designW, designH, cc.ResolutionPolicy.FIXED_WIDTH);
         }
-        cc.view.emit('canvas-resize');
+        ccviewData.initData();
     }
 
     /**

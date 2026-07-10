@@ -682,6 +682,7 @@ export default class TexasTableEvent {
             (): number | null => null
         );
     }
+
     public static PrefetchhReportRoomers(roomID: number, matchID: number): void {
         if (!roomID) return;
         ProtocolAgency.Send({

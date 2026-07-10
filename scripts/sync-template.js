@@ -80,7 +80,7 @@ const COCOS_VIEWPORT_RESIZE_PATCH = `        /**
             if (cc.Canvas && cc.Canvas.instance) {
               var designW = cc.Canvas.instance.designResolution.width
               var designH = cc.Canvas.instance.designResolution.height
-              var policy = w / h > 0.63 ? cc.ResolutionPolicy.FIXED_HEIGHT : cc.ResolutionPolicy.FIXED_WIDTH
+              var policy = w / h > 0.75 ? cc.ResolutionPolicy.FIXED_HEIGHT : cc.ResolutionPolicy.FIXED_WIDTH
               view.setDesignResolutionSize(designW, designH, policy)
             }
 
@@ -117,9 +117,9 @@ function hasViewportResizeBindCall(html) {
 
 function patchCocosViewportResize(html) {
   let out = html
-  const refitRe = /        \/\*\*[\s\S]*?\r?\n         \*\/\r?\n        function forceCocosRefit[\s\S]*?\r?\n\r?\n        \/\*\*\r?\n         \* Telegram 键盘/
+  const refitRe = /        \/\*\*[\s\S]*?\r?\n         \*\/\r?\n        function forceCocosRefit[\s\S]*?\r?\n\r?\n        \/\*\*\r?\n         \* Telegram/
   if (refitRe.test(out)) {
-    out = out.replace(refitRe, `${COCOS_VIEWPORT_RESIZE_PATCH}\n\n        /**\n         * Telegram 键盘`)
+    out = out.replace(refitRe, `${COCOS_VIEWPORT_RESIZE_PATCH}\n\n        /**\n         * Telegram`)
   } else {
     console.warn('⚠ 未找到 forceCocosRefit，跳过 Cocos viewport resize 补丁')
   }

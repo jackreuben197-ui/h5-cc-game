@@ -230,12 +230,7 @@ function parseLastActions(procedure: typeof WebRoomCenterHistoryReplay.Procedure
     return lastActions;
 }
 
-function parseStreet(
-    pls: ProcedurePl[],
-    playerBySeat: Map<number, HistoryPlayerInfo>,
-    myRID: number,
-    potRef: { pot: number }
-): HistoryStreetModel {
+function parseStreet(pls: ProcedurePl[], playerBySeat: Map<number, HistoryPlayerInfo>, myRID: number, potRef: { pot: number }): HistoryStreetModel {
     const rows: HistoryActionInfo[] = [];
     let raiseTimes = 0;
     for (const pl of pls ?? []) {

@@ -25,6 +25,7 @@
  *   H5MsgMgr.Instance.on('xxx', fn);                 // 注册消息监听
  */
 import { traceClass } from './core/decorator/LogTrace';
+import ccviewData from './data/system/CCViewData';
 import userStore from './data/user/UserStore';
 import UserStoreUtils from './data/user/UserStoreUtils';
 
@@ -234,6 +235,8 @@ class H5MsgMgr {
             this.tracelog.debug('收到 h5Ready，回复 ccAck', payload);
             if (payload?.safeArea) {
                 H5MsgMgr.safeArea = payload.safeArea;
+                // ccviewData.setSaveareaTop(payload.safeArea.top);
+                ccviewData.setSaveareaTop(20);
             }
             if (payload.token) {
                 userStore.token = payload.token;

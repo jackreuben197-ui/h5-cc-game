@@ -37,7 +37,7 @@ export class DLTexasRoomBackground {
             bundle: BUNDLE_RESOURCES,
             path: 'table/desk4'
         },
-        61: {
+        6: {
             bundle: BUNDLE_RESOURCES,
             path: 'table/desk5'
         },
@@ -83,6 +83,9 @@ export class DLTexasRoomBackground {
 
     public async getBackground(deskType: number): Promise<BackgroundData> {
         const data = DLTexasRoomBackground.BACKGROUNDS[deskType];
+        if (data == null) {
+            console.error('null', deskType);
+        }
         const promises: Promise<unknown>[] = [];
         promises.push(AssetManager.getOrLoad(data.bundle, defaultDynamicLoadingPrefx + data.path, cc.SpriteFrame));
         if (data.animationPath) {
