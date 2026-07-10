@@ -701,6 +701,11 @@ export default class TexasTableEvent {
         this._sendChatBroadcast(roomData, content, Def.BroadcastMsgType.BC_MSG_AVATAR, false);
         if (sendDanmu) {
             this._sendChatBroadcast(roomData, content, Def.BroadcastMsgType.BC_MSG_BULLET, true);
+            // 本人弹幕本地立即回显（网络回包在 GetMsg 中按 user_id 过滤，不会重复播放）
+            roomData.chat.addDanmu({
+                name: userStore.name || '',
+                content
+            });
         }
     }
 

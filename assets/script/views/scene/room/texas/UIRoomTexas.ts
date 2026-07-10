@@ -1,7 +1,9 @@
+import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass } from '../../../../core/decorator/LogTrace';
 import storageManager from '../../../../data/LocalStorage';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
+import TexasGameRoomDataChat, { TexasDanmuMessage } from '../../../../data/room/texas/TexasGameRoomDataChat';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
@@ -9,6 +11,7 @@ import ProtocolAgency from '../../../../net/websocket/ProtocolAgency';
 import UIComponentBase from '../../../base/UIComponentBase';
 import { UIGuideDialogType } from '../../../dialog/mushroomandcriticalhit/UIGuideDialog';
 import viewManager from '../../../UIViewManager';
+import danmuManager from './DanmuManager';
 import TexasTableEvent from './events/TexasTableEvent';
 import InsuranceOperation from './InsuranceOperation';
 import MorePlayTypeInfo from './MorePlayTypeInfo';
@@ -64,6 +67,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private btnEmoji: cc.Node = null;
     @property({ type: cc.Node, displayName: '聊天按钮' })
     private chatBtn: cc.Node = null;
+    @property({ type: cc.Node, displayName: '聊天红点' })
+    private chatAlertNode: cc.Node = null;
     //数据绑定
     private _mine: TexasGameRoomDataPlayerMine = null;
 
@@ -85,6 +90,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         // main_menu 按钮事件注册
         this.btnEmoji.on('click', this.onClickBtnEmoji, this);
         this.chatBtn.on('click', this.onClickChatBtn, this);
+        this._setChatAlertVisible(false);
     }
 
     private onClickReport = () => {
@@ -104,6 +110,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
 
     async initialize(param: UIRoomTexasEnterParam) {
         const roomData = roomDataManager.getRoomData<TexasGameRoomData>(param.roomID, param.matchID);
+        autoBindEvents(this, { chat: roomData.chat });
         this._mine = roomData.mine;
         this.roomInfo.initData(param.roomID, param.matchID);
         this.potsInfo.initData(param.roomID, param.matchID);
@@ -121,6 +128,27 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         await this._showSquidIntroDialog(roomData);
         await this._showMushroomIntroDialog(roomData);
         await this._showCriticalHitIntroDialog(roomData);
+    }
+
+    protected onDisable(): void {
+        unBindEventsAll(this);
+        danmuManager.clearAll();
+    }
+
+    @bindEvent(TexasGameRoomDataChat.DANMU_ADDED, { dataSource: 'chat', initIgnore: true })
+    private onDanmuAdded(msg: TexasDanmuMessage): void {
+        danmuManager.playDanmu(`${msg.name || ''}: ${msg.content}`, viewManager.dialogLayer);
+    }
+
+    @bindEvent(TexasGameRoomDataChat.NEW_MESSAGE_ALERT_CHANGED, 'chat')
+    private onChatAlertChanged(hasNewMessageAlert: boolean): void {
+        this._setChatAlertVisible(hasNewMessageAlert);
+    }
+
+    private _setChatAlertVisible(visible: boolean): void {
+        if (this.chatAlertNode) {
+            this.chatAlertNode.active = visible;
+        }
     }
 
     private async _showSquidIntroDialog(roomData: TexasGameRoomData): Promise<boolean> {
@@ -190,6 +218,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     /** 聊天按钮：打开牌桌聊天对话框 */
     private onClickChatBtn(): void {
         if (!this._mine) return;
+        this._mine.roomData.chat.hideNewMessageAlert();
         viewManager.openDialog('TexasChat', {
             roomID: this._mine.roomData.roomID,
             matchID: this._mine.roomData.matchID

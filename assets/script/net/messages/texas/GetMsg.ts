@@ -11,6 +11,8 @@ interface BroadcastMsgData {
     user_id?: number;
     target_user_id?: number;
     message?: string;
+    /** 1=表情（type 为 PropsID），2=文字，3=语音（对齐 Unity UIGameplayChatComponent） */
+    msgType?: number;
     time?: number;
     sex?: number;
     headUrl?: string;
@@ -48,6 +50,7 @@ export function GetMsg(data: ServerMessageGetMsg.AsObject, roomID: number, match
     }
     // 1000=文字聊天/弹幕，10001=表情/道具（表情不在本次迁移范围，靠 type!==0 过滤）
     if (envelope.code !== 1000 && envelope.code !== 10001) return;
+    console.log('[Chat][GetMsg] 收到广播', { code: envelope.code, roomID });
     let broadcastMsg: BroadcastMsgData;
     try {
         broadcastMsg = typeof envelope.data === 'string' ? JSON.parse(envelope.data) : (envelope.data as BroadcastMsgData);
@@ -56,15 +59,42 @@ export function GetMsg(data: ServerMessageGetMsg.AsObject, roomID: number, match
         return;
     }
     if (!broadcastMsg) return;
-    // 只处理文本聊天：type=0 且有内容；弹幕暂不迁移
-    if (broadcastMsg.type !== 0 || !broadcastMsg.message || broadcastMsg.isDanmu === true) return;
+    console.log('[Chat][GetMsg] 解析消息', broadcastMsg);
+    const isSelfMessage = broadcastMsg.user_id === userStore.userID;
+    // 表情消息：msgType=1，type 为 PropsID（对齐 Unity UIGameplayChatComponent 判定标准）
+    if (broadcastMsg.msgType === 1 && typeof broadcastMsg.type === 'number') {
+        roomData.chat.addMessage(
+            {
+                name: broadcastMsg.name || '',
+                content: '',
+                headUrl: broadcastMsg.headUrl || '',
+                sex: broadcastMsg.sex || 0,
+                time: TexasGameRoomDataChat.formatNowTime(),
+                emojiType: broadcastMsg.type
+            },
+            !isSelfMessage
+        );
+        return;
+    }
+    // 只处理文本聊天/弹幕：type=0 且有内容
+    if (broadcastMsg.type !== 0 || !broadcastMsg.message) return;
     // 本人消息走 1019 确认路径（BroadcastMsg.ts），此处过滤
-    if (broadcastMsg.user_id === userStore.userID) return;
-    roomData.chat.addMessage({
-        name: broadcastMsg.name || '',
-        content: broadcastMsg.message,
-        headUrl: broadcastMsg.headUrl || '',
-        sex: broadcastMsg.sex || 0,
-        time: TexasGameRoomDataChat.formatNowTime()
-    });
+    if (isSelfMessage) return;
+    if (broadcastMsg.isDanmu === true) {
+        roomData.chat.addDanmu({
+            name: broadcastMsg.name || '',
+            content: broadcastMsg.message
+        });
+        return;
+    }
+    roomData.chat.addMessage(
+        {
+            name: broadcastMsg.name || '',
+            content: broadcastMsg.message,
+            headUrl: broadcastMsg.headUrl || '',
+            sex: broadcastMsg.sex || 0,
+            time: TexasGameRoomDataChat.formatNowTime()
+        },
+        true
+    );
 }

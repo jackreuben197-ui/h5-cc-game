@@ -1,4 +1,4 @@
-import { bindData, pureEvent } from '../../../core/decorator/DataBind';
+import { bindData, observable, pureEvent } from '../../../core/decorator/DataBind';
 import { traceClass } from '../../../core/decorator/LogTrace';
 import TexasGameRoomData from './TexasGameRoomData';
 
@@ -10,6 +10,16 @@ export interface TexasChatMessage {
     sex: number;
     /** 已格式化的 HH:mm 展示时间 */
     time: string;
+    /**
+     * 表情消息的原始 type（Unity PropsID：500-509 免费表情 / 700-726 魔法表情）。
+     * 有值则为表情消息（msgType=1），undefined 为文字消息。
+     */
+    emojiType?: number;
+}
+
+export interface TexasDanmuMessage {
+    name: string;
+    content: string;
 }
 
 /**
@@ -25,12 +35,18 @@ export interface TexasChatMessage {
 export default class TexasGameRoomDataChat extends cc.EventTarget {
     public static readonly MESSAGE_ADDED = 'MESSAGE_ADDED';
     public static readonly MESSAGES_RESET = 'MESSAGES_RESET';
+    public static readonly DANMU_ADDED = 'DANMU_ADDED';
+    public static readonly NEW_MESSAGE_ALERT_CHANGED = 'NEW_MESSAGE_ALERT_CHANGED';
     public readonly roomData: TexasGameRoomData;
     private _messages: TexasChatMessage[] = [];
     /** 本人发送后等待服务端 1019 确认的消息 */
     private _pendingMessage: TexasChatMessage | null = null;
+    private _chatDialogOpen: boolean = false;
     /** 俱乐部开场白缓存（服务端后续同步可能不再返回） */
     public prologue: string | null = null;
+
+    @observable(TexasGameRoomDataChat.NEW_MESSAGE_ALERT_CHANGED)
+    public hasNewMessageAlert: boolean = false;
 
     constructor(roomData: TexasGameRoomData) {
         super();
@@ -61,6 +77,17 @@ export default class TexasGameRoomDataChat extends cc.EventTarget {
         this._pendingMessage = msg;
     }
 
+    public setChatDialogOpen(open: boolean): void {
+        this._chatDialogOpen = open;
+        if (open) {
+            this.hideNewMessageAlert();
+        }
+    }
+
+    public hideNewMessageAlert(): void {
+        this.hasNewMessageAlert = false;
+    }
+
     /** BroadcastMsg(1019) 确认结果；status=0 时把 pending 消息落进记录 */
     public confirmPendingMessage(status: number): void {
         const pending = this._pendingMessage;
@@ -70,9 +97,15 @@ export default class TexasGameRoomDataChat extends cc.EventTarget {
     }
 
     @pureEvent(TexasGameRoomDataChat.MESSAGE_ADDED)
-    public addMessage(msg: TexasChatMessage): void {
+    public addMessage(msg: TexasChatMessage, showAlert: boolean = false): void {
         this._messages.push(msg);
+        if (showAlert && !this._chatDialogOpen) {
+            this.hasNewMessageAlert = true;
+        }
     }
+
+    @pureEvent(TexasGameRoomDataChat.DANMU_ADDED)
+    public addDanmu(msg: TexasDanmuMessage): void {}
 
     /** HTTP 历史消息合并：去重 + 按时间排序，整体重置通知 */
     @pureEvent(TexasGameRoomDataChat.MESSAGES_RESET)

@@ -1,9 +1,9 @@
 {
   "ver": "1.1.3",
-  "uuid": "b120e750-bd6f-471b-94cc-f101eae373a7",
+  "uuid": "8303727f-f95e-43f8-8263-63aaacc8ae5c",
   "importer": "folder",
-  "isBundle": true,
-  "bundleName": "animate",
+  "isBundle": false,
+  "bundleName": "",
   "priority": 1,
   "compressionType": {},
   "optimizeHotUpdate": {},

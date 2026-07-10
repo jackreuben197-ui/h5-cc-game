@@ -122,7 +122,13 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
             this.close();
             return;
         }
+        // 对话框实例被 UIViewManager 缓存复用：换房间时 onEnable 已把旧房间 chat 置为打开，
+        // 换绑前必须释放，否则旧房间的红点永远不会再亮
+        if (this._chat && this._chat !== this._roomData.chat) {
+            this._chat.setChatDialogOpen(false);
+        }
         this._chat = this._roomData.chat;
+        this._chat.setChatDialogOpen(true);
         this.dlgTitleLabel.string = `${this._roomData.basicInfo.roomName || ''}\n#${this._roomData.roomID}`;
         this.chatEditBox.string = '';
         this._chatTemplatePanelActive = false;
@@ -137,10 +143,16 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
     }
 
     protected onEnable(): void {
+        if (this._chat) {
+            this._chat.setChatDialogOpen(true);
+        }
         this._bindEventsAndRefresh();
     }
 
     protected onDisable(): void {
+        if (this._chat) {
+            this._chat.setChatDialogOpen(false);
+        }
         unBindEventsAll(this);
         this._chatTemplatePanelActive = false;
         if (this.chatTemplateNode) {
@@ -175,25 +187,27 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
         for (const msg of this._chat.messages) {
             this._appendItem(msg, false);
         }
-        this._scrollToBottom();
+        this._scrollToBottom(false);
     }
 
     private _appendItem(msg: TexasChatMessage, fadeIn: boolean): void {
         const item = cc.instantiate(this.chatMsgItemPrefab);
         item.parent = this.chatListScroll.content;
-        item.getComponent(ChatMsgItem).initData(msg);
+        const itemComp = item.getComponent(ChatMsgItem);
+        itemComp.initData(msg);
+        itemComp.forceLayout();
         if (fadeIn) {
             item.opacity = 0;
             cc.tween(item).to(0.4, { opacity: 255 }).start();
         }
     }
 
-    private _scrollToBottom(): void {
-        this.scheduleOnce(() => {
-            if (cc.isValid(this.chatListScroll)) {
-                this.chatListScroll.scrollToBottom(0.1);
-            }
-        }, 0);
+    /** 条目已 forceLayout，content 当帧结算后立即滚动，目标位置基于真实高度不会滚过头 */
+    private _scrollToBottom(animated: boolean = true): void {
+        const contentLayout = this.chatListScroll.content.getComponent(cc.Layout);
+        if (contentLayout) contentLayout.updateLayout();
+        this.chatListScroll.stopAutoScroll();
+        this.chatListScroll.scrollToBottom(animated ? 0.1 : 0);
     }
 
     /** 根据 chat.prologue 显示/隐藏开场白，并通过 ChatList Widget.top 回收/让出开场白区域 */
@@ -248,13 +262,27 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
                     if (!chatData || !chatData.extra) continue;
                     try {
                         const extraObj = JSON.parse(chatData.extra);
-                        // 只处理文字聊天（code=1000），跳过表情/道具等（code=10001 等）
-                        if (extraObj.code !== 1000) continue;
+                        // 表情/文字都可能走 code=1000（Unity 端表情历史即 code=1000 + msgType=1）
+                        if (extraObj.code !== 1000 && extraObj.code !== 10001) continue;
                         const msgData = typeof extraObj.data === 'string' ? JSON.parse(extraObj.data) : extraObj.data;
+                        // msgType：1=表情（type 为 PropsID），2=文字，3=语音（跳过）
+                        if (msgData.msgType === 1 && typeof msgData.type === 'number') {
+                            history.push({
+                                name: msgData.name || '',
+                                content: '',
+                                headUrl: msgData.headUrl || '',
+                                sex: msgData.sex || 0,
+                                time: TexasGameRoomDataChat.formatTimestamp(msgData.time),
+                                emojiType: msgData.type
+                            });
+                            continue;
+                        }
+                        if (msgData.msgType === 3) continue;
                         if (prologue === null && msgData.is_prologue === true) {
                             prologue = msgData.message || '';
                             continue;
                         }
+                        if (!msgData.message) continue;
                         history.push({
                             name: msgData.name || '',
                             content: msgData.message || '',
@@ -266,6 +294,7 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
                         this.tracelog.warn('parse chat extra failed:', e);
                     }
                 }
+                console.log('[Chat][History] 解析完成，有效消息', history, '开场白', prologue);
                 this._chat.mergeHistory(history, prologue);
                 this._refreshWelcome();
             },
