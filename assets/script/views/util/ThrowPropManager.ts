@@ -10,31 +10,30 @@ interface PropAnimConfig {
     pattern: PropPattern;
     spines: string[];
     anims: string[];
+    soundName?: string;
 }
 
 class ThrowPropManager {
     private static readonly PROP_TYPE_BASE = 600;
-    private static readonly SOUND_PREFIX = 'sound/PropOp/';
-    private static readonly SOUND_MAP: Record<number, string> = {
-        0: 'sfx_tomato_mus', // 番茄
-        1: 'sfx_rose_mus', // 花环
-        2: 'sfx_kiss_mus', // 亲吻
-        3: 'sfx_like_mus', // 大拇指
-        4: 'sfx_cheers_mus', // 干杯-旁观者
-        5: 'sfx_touch_mus', // 摸头
-        6: 'sfx_shark_mus', // 鲨鱼
-        7: 'sfx_zhuaji_mus', // 抓鸡
-        11: 'sfx_baseball' // 棒球
-    };
     private static readonly CONFIGS: PropAnimConfig[] = [
-        { pattern: 'A', spines: ['rc/other/effect/expressionTomato/skeleton'], anims: ['1'] },
-        { pattern: 'A', spines: ['rc/other/effect/expressionFlower/skeleton'], anims: ['animation'] },
-        { pattern: 'A', spines: ['rc/other/effect/expressionKiss/kiss'], anims: ['1'] },
-        { pattern: 'A', spines: ['rc/other/effect/expressionGood/skeleton'], anims: ['animation'] },
-        { pattern: 'D', spines: ['rc/other/effect/expressionBeer/cheers_2', 'rc/other/effect/expressionBeerScreen/cheers_1'], anims: [] },
-        { pattern: 'B', spines: ['rc/other/effect/expressionTouch/touch'], anims: ['animation'] },
-        { pattern: 'C', spines: ['rc/other/effect/expressionShark/shark'], anims: ['shark_set', 'shark_receive'] },
-        { pattern: 'C', spines: ['rc/other/effect/expressionChicken/chicken_spine'], anims: ['chicken_set', 'chicken_receive'] },
+        { pattern: 'A', spines: ['rc/other/effect/expressionTomato/skeleton'], anims: ['1'], soundName: 'sound/PropOp/sfx_tomato_mus' },
+        { pattern: 'A', spines: ['rc/other/effect/expressionFlower/skeleton'], anims: ['animation'], soundName: 'sound/PropOp/sfx_rose_mus' },
+        { pattern: 'A', spines: ['rc/other/effect/expressionKiss/kiss'], anims: ['1'], soundName: 'sound/PropOp/sfx_kiss_mus' },
+        { pattern: 'A', spines: ['rc/other/effect/expressionGood/skeleton'], anims: ['animation'], soundName: 'sound/PropOp/sfx_like_mus' },
+        {
+            pattern: 'D',
+            spines: ['rc/other/effect/expressionBeer/cheers_2', 'rc/other/effect/expressionBeerScreen/cheers_1'],
+            anims: [],
+            soundName: 'sound/PropOp/sfx_cheers_mus'
+        },
+        { pattern: 'B', spines: ['rc/other/effect/expressionTouch/touch'], anims: ['animation'], soundName: 'sound/PropOp/sfx_touch_mus' },
+        { pattern: 'C', spines: ['rc/other/effect/expressionShark/shark'], anims: ['shark_set', 'shark_receive'], soundName: 'sound/PropOp/sfx_shark_mus' },
+        {
+            pattern: 'C',
+            spines: ['rc/other/effect/expressionChicken/chicken_spine'],
+            anims: ['chicken_set', 'chicken_receive'],
+            soundName: 'sound/PropOp/sfx_zhuaji_mus'
+        },
         { pattern: 'D', spines: ['rc/other/effect/expressionBox/box_local', 'rc/other/effect/expressionBoxScreen/box_full'], anims: [] },
         { pattern: 'C', spines: ['rc/other/effect/expressionMoney/attachments'], anims: ['attachments_1_receive'] },
         {
@@ -54,7 +53,8 @@ class ThrowPropManager {
                 'rc/other/effect/expressionBaseballReceiver/ballfolder1',
                 'rc/other/effect/expressionBaseballOther/skeleton'
             ],
-            anims: []
+            anims: [],
+            soundName: 'sound/PropOp/sfx_baseball'
         }
     ];
     private _root: cc.Node = null;
@@ -85,7 +85,7 @@ class ThrowPropManager {
                 this._playPatternA(offset, config, senderNode, targetNode);
                 break;
             case 'B':
-                this._playPatternB(offset, config, senderNode, targetNode);
+                this._playPatternB(config, senderNode, targetNode);
                 break;
             case 'C':
                 this._playPatternC(offset, config, senderNode, targetNode, data);
@@ -103,33 +103,30 @@ class ThrowPropManager {
         if (!senderNode || !receiverNode) return;
         const senderWorld = this._getWorldPos(senderNode);
         const receiverWorld = this._getWorldPos(receiverNode);
-        cc.resources.load('effect/diamondFly', cc.Prefab, (err, flyPrefab: cc.Prefab) => {
-            if (err || !flyPrefab || !cc.isValid(this._root)) return;
-            cc.resources.load('effect/DiamondIcon', cc.Prefab, (errIcon, iconPrefab: cc.Prefab) => {
-                if (errIcon || !iconPrefab || !cc.isValid(this._root)) return;
-                cc.resources.load('effect/diamondSpine', cc.Prefab, (errSpine, spinePrefab: cc.Prefab) => {
-                    if (errSpine || !spinePrefab || !cc.isValid(this._root)) return;
-                    this._spawnDiamondFly(flyPrefab, senderWorld, `-${data.amount}`);
-                    const icon = cc.instantiate(iconPrefab);
-                    icon.parent = this._root;
-                    icon.zIndex = 9999;
-                    icon.setPosition(this._root.convertToNodeSpaceAR(senderWorld));
-                    cc.tween(icon)
-                        .to(0.9, this._toTweenPos(this._root.convertToNodeSpaceAR(receiverWorld)), { easing: 'quadInOut' })
-                        .call(() => {
-                            if (!cc.isValid(this._root)) return;
-                            this._spawnDiamondSpine(spinePrefab, this._root.convertToNodeSpaceAR(receiverWorld));
-                            this._spawnDiamondFly(flyPrefab, receiverWorld, `+${data.amount}`);
-                            if (cc.isValid(icon)) icon.destroy();
-                        })
-                        .start();
-                });
-            });
-        });
+        this._getDiamondPrefabs()
+            .then(([flyPrefab, iconPrefab, spinePrefab]) => {
+                if (!cc.isValid(this._root)) return;
+                this._spawnDiamondFly(flyPrefab, senderWorld, `-${data.amount}`);
+                const icon = cc.instantiate(iconPrefab);
+                icon.parent = this._root;
+                icon.zIndex = 9999;
+                icon.setPosition(this._root.convertToNodeSpaceAR(senderWorld));
+                cc.tween(icon)
+                    .to(0.9, this._toTweenPos(this._root.convertToNodeSpaceAR(receiverWorld)), { easing: 'quadInOut' })
+                    .call(() => {
+                        if (!cc.isValid(this._root)) return;
+                        this._spawnDiamondSpine(spinePrefab, this._root.convertToNodeSpaceAR(receiverWorld));
+                        this._spawnDiamondFly(flyPrefab, receiverWorld, `+${data.amount}`);
+                        if (cc.isValid(icon)) icon.destroy();
+                    })
+                    .start();
+            })
+            .catch(error => cc.warn('[ThrowPropManager] load diamond prefabs failed', error));
     }
 
+    // A 类：先从发送者头像飞到目标头像，命中后在目标位置播放一次性 Spine 动画。
     private _playPatternA(offset: number, config: PropAnimConfig, senderNode: cc.Node, targetNode: cc.Node): void {
-        const soundName = ThrowPropManager.SOUND_MAP[offset];
+        const soundName = config.soundName;
         if (offset === 2) this._playSound(soundName);
         const skeletonData = this._getSkeleton(config.spines[0]);
         if (!this._isRootValid()) return;
@@ -147,8 +144,9 @@ class ThrowPropManager {
             .start();
     }
 
-    private _playPatternB(offset: number, config: PropAnimConfig, senderNode: cc.Node, targetNode: cc.Node): void {
-        const soundName = ThrowPropManager.SOUND_MAP[offset];
+    // B 类：同样先飞到目标头像，但命中后播放循环动画，按固定时间销毁。
+    private _playPatternB(config: PropAnimConfig, senderNode: cc.Node, targetNode: cc.Node): void {
+        const soundName = config.soundName;
         const skeletonData = this._getSkeleton(config.spines[0]);
         if (!this._isRootValid()) return;
         const node = this._createSpineNode(skeletonData, '', false, this._getLocalPos(senderNode));
@@ -165,16 +163,17 @@ class ThrowPropManager {
             .start();
     }
 
+    // C 类：不使用通用命中动画，而是在发送者/目标位置分别播放配置好的局部效果。
     private _playPatternC(offset: number, config: PropAnimConfig, senderNode: cc.Node, targetNode: cc.Node, data: ThrowPropBroadcastData): void {
         const targetPos = this._getLocalPos(targetNode);
-        const soundName = ThrowPropManager.SOUND_MAP[offset];
+        const soundName = config.soundName;
         const allData = this._getSkeletons(config.spines);
         if (!this._isRootValid()) return;
         if (config.anims.length === 1) {
             const node = this._createSpineNode(allData[0], config.anims[0], false, targetPos);
             this._destroyAfterComplete(node, 4);
             if (offset === 9) {
-                this._playSound(this._getRole(data.userID, data.targetUserID) === 'receiver' ? 'sfx_touch_mus' : 'sfx_money');
+                this._playSound(this._getRole(data.userID, data.targetUserID) === 'receiver' ? 'sound/PropOp/sfx_touch_mus' : 'sound/PropOp/sfx_money');
             } else {
                 this._playSound(soundName);
             }
@@ -196,85 +195,81 @@ class ThrowPropManager {
         this._playSound(soundName);
     }
 
+    // D 类：道具表现依赖当前客户端身份，需要按发送者、接收者、旁观者分支播放专用序列。
     private _playPatternD(offset: number, senderNode: cc.Node, targetNode: cc.Node, data: ThrowPropBroadcastData): void {
+        const config = ThrowPropManager.CONFIGS[offset];
         const role = this._getRole(data.userID, data.targetUserID);
-        if (offset === 4) this._playBeer(senderNode, targetNode, role);
-        if (offset === 8) this._playBoxing(senderNode, targetNode, role);
-        if (offset === 10) this._playFish(senderNode, targetNode, role);
-        if (offset === 11) this._playBaseball(senderNode, targetNode, role);
+        if (offset === 4) this._playBeer(senderNode, targetNode, role, config);
+        if (offset === 8) this._playBoxing(senderNode, targetNode, role, config);
+        if (offset === 10) this._playFish(senderNode, targetNode, role, config);
+        if (offset === 11) this._playBaseball(senderNode, targetNode, role, config);
     }
 
-    private _playBeer(senderNode: cc.Node, targetNode: cc.Node, role: PropRole): void {
-        const [beerData, screenData] = this._getSkeletons(['rc/other/effect/expressionBeer/cheers_2', 'rc/other/effect/expressionBeerScreen/cheers_1']);
+    private _playBeer(senderNode: cc.Node, targetNode: cc.Node, role: PropRole, config: PropAnimConfig): void {
+        const [beerData, screenData] = this._getSkeletons(config.spines);
         if (!this._isRootValid()) return;
         const senderPos = this._getLocalPos(senderNode);
         const targetPos = this._getLocalPos(targetNode);
         if (role === 'sender' || role === 'receiver') {
-            this._playSound('sfx_beer_screen');
+            this._playSound('sound/PropOp/sfx_beer_screen');
             this._destroyAfterComplete(this._createSpineNode(screenData, '1', false, this._getScreenCenter()), 5);
             this._destroyAfterComplete(this._createSpineNode(beerData, '3', false, senderPos), 5);
             this._destroyAfterComplete(this._createSpineNode(beerData, '3', false, targetPos), 5);
             return;
         }
-        this._playSound(ThrowPropManager.SOUND_MAP[4]);
+        this._playSound(config.soundName);
         this._destroyAfterComplete(this._createSpineNode(beerData, '2', false, senderPos), 5);
         this._destroyAfterComplete(this._createSpineNode(beerData, '2', false, targetPos), 5);
     }
 
-    private _playBoxing(senderNode: cc.Node, targetNode: cc.Node, role: PropRole): void {
-        const [boxData, screenData] = this._getSkeletons(['rc/other/effect/expressionBox/box_local', 'rc/other/effect/expressionBoxScreen/box_full']);
+    private _playBoxing(senderNode: cc.Node, targetNode: cc.Node, role: PropRole, config: PropAnimConfig): void {
+        const [boxData, screenData] = this._getSkeletons(config.spines);
         if (!this._isRootValid()) return;
         const senderPos = this._getLocalPos(senderNode);
         const targetPos = this._getLocalPos(targetNode);
         const screenCenter = this._getScreenCenter();
         if (role === 'sender') {
-            this._playSound('sfx_boxing_sender1');
+            this._playSound('sound/PropOp/sfx_boxing_sender1');
             this._chainSpine(this._createSpineNode(screenData, 'box_full_1', false, screenCenter), () => {
-                this._playSound('sfx_boxing_sender2');
+                this._playSound('sound/PropOp/sfx_boxing_sender2');
                 this._destroyAfterComplete(this._createSpineNode(boxData, 'box_local_1', false, targetPos), 4);
             });
             return;
         }
         if (role === 'receiver') {
-            this._playSound('sfx_boxing_beaten1');
+            this._playSound('sound/PropOp/sfx_boxing_beaten1');
             this._chainSpine(this._createSpineNode(boxData, 'box_local_2', false, senderPos), () => {
-                this._playSound('sfx_boxing_beaten2');
+                this._playSound('sound/PropOp/sfx_boxing_beaten2');
                 this._destroyAfterComplete(this._createSpineNode(screenData, 'box_full_2', false, screenCenter), 5);
             });
             return;
         }
-        this._playSound('sfx_boxing_beaten1');
+        this._playSound('sound/PropOp/sfx_boxing_beaten1');
         this._chainSpine(this._createSpineNode(boxData, 'box_local_2', false, senderPos), () => {
-            this._playSound('sfx_boxing_sender2');
+            this._playSound('sound/PropOp/sfx_boxing_sender2');
             this._destroyAfterComplete(this._createSpineNode(boxData, 'box_local_1', false, targetPos), 4);
         });
     }
 
-    private _playFish(senderNode: cc.Node, targetNode: cc.Node, role: PropRole): void {
-        const paths = [
-            'rc/other/effect/expressionFish/sy3',
-            'rc/other/effect/expressionFishScreenSender/sy2',
-            'rc/other/effect/expressionFishScreenReceiver/sy',
-            'rc/other/effect/expressionFishWave/hl'
-        ];
-        const [fishData, senderScreenData, receiverScreenData, waveData] = this._getSkeletons(paths);
+    private _playFish(senderNode: cc.Node, targetNode: cc.Node, role: PropRole, config: PropAnimConfig): void {
+        const [fishData, senderScreenData, receiverScreenData, waveData] = this._getSkeletons(config.spines);
         if (!this._isRootValid()) return;
         const senderPos = this._getLocalPos(senderNode);
         const targetPos = this._getLocalPos(targetNode);
         const center = this._getScreenCenter();
         if (role === 'sender') {
-            this._playSound('sfx_fish2');
+            this._playSound('sound/PropOp/sfx_fish2');
             this._destroyAfterComplete(this._createSpineNode(senderScreenData, 'sy2', false, center), 6);
             this._destroyAfterComplete(this._createSpineNode(waveData, 'hl1', false, center), 6);
             return;
         }
         if (role === 'receiver') {
-            this._playSound('sfx_fish');
+            this._playSound('sound/PropOp/sfx_fish');
             this._destroyAfterComplete(this._createSpineNode(receiverScreenData, 'sy', false, center), 6);
             this._destroyAfterComplete(this._createSpineNode(waveData, 'hl2', false, center), 6);
             return;
         }
-        this._playSound('sfx_fish');
+        this._playSound('sound/PropOp/sfx_fish');
         const fishNode = this._createSpineNode(fishData, 'sy3_1', true, senderPos);
         const skeleton = fishNode.getComponent(sp.Skeleton);
         const dir = cc.v2(targetPos.x - senderPos.x, targetPos.y - senderPos.y);
@@ -295,14 +290,9 @@ class ThrowPropManager {
         this._destroyAfterComplete(this._createSpineNode(waveData, 'hl3', false, center), 6);
     }
 
-    private _playBaseball(senderNode: cc.Node, targetNode: cc.Node, role: PropRole): void {
-        const paths = [
-            'rc/other/effect/expressionBaseballSender/skeleton',
-            'rc/other/effect/expressionBaseballReceiver/ballfolder1',
-            'rc/other/effect/expressionBaseballOther/skeleton'
-        ];
-        this._playSound(ThrowPropManager.SOUND_MAP[11]);
-        const [senderData, receiverData, otherData] = this._getSkeletons(paths);
+    private _playBaseball(senderNode: cc.Node, targetNode: cc.Node, role: PropRole, config: PropAnimConfig): void {
+        this._playSound(config.soundName);
+        const [senderData, receiverData, otherData] = this._getSkeletons(config.spines);
         if (!this._isRootValid()) return;
         const senderPos = this._getLocalPos(senderNode);
         const targetPos = this._getLocalPos(targetNode);
@@ -356,6 +346,14 @@ class ThrowPropManager {
 
     private _getSkeletons(paths: string[]): sp.SkeletonData[] {
         return paths.map(path => this._getSkeleton(path));
+    }
+
+    private _getDiamondPrefabs(): Promise<cc.Prefab[]> {
+        return Promise.all([
+            AssetManager.getOrLoad(BUNDLE_RESOURCES, 'effect/diamondFly', cc.Prefab),
+            AssetManager.getOrLoad(BUNDLE_RESOURCES, 'effect/DiamondIcon', cc.Prefab),
+            AssetManager.getOrLoad(BUNDLE_RESOURCES, 'effect/diamondSpine', cc.Prefab)
+        ]);
     }
 
     private _createSpineNode(skeletonData: sp.SkeletonData, animName: string, loop: boolean, localPos: cc.Vec3): cc.Node {
@@ -436,7 +434,7 @@ class ThrowPropManager {
 
     private _playSound(name: string): void {
         if (!name) return;
-        cc.resources.load(ThrowPropManager.SOUND_PREFIX + name, cc.AudioClip, (err, clip: cc.AudioClip) => {
+        cc.resources.load(name, cc.AudioClip, (err, clip: cc.AudioClip) => {
             if (!err && clip) cc.audioEngine.playEffect(clip, false);
         });
     }

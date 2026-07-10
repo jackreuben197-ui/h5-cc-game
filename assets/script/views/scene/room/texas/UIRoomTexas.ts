@@ -8,6 +8,7 @@ import { i18nMgr } from '../../../../i18n/i18nMgr';
 import UIComponentBase from '../../../base/UIComponentBase';
 import { UIGuideDialogType } from '../../../dialog/mushroomandcriticalhit/UIGuideDialog';
 import viewManager from '../../../UIViewManager';
+import throwPropManager from '../../../util/ThrowPropManager';
 import TexasTableEvent from './events/TexasTableEvent';
 import InsuranceOperation from './InsuranceOperation';
 import MorePlayTypeInfo from './MorePlayTypeInfo';
@@ -69,6 +70,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private scaleNode: cc.Node = null;
 
     protected onLoad(): void {
+        throwPropManager.initialize(this.node);
         //菜单项
         this._onSideMenuClicked = () => {
             this._sideMenuTexasMenu.fadeIn(true);

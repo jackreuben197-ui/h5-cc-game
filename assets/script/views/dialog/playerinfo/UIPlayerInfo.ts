@@ -704,11 +704,17 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         }
         this._playClickScale(clickNode, false);
         try {
-            const res = await PlayerStoreUtils.sendDiamond(this._requestRID, amount);
+            const res = await PlayerStoreUtils.sendDiamond(this._requestRID, amount, this._roomData.roomID);
             if (res.code === 0) {
                 this._diamondSentCount++;
                 this._refreshDiamondNotice();
                 this._loadDiamondBalance();
+                this.close();
+                this._roomData.seatsStateManager.diamondGiftEvent({
+                    senderID: userStore.userRID,
+                    receiverID: this._requestRID,
+                    amount
+                });
                 return;
             }
             if (res.code === 20124) {

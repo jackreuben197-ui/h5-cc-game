@@ -193,11 +193,12 @@ export default class PlayerStoreUtils {
         });
     }
 
-    public static sendDiamond(targetUserRID: number, amount: number): Promise<HttpUserDiamondSend.ResponseData> {
+    public static sendDiamond(targetUserRID: number, amount: number, roomID: number): Promise<HttpUserDiamondSend.ResponseData> {
         const body = new HttpUserDiamondSend.RequestData();
         body.target_user_id = targetUserRID;
         body.send_type = 2;
         body.amount = amount;
+        body.room_id = roomID;
         return WWW.Instance.CommonAPI<HttpUserDiamondSend.ResponseData>({
             web_class: WebUserDiamondSend,
             body
