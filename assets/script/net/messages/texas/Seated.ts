@@ -11,7 +11,6 @@ import { BringInMode } from '../../../game/constant/BringInMode';
 import { ButtonState } from '../../../game/constant/Constants';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import viewManager from '../../../views/UIViewManager';
-import throwPropManager from '../../../views/util/ThrowPropManager';
 import agoraManager from '../../agora/AgoraManager';
 import TexasVideoMediaHelper from './TexasVideoMediaHelper';
 
@@ -66,7 +65,6 @@ export async function Seated(data: ServerMessageSeated.AsObject, roomID: number,
     mine.autoOperationType = AutoOperationTypeTexas.NO;
     mine.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
     PlayerStoreUtils.syncSeatPlayer(seatData, roomData);
-    throwPropManager.preloadPropAssets();
     if (roomData.basicInfo.antiCheatConfig) {
         const seatedConfig = roomData.basicInfo.antiCheatConfig.getSeatedSetting();
         const promise = [];

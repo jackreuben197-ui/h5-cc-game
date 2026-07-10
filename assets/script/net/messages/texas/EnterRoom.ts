@@ -183,7 +183,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             roomData.mine.totalChips = data.myInfo.totalChips;
             roomData.mine.caculateHandValueTypeAndHighlight();
         }
-        if (roomData.mine.seatNo > 0) throwPropManager.preloadPropAssets();
+        throwPropManager.preloadPropAssets();
         data.operatorList.forEach(operator => {
             let seatData = roomData.seatsStateManager.getSeatPlayer(operator.seatId);
             if (seatData.mine) {
