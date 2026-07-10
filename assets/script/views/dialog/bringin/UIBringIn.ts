@@ -211,6 +211,21 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         this.initDiamond();
     }
 
+    protected override onFrameResize(
+        visibleSizeWidth: number,
+        visibleSizeHeight: number,
+        frameSizeWidth: number,
+        frameSizeHeight: number,
+        suggestScale: number,
+        saveAreaTop: number
+    ): void {
+        const maxHeight = 2290;
+        if (visibleSizeHeight < maxHeight) {
+            const scale = visibleSizeHeight / maxHeight;
+            this.node.setScale(scale, scale);
+        }
+    }
+
     private onClickBringInTip() {
         if (this.tipsMask) this.tipsMask.active = true;
         if (this.bringTips) this.bringTips.active = true;

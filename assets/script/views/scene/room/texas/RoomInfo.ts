@@ -1,6 +1,6 @@
 import { RoomInfo as RoomInfoPb } from '@silenthill/agreement-web';
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
-import { traceClass } from '../../../../core/decorator/LogTrace';
+import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import texasGamePersonalSettings, { TexasGamePersonalSettings } from '../../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
@@ -26,6 +26,7 @@ export default class RoomInfo extends cc.Component {
     private _roomID: number;
     private _matchID: number;
     private _roomBaseInfo: TexasGameRoomDataBasic;
+    private _currentDeskType: number = -1;
 
     public initData(roomID: number, matchID: number) {
         this._roomID = roomID;
@@ -141,11 +142,16 @@ export default class RoomInfo extends cc.Component {
     }
 
     @bindEvent(TexasGamePersonalSettings.DESK_TYPE_CHANGE, 'setting')
+    @traceMethod({ level: 'debug' })
     private async onUpdateBg(deskType: number, bat: AnimateDisplayBackground = AnimateDisplayBackground.Static) {
+        this._currentDeskType = deskType;
         const bgData = await dlTexasRoomBackground.getBackground(deskType);
+        if (this._currentDeskType !== deskType) return; // 防异步冲突
         this._fitDeskCover(bgData.SpriteFrame);
-        if (bgData.Animataion && bat == AnimateDisplayBackground.Go) {
-            this._playDeskSpine(bgData.Animataion);
+        if (bgData.Animation) {
+            this._playDeskSpine(bgData.Animation);
+        } else {
+            this._stopDeskSpine();
         }
     }
 
@@ -154,8 +160,16 @@ export default class RoomInfo extends cc.Component {
      * 非动画桌布类型会清理已有节点
      */
     private _playDeskSpine(data: sp.SkeletonData): void {
+        this.bgAnim.node.active = true;
         this.bgAnim.skeletonData = data;
         this.bgAnim.setAnimation(0, 'animation', true);
+    }
+
+    private _stopDeskSpine(): void {
+        if (this.bgAnim.skeletonData) {
+            this.bgAnim.clearTracks();
+            this.bgAnim.node.active = false;
+        }
     }
 
     /**

@@ -18,9 +18,6 @@ interface INetWork {
 }
 
 class GameConfig {
-    //需要清理storage,就递增这个值
-    static clean_all_flag: number = 2;
-    static debug: boolean = true;
     static Web_Host_Test1 = 'test2.awanptest.com';
     static Web_Host_Dev1 = 'dev1.awanptest.com';
     static Web_Host_Dev = 'dev.awanptest.com';
@@ -33,29 +30,19 @@ class GameConfig {
     //版本号
     static readonly VERSION: string = '20230109_2130';
     static readonly DEFAULT_LANGUAGE: string = 'cn';
-    //是否使用代理
-    static useProxy: boolean = false;
     //是否启用声网 Agora（false 则跳过 SDK 加载、初始化等全部流程
-    static agoraKey: string = 'da91afd18fa84618bee90c5468b06a5f';
+    static readonly AGOROKEY: string = 'da91afd18fa84618bee90c5468b06a5f';
     static get enableAgora(): boolean {
-        return !!GameConfig.agoraKey?.trim();
+        return !!GameConfig.AGOROKEY?.trim();
     }
-    //是否使用新域名
-    //static IsNewArea: boolean = false;
     //设计分辨率
-    static DesignResolution = cc.size(1242, 2688);
+    static readonly DESIGN_RESOLUTION = cc.size(1242, 2688);
     //fps
     static readonly FRAME_RATE = 60;
     //多点触摸
     static readonly ENABLE_MULTI_TOUCH = false;
-    //服务器类型 1测试 2正式
-    static Server_Type = 2;
-    //对应 GlobalProto.txt
-    static GlobalProto: any = null;
     //网络配置
     static Network: INetWork = null;
-    //默认区号
-    static DefaultAreaCode: string = '+55';
     //是否是发布版本
     static readonly IS_PUBLISHED: boolean = false;
     //日志等级

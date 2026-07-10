@@ -9,6 +9,7 @@ import { AutoOperationTypeTexas } from '../../../../game/constant/AutoOpertaionT
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
 import { UIComfirmDialogType } from '../../../dialog/confirm/UIConfirmDialog';
 import viewManager from '../../../UIViewManager';
+import UIViewUtil from '../../../util/UIViewUtil';
 import ShiningPathTimer from '../../../widget/ShiningPathTimer';
 import StepSlider from '../../../widget/StepSlider';
 import TexasTableEvent from './events/TexasTableEvent';
@@ -61,6 +62,10 @@ export default class Operation extends cc.Component {
     freeBetAmount: cc.Label = null;
     @property({ type: cc.Node, displayName: '自动操作面板' })
     private autoOpPannelNode: cc.Node = null!;
+    @property({ type: cc.Node, displayName: '位置节点UI' })
+    private uiNode: cc.Node = null;
+    @property({ type: cc.Node, displayName: '位置节点freeCall' })
+    private freeCallNode: cc.Node = null;
     private _autoOpPanel: AutoOperation = null;
     private _raiseAmount: number = 0;
     private _seatPlayer: TexasGameRoomDataPlayerMine = null;
@@ -161,21 +166,20 @@ export default class Operation extends cc.Component {
         this._autoOpPanel.initData(mine);
         this._bindEventsAndRefresh();
     }
-    // public startOperation(param: OperatorMine, mine: TexasGameRoomDataPlayerMine): void {
-    //     this.tracelog.info(param.actionLimitList);
-    //     const seatPlayer = mine.player;
-    //     if (!seatPlayer) return;
-    //     this._seatPlayer = mine;
-    //     this.opTimer.startTimer({
-    //         totalTime: param.totalOpDuration,
-    //         elapsedTime: param.totalOpDuration - param.leftOpDuration,
-    //         onComplete: () => {
-    //             this.opTimer.stop();
-    //         }
-    //     });
-    //     this._refreshUI(param.actionLimitList, param.roundBetEqual, seatPlayer);
-    //     this._bindEventsAndRefresh();
-    // }
+
+    public adjustPostion(targeNode: cc.Node, pos: cc.Vec3, scale: number) {
+        this.uiNode.scale = scale;
+        this.freeCallNode.scale = scale;
+        const tpos = UIViewUtil.caculatePostion(this.uiNode, targeNode, pos);
+        const height = 210 * scale;
+        tpos.y += height;
+        this.uiNode.setPosition(tpos);
+        const tpos2 = UIViewUtil.caculatePostion(this.freeCallNode, targeNode, pos);
+        const height2 = 910 * scale;
+        tpos2.y += height2;
+        this.freeCallNode.setPosition(tpos2);
+        this._autoOpPanel.adjustPostion(targeNode, pos, scale);
+    }
 
     private _refreshUI(roundBetEqual: number) {
         this.btnAllIn.node.active = false;

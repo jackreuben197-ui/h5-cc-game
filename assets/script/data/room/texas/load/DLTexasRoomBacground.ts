@@ -10,7 +10,7 @@ export interface DLItem {
 
 export interface BackgroundData {
     SpriteFrame: cc.SpriteFrame;
-    Animataion?: sp.SkeletonData;
+    Animation?: sp.SkeletonData;
 }
 
 const defaultDynamicLoadingPrefx = 'dynamic/';
@@ -37,7 +37,7 @@ export class DLTexasRoomBackground {
             bundle: BUNDLE_RESOURCES,
             path: 'table/desk4'
         },
-        61: {
+        6: {
             bundle: BUNDLE_RESOURCES,
             path: 'table/desk5'
         },
@@ -83,6 +83,9 @@ export class DLTexasRoomBackground {
 
     public async getBackground(deskType: number): Promise<BackgroundData> {
         const data = DLTexasRoomBackground.BACKGROUNDS[deskType];
+        if (data == null) {
+            console.error('null', deskType);
+        }
         const promises: Promise<unknown>[] = [];
         promises.push(AssetManager.getOrLoad(data.bundle, defaultDynamicLoadingPrefx + data.path, cc.SpriteFrame));
         if (data.animationPath) {
@@ -90,7 +93,7 @@ export class DLTexasRoomBackground {
             const [ap, sp2] = await Promise.all(promises);
             return {
                 SpriteFrame: ap as cc.SpriteFrame,
-                Animataion: sp2 as sp.SkeletonData
+                Animation: sp2 as sp.SkeletonData
             };
         }
         const [ap] = await Promise.all(promises);

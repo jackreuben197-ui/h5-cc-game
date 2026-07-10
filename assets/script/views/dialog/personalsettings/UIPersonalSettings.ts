@@ -105,6 +105,21 @@ export default class UIPersonalSettings extends UIComponentBaseDialog<UIPersonal
         this.toggleVoice.onoff(texasGamePersonalSettings.soundOn);
         this.toggleShowBB.onoff(texasGamePersonalSettings.showBB);
     }
+
+    protected override onFrameResize(
+        visibleSizeWidth: number,
+        visibleSizeHeight: number,
+        frameSizeWidth: number,
+        frameSizeHeight: number,
+        suggestScale: number,
+        saveAreaTop: number
+    ): void {
+        const maxHeight = 2200;
+        if (visibleSizeHeight < maxHeight) {
+            const scale = visibleSizeHeight / maxHeight;
+            this.node.setScale(scale, scale);
+        }
+    }
     // ====================================================
     // Tab 标签页
     // ====================================================
