@@ -1,4 +1,4 @@
-import { ClientMessageBroadcastMsg, Code } from '@silenthill/agreement-web';
+import { ClientMessageBroadcastMsg, Code, Def } from '@silenthill/agreement-web';
 import playerStore, { PlayerBasicData, PlayerDiamondConfig, PlayerPropData, PlayerStore } from '../../../data/player/PlayerStore';
 import PlayerStoreUtils from '../../../data/player/PlayerStoreUtils';
 import roomDataManager from '../../../data/room/RoomDataManager';
@@ -23,10 +23,6 @@ import { UIComfirmDialogType } from '../confirm/UIConfirmDialog';
 const { ccclass, menu, property } = cc._decorator;
 
 const VIEW_MANAGER_MASK_NODE = 'ithinktisinotshouldbedupilcatednodename';
-
-const CONSUME_TYPE_EMOJI_2 = 6;
-
-const BROADCAST_MSG_TYPE_THROW = 4;
 
 const OTHER_DATA_TAB_Y = -163.5;
 
@@ -84,7 +80,6 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private diamondNumNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '数据页签根节点' })
     private dataTabNode: cc.Node = null;
-    private static readonly PROP_TYPE_BASE = CONSUME_TYPE_EMOJI_2 * 100;
     private static readonly PROP_TYPE_MAP: number[] = [602, 609, 608, 605, 600, 610, 611, 603, 604, 607, 601, 606];
     private static readonly shieldUsers: Set<number> = new Set();
     private static readonly audioClosedUsers: Set<number> = new Set();
@@ -740,8 +735,8 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private _clickProp(propIndex: number, clickNode: cc.Node): void {
         this._playClickScale(clickNode, true);
         const propData = this._propListData[propIndex - 1];
-        const consume = (propData ? propData.priceID : CONSUME_TYPE_EMOJI_2) as ClientMessageBroadcastMsg.AsObject['consume'];
-        const propType = UIPlayerInfo.PROP_TYPE_MAP[propIndex - 1] || UIPlayerInfo.PROP_TYPE_BASE;
+        const consume = (propData ? propData.priceID : this._getThrowPropConsumeType()) as ClientMessageBroadcastMsg.AsObject['consume'];
+        const propType = UIPlayerInfo.PROP_TYPE_MAP[propIndex - 1] || this._getThrowPropTypeBase();
         this._roomData.seatsStateManager.setPendingThrowProp({
             type: propType,
             userID: userStore.userRID,
@@ -762,7 +757,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             consume,
             message: '',
             extra: this._stringToBytes(extra),
-            msgType: BROADCAST_MSG_TYPE_THROW
+            msgType: this._getThrowPropMsgType()
         };
         ProtocolAgency.Send({
             code: Code.MSG_D_BROADCAST_MSG,
@@ -770,6 +765,18 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             matchID: this._roomData.matchID,
             body: body
         });
+    }
+
+    private _getThrowPropConsumeType(): Def.ConsumeTypeMap[keyof Def.ConsumeTypeMap] {
+        return Def.ConsumeType.CT_EMOJI_2;
+    }
+
+    private _getThrowPropTypeBase(): number {
+        return Def.ConsumeType.CT_EMOJI_2 * 100;
+    }
+
+    private _getThrowPropMsgType(): Def.BroadcastMsgTypeMap[keyof Def.BroadcastMsgTypeMap] {
+        return Def.BroadcastMsgType.BC_MSG_THROW;
     }
 
     private _clickReport(): void {

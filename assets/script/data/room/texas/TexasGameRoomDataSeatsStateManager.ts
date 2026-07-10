@@ -36,6 +36,11 @@ export interface DiamondGiftBroadcastData {
     amount: number;
 }
 
+export interface EmojiBroadcastData {
+    type: number;
+    userID: number;
+}
+
 const SeatsArrange: Record<number, SeatPosition[]> = {
     2: [SeatPosition.BottomMiddle, SeatPosition.TopMiddle],
     3: [SeatPosition.BottomMiddle, SeatPosition.TopLeft, SeatPosition.TopRight],
@@ -82,6 +87,7 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     public static readonly SPEAKING_CHANGE = 'SPEAKING_CHANGE';
     public static readonly THROW_PROP = 'THROW_PROP';
     public static readonly DIAMOND_GIFT = 'DIAMOND_GIFT';
+    public static readonly EMOJI = 'EMOJI';
     private _parentRoomData: TexasGameRoomData;
 
     constructor(p: TexasGameRoomData) {
@@ -96,6 +102,7 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     }
     private _prevMushroomBtn: number = 0;
     private _pendingThrowPropData: ThrowPropBroadcastData = null;
+    private _pendingEmojiData: EmojiBroadcastData = null;
 
     public setMushroomPoolChange(btnSeatNo: number, pool: number, bat: AnimateDisplayTypeMushroomPool) {
         if (pool == 0) return;
@@ -141,6 +148,20 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
 
     @pureEvent(TexasGameRoomDataSeatsStateManager.THROW_PROP)
     public throwPropEvent(data: ThrowPropBroadcastData): void {}
+
+    public setPendingEmoji(data: EmojiBroadcastData): void {
+        this._pendingEmojiData = data;
+    }
+
+    public confirmPendingEmoji(status: number): void {
+        const data = this._pendingEmojiData;
+        this._pendingEmojiData = null;
+        if (status !== 0 || !data) return;
+        this.emojiEvent(data);
+    }
+
+    @pureEvent(TexasGameRoomDataSeatsStateManager.EMOJI)
+    public emojiEvent(data: EmojiBroadcastData): void {}
 
     @pureEvent(TexasGameRoomDataSeatsStateManager.DIAMOND_GIFT)
     public diamondGiftEvent(data: DiamondGiftBroadcastData): void {}

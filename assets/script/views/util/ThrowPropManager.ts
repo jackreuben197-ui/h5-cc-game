@@ -1,4 +1,5 @@
-import { DiamondGiftBroadcastData, ThrowPropBroadcastData } from '../../data/room/texas/TexasGameRoomDataSeatsStateManager';
+import { Def } from '@silenthill/agreement-web';
+import { DiamondGiftBroadcastData, EmojiBroadcastData, ThrowPropBroadcastData } from '../../data/room/texas/TexasGameRoomDataSeatsStateManager';
 import userStore from '../../data/user/UserStore';
 import AssetManager, { BUNDLE_RESOURCES } from '../loader/AssetManager';
 
@@ -13,7 +14,6 @@ interface PropAnimConfig {
 }
 
 class ThrowPropManager {
-    private static readonly PROP_TYPE_BASE = 600;
     private static readonly SOUND_PREFIX = 'sound/PropOp/';
     private static readonly SOUND_MAP: Record<number, string> = {
         0: 'sfx_tomato_mus', // 番茄
@@ -74,7 +74,7 @@ class ThrowPropManager {
     }
 
     public playProp(data: ThrowPropBroadcastData): void {
-        const offset = data.type - ThrowPropManager.PROP_TYPE_BASE;
+        const offset = data.type - this._getThrowPropTypeBase();
         const config = ThrowPropManager.CONFIGS[offset];
         if (!config || !this._root || !cc.isValid(this._root)) return;
         const senderNode = this._seatNodes.get(data.userID);
@@ -126,6 +126,48 @@ class ThrowPropManager {
                 });
             });
         });
+    }
+
+    public async playEmoji(data: EmojiBroadcastData): Promise<void> {
+        const index = data.type - this._getEmojiTypeBase() + 1;
+        if (index < 1 || index > 15 || !this._root || !cc.isValid(this._root)) return;
+        const seatNode = this._seatNodes.get(data.userID);
+        if (!seatNode) return;
+        let spriteFrame: cc.SpriteFrame = null;
+        try {
+            spriteFrame = await AssetManager.getOrLoad(BUNDLE_RESOURCES, `rc/other/emoji/em${index}`, cc.SpriteFrame);
+        } catch (error) {
+            cc.warn('[ThrowPropManager] load emoji failed', index, error);
+            return;
+        }
+        if (!this._isRootValid() || !cc.isValid(seatNode)) return;
+        const emojiNode = new cc.Node('EmojiAnim');
+        const sprite = emojiNode.addComponent(cc.Sprite);
+        sprite.spriteFrame = spriteFrame;
+        emojiNode.setContentSize(70, 70);
+        emojiNode.opacity = 0;
+        emojiNode.scale = 0.5;
+        emojiNode.parent = this._root;
+        emojiNode.zIndex = 9999;
+        const startPos = this._getLocalPos(seatNode);
+        emojiNode.setPosition(startPos.x, startPos.y + seatNode.height / 4);
+        cc.tween(emojiNode)
+            .to(0.18, { opacity: 255, scale: 1.2 }, { easing: 'backOut' })
+            .to(0.12, { scale: 1 })
+            .delay(1.2)
+            .to(0.25, { opacity: 0, y: emojiNode.y + 30 })
+            .call(() => {
+                if (cc.isValid(emojiNode)) emojiNode.destroy();
+            })
+            .start();
+    }
+
+    private _getEmojiTypeBase(): number {
+        return Def.ConsumeType.CT_EMOJI_1 * 100;
+    }
+
+    private _getThrowPropTypeBase(): number {
+        return Def.ConsumeType.CT_EMOJI_2 * 100;
     }
 
     private _playPatternA(offset: number, config: PropAnimConfig, senderNode: cc.Node, targetNode: cc.Node): void {

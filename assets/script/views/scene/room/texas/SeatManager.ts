@@ -4,6 +4,7 @@ import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataSeatsStateManager, {
     DiamondGiftBroadcastData,
+    EmojiBroadcastData,
     ThrowPropBroadcastData
 } from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
 import { AnimateDisplayTypeButton } from '../../../../game/constant/AnimateDisplayType';
@@ -65,6 +66,12 @@ export default class SeatManager extends cc.Component {
     private onDiamondGift(data: DiamondGiftBroadcastData): void {
         this._refreshThrowPropSeatNodes();
         throwPropManager.playDiamondGift(data);
+    }
+
+    @bindEvent(TexasGameRoomDataSeatsStateManager.EMOJI, { dataSource: 'seats', initIgnore: true })
+    private onEmoji(data: EmojiBroadcastData): void {
+        this._refreshThrowPropSeatNodes();
+        throwPropManager.playEmoji(data);
     }
 
     @bindEvent(TexasGameRoomDataSeatsStateManager.MUSHROOM_POOL_CHANGE, 'seats')

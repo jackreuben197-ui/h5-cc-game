@@ -17913,16 +17913,14 @@
       "__id__": 445
     },
     "btnEmoji": {
-      "__id__": 77
+      "__id__": 86
     },
     "chatBtn": {
       "__id__": 88
     },
-    "btnEmoji": null,
     "btnEffect": null,
     "btnAudio": null,
     "btnCamera": null,
-    "chatBtn": null,
     "muteMicNode": null,
     "hideVideoNode": null,
     "_id": ""

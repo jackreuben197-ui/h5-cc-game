@@ -2,6 +2,7 @@
 import UIBringIn from './dialog/bringin/UIBringIn';
 import UIBringOut from './dialog/bringout/UIBringInOut';
 import UIConfirmDialog from './dialog/confirm/UIConfirmDialog';
+import UIEmojiDlg from './dialog/emoji/UIEmojiDlg';
 import UITexasHistory from './dialog/history/UITexasHistory';
 import UIInsuranceNewPanel from './dialog/insurance/UIInsuranceNewPanel';
 import UIGuideDialog from './dialog/mushroomandcriticalhit/UIGuideDialog';
@@ -129,6 +130,12 @@ export const UIPrefabDialog = {
         Name: '举报',
         Bundle: BUNDLE_RESOURCES,
         Path: 'rc/dialog/playerinfo/UIReport'
+    },
+    Emoji: {
+        UIType: UIEmojiDlg,
+        Name: '表情',
+        Bundle: BUNDLE_RESOURCES,
+        Path: 'rc/dialog/emoji/UIEmojiDlg'
     }
 } as const;
 
