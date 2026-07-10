@@ -18040,6 +18040,9 @@
     "btnReplay": {
       "__id__": 75
     },
+    "btnSafetyGuard": {
+      "__id__": 49
+    },
     "opPannelNode": {
       "__id__": 453
     },

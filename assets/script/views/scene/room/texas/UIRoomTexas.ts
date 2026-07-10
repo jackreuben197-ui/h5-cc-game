@@ -5,6 +5,7 @@ import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataChat, { TexasDanmuMessage } from '../../../../data/room/texas/TexasGameRoomDataChat';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
+import h5MessageManager from '../../../../H5MsgMgr';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
 import ProtocolAgency from '../../../../net/websocket/ProtocolAgency';
@@ -52,6 +53,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private btnReport: cc.Button = null!;
     @property({ type: cc.Button, displayName: '牌谱按钮' })
     private btnReplay: cc.Button = null!;
+    @property({ type: cc.Button, displayName: '安全卫士按钮' })
+    private btnSafetyGuard: cc.Button = null!;
     @property({ type: cc.Node, displayName: '操作面板' })
     private opPannelNode: cc.Node = null!;
     private _opPannel: Operation = null!;
@@ -85,6 +88,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         if (this.btnReport) this.btnReport.node.on('click', this.onClickReport, this);
         //牌谱按钮
         if (this.btnReplay) this.btnReplay.node.on('click', this.onClickReplay, this);
+        this.btnSafetyGuard.node.active = false;
+        this.btnSafetyGuard.node.on('click', this.onSafetyGuardClicked, this);
         //其他状态
         this._otherBindings = this.otherBindings.getComponent(OtherBindings);
         // main_menu 按钮事件注册
@@ -108,10 +113,21 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         });
     };
 
+    private onSafetyGuardClicked(): void {
+        if (!this._mine) return;
+        const tribeId = this._mine.roomData.basicInfo.tribeID;
+        if (tribeId <= 0) return;
+        h5MessageManager.sendToH5('showPanel', 1, {
+            panelType: 'safetyGuard',
+            props: { tribeId }
+        });
+    }
+
     async initialize(param: UIRoomTexasEnterParam) {
         const roomData = roomDataManager.getRoomData<TexasGameRoomData>(param.roomID, param.matchID);
         autoBindEvents(this, { chat: roomData.chat });
         this._mine = roomData.mine;
+        this.btnSafetyGuard.node.active = roomData.basicInfo.tribeID > 0;
         this.roomInfo.initData(param.roomID, param.matchID);
         this.potsInfo.initData(param.roomID, param.matchID);
         this.seatManager.initData(param.roomID, param.matchID);
