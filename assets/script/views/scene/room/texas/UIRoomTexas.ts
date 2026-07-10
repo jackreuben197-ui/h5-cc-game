@@ -68,9 +68,13 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private _mine: TexasGameRoomDataPlayerMine = null;
     @property({ type: cc.Node, displayName: '所有需要缩放的节点位置' })
     private scaleNode: cc.Node = null;
+    private _throwPropRootNode: cc.Node = null;
 
     protected onLoad(): void {
-        throwPropManager.initialize(this.node);
+        this._throwPropRootNode = new cc.Node('PropSpine');
+        this._throwPropRootNode.parent = this.node;
+        this._throwPropRootNode.zIndex = 9999;
+        throwPropManager.initialize(this.node, this._throwPropRootNode);
         //菜单项
         this._onSideMenuClicked = () => {
             this._sideMenuTexasMenu.fadeIn(true);

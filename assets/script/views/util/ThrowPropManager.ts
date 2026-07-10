@@ -1,3 +1,4 @@
+import soundManager from '../../core/SoundManager';
 import { DiamondGiftBroadcastData, ThrowPropBroadcastData } from '../../data/room/texas/TexasGameRoomDataSeatsStateManager';
 import userStore from '../../data/user/UserStore';
 import AssetManager, { BUNDLE_RESOURCES } from '../loader/AssetManager';
@@ -11,6 +12,22 @@ interface PropAnimConfig {
     spines: string[];
     anims: string[];
     soundName?: string;
+}
+
+export interface ThrowPropSeatNodes {
+    avatarNode: cc.Node;
+    propNode: cc.Node;
+}
+
+interface ThrowPropTask {
+    data: ThrowPropBroadcastData;
+    senderData: ThrowPropSeatNodes;
+    targetData: ThrowPropSeatNodes;
+    offset: number;
+    config: PropAnimConfig;
+    role: PropRole;
+    fullscreen: boolean;
+    duration: number;
 }
 
 class ThrowPropManager {
@@ -58,49 +75,65 @@ class ThrowPropManager {
         }
     ];
     private _root: cc.Node = null;
-    private _seatNodes: Map<number, cc.Node> = new Map();
+    private _fullscreenRoot: cc.Node = null;
+    private _seatPropSkeletonData: Map<cc.Node, sp.SkeletonData> = new Map();
+    private _propQueue: ThrowPropTask[] = [];
+    private _playingPropUsers: Set<number> = new Set();
+    private _playingFullscreenProp: boolean = false;
 
-    public initialize(root: cc.Node): void {
+    public initialize(root: cc.Node, fullscreenRoot: cc.Node): void {
+        if (this._root !== root) {
+            this._seatPropSkeletonData.clear();
+            this._propQueue.length = 0;
+            this._playingPropUsers.clear();
+            this._playingFullscreenProp = false;
+        }
         this._root = root;
+        this._fullscreenRoot = fullscreenRoot;
     }
 
-    public registerSeat(userID: number, avatarNode: cc.Node): void {
-        if (!userID || !avatarNode) return;
-        this._seatNodes.set(userID, avatarNode);
-    }
-
-    public clearSeatNodes(): void {
-        this._seatNodes.clear();
-    }
-
-    public playProp(data: ThrowPropBroadcastData): void {
+    public playProp(data: ThrowPropBroadcastData, senderData: ThrowPropSeatNodes, targetData: ThrowPropSeatNodes): void {
         const offset = data.type - ThrowPropManager.PROP_TYPE_BASE;
         const config = ThrowPropManager.CONFIGS[offset];
         if (!config || !this._root || !cc.isValid(this._root)) return;
-        const senderNode = this._seatNodes.get(data.userID);
-        const targetNode = this._seatNodes.get(data.targetUserID);
-        if (!senderNode || !targetNode) return;
-        switch (config.pattern) {
+        if (!senderData || !targetData) return;
+        const role = this._getRole(data.userID, data.targetUserID);
+        const task: ThrowPropTask = {
+            data,
+            senderData,
+            targetData,
+            offset,
+            config,
+            role,
+            fullscreen: this._isFullscreenProp(offset, role),
+            duration: this._getPropDuration(offset, role)
+        };
+        this._propQueue.push(task);
+        this._tryPlayQueuedProps();
+    }
+
+    private _playPropNow(task: ThrowPropTask): void {
+        switch (task.config.pattern) {
             case 'A':
-                this._playPatternA(offset, config, senderNode, targetNode);
+                this._playPatternA(task.offset, task.config, task.senderData, task.targetData);
                 break;
             case 'B':
-                this._playPatternB(config, senderNode, targetNode);
+                this._playPatternB(task.config, task.senderData, task.targetData);
                 break;
             case 'C':
-                this._playPatternC(offset, config, senderNode, targetNode, data);
+                this._playPatternC(task.offset, task.config, task.senderData, task.targetData, task.data);
                 break;
             case 'D':
-                this._playPatternD(offset, senderNode, targetNode, data);
+                this._playPatternD(task.offset, task.senderData, task.targetData, task.data);
                 break;
         }
     }
 
-    public playDiamondGift(data: DiamondGiftBroadcastData): void {
+    public playDiamondGift(data: DiamondGiftBroadcastData, senderData: ThrowPropSeatNodes, receiverData: ThrowPropSeatNodes): void {
         if (!this._root || !cc.isValid(this._root) || !data.amount) return;
-        const senderNode = this._seatNodes.get(data.senderID);
-        const receiverNode = this._seatNodes.get(data.receiverID);
-        if (!senderNode || !receiverNode) return;
+        if (!senderData || !receiverData) return;
+        const senderNode = senderData.avatarNode;
+        const receiverNode = receiverData.avatarNode;
         const senderWorld = this._getWorldPos(senderNode);
         const receiverWorld = this._getWorldPos(receiverNode);
         this._getDiamondPrefabs()
@@ -124,17 +157,79 @@ class ThrowPropManager {
             .catch(error => cc.warn('[ThrowPropManager] load diamond prefabs failed', error));
     }
 
+    private _tryPlayQueuedProps(): void {
+        let started = false;
+        do {
+            started = false;
+            for (let i = 0; i < this._propQueue.length; i++) {
+                const task = this._propQueue[i];
+                if (!this._canPlayPropTask(task)) continue;
+                this._propQueue.splice(i, 1);
+                this._markPropTaskPlaying(task);
+                this._playPropNow(task);
+                this._schedulePropTaskFinish(task);
+                started = true;
+                break;
+            }
+        } while (started);
+    }
+
+    private _canPlayPropTask(task: ThrowPropTask): boolean {
+        if (task.fullscreen) return !this._playingFullscreenProp;
+        return !this._playingPropUsers.has(task.data.userID) && !this._playingPropUsers.has(task.data.targetUserID);
+    }
+
+    private _markPropTaskPlaying(task: ThrowPropTask): void {
+        if (task.fullscreen) {
+            this._playingFullscreenProp = true;
+            return;
+        }
+        this._playingPropUsers.add(task.data.userID);
+        this._playingPropUsers.add(task.data.targetUserID);
+    }
+
+    private _schedulePropTaskFinish(task: ThrowPropTask): void {
+        cc.tween(this._root)
+            .delay(task.duration)
+            .call(() => {
+                if (task.fullscreen) {
+                    this._playingFullscreenProp = false;
+                } else {
+                    this._playingPropUsers.delete(task.data.userID);
+                    this._playingPropUsers.delete(task.data.targetUserID);
+                }
+                this._tryPlayQueuedProps();
+            })
+            .start();
+    }
+
+    private _isFullscreenProp(offset: number, role: PropRole): boolean {
+        if (offset === 10) return true;
+        if (offset === 4 || offset === 8) return role === 'sender' || role === 'receiver';
+        return false;
+    }
+
+    private _getPropDuration(offset: number, role: PropRole): number {
+        if (offset >= 0 && offset <= 3) return 4.5;
+        if (offset === 5) return 3.5;
+        if (offset === 4) return 5;
+        if (offset === 8) return role === 'sender' || role === 'receiver' ? 6 : 4;
+        if (offset === 10) return 6;
+        if (offset === 11) return role === 'bystander' ? 10 : 8;
+        return 4;
+    }
+
     // A 类：先从发送者头像飞到目标头像，命中后在目标位置播放一次性 Spine 动画。
-    private _playPatternA(offset: number, config: PropAnimConfig, senderNode: cc.Node, targetNode: cc.Node): void {
+    private _playPatternA(offset: number, config: PropAnimConfig, senderData: ThrowPropSeatNodes, targetData: ThrowPropSeatNodes): void {
         const soundName = config.soundName;
         if (offset === 2) this._playSound(soundName);
         const skeletonData = this._getSkeleton(config.spines[0]);
         if (!this._isRootValid()) return;
-        const node = this._createSpineNode(skeletonData, '', false, this._getLocalPos(senderNode));
+        const node = this._createSpineNode(skeletonData, '', false, this._getLocalPos(senderData.avatarNode), senderData.propNode);
         const skeleton = node.getComponent(sp.Skeleton);
-        const endPos = this._getLocalPos(targetNode);
+        const endPos = this._getLocalPos(targetData.avatarNode);
         cc.tween(node)
-            .to(0.5, this._toTweenPos(endPos), { easing: 'quadInOut' })
+            .to(0.5, this._toTweenPosForNode(node, endPos), { easing: 'quadInOut' })
             .call(() => {
                 if (!cc.isValid(node)) return;
                 skeleton.setAnimation(0, config.anims[0], false);
@@ -145,15 +240,15 @@ class ThrowPropManager {
     }
 
     // B 类：同样先飞到目标头像，但命中后播放循环动画，按固定时间销毁。
-    private _playPatternB(config: PropAnimConfig, senderNode: cc.Node, targetNode: cc.Node): void {
+    private _playPatternB(config: PropAnimConfig, senderData: ThrowPropSeatNodes, targetData: ThrowPropSeatNodes): void {
         const soundName = config.soundName;
         const skeletonData = this._getSkeleton(config.spines[0]);
         if (!this._isRootValid()) return;
-        const node = this._createSpineNode(skeletonData, '', false, this._getLocalPos(senderNode));
+        const node = this._createSpineNode(skeletonData, '', false, this._getLocalPos(senderData.avatarNode), senderData.propNode);
         const skeleton = node.getComponent(sp.Skeleton);
-        const endPos = this._getLocalPos(targetNode);
+        const endPos = this._getLocalPos(targetData.avatarNode);
         cc.tween(node)
-            .to(0.5, this._toTweenPos(endPos), { easing: 'quadInOut' })
+            .to(0.5, this._toTweenPosForNode(node, endPos), { easing: 'quadInOut' })
             .call(() => {
                 if (!cc.isValid(node)) return;
                 skeleton.setAnimation(0, config.anims[0], true);
@@ -164,13 +259,19 @@ class ThrowPropManager {
     }
 
     // C 类：不使用通用命中动画，而是在发送者/目标位置分别播放配置好的局部效果。
-    private _playPatternC(offset: number, config: PropAnimConfig, senderNode: cc.Node, targetNode: cc.Node, data: ThrowPropBroadcastData): void {
-        const targetPos = this._getLocalPos(targetNode);
+    private _playPatternC(
+        offset: number,
+        config: PropAnimConfig,
+        senderData: ThrowPropSeatNodes,
+        targetData: ThrowPropSeatNodes,
+        data: ThrowPropBroadcastData
+    ): void {
+        const targetPos = this._getLocalPos(targetData.avatarNode);
         const soundName = config.soundName;
         const allData = this._getSkeletons(config.spines);
         if (!this._isRootValid()) return;
         if (config.anims.length === 1) {
-            const node = this._createSpineNode(allData[0], config.anims[0], false, targetPos);
+            const node = this._createSpineNode(allData[0], config.anims[0], false, targetPos, targetData.propNode);
             this._destroyAfterComplete(node, 4);
             if (offset === 9) {
                 this._playSound(this._getRole(data.userID, data.targetUserID) === 'receiver' ? 'sound/PropOp/sfx_touch_mus' : 'sound/PropOp/sfx_money');
@@ -179,16 +280,16 @@ class ThrowPropManager {
             }
             return;
         }
-        const senderPos = this._getLocalPos(senderNode);
+        const senderPos = this._getLocalPos(senderData.avatarNode);
         if (offset === 7) {
-            const handNode = this._createSpineNode(allData[0], config.anims[0], false, senderPos);
+            const handNode = this._createSpineNode(allData[0], config.anims[0], false, senderPos, senderData.propNode);
             this._destroyAfterComplete(handNode, 4);
-            cc.tween(handNode).to(0.5, this._toTweenPos(targetPos), { easing: 'quadInOut' }).start();
-            const targetEffect = this._createSpineNode(allData[0], config.anims[1], false, targetPos);
+            cc.tween(handNode).to(0.5, this._toTweenPosForNode(handNode, targetPos), { easing: 'quadInOut' }).start();
+            const targetEffect = this._createSpineNode(allData[0], config.anims[1], false, targetPos, targetData.propNode);
             this._destroyAfterComplete(targetEffect, 4);
         } else {
-            const senderEffect = this._createSpineNode(allData[0], config.anims[0], false, senderPos);
-            const targetEffect = this._createSpineNode(allData[0], config.anims[1], false, targetPos);
+            const senderEffect = this._createSpineNode(allData[0], config.anims[0], false, senderPos, senderData.propNode);
+            const targetEffect = this._createSpineNode(allData[0], config.anims[1], false, targetPos, targetData.propNode);
             this._destroyAfterComplete(senderEffect, 4);
             this._destroyAfterComplete(targetEffect, 4);
         }
@@ -196,20 +297,20 @@ class ThrowPropManager {
     }
 
     // D 类：道具表现依赖当前客户端身份，需要按发送者、接收者、旁观者分支播放专用序列。
-    private _playPatternD(offset: number, senderNode: cc.Node, targetNode: cc.Node, data: ThrowPropBroadcastData): void {
+    private _playPatternD(offset: number, senderData: ThrowPropSeatNodes, targetData: ThrowPropSeatNodes, data: ThrowPropBroadcastData): void {
         const config = ThrowPropManager.CONFIGS[offset];
         const role = this._getRole(data.userID, data.targetUserID);
-        if (offset === 4) this._playBeer(senderNode, targetNode, role, config);
-        if (offset === 8) this._playBoxing(senderNode, targetNode, role, config);
-        if (offset === 10) this._playFish(senderNode, targetNode, role, config);
-        if (offset === 11) this._playBaseball(senderNode, targetNode, role, config);
+        if (offset === 4) this._playBeer(senderData, targetData, role, config);
+        if (offset === 8) this._playBoxing(senderData, targetData, role, config);
+        if (offset === 10) this._playFish(senderData, targetData, role, config);
+        if (offset === 11) this._playBaseball(senderData, targetData, role, config);
     }
 
-    private _playBeer(senderNode: cc.Node, targetNode: cc.Node, role: PropRole, config: PropAnimConfig): void {
+    private _playBeer(senderData: ThrowPropSeatNodes, targetData: ThrowPropSeatNodes, role: PropRole, config: PropAnimConfig): void {
         const [beerData, screenData] = this._getSkeletons(config.spines);
         if (!this._isRootValid()) return;
-        const senderPos = this._getLocalPos(senderNode);
-        const targetPos = this._getLocalPos(targetNode);
+        const senderPos = this._getLocalPos(senderData.avatarNode);
+        const targetPos = this._getLocalPos(targetData.avatarNode);
         if (role === 'sender' || role === 'receiver') {
             this._playSound('sound/PropOp/sfx_beer_screen');
             this._destroyAfterComplete(this._createSpineNode(screenData, '1', false, this._getScreenCenter()), 5);
@@ -218,15 +319,15 @@ class ThrowPropManager {
             return;
         }
         this._playSound(config.soundName);
-        this._destroyAfterComplete(this._createSpineNode(beerData, '2', false, senderPos), 5);
-        this._destroyAfterComplete(this._createSpineNode(beerData, '2', false, targetPos), 5);
+        this._destroyAfterComplete(this._createSpineNode(beerData, '2', false, senderPos, senderData.propNode), 5);
+        this._destroyAfterComplete(this._createSpineNode(beerData, '2', false, targetPos, targetData.propNode), 5);
     }
 
-    private _playBoxing(senderNode: cc.Node, targetNode: cc.Node, role: PropRole, config: PropAnimConfig): void {
+    private _playBoxing(senderData: ThrowPropSeatNodes, targetData: ThrowPropSeatNodes, role: PropRole, config: PropAnimConfig): void {
         const [boxData, screenData] = this._getSkeletons(config.spines);
         if (!this._isRootValid()) return;
-        const senderPos = this._getLocalPos(senderNode);
-        const targetPos = this._getLocalPos(targetNode);
+        const senderPos = this._getLocalPos(senderData.avatarNode);
+        const targetPos = this._getLocalPos(targetData.avatarNode);
         const screenCenter = this._getScreenCenter();
         if (role === 'sender') {
             this._playSound('sound/PropOp/sfx_boxing_sender1');
@@ -245,17 +346,17 @@ class ThrowPropManager {
             return;
         }
         this._playSound('sound/PropOp/sfx_boxing_beaten1');
-        this._chainSpine(this._createSpineNode(boxData, 'box_local_2', false, senderPos), () => {
+        this._chainSpine(this._createSpineNode(boxData, 'box_local_2', false, senderPos, senderData.propNode), () => {
             this._playSound('sound/PropOp/sfx_boxing_sender2');
-            this._destroyAfterComplete(this._createSpineNode(boxData, 'box_local_1', false, targetPos), 4);
+            this._destroyAfterComplete(this._createSpineNode(boxData, 'box_local_1', false, targetPos, targetData.propNode), 4);
         });
     }
 
-    private _playFish(senderNode: cc.Node, targetNode: cc.Node, role: PropRole, config: PropAnimConfig): void {
+    private _playFish(senderData: ThrowPropSeatNodes, targetData: ThrowPropSeatNodes, role: PropRole, config: PropAnimConfig): void {
         const [fishData, senderScreenData, receiverScreenData, waveData] = this._getSkeletons(config.spines);
         if (!this._isRootValid()) return;
-        const senderPos = this._getLocalPos(senderNode);
-        const targetPos = this._getLocalPos(targetNode);
+        const senderPos = this._getLocalPos(senderData.avatarNode);
+        const targetPos = this._getLocalPos(targetData.avatarNode);
         const center = this._getScreenCenter();
         if (role === 'sender') {
             this._playSound('sound/PropOp/sfx_fish2');
@@ -272,47 +373,52 @@ class ThrowPropManager {
         this._playSound('sound/PropOp/sfx_fish');
         const fishNode = this._createSpineNode(fishData, 'sy3_1', true, senderPos);
         const skeleton = fishNode.getComponent(sp.Skeleton);
-        const dir = cc.v2(targetPos.x - senderPos.x, targetPos.y - senderPos.y);
-        fishNode.angle = (-cc.v2(0, 1).signAngle(dir) * 180) / Math.PI;
+        const dir = cc.v2(targetPos.x - senderPos.x, targetPos.y - senderPos.y).normalize();
+        const exitDir = cc.v2(dir.y, -dir.x).normalize();
+        const exitPos = cc.v3(targetPos.x + exitDir.x * 100, targetPos.y + exitDir.y * 100, 0);
+        fishNode.angle = (cc.v2(0, 1).signAngle(dir) * 180) / Math.PI;
         fishNode.scaleX = dir.x > 0 ? -Math.abs(fishNode.scaleX || 1) : Math.abs(fishNode.scaleX || 1);
         cc.tween(fishNode)
-            .to(2, this._toTweenPos(targetPos), { easing: 'sineInOut' })
+            .to(2, this._toTweenPosForNode(fishNode, targetPos), { easing: 'sineInOut' })
             .call(() => {
                 if (!cc.isValid(fishNode)) return;
                 skeleton.setAnimation(0, 'sy3_2', false);
+                fishNode.angle = (cc.v2(0, 1).signAngle(exitDir) * 180) / Math.PI;
+                fishNode.scaleX = exitDir.x > 0 ? -Math.abs(fishNode.scaleX || 1) : Math.abs(fishNode.scaleX || 1);
                 this._destroyAfterComplete(this._createSpineNode(fishData, 'bl', false, targetPos), 4);
             })
-            .delay(1)
+            .delay(0.3)
+            .to(1, this._toTweenPosForNode(fishNode, exitPos), { easing: 'sineInOut' })
             .call(() => {
-                if (cc.isValid(fishNode)) fishNode.destroy();
+                this._releaseSpineNode(fishNode);
             })
             .start();
         this._destroyAfterComplete(this._createSpineNode(waveData, 'hl3', false, center), 6);
     }
 
-    private _playBaseball(senderNode: cc.Node, targetNode: cc.Node, role: PropRole, config: PropAnimConfig): void {
+    private _playBaseball(senderSeatData: ThrowPropSeatNodes, targetSeatData: ThrowPropSeatNodes, role: PropRole, config: PropAnimConfig): void {
         this._playSound(config.soundName);
-        const [senderData, receiverData, otherData] = this._getSkeletons(config.spines);
+        const [senderSkeletonData, receiverSkeletonData, otherSkeletonData] = this._getSkeletons(config.spines);
         if (!this._isRootValid()) return;
-        const senderPos = this._getLocalPos(senderNode);
-        const targetPos = this._getLocalPos(targetNode);
+        const senderPos = this._getLocalPos(senderSeatData.avatarNode);
+        const targetPos = this._getLocalPos(targetSeatData.avatarNode);
         if (role === 'sender') {
-            this._playBaseballSequence(senderData, senderPos, targetPos, false);
+            this._playBaseballSequence(senderSkeletonData, senderPos, targetPos, false, senderSeatData.propNode);
         } else if (role === 'receiver') {
-            this._playBaseballSequence(receiverData, senderPos, targetPos, false);
+            this._playBaseballSequence(receiverSkeletonData, senderPos, targetPos, false, senderSeatData.propNode);
         } else {
-            this._playBaseballSequence(otherData, senderPos, targetPos, true);
+            this._playBaseballSequence(otherSkeletonData, senderPos, targetPos, true, senderSeatData.propNode);
         }
     }
 
-    private _playBaseballSequence(skeletonData: sp.SkeletonData, startPos: cc.Vec3, targetPos: cc.Vec3, exitAfterHit: boolean): void {
-        const node = this._createSpineNode(skeletonData, '1', false, startPos);
+    private _playBaseballSequence(skeletonData: sp.SkeletonData, startPos: cc.Vec3, targetPos: cc.Vec3, exitAfterHit: boolean, propNode: cc.Node): void {
+        const node = this._createSpineNode(skeletonData, '1', false, startPos, propNode);
         const skeleton = node.getComponent(sp.Skeleton);
         skeleton.setCompleteListener(() => {
             if (!cc.isValid(node)) return;
             skeleton.setCompleteListener(() => {});
             skeleton.setAnimation(0, '2', false);
-            cc.tween(node).to(0.333, this._toTweenPos(targetPos), { easing: 'quadInOut' }).start();
+            cc.tween(node).to(0.333, this._toTweenPosForNode(node, targetPos), { easing: 'quadInOut' }).start();
             cc.tween(node)
                 .delay(0.333)
                 .call(() => {
@@ -328,9 +434,9 @@ class ThrowPropManager {
                         const dir = cc.v2(targetPos.x - startPos.x, targetPos.y - startPos.y).normalize();
                         const exitPos = cc.v3(targetPos.x + dir.x * 2000, targetPos.y + dir.y * 2000, 0);
                         cc.tween(node)
-                            .to(1, this._toTweenPos(exitPos), { easing: 'quadIn' })
+                            .to(1, this._toTweenPosForNode(node, exitPos), { easing: 'quadIn' })
                             .call(() => {
-                                if (cc.isValid(node)) node.destroy();
+                                this._releaseSpineNode(node);
                             })
                             .start();
                     });
@@ -356,14 +462,28 @@ class ThrowPropManager {
         ]);
     }
 
-    private _createSpineNode(skeletonData: sp.SkeletonData, animName: string, loop: boolean, localPos: cc.Vec3): cc.Node {
-        const node = new cc.Node('PropSpine');
-        const skeleton = node.addComponent(sp.Skeleton);
-        skeleton.skeletonData = skeletonData;
-        node.parent = this._root;
-        node.zIndex = 9999;
-        node.setPosition(localPos);
+    private _createSpineNode(skeletonData: sp.SkeletonData, animName: string, loop: boolean, localPos: cc.Vec3, propNode?: cc.Node): cc.Node {
+        const node = propNode || new cc.Node('PropSpine');
+        const skeleton = node.getComponent(sp.Skeleton) || node.addComponent(sp.Skeleton);
+        if (!propNode) {
+            node.parent = this._fullscreenRoot || this._root;
+            node.zIndex = 9999;
+        }
+        node.stopAllActions();
+        node.active = true;
+        node.opacity = 255;
+        node.angle = 0;
+        node.scaleX = Math.abs(node.scaleX || 1);
+        node.scaleY = Math.abs(node.scaleY || 1);
+        this._setRootLocalPosition(node, localPos);
+        skeleton.setCompleteListener(() => {});
+        const currentSkeletonData = propNode ? this._seatPropSkeletonData.get(node) : null;
+        if (!propNode || currentSkeletonData !== skeletonData) {
+            skeleton.skeletonData = skeletonData;
+            if (propNode) this._seatPropSkeletonData.set(node, skeletonData);
+        }
         if (animName) skeleton.setAnimation(0, animName, loop);
+        else this._resetSkeleton(skeleton);
         return node;
     }
 
@@ -371,7 +491,7 @@ class ThrowPropManager {
         const skeleton = node.getComponent(sp.Skeleton);
         skeleton.setCompleteListener(() => {
             if (!cc.isValid(node)) return;
-            node.destroy();
+            this._releaseSpineNode(node);
             next();
         });
         this._destroyAfterDelay(node, 6);
@@ -382,7 +502,7 @@ class ThrowPropManager {
         const skeleton = node.getComponent(sp.Skeleton);
         if (skeleton) {
             skeleton.setCompleteListener(() => {
-                if (cc.isValid(node)) node.destroy();
+                this._releaseSpineNode(node);
             });
         }
         this._destroyAfterDelay(node, fallbackDelay);
@@ -393,9 +513,28 @@ class ThrowPropManager {
         cc.tween(node)
             .delay(delay)
             .call(() => {
-                if (cc.isValid(node)) node.destroy();
+                this._releaseSpineNode(node);
             })
             .start();
+    }
+
+    private _releaseSpineNode(node: cc.Node): void {
+        if (!node || !cc.isValid(node)) return;
+        node.stopAllActions();
+        const skeleton = node.getComponent(sp.Skeleton);
+        if (skeleton) {
+            skeleton.setCompleteListener(() => {});
+        }
+        if (!this._seatPropSkeletonData.has(node)) {
+            node.destroy();
+            return;
+        }
+        node.active = false;
+    }
+
+    private _resetSkeleton(skeleton: sp.Skeleton): void {
+        skeleton.clearTracks();
+        skeleton.setToSetupPose();
     }
 
     private _spawnDiamondSpine(prefab: cc.Prefab, localPos: cc.Vec3): void {
@@ -433,7 +572,7 @@ class ThrowPropManager {
     }
 
     private _playSound(name: string): void {
-        if (!name) return;
+        if (!name || !soundManager.isOn) return;
         const clip = AssetManager.mustGetLoaded(BUNDLE_RESOURCES, name, cc.AudioClip);
         cc.audioEngine.playEffect(clip, false);
     }
@@ -464,6 +603,21 @@ class ThrowPropManager {
 
     private _toTweenPos(pos: cc.Vec3): { x: number; y: number } {
         return { x: pos.x, y: pos.y };
+    }
+
+    private _toTweenPosForNode(node: cc.Node, rootLocalPos: cc.Vec3): { x: number; y: number } {
+        const pos = this._convertRootLocalPosToNodeParent(node, rootLocalPos);
+        return { x: pos.x, y: pos.y };
+    }
+
+    private _setRootLocalPosition(node: cc.Node, rootLocalPos: cc.Vec3): void {
+        node.setPosition(this._convertRootLocalPosToNodeParent(node, rootLocalPos));
+    }
+
+    private _convertRootLocalPosToNodeParent(node: cc.Node, rootLocalPos: cc.Vec3): cc.Vec3 {
+        if (!this._root || !node?.parent || node.parent === this._root) return rootLocalPos;
+        const worldPos = this._root.convertToWorldSpaceAR(rootLocalPos);
+        return node.parent.convertToNodeSpaceAR(worldPos);
     }
 
     private _isRootValid(): boolean {

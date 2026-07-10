@@ -9,7 +9,7 @@ import TexasGameRoomDataSeatsStateManager, {
 import ccviewData, { CCViewData } from '../../../../data/system/CCViewData';
 import { AnimateDisplayTypeButton } from '../../../../game/constant/AnimateDisplayType';
 import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconState';
-import throwPropManager from '../../../util/ThrowPropManager';
+import throwPropManager, { ThrowPropSeatNodes } from '../../../util/ThrowPropManager';
 import Operation from './Operation';
 import SeatPlayer from './SeatPlayer';
 import seatPostionCaculator, { SeatPosition } from './widget/SeatPositionCaculator';
@@ -70,7 +70,6 @@ export default class SeatManager extends cc.Component {
 
     public onDisable(): void {
         unBindEventsAll(this);
-        throwPropManager.clearSeatNodes();
     }
 
     private _bindEventsAndRefresh() {
@@ -79,14 +78,16 @@ export default class SeatManager extends cc.Component {
 
     @bindEvent(TexasGameRoomDataSeatsStateManager.THROW_PROP, { dataSource: 'seats', initIgnore: true })
     private onThrowProp(data: ThrowPropBroadcastData): void {
-        this._refreshThrowPropSeatNodes();
-        throwPropManager.playProp(data);
+        const senderData = this._getThrowPropSeatNodes(data.userID);
+        const targetData = this._getThrowPropSeatNodes(data.targetUserID);
+        throwPropManager.playProp(data, senderData, targetData);
     }
 
     @bindEvent(TexasGameRoomDataSeatsStateManager.DIAMOND_GIFT, { dataSource: 'seats', initIgnore: true })
     private onDiamondGift(data: DiamondGiftBroadcastData): void {
-        this._refreshThrowPropSeatNodes();
-        throwPropManager.playDiamondGift(data);
+        const senderData = this._getThrowPropSeatNodes(data.senderID);
+        const receiverData = this._getThrowPropSeatNodes(data.receiverID);
+        throwPropManager.playDiamondGift(data, senderData, receiverData);
     }
 
     @bindEvent(TexasGameRoomDataSeatsStateManager.MUSHROOM_POOL_CHANGE, 'seats')
@@ -178,7 +179,6 @@ export default class SeatManager extends cc.Component {
     @bindEvent(TexasGameRoomDataSeatsStateManager.SEATS_CHANGE, { dataSource: 'seats', initPriority: 10 })
     @traceMethod()
     private onUpdateSeats(count: number) {
-        throwPropManager.clearSeatNodes();
         seatPostionCaculator.arrageSeatPositions(count);
         const pos = seatPostionCaculator.getPosition(SeatPosition.BottomMiddle);
         this._opPannel.adjustPostion(this.node, pos.position, pos.scale);
@@ -200,16 +200,23 @@ export default class SeatManager extends cc.Component {
                 let comp = this._seatNodesMap.get(i + 1);
                 comp.initData(seatData, this.potNot, this.dealNode);
                 node.active = true;
-                if (seatData?.userID) throwPropManager.registerSeat(seatData.userID, comp.avatarNode);
             }
         }
     }
 
-    private _refreshThrowPropSeatNodes(): void {
-        throwPropManager.clearSeatNodes();
+    private _getThrowPropSeatNodes(userID: number): ThrowPropSeatNodes {
+        if (!userID) return null;
+        let result: ThrowPropSeatNodes = null;
         this._seatNodesMap.forEach((seatPlayer, seatNo) => {
+            if (result) return;
             const seatData = this._seatManager.getSeatPlayer(seatNo);
-            if (seatData?.userID) throwPropManager.registerSeat(seatData.userID, seatPlayer.avatarNode);
+            if (seatData?.userID === userID) {
+                result = {
+                    avatarNode: seatPlayer.avatarNode,
+                    propNode: seatPlayer.throwPropNode
+                };
+            }
         });
+        return result;
     }
 }
