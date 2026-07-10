@@ -3,13 +3,14 @@ import { ensureRows, refreshTitleCards, setChildLabel } from './HistoryCardHelpe
 import { formatRaiseTimes, HistoryActionInfo, HistoryActionType, HistoryStreetModel, PLAYER_ACTION_ABBR, PLAYER_POSITION_ABBR } from './HistoryReplayModel';
 
 // 对齐 h5 UGUIUtil 常量：TEXT_GREEN / TEXT_RED / TEXT_GREEN_DEEP / TEXT_GRAY
-const COLOR_GREEN = cc.color(128, 205, 16);    // #80CD10
 
-const COLOR_RED = cc.color(255, 67, 104);      // #FF4368
+const COLOR_GREEN = cc.color(128, 205, 16); // #80CD10
 
-const COLOR_TEAL = cc.color(57, 194, 178);     // #39C2B2
+const COLOR_RED = cc.color(255, 67, 104); // #FF4368
 
-const COLOR_GRAY = cc.color(157, 157, 157);    // #9D9D9D
+const COLOR_TEAL = cc.color(57, 194, 178); // #39C2B2
+
+const COLOR_GRAY = cc.color(157, 157, 157); // #9D9D9D
 
 // Unity Color32(198,198,198,160)：仅用于 AllIn 时 win 标签
 const COLOR_GRAY_ALLIN = cc.color(198, 198, 198);

@@ -56,6 +56,86 @@ function insertBefore(html, marker, content) {
   return html.replace(marker, `${content}\n${marker}`)
 }
 
+const COCOS_VIEWPORT_RESIZE_PATCH = `        /**
+         * 视口变化后同步 Cocos frame/design size，并通知场景刷新布局。
+         */
+        function forceCocosRefit(canvas, heightOverride) {
+          try {
+            canvas = canvas || document.getElementById('GameCanvas')
+            if (!window.cc || !cc.view || !canvas) return false
+            var vv = window.visualViewport
+            var doc = document.documentElement || {}
+            var w = Math.round((vv && vv.width) || window.innerWidth || doc.clientWidth || canvas.clientWidth || 0)
+            var h = Math.round(heightOverride || (vv && vv.height) || window.innerHeight || doc.clientHeight || canvas.clientHeight || 0)
+            if (!w || !h) return false
+
+            var view = cc.view
+            if (typeof view.setFrameSize === 'function') {
+              view.setFrameSize(w, h)
+            } else if (view._frameSize) {
+              view._frameSize.width = w
+              view._frameSize.height = h
+            }
+
+            if (cc.Canvas && cc.Canvas.instance) {
+              var designW = cc.Canvas.instance.designResolution.width
+              var designH = cc.Canvas.instance.designResolution.height
+              var policy = w / h > 0.75 ? cc.ResolutionPolicy.FIXED_HEIGHT : cc.ResolutionPolicy.FIXED_WIDTH
+              view.setDesignResolutionSize(designW, designH, policy)
+            }
+
+            view.emit('canvas-resize')
+            return true
+          } catch (e) {
+            return false
+          }
+        }
+
+        function bindCocosViewportResize() {
+          if (window.__H5_CC_VIEWPORT_RESIZE_BOUND__) return
+          window.__H5_CC_VIEWPORT_RESIZE_BOUND__ = true
+          var timer = 0
+          var run = function () {
+            forceCocosRefit(document.getElementById('GameCanvas'))
+          }
+          var schedule = function () {
+            window.clearTimeout(timer)
+            timer = window.setTimeout(run, 80)
+          }
+          window.addEventListener('resize', schedule, { passive: true })
+          window.addEventListener('orientationchange', schedule, { passive: true })
+          if (window.visualViewport && window.visualViewport.addEventListener) {
+            window.visualViewport.addEventListener('resize', schedule, { passive: true })
+          }
+          window.addEventListener('load', schedule, { passive: true })
+          schedule()
+        }`
+
+function hasViewportResizeBindCall(html) {
+  return /^\s*bindCocosViewportResize\(\)\s*$/m.test(html)
+}
+
+function patchCocosViewportResize(html) {
+  let out = html
+  const refitRe = /        \/\*\*[\s\S]*?\r?\n         \*\/\r?\n        function forceCocosRefit[\s\S]*?\r?\n\r?\n        \/\*\*\r?\n         \* Telegram/
+  if (refitRe.test(out)) {
+    out = out.replace(refitRe, `${COCOS_VIEWPORT_RESIZE_PATCH}\n\n        /**\n         * Telegram`)
+  } else {
+    console.warn('⚠ 未找到 forceCocosRefit，跳过 Cocos viewport resize 补丁')
+  }
+
+  if (!hasViewportResizeBindCall(out)) {
+    const appendScript = '        document.head.appendChild(script)\n'
+    if (out.includes(appendScript)) {
+      out = out.replace(appendScript, `${appendScript}        bindCocosViewportResize()\n`)
+    } else {
+      console.warn('⚠ 未找到 Telegram script append 位置，跳过 Cocos viewport resize 绑定')
+    }
+  }
+
+  return out
+}
+
 // --- 步骤 1：同步 i18n ---
 const I18N_FILES = ['USER_ZH.txt', 'USER_EN.txt', 'USER_TW.txt', 'USER_PT.txt']
 const I18N_SRC_DIR = path.join(ROOT, 'assets', 'resources', 'config')
@@ -138,13 +218,24 @@ console.log('  preloads: ', preloads.length, '个')
 const SPLASH_EMPTY = /<div id="splash"><\/div>/
 const SPLASH_CORRECT = '<div id="splash">\n      <div class="progress-bar stripes">\n        <span></span>\n      </div>\n    </div>'
 
-let buildHtml = src
+let buildHtml = patchCocosViewportResize(src)
+let shouldWriteBuildHtml = buildHtml !== src
+if (shouldWriteBuildHtml) {
+  console.log('✓ build-templates/web-mobile/index.html viewport resize 已修补')
+} else {
+  console.log('✓ build-templates/web-mobile/index.html viewport resize 无需修补')
+}
+
 if (SPLASH_EMPTY.test(buildHtml)) {
   buildHtml = buildHtml.replace(SPLASH_EMPTY, SPLASH_CORRECT)
-  fs.writeFileSync(BUILD_HTML, buildHtml, 'utf-8')
+  shouldWriteBuildHtml = true
   console.log('✓ build-templates/web-mobile/index.html #splash 已修补')
 } else {
   console.log('✓ build-templates/web-mobile/index.html #splash 无需修补')
+}
+
+if (shouldWriteBuildHtml) {
+  fs.writeFileSync(BUILD_HTML, buildHtml, 'utf-8')
 }
 
 // --- 步骤 5：生成 preview index ---
@@ -307,11 +398,7 @@ const PREVIEW_RECOMPILING = `
 `
 
 const PREVIEW_COCOS_DOM = `
-  <!-- ========================================== -->
-  <!-- Cocos 官方 DOM 结构 -->
-  <!-- content > contentWrap > wrapper#GameDiv -->
-  <!-- boot.js 依赖这些元素，不可删除 -->
-  <!-- ========================================== -->
+  <!-- Cocos 预览 DOM -->
   <div class="content" id="content">
     <div class="contentWrap">
       <div class="wrapper" id="GameDiv">

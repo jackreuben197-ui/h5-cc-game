@@ -25,6 +25,7 @@
  *   H5MsgMgr.Instance.on('xxx', fn);                 // 注册消息监听
  */
 import { traceClass } from './core/decorator/LogTrace';
+import ccviewData from './data/system/CCViewData';
 import userStore from './data/user/UserStore';
 import UserStoreUtils from './data/user/UserStoreUtils';
 
@@ -36,7 +37,13 @@ const HANDSHAKE_TIMEOUT = 10000;
 // 不要在这里重新声明协议字段；要改协议先去 @silenthill/h5-cc-bridge 仓库发版，CC 端 `npm install` 即取最新类型。
 // 注意：CC 端绝对不能引入 bridge 的 runtime 值（如 BRIDGE_ACTION.X 常量、createBridgeMessage 等函数），
 // 否则那条 import 不会被擦除，Cocos 运行时会找不到该模块。
-import type { H5NavigatePayload, H5ToCocosPayloadMap, CocosToH5PayloadMap as SharedCocosToH5PayloadMap } from '@silenthill/h5-cc-bridge/cc-side';
+import type {
+    H5NavigatePayload,
+    H5ReadyPayload,
+    H5ToCocosPayloadMap,
+    SafeArea,
+    CocosToH5PayloadMap as SharedCocosToH5PayloadMap
+} from '@silenthill/h5-cc-bridge/cc-side';
 
 // CC 侧 sendToH5 接受原始 Uint8Array/ArrayBuffer，内部包装为 binary envelope；
 // 共享 map 的 wsSend 是包装后的 envelope 形态（H5 接收端视角），本地覆盖一下。
@@ -157,6 +164,8 @@ function isBinaryEnvelope(payload: OutgoingPayload): payload is WsSendBinaryEnve
 @traceClass()
 class H5MsgMgr {
     private static _instance: H5MsgMgr = null;
+    /** H5 握手时上报的安全区信息，供全局读取。*/
+    static safeArea: SafeArea = { top: 0, left: 0, right: 0, bottom: 0, source: '' };
     static get Instance(): H5MsgMgr {
         if (!H5MsgMgr._instance) {
             H5MsgMgr._instance = new H5MsgMgr();
@@ -173,6 +182,10 @@ class H5MsgMgr {
     private _handshakeTimer: number = null;
 
     private constructor() {}
+
+    public get safeArea(): SafeArea {
+        return H5MsgMgr.safeArea;
+    }
     // ─── 初始化 ──────────────────────────────────────
     /**
      * 初始化 H5 Bridge 消息监听。
@@ -218,10 +231,15 @@ class H5MsgMgr {
      */
     startHandshake(): void {
         // H5 主动发来 h5Ready → CC 回复 ccAck
-        this.on('h5Ready', data => {
-            this.tracelog.debug('收到 h5Ready，回复 ccAck', data);
-            if ((data as any)?.token) {
-                userStore.token = (data as any).token;
+        this.on('h5Ready', (payload: H5ReadyPayload) => {
+            this.tracelog.debug('收到 h5Ready，回复 ccAck', payload);
+            if (payload?.safeArea) {
+                H5MsgMgr.safeArea = payload.safeArea;
+                // ccviewData.setSaveareaTop(payload.safeArea.top);
+                ccviewData.setSaveareaTop(20);
+            }
+            if (payload.token) {
+                userStore.token = payload.token;
                 UserStoreUtils.updateUserInfoBasic();
             }
             this.sendToH5('ccAck', 1);

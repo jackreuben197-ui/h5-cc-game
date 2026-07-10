@@ -21,20 +21,20 @@
         "__id__": 2
       },
       {
-        "__id__": 251
+        "__id__": 252
       }
     ],
     "_active": true,
     "_components": [
       {
-        "__id__": 257
+        "__id__": 258
       },
       {
-        "__id__": 258
+        "__id__": 259
       }
     ],
     "_prefab": {
-      "__id__": 259
+      "__id__": 260
     },
     "_opacity": 255,
     "_color": {
@@ -126,10 +126,13 @@
       },
       {
         "__id__": 249
+      },
+      {
+        "__id__": 250
       }
     ],
     "_prefab": {
-      "__id__": 250
+      "__id__": 251
     },
     "_opacity": 255,
     "_color": {
@@ -9257,6 +9260,33 @@
     "_id": ""
   },
   {
+    "__type__": "cc.Widget",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 2
+    },
+    "_enabled": true,
+    "alignMode": 1,
+    "_target": null,
+    "_alignFlags": 18,
+    "_left": 0,
+    "_right": 0,
+    "_top": 0,
+    "_bottom": 0,
+    "_verticalCenter": 0,
+    "_horizontalCenter": 0,
+    "_isAbsLeft": true,
+    "_isAbsRight": true,
+    "_isAbsTop": true,
+    "_isAbsBottom": true,
+    "_isAbsHorizontalCenter": true,
+    "_isAbsVerticalCenter": true,
+    "_originalWidth": 0,
+    "_originalHeight": 0,
+    "_id": ""
+  },
+  {
     "__type__": "cc.PrefabInfo",
     "root": {
       "__id__": 1
@@ -9278,9 +9308,6 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 252
-      },
-      {
         "__id__": 253
       },
       {
@@ -9288,10 +9315,13 @@
       },
       {
         "__id__": 255
+      },
+      {
+        "__id__": 256
       }
     ],
     "_prefab": {
-      "__id__": 256
+      "__id__": 257
     },
     "_opacity": 1,
     "_color": {
@@ -9345,7 +9375,7 @@
     "_name": "",
     "_objFlags": 0,
     "node": {
-      "__id__": 251
+      "__id__": 252
     },
     "_enabled": true,
     "_materials": [
@@ -9377,7 +9407,7 @@
     "_name": "",
     "_objFlags": 0,
     "node": {
-      "__id__": 251
+      "__id__": 252
     },
     "_enabled": true,
     "alignMode": 1,
@@ -9404,7 +9434,7 @@
     "_name": "",
     "_objFlags": 0,
     "node": {
-      "__id__": 251
+      "__id__": 252
     },
     "_enabled": true,
     "_id": ""
@@ -9414,7 +9444,7 @@
     "_name": "",
     "_objFlags": 0,
     "node": {
-      "__id__": 251
+      "__id__": 252
     },
     "_enabled": true,
     "_normalMaterial": null,
@@ -9539,7 +9569,7 @@
       "__id__": 97
     },
     "tipsMask": {
-      "__id__": 251
+      "__id__": 252
     },
     "tipsContent": {
       "__id__": 223

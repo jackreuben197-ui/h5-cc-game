@@ -8,10 +8,10 @@ import {
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
 import { MicrophoneIconState } from '../../../game/constant/MicrophoneIconState';
+import { SeatPosition } from '../../../views/scene/room/texas/widget/SeatPositionCaculator';
 import { Operator } from './model/Operator';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from './TexasGameRoomDataPlayerMine';
-import { SeatPosition } from './TexasGameRoomDataSeatsStateManager';
 
 type PlayerAnimBindings = {
     seated: [TexasGameRoomDataPlayerMine];

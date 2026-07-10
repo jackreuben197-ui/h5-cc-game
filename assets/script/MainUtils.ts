@@ -39,7 +39,7 @@ export function loadWebSDK(): void {
         script.onload = () => {
             _ploger.info(`[WebSDK] ${sdk.name} 声网sdk加载完成`);
             if (sdk.name === 'AgoraRTC') {
-                agoraManager.init(GameConfig.agoraKey);
+                agoraManager.init(GameConfig.AGOROKEY);
             }
         };
         script.onerror = () => {

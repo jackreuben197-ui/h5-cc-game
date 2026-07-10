@@ -1,12 +1,15 @@
 export default class UIViewUtil {
     // caculatePostion 计算任意一个节点TargetNode, 针对当前节点的坐标
-    public static caculatePostion(originalNode: cc.Node, targetNode: cc.Node): cc.Vec2 {
+    public static caculatePostion(originalNode: cc.Node, targetNode: cc.Node, offset: cc.Vec2 | cc.Vec3 = cc.Vec2.ZERO): cc.Vec2 | cc.Vec3 {
         // 世界坐标
-        const worldPos = targetNode.convertToWorldSpaceAR(cc.Vec2.ZERO);
+        const worldPos = targetNode.convertToWorldSpaceAR(offset);
         // 转化为本地的
         const localPos = originalNode.parent.convertToNodeSpaceAR(worldPos);
         return localPos;
     }
+    // public static caculatePostion(originalNode: cc.Node, targetPos: cc.Vec3): cc.Vec2 {
+
+    // }
 
     public static parellTweens(tweens: cc.Tween[], complete: () => void): () => void {
         if (!tweens || tweens.length === 0) {

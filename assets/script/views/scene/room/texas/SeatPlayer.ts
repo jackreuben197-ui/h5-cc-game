@@ -7,7 +7,6 @@ import { Operator, OpertionType } from '../../../../data/room/texas/model/Operat
 import texasGamePersonalSettings, { TexasGamePersonalSettings } from '../../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
-import { SeatPosition } from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
 import {
     AnimateDisplayTypeAction,
     AnimateDisplayTypeCards,
@@ -30,24 +29,9 @@ import RemoteSprite from '../../../widget/RemoteSprite';
 import ShiningPathTimer from '../../../widget/ShiningPathTimer';
 import TexasTableEvent from './events/TexasTableEvent';
 import SeatAction from './SeatAction';
+import seatPostionCaculator, { SeatPosition } from './widget/SeatPositionCaculator';
 
 const { ccclass, property, menu } = cc._decorator;
-
-const seatArrange: Record<SeatPosition, cc.Vec3> = {
-    [SeatPosition.Default]: cc.v3(0, 0),
-    [SeatPosition.BottomMiddle]: cc.v3(0, -2270), // 0 下中
-    [SeatPosition.BottomLeft]: cc.v3(-480, -1585), // 1 左下
-    [SeatPosition.MiddleLeft]: cc.v3(-480, -1130), // 2 左中
-    [SeatPosition.TopLeft]: cc.v3(-480, -730), // 3 左上
-    [SeatPosition.TopLeft1]: cc.v3(-165, -440), // 4 上左
-    [SeatPosition.TopMiddle]: cc.v3(0, -440), // 5 上中
-    [SeatPosition.TopRight1]: cc.v3(165, -440), // 6 上右
-    [SeatPosition.TopRight]: cc.v3(480, -730), // 7 右上
-    [SeatPosition.MiddleRight]: cc.v3(480, -1130), // 8 右中
-    [SeatPosition.BottomRight]: cc.v3(480, -1585), // 9 右下
-    [SeatPosition.TopLeft7]: cc.v3(-480, -1065), // 8 7 人桌的修正
-    [SeatPosition.TopRight7]: cc.v3(480, -1065) // 9 7 人桌的修正
-};
 
 const redColor = cc.Color.fromHEX(new cc.Color(), '#FA2B4B');
 
@@ -419,7 +403,6 @@ export default class SeatPlayer extends cc.Component {
             case SeatPosition.BottomLeft:
             case SeatPosition.MiddleLeft:
             case SeatPosition.TopLeft:
-            case SeatPosition.TopLeft7:
                 this.buttonIcon.setPosition(0, -215);
                 this.roudBetIcon.setPosition(-25, 0);
                 this.roundBetNode.setPosition(190, -70);
@@ -436,7 +419,7 @@ export default class SeatPlayer extends cc.Component {
                 this.winPercentNode.node.active = false;
                 this.micIconSprite.node.setPosition(-90, 0);
                 break;
-            case SeatPosition.TopLeft1:
+            case SeatPosition.TopMiddleLeft:
                 this.buttonIcon.setPosition(65, -220);
                 this.roudBetIcon.setPosition(-25, 0);
                 this.roundBetNode.setPosition(-65, -215);
@@ -454,7 +437,7 @@ export default class SeatPlayer extends cc.Component {
                 this.micIconSprite.node.setPosition(-90, 0);
                 break;
             case SeatPosition.TopMiddle:
-            case SeatPosition.TopRight1:
+            case SeatPosition.TopMiddleRight:
                 this.buttonIcon.setPosition(65, -220);
                 this.roudBetIcon.setPosition(133, 0);
                 this.roundBetNode.setPosition(-85, -215);
@@ -474,7 +457,6 @@ export default class SeatPlayer extends cc.Component {
             case SeatPosition.TopRight:
             case SeatPosition.MiddleRight:
             case SeatPosition.BottomRight:
-            case SeatPosition.TopRight7:
                 this.buttonIcon.setPosition(0, -215);
                 this.roudBetIcon.setPosition(133, 0);
                 this.roundBetNode.setPosition(-180, -70);
@@ -492,15 +474,16 @@ export default class SeatPlayer extends cc.Component {
                 this.micIconSprite.node.setPosition(90, 0);
                 break;
         }
-        const realPos = seatArrange[pos];
+        const realPos = seatPostionCaculator.getPosition(pos);
         if (pat == AnimateDisplayTypePosition.ToTarget) {
             this.node.opacity = 0;
             cc.tween(this.node)
-                .parallel(cc.tween().to(1, { opacity: 255 }), cc.tween().to(1, { position: realPos }, { easing: 'backOut' }))
+                .parallel(cc.tween().to(1, { opacity: 255 }), cc.tween().to(1, { position: realPos.position, scale: realPos.scale }, { easing: 'backOut' }))
                 .start();
             return;
         }
-        this.node.setPosition(realPos);
+        this.node.setScale(realPos.scale, realPos.scale);
+        this.node.setPosition(realPos.position);
     }
 
     @bindEvent(TexasGameRoomDataPlayer.ROUND_BET_CHANGE, 'player', AnimateDisplayTypeRoundBet.Static)
