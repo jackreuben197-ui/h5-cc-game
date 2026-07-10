@@ -16,65 +16,49 @@ interface PropAnimConfig {
 class ThrowPropManager {
     private static readonly PROP_TYPE_BASE = 600;
     private static readonly CONFIGS: PropAnimConfig[] = [
-        { pattern: 'A', spines: ['dynamic/prop/spine/expressionTomato/skeleton'], anims: ['1'], soundName: 'dynamic/prop/sound/sfx_tomato_mus' },
-        { pattern: 'A', spines: ['dynamic/prop/spine/expressionFlower/skeleton'], anims: ['animation'], soundName: 'dynamic/prop/sound/sfx_rose_mus' },
-        { pattern: 'A', spines: ['dynamic/prop/spine/expressionKiss/kiss'], anims: ['1'], soundName: 'dynamic/prop/sound/sfx_kiss_mus' },
-        { pattern: 'A', spines: ['dynamic/prop/spine/expressionGood/skeleton'], anims: ['animation'], soundName: 'dynamic/prop/sound/sfx_like_mus' },
+        { pattern: 'A', spines: ['rc/other/effect/expressionTomato/skeleton'], anims: ['1'], soundName: 'sound/PropOp/sfx_tomato_mus' },
+        { pattern: 'A', spines: ['rc/other/effect/expressionFlower/skeleton'], anims: ['animation'], soundName: 'sound/PropOp/sfx_rose_mus' },
+        { pattern: 'A', spines: ['rc/other/effect/expressionKiss/kiss'], anims: ['1'], soundName: 'sound/PropOp/sfx_kiss_mus' },
+        { pattern: 'A', spines: ['rc/other/effect/expressionGood/skeleton'], anims: ['animation'], soundName: 'sound/PropOp/sfx_like_mus' },
         {
             pattern: 'D',
-            spines: ['dynamic/prop/spine/expressionBeer/cheers_2', 'dynamic/prop/spine/expressionBeerScreen/cheers_1'],
+            spines: ['rc/other/effect/expressionBeer/cheers_2', 'rc/other/effect/expressionBeerScreen/cheers_1'],
             anims: [],
-            soundName: 'dynamic/prop/sound/sfx_cheers_mus'
+            soundName: 'sound/PropOp/sfx_cheers_mus'
         },
-        { pattern: 'B', spines: ['dynamic/prop/spine/expressionTouch/touch'], anims: ['animation'], soundName: 'dynamic/prop/sound/sfx_touch_mus' },
+        { pattern: 'B', spines: ['rc/other/effect/expressionTouch/touch'], anims: ['animation'], soundName: 'sound/PropOp/sfx_touch_mus' },
+        { pattern: 'C', spines: ['rc/other/effect/expressionShark/shark'], anims: ['shark_set', 'shark_receive'], soundName: 'sound/PropOp/sfx_shark_mus' },
         {
             pattern: 'C',
-            spines: ['dynamic/prop/spine/expressionShark/shark'],
-            anims: ['shark_set', 'shark_receive'],
-            soundName: 'dynamic/prop/sound/sfx_shark_mus'
-        },
-        {
-            pattern: 'C',
-            spines: ['dynamic/prop/spine/expressionChicken/chicken_spine'],
+            spines: ['rc/other/effect/expressionChicken/chicken_spine'],
             anims: ['chicken_set', 'chicken_receive'],
-            soundName: 'dynamic/prop/sound/sfx_zhuaji_mus'
+            soundName: 'sound/PropOp/sfx_zhuaji_mus'
         },
-        { pattern: 'D', spines: ['dynamic/prop/spine/expressionBox/box_local', 'dynamic/prop/spine/expressionBoxScreen/box_full'], anims: [] },
-        { pattern: 'C', spines: ['dynamic/prop/spine/expressionMoney/attachments'], anims: ['attachments_1_receive'] },
+        { pattern: 'D', spines: ['rc/other/effect/expressionBox/box_local', 'rc/other/effect/expressionBoxScreen/box_full'], anims: [] },
+        { pattern: 'C', spines: ['rc/other/effect/expressionMoney/attachments'], anims: ['attachments_1_receive'] },
         {
             pattern: 'D',
             spines: [
-                'dynamic/prop/spine/expressionFish/sy3',
-                'dynamic/prop/spine/expressionFishScreenSender/sy2',
-                'dynamic/prop/spine/expressionFishScreenReceiver/sy',
-                'dynamic/prop/spine/expressionFishWave/hl'
+                'rc/other/effect/expressionFish/sy3',
+                'rc/other/effect/expressionFishScreenSender/sy2',
+                'rc/other/effect/expressionFishScreenReceiver/sy',
+                'rc/other/effect/expressionFishWave/hl'
             ],
             anims: []
         },
         {
             pattern: 'D',
             spines: [
-                'dynamic/prop/spine/expressionBaseballSender/skeleton',
-                'dynamic/prop/spine/expressionBaseballReceiver/ballfolder1',
-                'dynamic/prop/spine/expressionBaseballOther/skeleton'
+                'rc/other/effect/expressionBaseballSender/skeleton',
+                'rc/other/effect/expressionBaseballReceiver/ballfolder1',
+                'rc/other/effect/expressionBaseballOther/skeleton'
             ],
             anims: [],
-            soundName: 'dynamic/prop/sound/sfx_baseball'
+            soundName: 'sound/PropOp/sfx_baseball'
         }
-    ];
-    private static readonly EXTRA_SOUND_NAMES = [
-        'dynamic/prop/sound/sfx_beer_screen',
-        'dynamic/prop/sound/sfx_boxing_sender1',
-        'dynamic/prop/sound/sfx_boxing_sender2',
-        'dynamic/prop/sound/sfx_boxing_beaten1',
-        'dynamic/prop/sound/sfx_boxing_beaten2',
-        'dynamic/prop/sound/sfx_fish',
-        'dynamic/prop/sound/sfx_fish2',
-        'dynamic/prop/sound/sfx_money'
     ];
     private _root: cc.Node = null;
     private _seatNodes: Map<number, cc.Node> = new Map();
-    private _propAssetsLoading: Promise<void> = null;
 
     public initialize(root: cc.Node): void {
         this._root = root;
@@ -90,14 +74,6 @@ class ThrowPropManager {
     }
 
     public playProp(data: ThrowPropBroadcastData): void {
-        this._playProp(data).catch(error => cc.warn('[ThrowPropManager] play prop failed', error));
-    }
-
-    public preloadPropAssets(): void {
-        this._ensurePropAssetsLoaded().catch(error => cc.warn('[ThrowPropManager] preload prop assets failed', error));
-    }
-
-    private async _playProp(data: ThrowPropBroadcastData): Promise<void> {
         const offset = data.type - ThrowPropManager.PROP_TYPE_BASE;
         const config = ThrowPropManager.CONFIGS[offset];
         if (!config || !this._root || !cc.isValid(this._root)) return;
@@ -106,16 +82,16 @@ class ThrowPropManager {
         if (!senderNode || !targetNode) return;
         switch (config.pattern) {
             case 'A':
-                await this._playPatternA(offset, config, senderNode, targetNode);
+                this._playPatternA(offset, config, senderNode, targetNode);
                 break;
             case 'B':
-                await this._playPatternB(config, senderNode, targetNode);
+                this._playPatternB(config, senderNode, targetNode);
                 break;
             case 'C':
-                await this._playPatternC(offset, config, senderNode, targetNode, data);
+                this._playPatternC(offset, config, senderNode, targetNode, data);
                 break;
             case 'D':
-                await this._playPatternD(offset, senderNode, targetNode, data);
+                this._playPatternD(offset, senderNode, targetNode, data);
                 break;
         }
     }
@@ -149,10 +125,10 @@ class ThrowPropManager {
     }
 
     // A 类：先从发送者头像飞到目标头像，命中后在目标位置播放一次性 Spine 动画。
-    private async _playPatternA(offset: number, config: PropAnimConfig, senderNode: cc.Node, targetNode: cc.Node): Promise<void> {
+    private _playPatternA(offset: number, config: PropAnimConfig, senderNode: cc.Node, targetNode: cc.Node): void {
         const soundName = config.soundName;
         if (offset === 2) this._playSound(soundName);
-        const skeletonData = await this._getSkeleton(config.spines[0]);
+        const skeletonData = this._getSkeleton(config.spines[0]);
         if (!this._isRootValid()) return;
         const node = this._createSpineNode(skeletonData, '', false, this._getLocalPos(senderNode));
         const skeleton = node.getComponent(sp.Skeleton);
@@ -169,9 +145,9 @@ class ThrowPropManager {
     }
 
     // B 类：同样先飞到目标头像，但命中后播放循环动画，按固定时间销毁。
-    private async _playPatternB(config: PropAnimConfig, senderNode: cc.Node, targetNode: cc.Node): Promise<void> {
+    private _playPatternB(config: PropAnimConfig, senderNode: cc.Node, targetNode: cc.Node): void {
         const soundName = config.soundName;
-        const skeletonData = await this._getSkeleton(config.spines[0]);
+        const skeletonData = this._getSkeleton(config.spines[0]);
         if (!this._isRootValid()) return;
         const node = this._createSpineNode(skeletonData, '', false, this._getLocalPos(senderNode));
         const skeleton = node.getComponent(sp.Skeleton);
@@ -188,18 +164,16 @@ class ThrowPropManager {
     }
 
     // C 类：不使用通用命中动画，而是在发送者/目标位置分别播放配置好的局部效果。
-    private async _playPatternC(offset: number, config: PropAnimConfig, senderNode: cc.Node, targetNode: cc.Node, data: ThrowPropBroadcastData): Promise<void> {
+    private _playPatternC(offset: number, config: PropAnimConfig, senderNode: cc.Node, targetNode: cc.Node, data: ThrowPropBroadcastData): void {
         const targetPos = this._getLocalPos(targetNode);
         const soundName = config.soundName;
-        const allData = await this._getSkeletons(config.spines);
+        const allData = this._getSkeletons(config.spines);
         if (!this._isRootValid()) return;
         if (config.anims.length === 1) {
             const node = this._createSpineNode(allData[0], config.anims[0], false, targetPos);
             this._destroyAfterComplete(node, 4);
             if (offset === 9) {
-                this._playSound(
-                    this._getRole(data.userID, data.targetUserID) === 'receiver' ? 'dynamic/prop/sound/sfx_touch_mus' : 'dynamic/prop/sound/sfx_money'
-                );
+                this._playSound(this._getRole(data.userID, data.targetUserID) === 'receiver' ? 'sound/PropOp/sfx_touch_mus' : 'sound/PropOp/sfx_money');
             } else {
                 this._playSound(soundName);
             }
@@ -222,22 +196,22 @@ class ThrowPropManager {
     }
 
     // D 类：道具表现依赖当前客户端身份，需要按发送者、接收者、旁观者分支播放专用序列。
-    private async _playPatternD(offset: number, senderNode: cc.Node, targetNode: cc.Node, data: ThrowPropBroadcastData): Promise<void> {
+    private _playPatternD(offset: number, senderNode: cc.Node, targetNode: cc.Node, data: ThrowPropBroadcastData): void {
         const config = ThrowPropManager.CONFIGS[offset];
         const role = this._getRole(data.userID, data.targetUserID);
-        if (offset === 4) await this._playBeer(senderNode, targetNode, role, config);
-        if (offset === 8) await this._playBoxing(senderNode, targetNode, role, config);
-        if (offset === 10) await this._playFish(senderNode, targetNode, role, config);
-        if (offset === 11) await this._playBaseball(senderNode, targetNode, role, config);
+        if (offset === 4) this._playBeer(senderNode, targetNode, role, config);
+        if (offset === 8) this._playBoxing(senderNode, targetNode, role, config);
+        if (offset === 10) this._playFish(senderNode, targetNode, role, config);
+        if (offset === 11) this._playBaseball(senderNode, targetNode, role, config);
     }
 
-    private async _playBeer(senderNode: cc.Node, targetNode: cc.Node, role: PropRole, config: PropAnimConfig): Promise<void> {
-        const [beerData, screenData] = await this._getSkeletons(config.spines);
+    private _playBeer(senderNode: cc.Node, targetNode: cc.Node, role: PropRole, config: PropAnimConfig): void {
+        const [beerData, screenData] = this._getSkeletons(config.spines);
         if (!this._isRootValid()) return;
         const senderPos = this._getLocalPos(senderNode);
         const targetPos = this._getLocalPos(targetNode);
         if (role === 'sender' || role === 'receiver') {
-            this._playSound('dynamic/prop/sound/sfx_beer_screen');
+            this._playSound('sound/PropOp/sfx_beer_screen');
             this._destroyAfterComplete(this._createSpineNode(screenData, '1', false, this._getScreenCenter()), 5);
             this._destroyAfterComplete(this._createSpineNode(beerData, '3', false, senderPos), 5);
             this._destroyAfterComplete(this._createSpineNode(beerData, '3', false, targetPos), 5);
@@ -248,54 +222,54 @@ class ThrowPropManager {
         this._destroyAfterComplete(this._createSpineNode(beerData, '2', false, targetPos), 5);
     }
 
-    private async _playBoxing(senderNode: cc.Node, targetNode: cc.Node, role: PropRole, config: PropAnimConfig): Promise<void> {
-        const [boxData, screenData] = await this._getSkeletons(config.spines);
+    private _playBoxing(senderNode: cc.Node, targetNode: cc.Node, role: PropRole, config: PropAnimConfig): void {
+        const [boxData, screenData] = this._getSkeletons(config.spines);
         if (!this._isRootValid()) return;
         const senderPos = this._getLocalPos(senderNode);
         const targetPos = this._getLocalPos(targetNode);
         const screenCenter = this._getScreenCenter();
         if (role === 'sender') {
-            this._playSound('dynamic/prop/sound/sfx_boxing_sender1');
+            this._playSound('sound/PropOp/sfx_boxing_sender1');
             this._chainSpine(this._createSpineNode(screenData, 'box_full_1', false, screenCenter), () => {
-                this._playSound('dynamic/prop/sound/sfx_boxing_sender2');
+                this._playSound('sound/PropOp/sfx_boxing_sender2');
                 this._destroyAfterComplete(this._createSpineNode(boxData, 'box_local_1', false, targetPos), 4);
             });
             return;
         }
         if (role === 'receiver') {
-            this._playSound('dynamic/prop/sound/sfx_boxing_beaten1');
+            this._playSound('sound/PropOp/sfx_boxing_beaten1');
             this._chainSpine(this._createSpineNode(boxData, 'box_local_2', false, senderPos), () => {
-                this._playSound('dynamic/prop/sound/sfx_boxing_beaten2');
+                this._playSound('sound/PropOp/sfx_boxing_beaten2');
                 this._destroyAfterComplete(this._createSpineNode(screenData, 'box_full_2', false, screenCenter), 5);
             });
             return;
         }
-        this._playSound('dynamic/prop/sound/sfx_boxing_beaten1');
+        this._playSound('sound/PropOp/sfx_boxing_beaten1');
         this._chainSpine(this._createSpineNode(boxData, 'box_local_2', false, senderPos), () => {
-            this._playSound('dynamic/prop/sound/sfx_boxing_sender2');
+            this._playSound('sound/PropOp/sfx_boxing_sender2');
             this._destroyAfterComplete(this._createSpineNode(boxData, 'box_local_1', false, targetPos), 4);
         });
     }
 
-    private async _playFish(senderNode: cc.Node, targetNode: cc.Node, role: PropRole, config: PropAnimConfig): Promise<void> {
-        const [fishData, senderScreenData, receiverScreenData, waveData] = await this._getSkeletons(config.spines);
+    private _playFish(senderNode: cc.Node, targetNode: cc.Node, role: PropRole, config: PropAnimConfig): void {
+        const [fishData, senderScreenData, receiverScreenData, waveData] = this._getSkeletons(config.spines);
         if (!this._isRootValid()) return;
         const senderPos = this._getLocalPos(senderNode);
         const targetPos = this._getLocalPos(targetNode);
         const center = this._getScreenCenter();
         if (role === 'sender') {
-            this._playSound('dynamic/prop/sound/sfx_fish2');
+            this._playSound('sound/PropOp/sfx_fish2');
             this._destroyAfterComplete(this._createSpineNode(senderScreenData, 'sy2', false, center), 6);
             this._destroyAfterComplete(this._createSpineNode(waveData, 'hl1', false, center), 6);
             return;
         }
         if (role === 'receiver') {
-            this._playSound('dynamic/prop/sound/sfx_fish');
+            this._playSound('sound/PropOp/sfx_fish');
             this._destroyAfterComplete(this._createSpineNode(receiverScreenData, 'sy', false, center), 6);
             this._destroyAfterComplete(this._createSpineNode(waveData, 'hl2', false, center), 6);
             return;
         }
-        this._playSound('dynamic/prop/sound/sfx_fish');
+        this._playSound('sound/PropOp/sfx_fish');
         const fishNode = this._createSpineNode(fishData, 'sy3_1', true, senderPos);
         const skeleton = fishNode.getComponent(sp.Skeleton);
         const dir = cc.v2(targetPos.x - senderPos.x, targetPos.y - senderPos.y);
@@ -316,9 +290,9 @@ class ThrowPropManager {
         this._destroyAfterComplete(this._createSpineNode(waveData, 'hl3', false, center), 6);
     }
 
-    private async _playBaseball(senderNode: cc.Node, targetNode: cc.Node, role: PropRole, config: PropAnimConfig): Promise<void> {
+    private _playBaseball(senderNode: cc.Node, targetNode: cc.Node, role: PropRole, config: PropAnimConfig): void {
         this._playSound(config.soundName);
-        const [senderData, receiverData, otherData] = await this._getSkeletons(config.spines);
+        const [senderData, receiverData, otherData] = this._getSkeletons(config.spines);
         if (!this._isRootValid()) return;
         const senderPos = this._getLocalPos(senderNode);
         const targetPos = this._getLocalPos(targetNode);
@@ -366,36 +340,12 @@ class ThrowPropManager {
         this._destroyAfterDelay(node, exitAfterHit ? 10 : 8);
     }
 
-    private _ensurePropAssetsLoaded(): Promise<void> {
-        if (!this._propAssetsLoading) {
-            this._propAssetsLoading = this._loadPropAssets().catch(error => {
-                this._propAssetsLoading = null;
-                throw error;
-            });
-        }
-        return this._propAssetsLoading;
+    private _getSkeleton(path: string): sp.SkeletonData {
+        return AssetManager.mustGetLoaded(BUNDLE_RESOURCES, path, sp.SkeletonData);
     }
 
-    private async _loadPropAssets(): Promise<void> {
-        const spinePaths = new Set<string>();
-        const soundPaths = new Set<string>();
-        ThrowPropManager.CONFIGS.forEach(config => {
-            config.spines.forEach(path => spinePaths.add(path));
-            if (config.soundName) soundPaths.add(config.soundName);
-        });
-        ThrowPropManager.EXTRA_SOUND_NAMES.forEach(path => soundPaths.add(path));
-        await Promise.all([
-            ...Array.from(spinePaths).map(path => AssetManager.getOrLoad(BUNDLE_RESOURCES, path, sp.SkeletonData)),
-            ...Array.from(soundPaths).map(path => AssetManager.getOrLoad(BUNDLE_RESOURCES, path, cc.AudioClip))
-        ]);
-    }
-
-    private _getSkeleton(path: string): Promise<sp.SkeletonData> {
-        return AssetManager.getOrLoad(BUNDLE_RESOURCES, path, sp.SkeletonData);
-    }
-
-    private _getSkeletons(paths: string[]): Promise<sp.SkeletonData[]> {
-        return Promise.all(paths.map(path => this._getSkeleton(path)));
+    private _getSkeletons(paths: string[]): sp.SkeletonData[] {
+        return paths.map(path => this._getSkeleton(path));
     }
 
     private _getDiamondPrefabs(): Promise<cc.Prefab[]> {
@@ -484,9 +434,8 @@ class ThrowPropManager {
 
     private _playSound(name: string): void {
         if (!name) return;
-        AssetManager.getOrLoad(BUNDLE_RESOURCES, name, cc.AudioClip)
-            .then(clip => cc.audioEngine.playEffect(clip, false))
-            .catch(error => cc.warn('[ThrowPropManager] play sound failed', name, error));
+        const clip = AssetManager.mustGetLoaded(BUNDLE_RESOURCES, name, cc.AudioClip);
+        cc.audioEngine.playEffect(clip, false);
     }
 
     private _getRole(senderID: number, targetID: number): PropRole {

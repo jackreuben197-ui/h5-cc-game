@@ -19,7 +19,6 @@ import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType
 import { ButtonState } from '../../../game/constant/Constants';
 import roomReconnectManager from '../../../game/RoomReconnectManager';
 import viewManager from '../../../views/UIViewManager';
-import throwPropManager from '../../../views/util/ThrowPropManager';
 import agoraManager from '../../agora/AgoraManager';
 import TexasVideoMediaHelper from './TexasVideoMediaHelper';
 
@@ -183,7 +182,6 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             roomData.mine.totalChips = data.myInfo.totalChips;
             roomData.mine.caculateHandValueTypeAndHighlight();
         }
-        throwPropManager.preloadPropAssets();
         data.operatorList.forEach(operator => {
             let seatData = roomData.seatsStateManager.getSeatPlayer(operator.seatId);
             if (seatData.mine) {
