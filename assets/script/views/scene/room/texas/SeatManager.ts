@@ -33,13 +33,13 @@ export default class SeatManager extends cc.Component {
     public initData(roomID: number, matchID: number) {
         const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
         this._seatManager = roomData.seatsStateManager;
+        this._opPannel.initData(roomData.mine);
         if (this.node.activeInHierarchy) {
             this._bindEventsAndRefresh();
         }
     }
 
     @bindEvent(CCViewData.FRAME_SIZE_UPDATE, { dataSource: 'ccviewData', initPriority: 20 })
-    @traceMethod({ level: 'debug' })
     protected onFrameResize(
         visibleSizeWidth: number,
         visibleSizeHeight: number,

@@ -121,7 +121,6 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         await this._showCriticalHitIntroDialog(roomData);
     }
 
-    @traceMethod({ level: 'debug' })
     protected onFrameResize(
         visibleSizeWidth: number,
         visibleSizeHeight: number,
