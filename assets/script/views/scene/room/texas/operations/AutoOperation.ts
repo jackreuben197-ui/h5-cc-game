@@ -3,6 +3,7 @@ import { traceClass, traceMethod } from '../../../../../core/decorator/LogTrace'
 import { TexasGamePersonalSettings } from '../../../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomDataPlayerMine from '../../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import { AutoOperationTypeTexas } from '../../../../../game/constant/AutoOpertaionType';
+import UIViewUtil from '../../../../util/UIViewUtil';
 import ToggleButton from '../../../../widget/ToggleButton';
 
 export type AutoOperationData = {
@@ -75,6 +76,14 @@ export default class AutoOperation extends cc.Component {
                 this.toggleAutoCall.setCheckText(this._mineData.roomData.basicInfo.showNumberWithShowBB(num), num);
             }
         }
+    }
+
+    public adjustPostion(targeNode: cc.Node, pos: cc.Vec3, scale: number) {
+        this.rootNode.scale = scale;
+        const tpos = UIViewUtil.caculatePostion(this.rootNode, targeNode, pos);
+        const height = 710 * scale;
+        tpos.y += height;
+        this.rootNode.setPosition(tpos);
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.VALID_AUTO_OPERATIONS_CHANGE, 'mine')

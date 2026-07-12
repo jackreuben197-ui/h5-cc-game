@@ -8,10 +8,10 @@ import { i18nMgr } from '../../../../i18n/i18nMgr';
 import UIComponentBase from '../../../base/UIComponentBase';
 import { UIGuideDialogType } from '../../../dialog/mushroomandcriticalhit/UIGuideDialog';
 import viewManager from '../../../UIViewManager';
+import throwPropManager from '../../../util/ThrowPropManager';
 import TexasTableEvent from './events/TexasTableEvent';
 import InsuranceOperation from './InsuranceOperation';
 import MorePlayTypeInfo from './MorePlayTypeInfo';
-import Operation from './Operation';
 import OtherBindings from './OtherBindings';
 import PotsInfo from './PotsInfo';
 import PublicCardsInfo from './PublicCardsInfo';
@@ -25,6 +25,10 @@ export interface UIRoomTexasEnterParam {
 }
 
 const { ccclass, property, menu } = cc._decorator;
+
+const ADAPTIVE_LIMIT_HEIGHT = 2400;
+
+const ADAPTIVE_MAIN_HEIGHT = 2688;
 
 @ccclass
 @menu('Scene/Room/Texas/UIRoomTexas')
@@ -48,9 +52,6 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private btnReport: cc.Button = null!;
     @property({ type: cc.Button, displayName: '牌谱按钮' })
     private btnReplay: cc.Button = null!;
-    @property({ type: cc.Node, displayName: '操作面板' })
-    private opPannelNode: cc.Node = null!;
-    private _opPannel: Operation = null!;
     @property({ type: InsuranceOperation, displayName: '保险弹窗触发器' })
     private insuranceOperation: InsuranceOperation = null!;
     @property({ type: MorePlayTypeInfo, displayName: '其他游戏玩法的处理节点' })
@@ -65,16 +66,21 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private chatBtn: cc.Node = null;
     //数据绑定
     private _mine: TexasGameRoomDataPlayerMine = null;
+    @property({ type: cc.Node, displayName: '所有需要缩放的节点位置' })
+    private scaleNode: cc.Node = null;
+    private _throwPropRootNode: cc.Node = null;
 
     protected onLoad(): void {
+        this._throwPropRootNode = new cc.Node('PropSpine');
+        this._throwPropRootNode.parent = this.node;
+        this._throwPropRootNode.zIndex = 9999;
+        throwPropManager.initialize(this.node, this._throwPropRootNode);
         //菜单项
         this._onSideMenuClicked = () => {
             this._sideMenuTexasMenu.fadeIn(true);
         };
         this.sideMenu.node.on('click', this._onSideMenuClicked, this);
         this._sideMenuTexasMenu = this.sideMenuNode.getComponent(UITexasMenu);
-        //操作面板
-        this._opPannel = this.opPannelNode.children[0].getComponent(Operation);
         //战绩按钮
         if (this.btnReport) this.btnReport.node.on('click', this.onClickReport, this);
         //牌谱按钮
@@ -109,7 +115,6 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this.seatManager.initData(param.roomID, param.matchID);
         this.publicCardsInfo.initData(param.roomID, param.matchID);
         this._sideMenuTexasMenu.initData(param.roomID, param.matchID);
-        this._opPannel.initData(this._mine);
         this.insuranceOperation.initData(this._mine);
         this.squidInfo.initData(this._mine);
         // 入桌即拉一次 Roomers 填战绩缓存：后续 Seated/Standup/ChipsChange/Winner 在消息层做增量。
@@ -120,6 +125,21 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         await this._showSquidIntroDialog(roomData);
         await this._showMushroomIntroDialog(roomData);
         await this._showCriticalHitIntroDialog(roomData);
+    }
+
+    protected onFrameResize(
+        visibleSizeWidth: number,
+        visibleSizeHeight: number,
+        frameSizeWidth: number,
+        frameSizeHeight: number,
+        suggestScale: number,
+        saveAreaTop: number
+    ) {
+        this.tracelog.debug(visibleSizeWidth, suggestScale, saveAreaTop);
+        const widget = this.scaleNode.getComponent(cc.Widget);
+        widget.top = saveAreaTop;
+        widget.updateAlignment();
+        this.scaleNode.setScale(suggestScale, suggestScale);
     }
 
     private async _showSquidIntroDialog(roomData: TexasGameRoomData): Promise<boolean> {

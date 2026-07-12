@@ -126,6 +126,21 @@ export default class UIGameplayTableSetting extends UIComponentBaseDialog<UIGame
         this.ResolveRoomPermissionsAndRefresh();
     }
 
+    protected override onFrameResize(
+        visibleSizeWidth: number,
+        visibleSizeHeight: number,
+        frameSizeWidth: number,
+        frameSizeHeight: number,
+        suggestScale: number,
+        saveAreaTop: number
+    ): void {
+        const maxHeight = 2240;
+        if (visibleSizeHeight < maxHeight) {
+            const scale = visibleSizeHeight / maxHeight;
+            this.node.setScale(scale, scale);
+        }
+    }
+
     /** Unity 对齐：俱乐部/联盟桌走 club permission，其它走全局权限 */
     private async ResolveRoomPermissionsAndRefresh(): Promise<void> {
         const clubId = this._roomData.basicInfo.clubID;
