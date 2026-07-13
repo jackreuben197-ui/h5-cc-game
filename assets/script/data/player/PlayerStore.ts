@@ -29,21 +29,14 @@ export interface PlayerReportParam {
     userGameRecordID?: number;
 }
 
-export interface PlayerPropData {
-    payPrice: number;
-    priceID: number;
-}
-
 export type PlayerStatsData = HttpStatsOtherUserStats.Data;
 
 @bindData()
 export class PlayerStore extends cc.EventTarget {
     public static readonly BASIC_INFO_CHANGE = 'BASIC_INFO_CHANGE';
     public static readonly STATS_CHANGE = 'STATS_CHANGE';
-    public static readonly PROP_LIST_CHANGE = 'PROP_LIST_CHANGE';
     private readonly _basicInfoMap: Map<number, PlayerBasicData> = new Map();
     private readonly _statsMap: Map<number, PlayerStatsData> = new Map();
-    private _propList: PlayerPropData[] = [];
 
     public getBasicInfo(userRID: number): PlayerBasicData {
         return this._basicInfoMap.get(userRID) || null;
@@ -75,27 +68,11 @@ export class PlayerStore extends cc.EventTarget {
         this._sendStatsChangeEvent(userRID, data);
     }
 
-    public getPropList(): PlayerPropData[] {
-        return this._propList;
-    }
-
-    public updatePropList(list: PlayerPropData[]): void {
-        this._propList = list;
-        this._sendPropListChangeEvent(this._propList);
-    }
-
     @pureEvent(PlayerStore.BASIC_INFO_CHANGE)
     private _sendBasicInfoChangeEvent(userRID: number, data: PlayerBasicData): void {}
 
     @pureEvent(PlayerStore.STATS_CHANGE)
     private _sendStatsChangeEvent(userRID: number, data: PlayerStatsData): void {}
-
-    @pureEvent(PlayerStore.PROP_LIST_CHANGE, {
-        initParams() {
-            return [this._propList];
-        }
-    })
-    private _sendPropListChangeEvent(list: PlayerPropData[]): void {}
 }
 
 const playerStore = new PlayerStore();

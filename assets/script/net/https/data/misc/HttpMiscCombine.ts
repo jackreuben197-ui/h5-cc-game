@@ -1,4 +1,5 @@
 import { WebResponseDataBase } from '../other/WebResponseDataBase';
+import { HttpPropChatPropList } from '../prop/HttpPropChatPropList';
 import { HttpStatsOtherUserStats } from '../stats/HttpStatsOtherUserStats';
 
 export namespace HttpMiscCombine {
@@ -8,6 +9,7 @@ export namespace HttpMiscCombine {
         public api_list: number[] = [];
         public user_info_by_rid_req: UserInfoByRidRequest = null;
         public user_stats_by_user_rid_req: HttpStatsOtherUserStats.RequestData = null;
+        public get_chat_shop_prop_list_req: HttpPropChatPropList.RequestData = null;
     }
     export class ResponseData extends WebResponseDataBase {
         public data: Data = null;
@@ -15,6 +17,7 @@ export namespace HttpMiscCombine {
     export class Data {
         public user_info_by_rid_resp: UserPublicInfo[] = null;
         public user_stats_by_user_rid_resp: StatsResponse[] | StatsResponse = null;
+        public get_chat_shop_prop_list_resp: HttpPropChatPropList.Data = null;
     }
     export class UserInfoByRidRequest {
         public user_random_id: number[] = [];

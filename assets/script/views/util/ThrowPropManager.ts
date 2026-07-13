@@ -1,7 +1,8 @@
 import soundManager from '../../core/SoundManager';
 import { DiamondGiftBroadcastData, EmojiBroadcastData, ThrowPropBroadcastData } from '../../data/room/texas/TexasGameRoomDataSeatsStateManager';
 import userStore from '../../data/user/UserStore';
-import { PropsID, getMagicEmojiTypeBase } from '../../game/constant/BroadcastCode';
+import { PropsID } from '../../game/constant/BroadcastCode';
+import MagicEmojiConfig from '../../game/constant/MagicEmojiConfig';
 import AssetManager, { BUNDLE_RESOURCES } from '../loader/AssetManager';
 
 type PropRole = 'sender' | 'receiver' | 'bystander';
@@ -154,6 +155,7 @@ class ThrowPropManager {
     private _propQueue: ThrowPropTask[] = [];
     private _playingPropUsers: Set<number> = new Set();
     private _playingFullscreenProp: boolean = false;
+    private _emojiPlayTokens: Map<cc.Node, number> = new Map();
 
     public initialize(root: cc.Node, fullscreenRoot: cc.Node): void {
         if (this._root !== root) {
@@ -161,6 +163,7 @@ class ThrowPropManager {
             this._propQueue.length = 0;
             this._playingPropUsers.clear();
             this._playingFullscreenProp = false;
+            this._emojiPlayTokens.clear();
         }
         this._root = root;
         this._fullscreenRoot = fullscreenRoot;
@@ -302,41 +305,35 @@ class ThrowPropManager {
     }
 
     public async playEmoji(data: EmojiBroadcastData, senderData: ThrowPropSeatNodes): Promise<void> {
-        const index = data.type - this._getEmojiTypeBase() + 1;
-        if (index < 1 || index > 15 || !this._root || !cc.isValid(this._root)) return;
-        const avatarNode = senderData?.avatarNode;
-        const emojiNode = senderData?.emojiNode;
-        if (!avatarNode || !emojiNode) return;
-        let spriteFrame: cc.SpriteFrame = null;
+        const config = MagicEmojiConfig.getByType(data.type);
+        if (!config || !senderData || !this._root || !cc.isValid(this._root)) return;
+        const avatarNode = senderData.avatarNode;
+        const emojiNode = senderData.emojiNode;
+        const token = (this._emojiPlayTokens.get(emojiNode) || 0) + 1;
+        this._emojiPlayTokens.set(emojiNode, token);
+        let skeletonData: sp.SkeletonData = null;
         try {
-            spriteFrame = await AssetManager.getOrLoad(BUNDLE_RESOURCES, `rc/other/emoji/em${index}`, cc.SpriteFrame);
+            skeletonData = await AssetManager.getOrLoad(BUNDLE_RESOURCES, config.spine, sp.SkeletonData);
         } catch (error) {
-            cc.warn('[ThrowPropManager] load emoji failed', index, error);
+            cc.warn('[ThrowPropManager] load emoji failed', config.propCode, error);
             return;
         }
-        if (!this._isRootValid() || !cc.isValid(avatarNode) || !cc.isValid(emojiNode)) return;
-        const sprite = emojiNode.getComponent(cc.Sprite);
-        sprite.spriteFrame = spriteFrame;
+        if (!this._isRootValid() || !cc.isValid(avatarNode) || !cc.isValid(emojiNode) || this._emojiPlayTokens.get(emojiNode) !== token) return;
+        const skeleton = emojiNode.getComponent(sp.Skeleton);
+        skeleton.setCompleteListener(() => {});
+        skeleton.skeletonData = skeletonData;
+        this._resetSkeleton(skeleton);
+        skeleton.setCompleteListener(() => {
+            if (!cc.isValid(emojiNode) || this._emojiPlayTokens.get(emojiNode) !== token) return;
+            skeleton.setCompleteListener(() => {});
+            emojiNode.active = false;
+        });
         this._bringNodeToTop(emojiNode);
-        emojiNode.stopAllActions();
         emojiNode.active = true;
-        emojiNode.opacity = 0;
-        emojiNode.scale = 0.5;
         const startPos = this._convertNodePosToNodeParent(emojiNode, avatarNode, cc.v3(0, avatarNode.height / 4, 0));
         emojiNode.setPosition(startPos);
-        cc.tween(emojiNode)
-            .to(0.18, { opacity: 255, scale: 1.2 }, { easing: 'backOut' })
-            .to(0.12, { scale: 1 })
-            .delay(1.2)
-            .to(0.25, { opacity: 0, y: emojiNode.y + 30 })
-            .call(() => {
-                if (cc.isValid(emojiNode)) emojiNode.active = false;
-            })
-            .start();
-    }
-
-    private _getEmojiTypeBase(): number {
-        return getMagicEmojiTypeBase();
+        skeleton.setAnimation(0, config.animation, false);
+        this._playSound(config.sound);
     }
 
     private _playTomato(task: ThrowPropTask): void {

@@ -1415,6 +1415,9 @@
     "scrollContent": {
       "__id__": 12
     },
+    "viewport": {
+      "__id__": 13
+    },
     "itemPrefab": {
       "__uuid__": "4d51c39c-a151-4890-96ee-8c8afd7bc15f"
     }

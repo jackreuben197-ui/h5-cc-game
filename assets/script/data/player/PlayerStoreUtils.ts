@@ -1,10 +1,9 @@
-import { traceClass, traceMethod } from '../../core/decorator/LogTrace';
+import { traceClass } from '../../core/decorator/LogTrace';
 import {
     WebChatMessageReport,
     WebCmsExtUserComplaIntReport,
     WebMiscCombine,
     WebOrgClubUserRemaRks,
-    WebPropChatPropList,
     WebRoomCenterRoomUserLeave,
     WebRoomCenterRoomUserStandUp,
     WebUserDiamondSend,
@@ -17,7 +16,6 @@ import { HttpCmsExtUserComplaintReport } from '../../net/https/data/cmsext/HttpC
 import { HttpMiscCombine } from '../../net/https/data/misc/HttpMiscCombine';
 import { HttpOrgClubUserUpdate } from '../../net/https/data/org/HttpOrgClubUserUpdate';
 import { WebResponseDataBase } from '../../net/https/data/other/WebResponseDataBase';
-import { HttpPropChatPropList } from '../../net/https/data/prop/HttpPropChatPropList';
 import { HttpRoomUserMuteProtocol } from '../../net/https/data/room/HttpRoomUserMuteProtocol';
 import { HttpRoomCenterRoomUserLeave } from '../../net/https/data/roomcenter/HttpRoomCenterRoomUserLeave';
 import { HttpRoomCenterRoomUserStandUp } from '../../net/https/data/roomcenter/HttpRoomCenterRoomUserStandUp';
@@ -26,9 +24,7 @@ import { HttpUserDiamondSend } from '../../net/https/data/user/HttpUserDiamondSe
 import { HttpUserMuteList } from '../../net/https/data/user/HttpUserMuteList';
 import TexasGameRoomData from '../room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayer from '../room/texas/TexasGameRoomDataPlayer';
-import playerStore, { PlayerBasicData, PlayerPropData, PlayerReportParam } from './PlayerStore';
-
-const CONSUME_TYPE_EMOJI_2 = 6;
+import playerStore, { PlayerBasicData, PlayerReportParam } from './PlayerStore';
 
 type StatsCombineResult = HttpStatsOtherUserStats.Data | HttpStatsOtherUserStats.ResponseData;
 
@@ -203,29 +199,6 @@ export default class PlayerStoreUtils {
             web_class: WebUserDiamondSend,
             body
         });
-    }
-
-    @traceMethod()
-    public static async preparePropList(): Promise<void> {
-        const body = new HttpPropChatPropList.RequestData();
-        body.prop_types = [4];
-        body.offset = 0;
-        body.limit = 100;
-        const res = await WWW.Instance.CommonAPI<HttpPropChatPropList.ResponseData>({
-            web_class: WebPropChatPropList,
-            body,
-            juhua: false
-        });
-        if (res.code != 0) {
-            PlayerStoreUtils.tracelog.error('get HttpPropChatPropList error', res.code);
-            return;
-        }
-        const list = res.data?.list || [];
-        const propList: PlayerPropData[] = list.map(item => ({
-            payPrice: item.pay_price || 0,
-            priceID: item.price_id || CONSUME_TYPE_EMOJI_2
-        }));
-        playerStore.updatePropList(propList);
     }
 
     public static standUp(roomData: TexasGameRoomData, userRID: number): Promise<HttpRoomCenterRoomUserStandUp.ResponseData> {

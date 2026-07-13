@@ -1,13 +1,15 @@
 import { ClientMessageBroadcastMsg, Code, Def } from '@silenthill/agreement-web';
-import playerStore, { PlayerBasicData, PlayerDiamondConfig, PlayerPropData, PlayerStore } from '../../../data/player/PlayerStore';
+import playerStore, { PlayerBasicData, PlayerDiamondConfig, PlayerStore } from '../../../data/player/PlayerStore';
 import PlayerStoreUtils from '../../../data/player/PlayerStoreUtils';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayer from '../../../data/room/texas/TexasGameRoomDataPlayer';
-import userStore, { UserStore } from '../../../data/user/UserStore';
+import userStore, { UserPropData, UserStore } from '../../../data/user/UserStore';
+import UserStoreUtils from '../../../data/user/UserStoreUtils';
 import { AntiCheatType } from '../../../game/constant/AntiCheatType';
 import { BroadcastCode, PropsID } from '../../../game/constant/BroadcastCode';
 import { ChatType } from '../../../game/constant/ChatType';
+import { GameplayChatPropType } from '../../../game/constant/GameplayChatPropType';
 import { RoomOriginType } from '../../../game/constant/RoomOriginType';
 import { StringHelper } from '../../../helper/StringHelper';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
@@ -38,6 +40,11 @@ interface DataLabelItem {
     node: cc.Node;
     des: cc.Label;
     num: cc.Label;
+}
+
+interface ThrowPropDefinition {
+    propCode: string;
+    type: PropsID;
 }
 
 @ccclass
@@ -81,19 +88,19 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private diamondNumNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '数据页签根节点' })
     private dataTabNode: cc.Node = null;
-    private static readonly PROP_TYPE_MAP: PropsID[] = [
-        PropsID.PROPSKISS,
-        PropsID.PROPSMONEY,
-        PropsID.PROPSBOXING,
-        PropsID.PROPSTOUCH,
-        PropsID.PROPSTOMATO,
-        PropsID.PROPSFISH,
-        PropsID.PROPSBASEBALL,
-        PropsID.PROPSGOOD,
-        PropsID.PROPSCHEERS,
-        PropsID.PROPSCHICKEN,
-        PropsID.PROPSFLOWER,
-        PropsID.PROPSSHARK
+    private static readonly PROP_DEFINITIONS: ThrowPropDefinition[] = [
+        { propCode: 'kiss_Button', type: PropsID.PROPSKISS },
+        { propCode: 'money_Button', type: PropsID.PROPSMONEY },
+        { propCode: 'boxing_Button', type: PropsID.PROPSBOXING },
+        { propCode: 'touch_Button', type: PropsID.PROPSTOUCH },
+        { propCode: 'tomato_Button', type: PropsID.PROPSTOMATO },
+        { propCode: 'fish_Button', type: PropsID.PROPSFISH },
+        { propCode: 'baseball_Button', type: PropsID.PROPSBASEBALL },
+        { propCode: 'good_Button', type: PropsID.PROPSGOOD },
+        { propCode: 'cheers_Button', type: PropsID.PROPSCHEERS },
+        { propCode: 'chicken_Button', type: PropsID.PROPSCHICKEN },
+        { propCode: 'flower_Button', type: PropsID.PROPSFLOWER },
+        { propCode: 'shark_Button', type: PropsID.PROPSSHARK }
     ];
     private static readonly shieldUsers: Set<number> = new Set();
     private static readonly audioClosedUsers: Set<number> = new Set();
@@ -124,7 +131,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private _hasVideoTrack = false;
     private _isAudioClosed = false;
     private _isVideoClosed = false;
-    private _propListData: PlayerPropData[] = [];
+    private _propListData: Map<PropsID, UserPropData> = new Map();
 
     public initialize(param: UIPlayerInfoParam): void {
         this._param = param;
@@ -190,6 +197,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this._bindOpButton('shieldToggle', this._clickShield);
         this._bindOpButton('ReportBtn', this._clickReport);
         userStore.on(UserStore.DIAMONDS_CHANGE, this._refreshDiamondBalance, this);
+        userStore.on(UserStore.PROP_LIST_CHANGE, this._refreshPropList, this);
     }
 
     private _resetView(): void {
@@ -355,11 +363,11 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _initPropNodes(): void {
-        for (let i = 1; i <= 12; i++) {
-            const node = this.propOpNode.getChildByName('$propOp_' + i);
-            this._bindClick(node, () => this._clickProp(i, node));
-        }
-        this._loadPropList();
+        UIPlayerInfo.PROP_DEFINITIONS.forEach((definition, index) => {
+            const node = this.propOpNode.getChildByName('$propOp_' + (index + 1));
+            this._bindClick(node, () => this._clickProp(definition, node));
+        });
+        this._refreshPropList(userStore.propList);
     }
 
     private _applyTargetLayout(): void {
@@ -602,18 +610,19 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this._noticeLabel.string = text.replace('{0}', `${remaining}`).replace('{1}', `${this._diamondConfig.fee_rate}%`);
     }
 
-    private async _loadPropList(): Promise<void> {
-        try {
-            await PlayerStoreUtils.preparePropList();
-            this._propListData = playerStore.getPropList();
-            this._propListData.forEach((item, index) => {
-                const propNode = this.propOpNode.getChildByName('$propOp_' + (index + 1));
-                const label = cc.find('diamondCost/costNum', propNode).getComponent(cc.Label);
-                if (label && item.payPrice > 0) label.string = `${item.payPrice}`;
-            });
-        } catch (error) {
-            cc.warn('[UIPlayerInfo] load prop list failed', error);
-        }
+    private _refreshPropList(list: UserPropData[]): void {
+        const propList = list.filter(item => item.propType === GameplayChatPropType.THROW_PROP);
+        this._propListData.clear();
+        UIPlayerInfo.PROP_DEFINITIONS.forEach((definition, index) => {
+            const data = propList.find(item => item.propCode === definition.propCode) || null;
+            const propNode = this.propOpNode.getChildByName('$propOp_' + (index + 1));
+            propNode.active = !!data;
+            if (!data) return;
+            this._propListData.set(definition.type, data);
+            const diamondCost = propNode.getChildByName('diamondCost');
+            diamondCost.active = !userStore.isPropFree(data);
+            diamondCost.getChildByName('costNum').getComponent(cc.Label).string = `${data.payPrice}`;
+        });
     }
 
     private _clickEditNote(): void {
@@ -761,13 +770,12 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this._updateAudioVideoVisuals();
     }
 
-    private _clickProp(propIndex: number, clickNode: cc.Node): void {
+    private _clickProp(definition: ThrowPropDefinition, clickNode: cc.Node): void {
         this._playClickScale(clickNode, true);
-        const propData = this._propListData[propIndex - 1];
-        const consume = (propData ? propData.priceID : this._getThrowPropConsumeType()) as ClientMessageBroadcastMsg.AsObject['consume'];
-        const propType = UIPlayerInfo.PROP_TYPE_MAP[propIndex - 1] || PropsID.PROPSTOMATO;
+        const propData = this._propListData.get(definition.type);
+        const consume = (userStore.isPropFree(propData) ? Def.ConsumeType.CT_NONE : propData.priceID) as ClientMessageBroadcastMsg.AsObject['consume'];
         this._roomData.seatsStateManager.setPendingThrowProp({
-            type: propType,
+            type: definition.type,
             userID: userStore.userRID,
             targetUserID: this._requestRID
         });
@@ -775,7 +783,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             name: userStore.name,
             target_user_id: this._requestRID,
             user_id: userStore.userRID,
-            type: propType
+            type: definition.type
         });
         const extra = JSON.stringify({ code: BroadcastCode.BroadcastMsg, data: inner });
         const body: ClientMessageBroadcastMsg.AsObject = {
@@ -794,10 +802,9 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             matchID: this._roomData.matchID,
             body: body
         });
-    }
-
-    private _getThrowPropConsumeType(): Def.ConsumeTypeMap[keyof Def.ConsumeTypeMap] {
-        return Def.ConsumeType.CT_EMOJI_2;
+        if (propData.propAmount > 0) {
+            UserStoreUtils.consumeUserProp(propData.gamePropID).catch(error => cc.warn('[UIPlayerInfo] consume user prop failed', error));
+        }
     }
 
     private _getThrowPropMsgType(): Def.BroadcastMsgTypeMap[keyof Def.BroadcastMsgTypeMap] {

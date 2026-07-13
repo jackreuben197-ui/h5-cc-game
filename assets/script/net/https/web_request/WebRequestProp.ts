@@ -214,11 +214,11 @@ export class WebPropBuy extends WebCommon {
 export class WebPropChatPropList extends WebCommon {
     static API: string = '/api/prop/chat/prop/list';
     static RequestParams: {
-        limit?: number // 数据数量
-        offset?: number // 当前偏移值
-        prop_type?: number // 道具类型：1 表情，2 弹幕，3 聊天框，4 互动道具
-        prop_types?: number[] // 道具类型：1 表情，2 弹幕，3 聊天框，4 互动道具
-        user_type?: number // 用户类型排序方式： 0 默认（创建时间倒序） 1 常用 2 最近使用 3 创建时间正序 4 价格正序 5 价格倒序
+        limit?: number; // 数据数量
+        offset?: number; // 当前偏移值
+        prop_type?: number; // 道具类型：1 表情，2 弹幕，3 聊天框，4 互动道具
+        prop_types?: number[]; // 道具类型：1 表情，2 弹幕，3 聊天框，4 互动道具
+        user_type?: number; // 用户类型排序方式： 0 默认（创建时间倒序） 1 常用 2 最近使用 3 创建时间正序 4 价格正序 5 价格倒序
     } | null = null;
     static ResponseData: {
         data?: typeof WebPropChatPropList.Data;

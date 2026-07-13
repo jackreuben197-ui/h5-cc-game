@@ -65,6 +65,7 @@ export async function Seated(data: ServerMessageSeated.AsObject, roomID: number,
     mine.autoOperationType = AutoOperationTypeTexas.NO;
     mine.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
     PlayerStoreUtils.syncSeatPlayer(seatData, roomData);
+    UserStoreUtils.preparePropList().catch(error => _plog.error('prepare prop list failed', error));
     if (roomData.basicInfo.antiCheatConfig) {
         const seatedConfig = roomData.basicInfo.antiCheatConfig.getSeatedSetting();
         const promise = [];

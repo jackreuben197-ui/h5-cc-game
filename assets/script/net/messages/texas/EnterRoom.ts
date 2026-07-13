@@ -21,6 +21,7 @@ import roomReconnectManager from '../../../game/RoomReconnectManager';
 import viewManager from '../../../views/UIViewManager';
 import agoraManager from '../../agora/AgoraManager';
 import TexasVideoMediaHelper from './TexasVideoMediaHelper';
+import UserStoreUtils from '../../../data/user/UserStoreUtils';
 
 const _plog = createLogger('ServerMessageEnterRoom');
 
@@ -163,6 +164,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             }
         }
         PlayerStoreUtils.syncSeatPlayers(roomData, seatedPlayers);
+        UserStoreUtils.preparePropList();
         if (data.myInfo) {
             roomData.mine.clearData();
             const player = roomData.seatsStateManager.setMySeat(data.myInfo.seatId, AnimateDisplayTypePosition.Static);

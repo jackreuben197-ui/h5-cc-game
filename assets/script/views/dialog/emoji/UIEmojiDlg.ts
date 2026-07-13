@@ -2,8 +2,11 @@ import type { ClientMessageBroadcastMsg } from '@silenthill/agreement-web';
 import { Code, Def } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
-import userStore from '../../../data/user/UserStore';
+import userStore, { UserPropData, UserStore } from '../../../data/user/UserStore';
+import UserStoreUtils from '../../../data/user/UserStoreUtils';
 import { BroadcastCode } from '../../../game/constant/BroadcastCode';
+import { GameplayChatPropType } from '../../../game/constant/GameplayChatPropType';
+import MagicEmojiConfig, { MagicEmojiDefinition } from '../../../game/constant/MagicEmojiConfig';
 import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import AssetManager, { BUNDLE_RESOURCES } from '../../loader/AssetManager';
@@ -25,25 +28,29 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
     private contentView: cc.Node = null;
     @property({ type: cc.Node, displayName: '表情滚动内容节点' })
     private scrollContent: cc.Node = null;
+    @property({ type: cc.Node, displayName: '表情滚动视口' })
+    private viewport: cc.Node = null;
     @property({ type: cc.Prefab, displayName: '表情条目预制体' })
     private itemPrefab: cc.Prefab = null;
-    private static readonly EMOJI_COUNT = 15;
-    private static readonly FIRST_BATCH_COUNT = 10;
     private _roomData: TexasGameRoomData = null;
     private _targetY = 0;
     private _startY = 0;
-    private _loadedOnce = false;
+    private _loadVersion = 0;
+    private _viewportVerticalInset = 0;
 
     public initialize(param: UIEmojiDlgParam): void {
         this._roomData = roomDataManager.getRoomData<TexasGameRoomData>(param.roomID, param.matchID);
         this._applyLayout();
-        this._playShowAnimation();
+        userStore.targetOff(this);
+        userStore.on(UserStore.PROP_LIST_CHANGE, this._loadEmojiItems, this);
         this._loadEmojiItems();
+        this._playShowAnimation();
     }
 
     protected onLoad(): void {
         this._targetY = this.contentView.y;
         this._startY = -cc.winSize.height + 100;
+        this._viewportVerticalInset = this.contentView.height - this.viewport.height;
         this._bindTouchEnd(this.panelClick, this.close);
         this.contentView.on(cc.Node.EventType.TOUCH_START, this._stopTouch, this);
         this.contentView.on(cc.Node.EventType.TOUCH_END, this._stopTouch, this);
@@ -53,6 +60,7 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
         this.node.targetOff(this);
         this.panelClick.targetOff(this);
         this.contentView.targetOff(this);
+        userStore.targetOff(this);
         this.unscheduleAllCallbacks();
     }
 
@@ -70,53 +78,64 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
         cc.tween(this.contentView).to(0.4, { y: this._targetY, opacity: 255 }, { easing: 'sineOut' }).start();
     }
 
-    private _loadEmojiItems(): void {
+    private async _loadEmojiItems(): Promise<void> {
+        const version = ++this._loadVersion;
         this.scrollContent.removeAllChildren();
-        if (!this._loadedOnce) {
-            this._loadedOnce = true;
-            for (let i = 1; i <= UIEmojiDlg.FIRST_BATCH_COUNT; i++) this._loadAndAddEmoji(i);
-            for (let i = UIEmojiDlg.FIRST_BATCH_COUNT + 1; i <= UIEmojiDlg.EMOJI_COUNT; i++) {
-                const index = i;
-                this.scheduleOnce(() => this._loadAndAddEmoji(index), (i - UIEmojiDlg.FIRST_BATCH_COUNT) * 0.1);
-            }
-            return;
-        }
-        for (let i = 1; i <= UIEmojiDlg.EMOJI_COUNT; i++) this._loadAndAddEmoji(i);
-    }
-
-    private async _loadAndAddEmoji(index: number): Promise<void> {
+        const items = userStore
+            .getPropListByType(GameplayChatPropType.CHAT_PROP)
+            .map(data => ({ data, config: MagicEmojiConfig.getByPropCode(data.propCode) }))
+            .filter(item => !!item.config);
+        this._updatePanelHeight(items.length);
         try {
-            const spriteFrame = await AssetManager.getOrLoad(BUNDLE_RESOURCES, `rc/other/emoji/em${index}`, cc.SpriteFrame);
-            if (!cc.isValid(this.node) || !this.node.activeInHierarchy) return;
-            const itemNode = cc.instantiate(this.itemPrefab);
-            itemNode.parent = this.scrollContent;
-            const item = itemNode.getComponent(UIEmojiItem);
-            item.initialize({
-                spriteFrame,
-                showDiamond: index < 11,
-                index,
-                onClick: this.onEmojiClicked
+            const skeletonPaths = items.map(item => item.config.spine).filter((path, index, list) => list.indexOf(path) === index);
+            const loadedSkeletonData = await Promise.all(skeletonPaths.map(path => AssetManager.getOrLoad(BUNDLE_RESOURCES, path, sp.SkeletonData)));
+            if (!cc.isValid(this.node) || !this.node.activeInHierarchy || this._loadVersion !== version) return;
+            items.forEach(itemData => {
+                const itemNode = cc.instantiate(this.itemPrefab);
+                itemNode.parent = this.scrollContent;
+                const item = itemNode.getComponent(UIEmojiItem);
+                const isFree = userStore.isPropFree(itemData.data);
+                item.initialize({
+                    skeletonData: loadedSkeletonData[skeletonPaths.indexOf(itemData.config.spine)],
+                    animation: itemData.config.animation,
+                    showDiamond: !isFree,
+                    diamond: itemData.data.payPrice,
+                    onClick: () => this.onEmojiClicked(itemData.data, itemData.config)
+                });
             });
         } catch (error) {
-            cc.warn('[UIEmojiDlg] load emoji failed', index, error);
+            cc.warn('[UIEmojiDlg] load emoji failed', error);
         }
     }
 
-    private onEmojiClicked = (index: number): void => {
-        this._sendEmojiBroadcast(index);
+    private _updatePanelHeight(itemCount: number): void {
+        const layout = this.scrollContent.getComponent(cc.Layout);
+        const itemNode = this.itemPrefab.data as cc.Node;
+        const availableWidth = this.scrollContent.width - layout.paddingLeft - layout.paddingRight;
+        const columnCount = Math.max(1, Math.floor((availableWidth + layout.spacingX) / (itemNode.width + layout.spacingX)));
+        const rowCount = Math.max(1, Math.ceil(itemCount / columnCount));
+        const contentHeight = layout.paddingTop + layout.paddingBottom + rowCount * itemNode.height + (rowCount - 1) * layout.spacingY;
+        this.scrollContent.height = contentHeight;
+        this.contentView.height = contentHeight + this._viewportVerticalInset;
+        this.contentView.getComponent(cc.Widget).updateAlignment();
+        this.viewport.getComponent(cc.Widget).updateAlignment();
+        this._targetY = this.contentView.y;
+    }
+
+    private onEmojiClicked = (propData: UserPropData, config: MagicEmojiDefinition): void => {
+        this._sendEmojiBroadcast(propData, config);
         this.scheduleOnce(() => this.close(), 0.26);
     };
 
-    private _sendEmojiBroadcast(emojiIndex: number): void {
-        const emojiType = this._getEmojiTypeBase() + emojiIndex - 1;
+    private _sendEmojiBroadcast(propData: UserPropData, config: MagicEmojiDefinition): void {
         this._roomData.seatsStateManager.setPendingEmoji({
-            type: emojiType,
+            type: config.type,
             userID: userStore.userRID
         });
         const msgType = Def.BroadcastMsgType.BC_MSG_EMOJI;
         const inner = JSON.stringify({
             name: userStore.name,
-            type: emojiType,
+            type: config.type,
             user_id: userStore.userRID,
             target_user_id: 0,
             message: '',
@@ -130,7 +149,7 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
                 roomId: this._roomData.roomID,
                 matchId: this._roomData.matchID
             },
-            consume: Def.ConsumeType.CT_NONE,
+            consume: userStore.isPropFree(propData) ? Def.ConsumeType.CT_NONE : (propData.priceID as Def.ConsumeTypeMap[keyof Def.ConsumeTypeMap]),
             message: '',
             extra: this._stringToBytes(JSON.stringify({ code: BroadcastCode.BroadcastMsg, data: inner })),
             msgType
@@ -141,10 +160,9 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
             matchID: this._roomData.matchID,
             body
         });
-    }
-
-    private _getEmojiTypeBase(): number {
-        return Def.ConsumeType.CT_EMOJI_3 * 100;
+        if (propData.propAmount > 0) {
+            UserStoreUtils.consumeUserProp(propData.gamePropID).catch(error => cc.warn('[UIEmojiDlg] consume user prop failed', error));
+        }
     }
 
     private _bindTouchEnd(node: cc.Node, handler: () => void): void {

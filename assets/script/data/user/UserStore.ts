@@ -3,6 +3,18 @@ import { HttpRoomBringOutProtocol } from '../../net/https/data/room/HttpRoomBrin
 
 export interface UserStore extends IObservableBindings<UserStore> {}
 
+export interface UserPropData {
+    propID: number;
+    propType: number;
+    priceID: number;
+    propCode: string;
+    rawPrice: number;
+    payPrice: number;
+    subscriptionName: string;
+    propAmount: number;
+    gamePropID: number;
+}
+
 @bindData()
 export class UserStore extends cc.EventTarget {
     public static readonly DIAMONDS_CHANGE = 'DIAMONDS_CHANGE';
@@ -13,6 +25,7 @@ export class UserStore extends cc.EventTarget {
     public static readonly CLUBS_CREDIT_CHANGE = 'CLUBS_CREDIT_CHANGE';
     public static readonly FORBID_CHANGE = 'FORBID_CHANGE';
     public static readonly TRADER_EXPIRE_TIME_CHANGE = 'TRADER_EXPIRE_TIME_CHANGE';
+    public static readonly PROP_LIST_CHANGE = 'PROP_LIST_CHANGE';
     // 不变的信息
     // 基础信息
     public userID: number;
@@ -33,6 +46,16 @@ export class UserStore extends cc.EventTarget {
     public credits: ClubCredit[] = [];
     @observable(UserStore.FORBID_CHANGE)
     public forbid: boolean = false;
+    @observable(UserStore.PROP_LIST_CHANGE)
+    public propList: UserPropData[] = [];
+
+    public getPropListByType(propType: number): UserPropData[] {
+        return this.propList.filter(item => item.propType === propType);
+    }
+
+    public isPropFree(data: UserPropData): boolean {
+        return !!data.subscriptionName || data.propAmount > 0;
+    }
 
     public fillWalletInfo(wallet: HttpRoomBringOutProtocol.Wallet[]) {
         let clubsData: ClubData[] = [];
