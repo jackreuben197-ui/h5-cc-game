@@ -1,12 +1,19 @@
 import AssetManager, { BUNDLE_RESOURCES } from '../../../loader/AssetManager';
 
 const MAX_TRACKS = 8;
+
 const TRACK_OFFSET_Y = 150;
+
 const TOP_OFFSET_RATIO = 0.2;
+
 const SPEED_MIN = 140;
+
 const SPEED_MAX = 200;
+
 const DANMU_ZINDEX = 9999;
+
 const PREFAB_PATH = 'rc/scene/room/texas/widget/DanmuPanel';
+
 const LAYER_NAME = 'DanmuLayer';
 
 class DanmuManager {
@@ -113,12 +120,10 @@ class DanmuManager {
     private _spawn(text: string, trackIdx: number): void {
         const layer = this._layerNode;
         if (!layer || !layer.isValid || !this._prefab) return;
-
         const node = cc.instantiate(this._prefab);
         node.name = `DanmuItem_${trackIdx}`;
         node.parent = layer;
         node.zIndex = DANMU_ZINDEX;
-
         const label = node.getChildByName('DanmuLabel')?.getComponent(cc.Label);
         if (label) {
             label.string = text;
@@ -128,18 +133,15 @@ class DanmuManager {
         }
         const layout = node.getComponent(cc.Layout);
         if (layout) layout.updateLayout();
-
         const nodeWidth = node.width || 0;
         const buffer = 50;
         const localStartX = layer.width * (1 - layer.anchorX) + nodeWidth + buffer;
         const localEndX = -layer.width * layer.anchorX - nodeWidth - buffer;
         const localTopY = layer.height * (1 - layer.anchorY);
         const localY = localTopY - layer.height * TOP_OFFSET_RATIO - trackIdx * TRACK_OFFSET_Y;
-
         node.x = localStartX;
         node.y = localY;
         this._tracks[trackIdx] = node;
-
         const distance = Math.abs(localStartX - localEndX);
         const speed = SPEED_MIN + Math.random() * (SPEED_MAX - SPEED_MIN);
         const duration = distance / speed;

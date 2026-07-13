@@ -1,6 +1,6 @@
 import { TexasChatMessage } from '../../../data/room/texas/TexasGameRoomDataChat';
-import RemoteSprite from '../../widget/RemoteSprite';
 import AssetManager from '../../loader/AssetManager';
+import RemoteSprite from '../../widget/RemoteSprite';
 
 const { ccclass, property, menu } = cc._decorator;
 
@@ -17,6 +17,7 @@ const EMOJI_SPINE_BUNDLE = 'animate';
 
 /** Spine 相对表情槽中心的额外偏移（骨骼自身原点偏左，正值往右挪）。嫌多/少改这里即可。 */
 const EMOJI_SPINE_OFFSET_X = 60;
+
 const EMOJI_SPINE_OFFSET_Y = 0;
 
 interface EmojiConfig {
@@ -35,23 +36,23 @@ interface EmojiConfig {
  * 展示优先级：Spine 动画（加载成功）>（可选）静态图 > 文字占位。
  */
 const EMOJI_CONFIG: Record<number, EmojiConfig> = {
-    710: { spine: 'Expression_BlueBoy/blueboy' },            // MAGICSMOKE 抽烟
+    710: { spine: 'Expression_BlueBoy/blueboy' }, // MAGICSMOKE 抽烟
     711: { spine: 'Expression_PurpleSmoke/pinkrabbit_smoke' }, // MAGICPURPLESMOKE 紫烟
-    712: { spine: 'Expression_BlueBoy/blueboy' },            // MAGICGUN 手枪
-    713: { spine: 'Expression_BlueBoy/blueboy' },            // MAGICSMILE 微笑
-    714: { spine: 'Expression_Shock/panda_excited' },        // MAGICSHOCK 震惊
-    715: { spine: 'Expression_BlueBoy/blueboy' },            // MAGICPOOR 穷
-    716: { spine: 'Expression_PokePanda/stab' },             // MAGICPOKEPANDA 戳熊猫
-    717: { spine: 'Expression_Amazed/amazed' },              // MAGICAMAZED 惊讶
-    718: { spine: 'Expression_Octopus/octopoda' },           // MAGICOCTOPUS 章鱼
-    719: { spine: 'Expression_Dog/dog' },                    // MAGICHAPPYMOUSE 开心鼠
+    712: { spine: 'Expression_BlueBoy/blueboy' }, // MAGICGUN 手枪
+    713: { spine: 'Expression_BlueBoy/blueboy' }, // MAGICSMILE 微笑
+    714: { spine: 'Expression_Shock/panda_excited' }, // MAGICSHOCK 震惊
+    715: { spine: 'Expression_BlueBoy/blueboy' }, // MAGICPOOR 穷
+    716: { spine: 'Expression_PokePanda/stab' }, // MAGICPOKEPANDA 戳熊猫
+    717: { spine: 'Expression_Amazed/amazed' }, // MAGICAMAZED 惊讶
+    718: { spine: 'Expression_Octopus/octopoda' }, // MAGICOCTOPUS 章鱼
+    719: { spine: 'Expression_Dog/dog' }, // MAGICHAPPYMOUSE 开心鼠
     720: { spine: 'Expression_KnifePanda/panda_knife_apple' }, // MAGICKNIFEMAN 持刀人
-    721: { spine: 'Expression_Dog/dog' },                    // MAGICSADDOG 伤心狗
+    721: { spine: 'Expression_Dog/dog' }, // MAGICSADDOG 伤心狗
     722: { spine: 'Expression_ToothlessPanda/panda_laugh' }, // MAGICTOOTHLESSPANDA 无牙熊猫
-    723: { spine: 'Expression_Whistle/whistle' },            // MAGICWHISTLE 口哨
-    724: { spine: 'Expression_DogGlasses/dog_glasses' },     // MAGICCOOLDOG 酷狗
-    725: { spine: 'Expression_BlueBoy/blueboy' },            // MAGICSCORN 嘲讽
-    726: { spine: 'Expression_BlueBoy/blueboy' }             // MAGICHAPPY 开心
+    723: { spine: 'Expression_Whistle/whistle' }, // MAGICWHISTLE 口哨
+    724: { spine: 'Expression_DogGlasses/dog_glasses' }, // MAGICCOOLDOG 酷狗
+    725: { spine: 'Expression_BlueBoy/blueboy' }, // MAGICSCORN 嘲讽
+    726: { spine: 'Expression_BlueBoy/blueboy' } // MAGICHAPPY 开心
 };
 
 @ccclass
@@ -195,10 +196,7 @@ export default class ChatMsgItem extends cc.Component {
                 // 子节点本地(0,0)在父锚点处；chatEmojiNode 锚点非居中(0,0.5)，
                 // 需按父节点尺寸/锚点偏移到几何中心，避免 Spine 贴到左边缘压住头像。
                 const parent = this.chatEmojiNode;
-                node.setPosition(
-                    (0.5 - parent.anchorX) * parent.width + EMOJI_SPINE_OFFSET_X,
-                    (0.5 - parent.anchorY) * parent.height + EMOJI_SPINE_OFFSET_Y
-                );
+                node.setPosition((0.5 - parent.anchorX) * parent.width + EMOJI_SPINE_OFFSET_X, (0.5 - parent.anchorY) * parent.height + EMOJI_SPINE_OFFSET_Y);
                 this._emojiSpineNode = node;
                 let animName = cfg.anim;
                 if (!animName) {

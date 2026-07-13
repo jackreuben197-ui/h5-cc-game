@@ -8,7 +8,8 @@ import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRo
 import h5MessageManager from '../../../../H5MsgMgr';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
-import ProtocolAgency from '../../../../net/websocket/ProtocolAgency';
+import { HttpRoomBringInByIDProtocol } from '../../../../net/https/data/room/HttpRoomBringInByIDProtocol';
+import { WebUserRoomBringin, WWW } from '../../../../net/https/WebRequest';
 import UIComponentBase from '../../../base/UIComponentBase';
 import { UIGuideDialogType } from '../../../dialog/mushroomandcriticalhit/UIGuideDialog';
 import viewManager from '../../../UIViewManager';
@@ -55,6 +56,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private btnReplay: cc.Button = null!;
     @property({ type: cc.Button, displayName: '安全卫士按钮' })
     private btnSafetyGuard: cc.Button = null!;
+    @property({ type: cc.Button, displayName: '客服聊天按钮' })
+    private btnIm: cc.Button = null!;
     @property({ type: cc.Node, displayName: '操作面板' })
     private opPannelNode: cc.Node = null!;
     private _opPannel: Operation = null!;
@@ -90,6 +93,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         if (this.btnReplay) this.btnReplay.node.on('click', this.onClickReplay, this);
         this.btnSafetyGuard.node.active = false;
         this.btnSafetyGuard.node.on('click', this.onSafetyGuardClicked, this);
+        this.btnIm.node.on('click', this.onImClicked, this);
         //其他状态
         this._otherBindings = this.otherBindings.getComponent(OtherBindings);
         // main_menu 按钮事件注册
@@ -120,6 +124,33 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         h5MessageManager.sendToH5('showPanel', 1, {
             panelType: 'safetyGuard',
             props: { tribeId }
+        });
+    }
+
+    // UC 桌（goldType=1）且带入俱乐部ID未缓存时，先查带入钱包补齐，客服面板按带入俱乐部路由
+    private async onImClicked(): Promise<void> {
+        if (!this._mine) return;
+        const basicInfo = this._mine.roomData.basicInfo;
+        if (this._mine.currentWalletClubID <= 0 && basicInfo.goldType == 1) {
+            try {
+                const res = await WWW.Instance.CommonAPI<HttpRoomBringInByIDProtocol.ResponseData>({
+                    web_class: WebUserRoomBringin,
+                    api_id: this._mine.roomData.roomID
+                });
+                const clubId = Number(res?.data?.club_id || 0);
+                if (clubId > 0) {
+                    this._mine.currentWalletClubID = clubId;
+                }
+            } catch (e) {
+                this.tracelog.warn('supportChat bringInClubId query failed', e);
+            }
+        }
+        h5MessageManager.sendToH5('showPanel', 1, {
+            panelType: 'supportChat',
+            props: {
+                tribeId: basicInfo.tribeID,
+                clubId: this._mine.currentWalletClubID || basicInfo.clubID
+            }
         });
     }
 

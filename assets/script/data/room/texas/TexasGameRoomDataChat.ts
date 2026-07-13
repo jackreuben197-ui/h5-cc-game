@@ -44,7 +44,6 @@ export default class TexasGameRoomDataChat extends cc.EventTarget {
     private _chatDialogOpen: boolean = false;
     /** 俱乐部开场白缓存（服务端后续同步可能不再返回） */
     public prologue: string | null = null;
-
     @observable(TexasGameRoomDataChat.NEW_MESSAGE_ALERT_CHANGED)
     public hasNewMessageAlert: boolean = false;
 
