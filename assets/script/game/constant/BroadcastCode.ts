@@ -112,6 +112,10 @@ export function getFreeEmojiTypeBase(): number {
     return PropsID.FREEAUDIENCE;
 }
 
+export function getMagicEmojiTypeBase(): number {
+    return PropsID.MAGICANGER;
+}
+
 export function getThrowPropTypeBase(): number {
     return PropsID.PROPSTOMATO;
 }

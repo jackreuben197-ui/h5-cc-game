@@ -2,7 +2,7 @@ import { ServerMessageBroadcastMsg } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { EmojiBroadcastData, ThrowPropBroadcastData } from '../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
-import { BroadcastCode, PropsID, THROW_PROP_IDS, getFreeEmojiTypeBase } from '../../../game/constant/BroadcastCode';
+import { BroadcastCode, PropsID, THROW_PROP_IDS, getMagicEmojiTypeBase } from '../../../game/constant/BroadcastCode';
 
 // BroadcastMsg 1019
 export function BroadcastMsg(data: ServerMessageBroadcastMsg.AsObject, roomID: number, matchID: number) {
@@ -25,7 +25,7 @@ export function handleBroadcastExtra(extra: Uint8Array | string, roomID: number,
         roomData.seatsStateManager.throwPropEvent(propData);
         return;
     }
-    if (innerData.type >= getFreeEmojiTypeBase()) {
+    if (innerData.type >= getMagicEmojiTypeBase()) {
         const emojiData: EmojiBroadcastData = {
             type: innerData.type,
             userID: innerData.userID

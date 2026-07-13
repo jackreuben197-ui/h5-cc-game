@@ -1,7 +1,7 @@
 import soundManager from '../../core/SoundManager';
 import { DiamondGiftBroadcastData, EmojiBroadcastData, ThrowPropBroadcastData } from '../../data/room/texas/TexasGameRoomDataSeatsStateManager';
 import userStore from '../../data/user/UserStore';
-import { PropsID, getFreeEmojiTypeBase } from '../../game/constant/BroadcastCode';
+import { PropsID, getMagicEmojiTypeBase } from '../../game/constant/BroadcastCode';
 import AssetManager, { BUNDLE_RESOURCES } from '../loader/AssetManager';
 
 type PropRole = 'sender' | 'receiver' | 'bystander';
@@ -336,7 +336,7 @@ class ThrowPropManager {
     }
 
     private _getEmojiTypeBase(): number {
-        return getFreeEmojiTypeBase();
+        return getMagicEmojiTypeBase();
     }
 
     private _playTomato(task: ThrowPropTask): void {

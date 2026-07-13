@@ -144,7 +144,7 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
     }
 
     private _getEmojiTypeBase(): number {
-        return Def.ConsumeType.CT_EMOJI_1 * 100;
+        return Def.ConsumeType.CT_EMOJI_3 * 100;
     }
 
     private _bindTouchEnd(node: cc.Node, handler: () => void): void {

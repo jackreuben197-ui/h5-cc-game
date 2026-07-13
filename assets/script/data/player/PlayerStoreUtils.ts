@@ -208,10 +208,9 @@ export default class PlayerStoreUtils {
     @traceMethod()
     public static async preparePropList(): Promise<void> {
         const body = new HttpPropChatPropList.RequestData();
-        body.prop_type = 4;
         body.prop_types = [4];
         body.offset = 0;
-        body.limit = 20;
+        body.limit = 100;
         const res = await WWW.Instance.CommonAPI<HttpPropChatPropList.ResponseData>({
             web_class: WebPropChatPropList,
             body,

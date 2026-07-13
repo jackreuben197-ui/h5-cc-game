@@ -6,8 +6,8 @@ export namespace HttpPropChatPropList {
         public limit: number = 0;
         public offset: number = 0;
         public prop_type: number = 0;
-        public prop_types: number[] = [];
-        public user_type?: number;
+        public prop_types: number[] = []; // 道具类型：1 表情，2 弹幕，3 聊天框，4 互动道具
+        public user_type?: number; // 用户类型排序方式： 0 默认（创建时间倒序） 1 常用 2 最近使用 3 创建时间正序 4 价格正序 5 价格倒序
     }
     export class ResponseData extends WebResponseDataBase {
         public data: Data = null;
