@@ -1,13 +1,8 @@
-import { Def, ServerMessageBroadcastMsg } from '@silenthill/agreement-web';
+import { ServerMessageBroadcastMsg } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { EmojiBroadcastData, ThrowPropBroadcastData } from '../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
-
-const BROADCAST_MSG_CODE = 1000;
-
-const EMOJI_TYPE_COUNT = 15;
-
-const PROP_TYPE_COUNT = 12;
+import { BroadcastCode, PropsID, THROW_PROP_IDS, getFreeEmojiTypeBase } from '../../../game/constant/BroadcastCode';
 
 // BroadcastMsg 1019
 export function BroadcastMsg(data: ServerMessageBroadcastMsg.AsObject, roomID: number, matchID: number) {
@@ -17,41 +12,34 @@ export function BroadcastMsg(data: ServerMessageBroadcastMsg.AsObject, roomID: n
 }
 
 export function handleBroadcastExtra(extra: Uint8Array | string, roomID: number, matchID: number): void {
-    const propData = parseThrowPropBroadcast(extra);
-    const emojiData = parseEmojiBroadcast(extra);
-    if (!propData && !emojiData) return;
+    const inner = parseBroadcastInner(extra);
+    const innerData = parseInner(inner);
+    if (!innerData) return;
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
-    if (propData) roomData.seatsStateManager.throwPropEvent(propData);
-    if (emojiData) roomData.seatsStateManager.emojiEvent(emojiData);
+    if (THROW_PROP_IDS.indexOf(innerData.type) >= 0) {
+        const propData: ThrowPropBroadcastData = {
+            type: innerData.type,
+            userID: innerData.userID,
+            targetUserID: innerData.targetUserID
+        };
+        roomData.seatsStateManager.throwPropEvent(propData);
+        return;
+    }
+    if (innerData.type >= getFreeEmojiTypeBase()) {
+        const emojiData: EmojiBroadcastData = {
+            type: innerData.type,
+            userID: innerData.userID
+        };
+        roomData.seatsStateManager.emojiEvent(emojiData);
+    }
 }
 
-export function parseThrowPropBroadcast(extra: Uint8Array | string): ThrowPropBroadcastData | null {
-    const inner = parseBroadcastInner(extra);
+function parseInner(inner: any): ThrowPropBroadcastData | null {
     if (!inner) return null;
     const type = Number(inner.type || 0);
     const userID = Number(inner.user_id || 0);
     const targetUserID = Number(inner.target_user_id || 0);
-    const propOffset = type - getThrowPropTypeBase();
-    if (propOffset < 0 || propOffset >= PROP_TYPE_COUNT || !userID || !targetUserID) return null;
-    return { type, userID, targetUserID };
-}
-
-export function parseEmojiBroadcast(extra: Uint8Array | string): EmojiBroadcastData | null {
-    const inner = parseBroadcastInner(extra);
-    if (!inner) return null;
-    const type = Number(inner.type || 0);
-    const userID = Number(inner.user_id || 0);
-    const emojiOffset = type - getEmojiTypeBase();
-    if (emojiOffset < 0 || emojiOffset >= EMOJI_TYPE_COUNT || !userID) return null;
-    return { type, userID };
-}
-
-function getEmojiTypeBase(): number {
-    return Def.ConsumeType.CT_EMOJI_1 * 100;
-}
-
-function getThrowPropTypeBase(): number {
-    return Def.ConsumeType.CT_EMOJI_2 * 100;
+    return { type: type as PropsID, userID, targetUserID };
 }
 
 function parseBroadcastInner(extra: Uint8Array | string): any {
@@ -63,7 +51,7 @@ function parseBroadcastInner(extra: Uint8Array | string): any {
     } catch (error) {
         return null;
     }
-    if (!outer || Number(outer.code) !== BROADCAST_MSG_CODE) return null;
+    if (!outer || Number(outer.code) !== BroadcastCode.BroadcastMsg) return null;
     let inner = outer.data;
     if (typeof inner === 'string') {
         try {

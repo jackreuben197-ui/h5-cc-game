@@ -1,11 +1,12 @@
 import { bindData, pureEvent } from '../../../core/decorator/DataBind';
 import { AnimateDisplayTypeButton, AnimateDisplayTypeMushroomPool, AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
+import { PropsID } from '../../../game/constant/BroadcastCode';
 import seatPostionCaculator from '../../../views/scene/room/texas/widget/SeatPositionCaculator';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';
 
 export interface ThrowPropBroadcastData {
-    type: number;
+    type: PropsID;
     userID: number;
     targetUserID: number;
 }
@@ -15,6 +16,7 @@ export interface DiamondGiftBroadcastData {
     receiverID: number;
     amount: number;
 }
+
 export interface EmojiBroadcastData {
     type: number;
     userID: number;

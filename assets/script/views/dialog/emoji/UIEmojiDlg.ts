@@ -3,6 +3,7 @@ import { Code, Def } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import userStore from '../../../data/user/UserStore';
+import { BroadcastCode } from '../../../game/constant/BroadcastCode';
 import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import AssetManager, { BUNDLE_RESOURCES } from '../../loader/AssetManager';
@@ -110,13 +111,13 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
         const emojiType = this._getEmojiTypeBase() + emojiIndex - 1;
         this._roomData.seatsStateManager.setPendingEmoji({
             type: emojiType,
-            userID: userStore.userRID || userStore.userID
+            userID: userStore.userRID
         });
         const msgType = Def.BroadcastMsgType.BC_MSG_EMOJI;
         const inner = JSON.stringify({
             name: userStore.name,
             type: emojiType,
-            user_id: userStore.userRID || userStore.userID,
+            user_id: userStore.userRID,
             target_user_id: 0,
             message: '',
             msgType,
@@ -131,7 +132,7 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
             },
             consume: Def.ConsumeType.CT_NONE,
             message: '',
-            extra: this._stringToBytes(JSON.stringify({ code: 1000, data: inner })),
+            extra: this._stringToBytes(JSON.stringify({ code: BroadcastCode.BroadcastMsg, data: inner })),
             msgType
         };
         ProtocolAgency.Send({

@@ -6,6 +6,7 @@ import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayer from '../../../data/room/texas/TexasGameRoomDataPlayer';
 import userStore, { UserStore } from '../../../data/user/UserStore';
 import { AntiCheatType } from '../../../game/constant/AntiCheatType';
+import { BroadcastCode, PropsID } from '../../../game/constant/BroadcastCode';
 import { ChatType } from '../../../game/constant/ChatType';
 import { RoomOriginType } from '../../../game/constant/RoomOriginType';
 import { StringHelper } from '../../../helper/StringHelper';
@@ -80,7 +81,20 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private diamondNumNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '数据页签根节点' })
     private dataTabNode: cc.Node = null;
-    private static readonly PROP_TYPE_MAP: number[] = [602, 609, 608, 605, 600, 610, 611, 603, 604, 607, 601, 606];
+    private static readonly PROP_TYPE_MAP: PropsID[] = [
+        PropsID.PROPSKISS,
+        PropsID.PROPSMONEY,
+        PropsID.PROPSBOXING,
+        PropsID.PROPSTOUCH,
+        PropsID.PROPSTOMATO,
+        PropsID.PROPSFISH,
+        PropsID.PROPSBASEBALL,
+        PropsID.PROPSGOOD,
+        PropsID.PROPSCHEERS,
+        PropsID.PROPSCHICKEN,
+        PropsID.PROPSFLOWER,
+        PropsID.PROPSSHARK
+    ];
     private static readonly shieldUsers: Set<number> = new Set();
     private static readonly audioClosedUsers: Set<number> = new Set();
     private static readonly videoClosedUsers: Set<number> = new Set();
@@ -199,6 +213,8 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         if (!this._isSelf) {
             this._loadMuteState();
             this._loadAudioVideoState();
+        }
+        if (this._canGiftDiamond()) {
             this._loadDiamondBalance();
         }
         try {
@@ -240,10 +256,12 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
 
     private _refreshSelfState(): void {
         const canUseProp = !this._isSelf && !!this._requestRID && !!this._roomData.mine.seatNo;
+        const canGiftDiamond = this._canGiftDiamond();
         this.propOpNode.active = canUseProp;
-        this.diamondShowNode.active = !this._isSelf;
+        this.diamondShowNode.active = canGiftDiamond;
         this.noteNode.active = !this._isSelf;
-        if (this._tabNodes[2]) this._tabNodes[2].active = !this._isSelf;
+        if (this._tabNodes[2]) this._tabNodes[2].active = canGiftDiamond;
+        if (!canGiftDiamond && this._tabIndex === 2) this._switchTab(0);
         this._refreshDialogLayout();
     }
 
@@ -365,7 +383,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this.dataTabNode.setPosition(0, OTHER_DATA_TAB_Y);
         this.dataTabNode.setContentSize(1000, 905);
         this.diamondShowNode.setPosition(0, -1070);
-        this.diamondShowNode.active = !this._isSelf;
+        this.diamondShowNode.active = this._canGiftDiamond();
         this.propOpNode.setPosition(0, -823);
         this.propOpNode.setContentSize(1000, 394);
     }
@@ -693,6 +711,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private async _clickSendDiamond(amount: number, clickNode: cc.Node): Promise<void> {
+        if (!this._canGiftDiamond()) return;
         if (this._diamondConfig && this._diamondSentCount >= this._diamondConfig.limit_time_pre_day) {
             viewManager.showToast(i18nMgr.Get('GiftDiamondError') || '赠送失败');
             return;
@@ -722,6 +741,10 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         }
     }
 
+    private _canGiftDiamond(): boolean {
+        return !this._isSelf && !!this._requestRID && !!this._roomData?.mine?.seatNo;
+    }
+
     private _clickAudioClose(): void {
         if (!this._hasAudioTrack) return;
         this._isAudioClosed = !this._isAudioClosed;
@@ -742,7 +765,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this._playClickScale(clickNode, true);
         const propData = this._propListData[propIndex - 1];
         const consume = (propData ? propData.priceID : this._getThrowPropConsumeType()) as ClientMessageBroadcastMsg.AsObject['consume'];
-        const propType = UIPlayerInfo.PROP_TYPE_MAP[propIndex - 1] || this._getThrowPropTypeBase();
+        const propType = UIPlayerInfo.PROP_TYPE_MAP[propIndex - 1] || PropsID.PROPSTOMATO;
         this._roomData.seatsStateManager.setPendingThrowProp({
             type: propType,
             userID: userStore.userRID,
@@ -754,7 +777,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             user_id: userStore.userRID,
             type: propType
         });
-        const extra = JSON.stringify({ code: 1000, data: inner });
+        const extra = JSON.stringify({ code: BroadcastCode.BroadcastMsg, data: inner });
         const body: ClientMessageBroadcastMsg.AsObject = {
             room: {
                 roomId: this._roomData.roomID,
@@ -775,10 +798,6 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
 
     private _getThrowPropConsumeType(): Def.ConsumeTypeMap[keyof Def.ConsumeTypeMap] {
         return Def.ConsumeType.CT_EMOJI_2;
-    }
-
-    private _getThrowPropTypeBase(): number {
-        return Def.ConsumeType.CT_EMOJI_2 * 100;
     }
 
     private _getThrowPropMsgType(): Def.BroadcastMsgTypeMap[keyof Def.BroadcastMsgTypeMap] {

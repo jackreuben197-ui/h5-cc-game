@@ -8,7 +8,6 @@ import { i18nMgr } from '../../../../i18n/i18nMgr';
 import UIComponentBase from '../../../base/UIComponentBase';
 import { UIGuideDialogType } from '../../../dialog/mushroomandcriticalhit/UIGuideDialog';
 import viewManager from '../../../UIViewManager';
-import throwPropManager from '../../../util/ThrowPropManager';
 import TexasTableEvent from './events/TexasTableEvent';
 import InsuranceOperation from './InsuranceOperation';
 import MorePlayTypeInfo from './MorePlayTypeInfo';
@@ -68,13 +67,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private _mine: TexasGameRoomDataPlayerMine = null;
     @property({ type: cc.Node, displayName: '所有需要缩放的节点位置' })
     private scaleNode: cc.Node = null;
-    private _throwPropRootNode: cc.Node = null;
 
     protected onLoad(): void {
-        this._throwPropRootNode = new cc.Node('PropSpine');
-        this._throwPropRootNode.parent = this.node;
-        this._throwPropRootNode.zIndex = 9999;
-        throwPropManager.initialize(this.node, this._throwPropRootNode);
         //菜单项
         this._onSideMenuClicked = () => {
             this._sideMenuTexasMenu.fadeIn(true);
@@ -202,7 +196,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     }
 
     private onClickBtnEmoji(): void {
-        if (!this._mine) return;
+        if (!this._mine || !this._mine.player || this._mine.player.seatNo == 0) return;
         viewManager.openDialog('Emoji', {
             roomID: this._mine.roomData.roomID,
             matchID: this._mine.roomData.matchID

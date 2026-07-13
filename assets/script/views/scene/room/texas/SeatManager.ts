@@ -30,6 +30,8 @@ export default class SeatManager extends cc.Component {
     private potNot: cc.Node = null;
     @property({ type: cc.Node, displayName: '操作面板' })
     private opPannelNode: cc.Node = null!;
+    @property({ type: cc.Node, displayName: '道具动画根节点' })
+    private _throwPropRootNode: cc.Node = null!;
     private _opPannel: Operation = null!;
     private _seatManager: TexasGameRoomDataSeatsStateManager;
     private _seatNodes: cc.Node[] = [];
@@ -62,6 +64,7 @@ export default class SeatManager extends cc.Component {
     public onLoad() {
         // 如果绑定点击写这里
         this._opPannel = this.opPannelNode.children[0].getComponent(Operation);
+        throwPropManager.initialize(this.node, this._throwPropRootNode);
     }
 
     public onEnable(): void {
@@ -220,7 +223,8 @@ export default class SeatManager extends cc.Component {
             if (seatData?.userID === userID) {
                 result = {
                     avatarNode: seatPlayer.avatarNode,
-                    propNode: seatPlayer.throwPropNode
+                    propNode: seatPlayer.throwPropNode,
+                    emojiNode: seatPlayer.emojiNode
                 };
             }
         });

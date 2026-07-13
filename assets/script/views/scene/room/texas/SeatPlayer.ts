@@ -110,6 +110,10 @@ export default class SeatPlayer extends cc.Component {
     // private soundIcon: cc.SpriteFrame = null;
     @property({ type: cc.Sprite, displayName: '麦克风图标' })
     private micIconSprite: cc.Sprite = null;
+    @property({ type: cc.Node, displayName: '道具动画节点' })
+    private _throwPropNode: cc.Node = null!;
+    @property({ type: cc.Node, displayName: '表情动画节点' })
+    private _emojiNode: cc.Node = null!;
     private _seatPlayer: TexasGameRoomDataPlayer = null!;
     private _cardBacks: cc.Node[] = [];
     private _bigCards: CardView[] = [];
@@ -117,14 +121,15 @@ export default class SeatPlayer extends cc.Component {
     private _potNode: cc.Node = null!;
     // 发牌
     private _dealNode: cc.Node = null!;
-    private _throwPropNode: cc.Node = null!;
     /** 暴露头像节点供视频渲染使用 */
     public get avatarNode(): cc.Node {
         return this.avatar.node;
     }
     public get throwPropNode(): cc.Node {
-        this._ensureThrowPropNode();
         return this._throwPropNode;
+    }
+    public get emojiNode(): cc.Node {
+        return this._emojiNode;
     }
 
     public initData(seatPlayer: TexasGameRoomDataPlayer, potNode: cc.Node, dealNode: cc.Node) {
@@ -166,16 +171,6 @@ export default class SeatPlayer extends cc.Component {
         this.avatar.node.on(cc.Node.EventType.TOUCH_END, this._clickPlayerInfo, this);
         this.insuranceCountdownBubble.node.active = false;
         this.returnToGameButton.node.on('click', this._clickReturnToGame, this);
-        this._ensureThrowPropNode();
-    }
-
-    private _ensureThrowPropNode(): void {
-        if (this._throwPropNode) return;
-        this._throwPropNode = new cc.Node('PropSpine');
-        this._throwPropNode.parent = this.node;
-        this._throwPropNode.zIndex = 9999;
-        this._throwPropNode.active = false;
-        this._throwPropNode.addComponent(sp.Skeleton);
     }
 
     protected onEnable(): void {
