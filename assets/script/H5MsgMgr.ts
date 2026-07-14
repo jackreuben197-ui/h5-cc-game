@@ -235,8 +235,7 @@ class H5MsgMgr {
             this.tracelog.debug('收到 h5Ready，回复 ccAck', payload);
             if (payload?.safeArea) {
                 H5MsgMgr.safeArea = payload.safeArea;
-                // ccviewData.setSaveareaTop(payload.safeArea.top);
-                ccviewData.setSaveareaTop(20);
+                ccviewData.setSaveareaTop(payload.safeArea.top);
             }
             if (payload.token) {
                 userStore.token = payload.token;

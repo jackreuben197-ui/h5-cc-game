@@ -2,6 +2,7 @@ import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/dec
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import TexasGameRoomDataBasic from '../../../../data/room/texas/TexasGameRoomDataBasic';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
+import ccviewData, { CCViewData } from '../../../../data/system/CCViewData';
 import { AnimateDisplayTypePlayType } from '../../../../game/constant/AnimateDisplayType';
 import { UISquidEndItemShowData } from '../../../dialog/squidover/UISquidEndItem';
 import viewManager from '../../../UIViewManager';
@@ -24,6 +25,8 @@ export default class MorePlayTypeInfo extends cc.Component {
     private squidStartAnimation: cc.Animation = null!;
     @property({ type: cc.Animation, displayName: '暴击开场动画' })
     private critialHitStartAnimation: cc.Animation = null!;
+    @property({ type: cc.Node, displayName: '左边鱿鱼按钮' })
+    private squidButton: cc.Node = null;
     private _mine: TexasGameRoomDataPlayerMine = null!;
     private _onJoinSquidClicked: () => void;
 
@@ -44,6 +47,24 @@ export default class MorePlayTypeInfo extends cc.Component {
         this._bindEventsAndRefresh();
     }
 
+    @bindEvent(CCViewData.FRAME_SIZE_UPDATE, { dataSource: 'ccviewData', initPriority: 20 })
+    protected onFrameResize(
+        visibleSizeWidth: number,
+        visibleSizeHeight: number,
+        frameSizeWidth: number,
+        frameSizeHeight: number,
+        suggestScale: number,
+        saveAreaTop: number
+    ) {
+        if (suggestScale < 1) {
+            this.squidButton.height = 390;
+            this.joinButton.node.setPosition(0, -visibleSizeHeight / 2 + 200 * suggestScale + 440 * suggestScale);
+        } else {
+            this.squidButton.height = 450;
+            this.joinButton.node.setPosition(0, -visibleSizeHeight / 2 + 200 * suggestScale + 520);
+        }
+    }
+
     protected onEnable(): void {
         this._bindEventsAndRefresh();
     }
@@ -58,7 +79,7 @@ export default class MorePlayTypeInfo extends cc.Component {
     private _bindEventsAndRefresh() {
         if (!this._mine) return;
         // 统一激活绑定，注入强类型 tag 推导过滤机制
-        autoBindEvents(this, { mine: this._mine, basic: this._mine.roomData.basicInfo });
+        autoBindEvents(this, { mine: this._mine, basic: this._mine.roomData.basicInfo, ccviewData: ccviewData });
     }
 
     //=================== 鱿鱼 ==================================
