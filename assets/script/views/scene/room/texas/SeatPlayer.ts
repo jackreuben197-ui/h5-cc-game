@@ -419,7 +419,7 @@ export default class SeatPlayer extends cc.Component {
                 }
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.winPercentNode.node.active = false;
-                this.mushroomNode.node.setPosition(75, 72);
+                this.mushroomNode.node.setPosition(75, 92);
                 this.mushroomNode.node.scaleX = 1;
                 this.mushroomNode.getOpNode(0).scaleX = 1;
                 this.mushroomNode.getOpNode(1).scaleX = 1;
@@ -437,7 +437,7 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.mushroomNode.node.setPosition(75, 72);
+                this.mushroomNode.node.setPosition(75, 92);
                 this.mushroomNode.node.scaleX = 1;
                 this.mushroomNode.getOpNode(0).scaleX = 1;
                 this.mushroomNode.getOpNode(1).scaleX = 1;
@@ -454,7 +454,7 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.mushroomNode.node.setPosition(75, 72);
+                this.mushroomNode.node.setPosition(75, 92);
                 this.mushroomNode.node.scaleX = 1;
                 this.mushroomNode.getOpNode(0).scaleX = 1;
                 this.mushroomNode.getOpNode(1).scaleX = 1;
@@ -472,7 +472,7 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.mushroomNode.node.setPosition(-75, 72);
+                this.mushroomNode.node.setPosition(-75, 92);
                 this.mushroomNode.node.scaleX = -1; // 先反转
                 this.mushroomNode.getOpNode(0).scaleX = -1; // 文本再转回去
                 this.mushroomNode.getOpNode(1).scaleX = -1; // 文本再转回去
@@ -491,7 +491,7 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.mushroomNode.node.setPosition(-75, 72);
+                this.mushroomNode.node.setPosition(-75, 92);
                 this.mushroomNode.node.scaleX = -1; // 先反转
                 this.mushroomNode.getOpNode(0).scaleX = -1; // 文本再转回去
                 this.mushroomNode.getOpNode(1).scaleX = -1; // 文本再转回去
