@@ -56,9 +56,16 @@ export default class SeatManager extends cc.Component {
         saveAreaTop: number
     ) {
         this.tracelog.debug(visibleSizeWidth, suggestScale, saveAreaTop);
-        const menuHeight = 210 * suggestScale;
-        seatPostionCaculator.initWithContainer(visibleSizeWidth, visibleSizeHeight - menuHeight - saveAreaTop - 20 * suggestScale, -saveAreaTop);
-        this.node.setPosition(cc.v3(0, 200));
+        const menuHeight = 200 * suggestScale;
+        let offsetY = 100;
+        if (suggestScale < 1) {
+            offsetY = 20;
+        }
+        seatPostionCaculator.initWithContainer(
+            visibleSizeWidth,
+            visibleSizeHeight - menuHeight - saveAreaTop - offsetY * suggestScale,
+            -saveAreaTop - offsetY * suggestScale
+        );
     }
 
     public onLoad() {

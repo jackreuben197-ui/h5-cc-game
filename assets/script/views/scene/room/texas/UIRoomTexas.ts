@@ -79,6 +79,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private _mine: TexasGameRoomDataPlayerMine = null;
     @property({ type: cc.Node, displayName: '所有需要缩放的节点位置' })
     private scaleNode: cc.Node = null;
+    @property({ type: cc.Node, displayName: '中间区域' })
+    private middleLayout: cc.Node = null;
 
     protected onLoad(): void {
         //菜单项
@@ -210,6 +212,10 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         widget.top = saveAreaTop;
         widget.updateAlignment();
         this.scaleNode.setScale(suggestScale, suggestScale);
+        this.publicCardsInfo.node.scale = suggestScale;
+        const middleLayout = this.middleLayout.getComponent(cc.Widget);
+        middleLayout.top = 650 * suggestScale;
+        widget.updateAlignment();
     }
 
     private async _showSquidIntroDialog(roomData: TexasGameRoomData): Promise<boolean> {
