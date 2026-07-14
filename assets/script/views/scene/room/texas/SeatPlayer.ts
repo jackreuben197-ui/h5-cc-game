@@ -110,6 +110,10 @@ export default class SeatPlayer extends cc.Component {
     // private soundIcon: cc.SpriteFrame = null;
     @property({ type: cc.Sprite, displayName: '麦克风图标' })
     private micIconSprite: cc.Sprite = null;
+    @property({ type: cc.Node, displayName: '道具动画节点' })
+    private _throwPropNode: cc.Node = null!;
+    @property({ type: cc.Node, displayName: '表情动画节点' })
+    private _emojiNode: cc.Node = null!;
     private _seatPlayer: TexasGameRoomDataPlayer = null!;
     private _cardBacks: cc.Node[] = [];
     private _bigCards: CardView[] = [];
@@ -117,6 +121,16 @@ export default class SeatPlayer extends cc.Component {
     private _potNode: cc.Node = null!;
     // 发牌
     private _dealNode: cc.Node = null!;
+    /** 暴露头像节点供视频渲染使用 */
+    public get avatarNode(): cc.Node {
+        return this.avatar.node;
+    }
+    public get throwPropNode(): cc.Node {
+        return this._throwPropNode;
+    }
+    public get emojiNode(): cc.Node {
+        return this._emojiNode;
+    }
 
     public initData(seatPlayer: TexasGameRoomDataPlayer, potNode: cc.Node, dealNode: cc.Node) {
         this._seatPlayer = seatPlayer;
@@ -132,6 +146,7 @@ export default class SeatPlayer extends cc.Component {
 
     // 防止内存泄露(简单说就是防止this丢失)
     private _clickEmptySeat: () => void = null!;
+    private _clickPlayerInfo: () => void = null!;
 
     protected onLoad() {
         // 如果绑定点击写这里
@@ -148,6 +163,12 @@ export default class SeatPlayer extends cc.Component {
             TexasTableEvent.Sitdown(this._seatPlayer.roomData.mine, this._seatPlayer.seatNo);
         };
         this.emptySeat.node.on('click', this._clickEmptySeat, this);
+        this._clickPlayerInfo = () => {
+            if (this._seatPlayer.seated) {
+                TexasTableEvent.OpenPlayerInfo(this._seatPlayer);
+            }
+        };
+        this.avatar.node.on(cc.Node.EventType.TOUCH_END, this._clickPlayerInfo, this);
         this.insuranceCountdownBubble.node.active = false;
         this.returnToGameButton.node.on('click', this._clickReturnToGame, this);
     }
@@ -163,6 +184,13 @@ export default class SeatPlayer extends cc.Component {
         this.avatarVideoRender.stopOverlay();
         this.setMicrophoneIconState(MicrophoneIconState.HIDDEN);
         unBindEventsAll(this);
+    }
+
+    protected onDestroy(): void {
+        this.emptySeat?.node.targetOff(this);
+        this.avatar?.node.targetOff(this);
+        this.userSeat?.targetOff(this);
+        this.returnToGameButton?.node.targetOff(this);
     }
 
     /**

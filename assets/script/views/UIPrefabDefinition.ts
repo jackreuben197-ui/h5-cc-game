@@ -2,10 +2,13 @@
 import UIBringIn from './dialog/bringin/UIBringIn';
 import UIBringOut from './dialog/bringout/UIBringInOut';
 import UIConfirmDialog from './dialog/confirm/UIConfirmDialog';
+import UIEmojiDlg from './dialog/emoji/UIEmojiDlg';
 import UITexasHistory from './dialog/history/UITexasHistory';
 import UIInsuranceNewPanel from './dialog/insurance/UIInsuranceNewPanel';
 import UIGuideDialog from './dialog/mushroomandcriticalhit/UIGuideDialog';
 import UIPersonalSettings from './dialog/personalsettings/UIPersonalSettings';
+import UIPlayerInfo from './dialog/playerinfo/UIPlayerInfo';
+import UIReport from './dialog/playerinfo/UIReport';
 import UIRechargeDiamond from './dialog/rechargediamond/UIRechargeDiamond';
 import UITexasReport from './dialog/report/UITexasReport';
 import UITexasReportPlayerInfo from './dialog/report/UITexasReportPlayerInfo';
@@ -115,6 +118,24 @@ export const UIPrefabDialog = {
         Name: '牌谱回放',
         Bundle: BUNDLE_RESOURCES,
         Path: 'rc/scene/room/texas/UITexasHistory'
+    },
+    PlayerInfo: {
+        UIType: UIPlayerInfo,
+        Name: '玩家信息',
+        Bundle: BUNDLE_RESOURCES,
+        Path: 'rc/dialog/playerinfo/UIPlayerInfo'
+    },
+    PlayerReport: {
+        UIType: UIReport,
+        Name: '举报',
+        Bundle: BUNDLE_RESOURCES,
+        Path: 'rc/dialog/playerinfo/UIReport'
+    },
+    Emoji: {
+        UIType: UIEmojiDlg,
+        Name: '表情',
+        Bundle: BUNDLE_RESOURCES,
+        Path: 'rc/dialog/emoji/UIEmojiDlg'
     }
 } as const;
 

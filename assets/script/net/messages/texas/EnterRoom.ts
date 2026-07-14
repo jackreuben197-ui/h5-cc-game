@@ -1,9 +1,11 @@
 import { Def, Player, ServerMessageEnterRoom } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
 import soundManager from '../../../core/SoundManager';
+import PlayerStoreUtils from '../../../data/player/PlayerStoreUtils';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
+import TexasGameRoomDataPlayer from '../../../data/room/texas/TexasGameRoomDataPlayer';
 import {
     AnimateDisplayTypeAction,
     AnimateDisplayTypeButton,
@@ -19,6 +21,7 @@ import roomReconnectManager from '../../../game/RoomReconnectManager';
 import viewManager from '../../../views/UIViewManager';
 import agoraManager from '../../agora/AgoraManager';
 import TexasVideoMediaHelper from './TexasVideoMediaHelper';
+import UserStoreUtils from '../../../data/user/UserStoreUtils';
 
 const _plog = createLogger('ServerMessageEnterRoom');
 
@@ -91,6 +94,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         }
         const playerMap: Map<number, Player.AsObject> = new Map();
         data.playersList.map(v => playerMap.set(v.seatId, v));
+        const seatedPlayers: TexasGameRoomDataPlayer[] = [];
         for (let seat = 1; seat <= seatCount; seat++) {
             let seatData = roomData.seatsStateManager.getSeatPlayer(seat);
             let player = playerMap.get(seat);
@@ -153,11 +157,14 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
                 if (player.winCardsInfo) {
                     seatData.winPercent100 = Math.min(10000, Math.round((player.winCardsInfo.wcCount * 10000) / player.winCardsInfo.lcCount));
                 }
+                seatedPlayers.push(seatData);
             } else {
                 seatData.seated = false;
                 seatData.clearData();
             }
         }
+        PlayerStoreUtils.syncSeatPlayers(roomData, seatedPlayers);
+        UserStoreUtils.preparePropList();
         if (data.myInfo) {
             roomData.mine.clearData();
             const player = roomData.seatsStateManager.setMySeat(data.myInfo.seatId, AnimateDisplayTypePosition.Static);

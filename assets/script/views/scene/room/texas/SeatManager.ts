@@ -2,10 +2,15 @@ import { autoBindEvents, bindData, bindEvent, unBindEventsAll } from '../../../.
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
-import TexasGameRoomDataSeatsStateManager from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
+import TexasGameRoomDataSeatsStateManager, {
+    DiamondGiftBroadcastData,
+    EmojiBroadcastData,
+    ThrowPropBroadcastData
+} from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
 import ccviewData, { CCViewData } from '../../../../data/system/CCViewData';
 import { AnimateDisplayTypeButton } from '../../../../game/constant/AnimateDisplayType';
 import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconState';
+import throwPropManager, { ThrowPropSeatNodes } from '../../../util/ThrowPropManager';
 import Operation from './Operation';
 import SeatPlayer from './SeatPlayer';
 import seatPostionCaculator, { SeatPosition } from './widget/SeatPositionCaculator';
@@ -25,6 +30,8 @@ export default class SeatManager extends cc.Component {
     private potNot: cc.Node = null;
     @property({ type: cc.Node, displayName: '操作面板' })
     private opPannelNode: cc.Node = null!;
+    @property({ type: cc.Node, displayName: '道具动画根节点' })
+    private _throwPropRootNode: cc.Node = null!;
     private _opPannel: Operation = null!;
     private _seatManager: TexasGameRoomDataSeatsStateManager;
     private _seatNodes: cc.Node[] = [];
@@ -57,6 +64,7 @@ export default class SeatManager extends cc.Component {
     public onLoad() {
         // 如果绑定点击写这里
         this._opPannel = this.opPannelNode.children[0].getComponent(Operation);
+        throwPropManager.initialize(this.node, this._throwPropRootNode);
     }
 
     public onEnable(): void {
@@ -70,6 +78,26 @@ export default class SeatManager extends cc.Component {
 
     private _bindEventsAndRefresh() {
         autoBindEvents(this, { seats: this._seatManager, ccviewData: ccviewData });
+    }
+
+    @bindEvent(TexasGameRoomDataSeatsStateManager.THROW_PROP, { dataSource: 'seats', initIgnore: true })
+    private onThrowProp(data: ThrowPropBroadcastData): void {
+        const senderData = this._getThrowPropSeatNodes(data.userID);
+        const targetData = this._getThrowPropSeatNodes(data.targetUserID);
+        throwPropManager.playProp(data, senderData, targetData);
+    }
+
+    @bindEvent(TexasGameRoomDataSeatsStateManager.DIAMOND_GIFT, { dataSource: 'seats', initIgnore: true })
+    private onDiamondGift(data: DiamondGiftBroadcastData): void {
+        const senderData = this._getThrowPropSeatNodes(data.senderID);
+        const receiverData = this._getThrowPropSeatNodes(data.receiverID);
+        throwPropManager.playDiamondGift(data, senderData, receiverData);
+    }
+
+    @bindEvent(TexasGameRoomDataSeatsStateManager.EMOJI, { dataSource: 'seats', initIgnore: true })
+    private onEmoji(data: EmojiBroadcastData): void {
+        const senderData = this._getThrowPropSeatNodes(data.userID);
+        throwPropManager.playEmoji(data, senderData);
     }
 
     @bindEvent(TexasGameRoomDataSeatsStateManager.MUSHROOM_POOL_CHANGE, 'seats')
@@ -184,5 +212,22 @@ export default class SeatManager extends cc.Component {
                 node.active = true;
             }
         }
+    }
+
+    private _getThrowPropSeatNodes(userID: number): ThrowPropSeatNodes {
+        if (!userID) return null;
+        let result: ThrowPropSeatNodes = null;
+        this._seatNodesMap.forEach((seatPlayer, seatNo) => {
+            if (result) return;
+            const seatData = this._seatManager.getSeatPlayer(seatNo);
+            if (seatData?.userID === userID) {
+                result = {
+                    avatarNode: seatPlayer.avatarNode,
+                    propNode: seatPlayer.throwPropNode,
+                    emojiNode: seatPlayer.emojiNode
+                };
+            }
+        });
+        return result;
     }
 }

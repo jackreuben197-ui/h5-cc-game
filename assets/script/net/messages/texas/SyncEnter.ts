@@ -1,8 +1,10 @@
 import { Def, Player, ServerMessageSyncEnter } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
+import PlayerStoreUtils from '../../../data/player/PlayerStoreUtils';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
+import TexasGameRoomDataPlayer from '../../../data/room/texas/TexasGameRoomDataPlayer';
 import {
     AnimateDisplayTypeAction,
     AnimateDisplayTypeButton,
@@ -68,6 +70,7 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
     }
     const playerMap: Map<number, Player.AsObject> = new Map();
     data.playersList.map(v => playerMap.set(v.seatId, v));
+    const seatedPlayers: TexasGameRoomDataPlayer[] = [];
     for (let seat = 1; seat <= seatCount; seat++) {
         let seatData = roomData.seatsStateManager.getSeatPlayer(seat);
         let player = playerMap.get(seat);
@@ -129,11 +132,13 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
             if (player.winCardsInfo) {
                 seatData.winPercent100 = Math.min(10000, Math.round((player.winCardsInfo.wcCount * 10000) / player.winCardsInfo.lcCount));
             }
+            seatedPlayers.push(seatData);
         } else {
             seatData.seated = false;
             seatData.clearData();
         }
     }
+    PlayerStoreUtils.syncSeatPlayers(roomData, seatedPlayers);
     if (data.myInfo) {
         roomData.mine.clearData();
         const player = roomData.seatsStateManager.setMySeat(data.myInfo.seatId, AnimateDisplayTypePosition.Static);

@@ -1,8 +1,26 @@
 import { bindData, pureEvent } from '../../../core/decorator/DataBind';
 import { AnimateDisplayTypeButton, AnimateDisplayTypeMushroomPool, AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
+import { PropsID } from '../../../game/constant/BroadcastCode';
 import seatPostionCaculator from '../../../views/scene/room/texas/widget/SeatPositionCaculator';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayer from './TexasGameRoomDataPlayer';
+
+export interface ThrowPropBroadcastData {
+    type: PropsID;
+    userID: number;
+    targetUserID: number;
+}
+
+export interface DiamondGiftBroadcastData {
+    senderID: number;
+    receiverID: number;
+    amount: number;
+}
+
+export interface EmojiBroadcastData {
+    type: number;
+    userID: number;
+}
 
 @bindData()
 export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
@@ -10,6 +28,9 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     public static readonly SEATS_CHANGE = 'SEATS_CHANGE';
     public static readonly MUSHROOM_POOL_CHANGE = 'MUSHROOM_POOL_CHANGE';
     public static readonly SPEAKING_CHANGE = 'SPEAKING_CHANGE';
+    public static readonly THROW_PROP = 'THROW_PROP';
+    public static readonly DIAMOND_GIFT = 'DIAMOND_GIFT';
+    public static readonly EMOJI = 'EMOJI';
     private _parentRoomData: TexasGameRoomData;
 
     constructor(p: TexasGameRoomData) {
@@ -23,6 +44,8 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
         return this._buttonPosition;
     }
     private _prevMushroomBtn: number = 0;
+    private _pendingThrowPropData: ThrowPropBroadcastData = null;
+    private _pendingEmojiData: EmojiBroadcastData = null;
 
     public setMushroomPoolChange(btnSeatNo: number, pool: number, bat: AnimateDisplayTypeMushroomPool) {
         if (pool == 0) return;
@@ -54,6 +77,37 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
         }
     })
     public buttonChangeEvent(prev: number, cur: number, bat: AnimateDisplayTypeButton) {}
+
+    public setPendingThrowProp(data: ThrowPropBroadcastData): void {
+        this._pendingThrowPropData = data;
+    }
+
+    public confirmPendingThrowProp(status: number): void {
+        const data = this._pendingThrowPropData;
+        this._pendingThrowPropData = null;
+        if (status !== 0 || !data) return;
+        this.throwPropEvent(data);
+    }
+
+    @pureEvent(TexasGameRoomDataSeatsStateManager.THROW_PROP)
+    public throwPropEvent(data: ThrowPropBroadcastData): void {}
+
+    public setPendingEmoji(data: EmojiBroadcastData): void {
+        this._pendingEmojiData = data;
+    }
+
+    public confirmPendingEmoji(status: number): void {
+        const data = this._pendingEmojiData;
+        this._pendingEmojiData = null;
+        if (status !== 0 || !data) return;
+        this.emojiEvent(data);
+    }
+
+    @pureEvent(TexasGameRoomDataSeatsStateManager.EMOJI)
+    public emojiEvent(data: EmojiBroadcastData): void {}
+
+    @pureEvent(TexasGameRoomDataSeatsStateManager.DIAMOND_GIFT)
+    public diamondGiftEvent(data: DiamondGiftBroadcastData): void {}
 
     /** 当前说话者的座位号 */
     private _speaking: number = 0;

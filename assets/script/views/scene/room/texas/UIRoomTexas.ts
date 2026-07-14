@@ -1,4 +1,4 @@
-import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
+import { traceClass } from '../../../../core/decorator/LogTrace';
 import storageManager from '../../../../data/LocalStorage';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
@@ -59,8 +59,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private otherBindings: cc.Node = null;
     private _otherBindings: OtherBindings = null;
     // main_menu 底部按钮
-    @property({ type: cc.Node, displayName: '表情按钮' })
-    private btnEmoji: cc.Node = null;
+    @property({ type: cc.Button, displayName: '表情按钮' })
+    private btnEmoji: cc.Button = null;
     @property({ type: cc.Node, displayName: '聊天按钮' })
     private chatBtn: cc.Node = null;
     //数据绑定
@@ -82,7 +82,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         //其他状态
         this._otherBindings = this.otherBindings.getComponent(OtherBindings);
         // main_menu 按钮事件注册
-        this.btnEmoji.on('click', this.onClickBtnEmoji, this);
+        if (this.btnEmoji) this.btnEmoji.node.on('click', this.onClickBtnEmoji, this);
         this.chatBtn.on('click', this.onClickChatBtn, this);
     }
 
@@ -195,9 +195,12 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         });
     }
 
-    /** 表情按钮（桩实现，后续接入弹幕/表情系统） */
     private onClickBtnEmoji(): void {
-        // TODO: 接入表情/弹幕系统
+        if (!this._mine || !this._mine.player || this._mine.player.seatNo == 0) return;
+        viewManager.openDialog('Emoji', {
+            roomID: this._mine.roomData.roomID,
+            matchID: this._mine.roomData.matchID
+        });
     }
 
     /** 聊天按钮（桩实现，后续接入聊天系统） */

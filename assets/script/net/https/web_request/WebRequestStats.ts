@@ -257,8 +257,8 @@ export class WebStatsOtherUserStats extends WebCommon {
         allinWins?: number; //全下胜率
     } | null = null;
     static Data: {
-        mtt_room_data?: (typeof WebStatsOtherUserStats.MTTRoomData)[]; //mtt数据
-        room_data?: (typeof WebStatsOtherUserStats.RoomData)[]; //普通牌局数据
+        mtt_room_data?: typeof WebStatsOtherUserStats.MTTRoomData; //mtt数据
+        room_data?: typeof WebStatsOtherUserStats.RoomData; //普通牌局数据
     } | null = null;
 
     static Request(param: typeof WebStatsOtherUserStats.RequestParams) {

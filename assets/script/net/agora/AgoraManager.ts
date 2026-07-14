@@ -30,6 +30,10 @@ class AgoraManager {
     private _joining: boolean = false;
     private _channelName: string = '';
     private _uid: number = 0;
+    /** 全局远端音频静音标记 */
+    private _allRemoteAudioMuted: boolean = false;
+    /** 全局远端视频隐藏标记 */
+    private _allRemoteVideoMuted: boolean = false;
     /** 音量监控定时器 */
     private _volumeMonitorTimer: number = null;
     /** 当前正在说话的用户 uid，null 表示无人说话 */
@@ -453,7 +457,7 @@ class AgoraManager {
         }
     }
 
-    public async publishVidio(): Promise<boolean> {
+    public async publishVideo(): Promise<boolean> {
         try {
             if (!this._localVideoTrack) {
                 this.tracelog.warn('摄像头未开启');
@@ -484,62 +488,6 @@ class AgoraManager {
         this._localVideoTrack = null;
         this.tracelog.info('摄像头已关闭');
     }
-    // /**
-    //  * 开关远端用户的音频（静音/恢复）
-    //  * @param enabled true=恢复声音, false=静音
-    //  * @param uid 指定远端用户 uid，不传则对所有远端用户生效
-    //  */
-    // public setRemoteAudioEnabled(enabled: boolean, uid?: number): void {
-    //     if (!this._client || !this._client.remoteUsers) return;
-    //     const remoteUsers = this._client.remoteUsers;
-    //     if (remoteUsers.length === 0) return;
-    //     if (uid === undefined) {
-    //         this._allRemoteAudioMuted = !enabled;
-    //     }
-    //     let targetUsers = remoteUsers;
-    //     if (uid !== undefined) {
-    //         const user = this._getRemoteUserByUid(uid);
-    //         targetUsers = user ? [user] : [];
-    //     }
-    //     targetUsers.forEach((user: IAgoraRTCRemoteUser) => {
-    //         if (user.audioTrack) {
-    //             user.audioTrack.setVolume(enabled ? 100 : 0);
-    //         }
-    //     });
-    //     this.tracelog.info('远端音频', enabled ? '已恢复' : '已静音', uid !== undefined ? 'uid:' + uid : '全部');
-    // }
-    // /**
-    //  * 开关远端用户的视频（隐藏/显示）
-    //  * @param enabled true=显示视频, false=隐藏视频
-    //  * @param uid 指定远端用户 uid，不传则对所有远端用户生效
-    //  */
-    // public async setRemoteVideoEnabled(enabled: boolean, uid?: number): Promise<void> {
-    //     if (!this._client || !this._client.remoteUsers) return;
-    //     const remoteUsers = this._client.remoteUsers;
-    //     if (remoteUsers.length === 0) return;
-    //     if (uid === undefined) {
-    //         this._allRemoteVideoMuted = !enabled;
-    //     }
-    //     let targetUsers = remoteUsers;
-    //     if (uid !== undefined) {
-    //         const user = this._getRemoteUserByUid(uid);
-    //         targetUsers = user ? [user] : [];
-    //     }
-    //     for (const user of targetUsers) {
-    //         try {
-    //             if (enabled) {
-    //                 await this._client.subscribe(user, 'video');
-    //                 this.onRemoteVideoSubscribed?.(Number(user.uid), user.videoTrack);
-    //             } else {
-    //                 await this._client.unsubscribe(user, 'video');
-    //                 this.onRemoteVideoUnsubscribed?.(Number(user.uid));
-    //             }
-    //         } catch (e) {
-    //             this.tracelog.warn('[AgoraManager] 切换远端视频失败, uid:', Number(user.uid), e);
-    //         }
-    //     }
-    //     this.tracelog.info('远端视频', enabled ? '已恢复' : '已隐藏', uid !== undefined ? 'uid:' + uid : '全部');
-    // }
     // ==================== 说话者检测（音量监控） ====================
     /**
      * 启动音量监控，定时检测所有用户（含自己）的音量，找出当前说话者
