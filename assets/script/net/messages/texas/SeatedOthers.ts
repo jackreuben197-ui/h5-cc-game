@@ -1,5 +1,6 @@
 import { Def, ServerMessageSeatedOthers } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
+import PlayerStoreUtils from '../../../data/player/PlayerStoreUtils';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { ButtonState } from '../../../game/constant/Constants';
@@ -27,6 +28,7 @@ export function SeatedOthers(data: ServerMessageSeatedOthers.AsObject, roomID: n
     seatData.userID = userRid;
     seatData.name = data.name;
     seatData.avatar = data.avatar;
+    seatData.sex = data.sex;
     seatData.chip = data.chips;
     seatData.deposit = data.deposit;
     seatData.vip = data.vip > 0;
@@ -56,4 +58,5 @@ export function SeatedOthers(data: ServerMessageSeatedOthers.AsObject, roomID: n
     }
     // 标记入座
     seatData.setSeated(true, null);
+    PlayerStoreUtils.syncSeatPlayer(seatData, roomData);
 }

@@ -2,6 +2,7 @@ import { ClientMessageSeated, Code, Def, PotInsuranceBuy, RoomInfo } from '@sile
 import { traceClass } from '../../../../../core/decorator/LogTrace';
 import TexasGameRoomData from '../../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataChat from '../../../../../data/room/texas/TexasGameRoomDataChat';
+import TexasGameRoomDataPlayer from '../../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import userStore from '../../../../../data/user/UserStore';
 import UserStoreUtils from '../../../../../data/user/UserStoreUtils';
@@ -34,6 +35,14 @@ import viewManager from '../../../../UIViewManager';
 
 @traceClass()
 export default class TexasTableEvent {
+    public static OpenPlayerInfo(player: TexasGameRoomDataPlayer): void {
+        if (!player?.userID || !player.roomData) return;
+        viewManager.openDialog('PlayerInfo', {
+            roomID: player.roomData.roomID,
+            matchID: player.roomData.matchID,
+            player
+        });
+    }
     /// <summary>
     /// 坐下
     /// </summary>

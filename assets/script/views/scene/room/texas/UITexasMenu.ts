@@ -3,6 +3,7 @@ import { traceClass } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
+import ccviewData, { CCViewData } from '../../../../data/system/CCViewData';
 import { SquidMode } from '../../../../game/constant/Squid';
 import h5MessageManager from '../../../../H5MsgMgr';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
@@ -63,6 +64,18 @@ export default class UITexasMenu extends cc.Component {
         this._bindEventsAndRefresh();
     }
 
+    @bindEvent(CCViewData.FRAME_SIZE_UPDATE, { dataSource: 'ccviewData', initPriority: 20 })
+    protected onFrameResize(
+        visibleSizeWidth: number,
+        visibleSizeHeight: number,
+        frameSizeWidth: number,
+        frameSizeHeight: number,
+        suggestScale: number,
+        saveAreaTop: number
+    ) {
+        this.node.scale = suggestScale;
+    }
+
     protected onEnable(): void {
         this._bindEventsAndRefresh();
     }
@@ -77,7 +90,7 @@ export default class UITexasMenu extends cc.Component {
     private _bindEventsAndRefresh() {
         // 统一激活绑定，注入强类型 tag 推导过滤机制
         if (!this._roomData) return;
-        autoBindEvents(this, { mine: this._roomData.mine });
+        autoBindEvents(this, { mine: this._roomData.mine, ccviewData: ccviewData });
     }
 
     //(优先于seated执行保证展示正确)
@@ -123,11 +136,12 @@ export default class UITexasMenu extends cc.Component {
 
     //面板移入
     public fadeIn(animation: boolean = true) {
+        const offsetX = 696 * (1 - this.node.scale);
         if (animation) {
             this.node.active = true;
-            cc.tween(this.$panel).to(0.25, { x: 0 }).start();
+            cc.tween(this.$panel).to(0.25, { x: -offsetX }).start();
         } else {
-            this.$panel.x = 0;
+            this.$panel.x = -offsetX;
             this.node.active = true;
         }
         this.$black.active = true;
@@ -138,13 +152,13 @@ export default class UITexasMenu extends cc.Component {
     public fadeOut(animation: boolean = true) {
         if (animation) {
             cc.tween(this.$panel)
-                .to(0.25, { x: -696 })
+                .to(0.25, { x: -696 * this.node.scale })
                 .call(() => {
                     this.node.active = false;
                 })
                 .start();
         } else {
-            this.$panel.x = -696;
+            this.$panel.x = -696 * this.node.scale;
             this.node.active = false;
         }
         this.$black.active = false;

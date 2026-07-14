@@ -8,10 +8,10 @@ import {
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
 import { MicrophoneIconState } from '../../../game/constant/MicrophoneIconState';
+import { SeatPosition } from '../../../views/scene/room/texas/widget/SeatPositionCaculator';
 import { Operator } from './model/Operator';
 import TexasGameRoomData from './TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from './TexasGameRoomDataPlayerMine';
-import { SeatPosition } from './TexasGameRoomDataSeatsStateManager';
 
 type PlayerAnimBindings = {
     seated: [TexasGameRoomDataPlayerMine];
@@ -57,6 +57,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public readonly seatNo: number;
     public userID: number;
     public clubID: number;
+    public sex: number;
     public handBet: number;
     public get mine(): TexasGameRoomDataPlayerMine | null {
         if (this.roomData.mine.seatNo == 0) return null;
@@ -170,6 +171,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
         this.muteEvents();
         this.userID = 0;
         this.clubID = 0;
+        this.sex = 0;
         this.chip = 0;
         this.avatar = '';
         this.name = '';

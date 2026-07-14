@@ -135,4 +135,70 @@ export default class TexasVideoMediaHelper {
         }
         return roomData;
     }
+
+    /**
+     * 开关远端用户的音频（静音/恢复）
+     * @param st true=恢复声音, false=静音
+     * @param uid 指定远端用户 uid
+     */
+    public static async setRemoteAudioStatus(roomData: TexasGameRoomData, st: boolean, uid: number): Promise<void> {
+        const pubUsersMap = agoraManager.getRemoteUserMap();
+        const user = pubUsersMap.get(uid);
+        const player = roomData.seatsStateManager.getSeatPlayerByUserID(uid);
+        if (!player) return;
+        if (!user) {
+            player.micIconState = MicrophoneIconState.HIDDEN;
+            return;
+        }
+        if (!user || !user.hasAudio) return;
+        if (st == true) {
+            if (!user.audioTrack) {
+                // 订阅后, user.videoTrack就存在了，可以renderFrame了
+                const track = await agoraManager.subscribeOrUnsubscribeRemoteAudio(true, user);
+                track.play();
+                track.setVolume(100);
+                player.micIconState = MicrophoneIconState.HIDDEN;
+                return;
+            }
+            user.audioTrack.setVolume(100);
+            player.micIconState = MicrophoneIconState.HIDDEN;
+            return;
+        }
+        if (!user.audioTrack) {
+            player.micIconState = MicrophoneIconState.MUTED;
+            return;
+        }
+        //先隐藏，再关闭
+        player.micIconState = MicrophoneIconState.MUTED;
+        user.audioTrack.setVolume(0);
+    }
+
+    /**
+     * 开关远端用户的视频（隐藏/显示）
+     * @param st true=显示视频, false=隐藏视频
+     * @param uid 指定远端用户 uid
+     */
+    public static async setRemoteVideoStatus(roomData: TexasGameRoomData, st: boolean, uid: number): Promise<void> {
+        const pubUsersMap = agoraManager.getRemoteUserMap();
+        const user = pubUsersMap.get(uid);
+        if (!user || !user.hasVideo) return;
+        const player = roomData.seatsStateManager.getSeatPlayerByUserID(uid);
+        if (!player) return;
+        if (st == true) {
+            if (!user.videoTrack) {
+                // 订阅后, user.videoTrack就存在了，可以renderFrame了
+                await agoraManager.subscribeOrUnsubscribeRemoteVideo(true, user);
+            }
+            player.remoteVideoVisible = true;
+            if (roomData.basicInfo.antiCheatConfig && roomData.basicInfo.antiCheatConfig.getSeatedSetting().canSwitchPowerSaving) {
+                player.realShowMaskID = player.videoMaskId == 0 ? 1 : player.videoMaskId;
+            } else {
+                player.realShowMaskID = 0;
+            }
+            return;
+        }
+        player.remoteVideoVisible = false;
+        player.realShowMaskID = 0;
+        await agoraManager.subscribeOrUnsubscribeRemoteVideo(false, user);
+    }
 }

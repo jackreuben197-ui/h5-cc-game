@@ -21,23 +21,23 @@
         "__id__": 2
       },
       {
-        "__id__": 382
+        "__id__": 383
       },
       {
-        "__id__": 386
+        "__id__": 387
       }
     ],
     "_active": true,
     "_components": [
       {
-        "__id__": 392
+        "__id__": 393
       },
       {
-        "__id__": 393
+        "__id__": 394
       }
     ],
     "_prefab": {
-      "__id__": 394
+      "__id__": 395
     },
     "_opacity": 255,
     "_color": {
@@ -101,11 +101,11 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 380
+        "__id__": 381
       }
     ],
     "_prefab": {
-      "__id__": 381
+      "__id__": 382
     },
     "_opacity": 255,
     "_color": {
@@ -182,10 +182,13 @@
       },
       {
         "__id__": 378
+      },
+      {
+        "__id__": 379
       }
     ],
     "_prefab": {
-      "__id__": 379
+      "__id__": 380
     },
     "_opacity": 255,
     "_color": {
@@ -210,7 +213,7 @@
       "ctor": "Float64Array",
       "array": [
         0,
-        532.034,
+        435.09999999999985,
         0,
         0,
         0,
@@ -13643,6 +13646,33 @@
     "_id": ""
   },
   {
+    "__type__": "cc.Widget",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 3
+    },
+    "_enabled": true,
+    "alignMode": 1,
+    "_target": null,
+    "_alignFlags": 18,
+    "_left": 0,
+    "_right": 0,
+    "_top": 0,
+    "_bottom": 0,
+    "_verticalCenter": 0,
+    "_horizontalCenter": 0,
+    "_isAbsLeft": true,
+    "_isAbsRight": true,
+    "_isAbsTop": true,
+    "_isAbsBottom": true,
+    "_isAbsHorizontalCenter": true,
+    "_isAbsVerticalCenter": true,
+    "_originalWidth": 0,
+    "_originalHeight": 0,
+    "_id": ""
+  },
+  {
     "__type__": "cc.PrefabInfo",
     "root": {
       "__id__": 1
@@ -13663,7 +13693,7 @@
     "_enabled": true,
     "alignMode": 1,
     "_target": null,
-    "_alignFlags": 5,
+    "_alignFlags": 45,
     "_left": 0,
     "_right": 0,
     "_top": 0,
@@ -13676,7 +13706,7 @@
     "_isAbsBottom": true,
     "_isAbsHorizontalCenter": true,
     "_isAbsVerticalCenter": true,
-    "_originalWidth": 0,
+    "_originalWidth": 1242,
     "_originalHeight": 0,
     "_id": ""
   },
@@ -13702,14 +13732,14 @@
     "_active": false,
     "_components": [
       {
-        "__id__": 383
+        "__id__": 384
       },
       {
-        "__id__": 384
+        "__id__": 385
       }
     ],
     "_prefab": {
-      "__id__": 385
+      "__id__": 386
     },
     "_opacity": 0,
     "_color": {
@@ -13763,7 +13793,7 @@
     "_name": "",
     "_objFlags": 0,
     "node": {
-      "__id__": 382
+      "__id__": 383
     },
     "_enabled": true,
     "alignMode": 1,
@@ -13790,7 +13820,7 @@
     "_name": "",
     "_objFlags": 0,
     "node": {
-      "__id__": 382
+      "__id__": 383
     },
     "_enabled": true,
     "_id": ""
@@ -13817,9 +13847,6 @@
     "_active": false,
     "_components": [
       {
-        "__id__": 387
-      },
-      {
         "__id__": 388
       },
       {
@@ -13827,10 +13854,13 @@
       },
       {
         "__id__": 390
+      },
+      {
+        "__id__": 391
       }
     ],
     "_prefab": {
-      "__id__": 391
+      "__id__": 392
     },
     "_opacity": 1,
     "_color": {
@@ -13884,7 +13914,7 @@
     "_name": "",
     "_objFlags": 0,
     "node": {
-      "__id__": 386
+      "__id__": 387
     },
     "_enabled": true,
     "_materials": [
@@ -13916,7 +13946,7 @@
     "_name": "",
     "_objFlags": 0,
     "node": {
-      "__id__": 386
+      "__id__": 387
     },
     "_enabled": true,
     "alignMode": 1,
@@ -13943,7 +13973,7 @@
     "_name": "",
     "_objFlags": 0,
     "node": {
-      "__id__": 386
+      "__id__": 387
     },
     "_enabled": true,
     "_id": ""
@@ -13953,7 +13983,7 @@
     "_name": "",
     "_objFlags": 0,
     "node": {
-      "__id__": 386
+      "__id__": 387
     },
     "_enabled": true,
     "_normalMaterial": null,
@@ -14117,7 +14147,7 @@
       "__id__": 133
     },
     "tipsMask": {
-      "__id__": 386
+      "__id__": 387
     },
     "amountDescriptionTopTipDot": {
       "__id__": 142

@@ -1,4 +1,4 @@
-import { Def } from '@silenthill/agreement-web';
+import { Def, RoomAdmin } from '@silenthill/agreement-web';
 import { bindData, IObservableBindings, observable, pureEvent } from '../../../core/decorator/DataBind';
 import { traceClass } from '../../../core/decorator/LogTrace';
 import { handValueTypeToString } from '../../../core/poker/PoerkCard';
@@ -35,6 +35,7 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public static readonly REMOTE_MICROPHONE_ENABLED_CHANGE = 'REMOTE_MICROPHONE_ENABLED_CHANGE';
     public static readonly RANDOM_VIDEO_ACTIVE_CHANGE = 'RANDOM_VIDEO_ACTIVE_CHANGE';
     public static readonly RANDOM_VIDEO_END_TIME_CHANGE = 'RANDOM_VIDEO_END_TIME_CHANGE';
+    public static readonly ROOM_ADMIN_PERMISSIONS_CHANGE = 'ROOM_ADMIN_PERMISSIONS_CHANGE';
     private _roomData: TexasGameRoomData;
     public get roomData() {
         return this._roomData;
@@ -53,6 +54,16 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public totalChips: number = 0;
     @observable(TexasGameRoomDataPlayerMine.TABLE_USER_DEPOSIT)
     public deposit: number = 0;
+    @observable(TexasGameRoomDataPlayerMine.ROOM_ADMIN_PERMISSIONS_CHANGE)
+    public isRoomManager: boolean = false;
+    @observable(TexasGameRoomDataPlayerMine.ROOM_ADMIN_PERMISSIONS_CHANGE)
+    public cnaDisbandRoom: boolean = false;
+    @observable(TexasGameRoomDataPlayerMine.ROOM_ADMIN_PERMISSIONS_CHANGE)
+    public canAdminStandUp: boolean = false;
+    @observable(TexasGameRoomDataPlayerMine.ROOM_ADMIN_PERMISSIONS_CHANGE)
+    public canAdminLeave: boolean = false;
+    @observable(TexasGameRoomDataPlayerMine.ROOM_ADMIN_PERMISSIONS_CHANGE)
+    public canAdminViewVideo: boolean = false;
 
     @pureEvent(TexasGameRoomDataPlayerMine.HIGHLIGHT_CARDS)
     public highlightCards(cards: number[]) {}
@@ -80,6 +91,9 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public remoteCameraEnabled: ButtonState = ButtonState.HIDDEN;
     @observable(TexasGameRoomDataPlayerMine.REMOTE_MICROPHONE_ENABLED_CHANGE)
     public remoteMicrophoneEnabled: ButtonState = ButtonState.HIDDEN;
+    public get needVideoPermision() {
+        return this._roomData.basicInfo.antiCheatConfig.isInVideoRoom;
+    }
 
     public async clearVideoAndAudio() {
         this.randomVideoActive = false;
@@ -92,6 +106,17 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
         this.remoteCameraEnabled = ButtonState.HIDDEN;
         this.remoteMicrophoneEnabled = ButtonState.HIDDEN;
         this.unmuteEvents();
+    }
+
+    public updateRoomAdminPermissions(roomAdmin: RoomAdmin.AsObject | null): void {
+        this.muteEvents();
+        this.isRoomManager = !!roomAdmin?.isAdmin;
+        this.cnaDisbandRoom = this.isRoomManager && roomAdmin?.disbandRoom == 1;
+        this.canAdminStandUp = this.isRoomManager && roomAdmin?.userStandUp == 1;
+        this.canAdminLeave = this.isRoomManager && roomAdmin?.userLeave == 1;
+        this.canAdminViewVideo = this.isRoomManager && roomAdmin?.viewVideo == 1;
+        this.unmuteEvents();
+        this.emit(TexasGameRoomDataPlayerMine.ROOM_ADMIN_PERMISSIONS_CHANGE);
     }
     // ==================== 随机视频验证状态 ====================
     /** 是否正在随机视频验证中 */

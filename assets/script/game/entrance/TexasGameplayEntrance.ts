@@ -413,7 +413,8 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         //baseInfo
         roomData.basicInfo.clubID = this._roomInfo.clubId;
         roomData.basicInfo.tribeID = this._roomInfo.tribeId;
-        roomData.basicInfo.limitGPS = this._roomInfo.limitIpOn > 0;
+        roomData.basicInfo.originType = this._roomInfo.originType;
+        roomData.basicInfo.limitIP = this._roomInfo.limitIpOn > 0;
         roomData.basicInfo.limitGPS = this._roomInfo.limitGpsOn > 0;
         roomData.basicInfo.setRandomAnte(this._roomInfo.randomAnte);
         //限制带入
@@ -487,6 +488,7 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         } else {
             roomData.basicInfo.antiCheatConfig = null;
         }
+        roomData.mine.updateRoomAdminPermissions(this._roomInfo.roomAdmin || null);
         roomData.seatsStateManager.seatsCount = this._roomInfo.seatCount;
         roomDataManager.setRoomData(this._roomId, this.matchId, roomData);
         const body: ClientMessageEnterRoom.AsObject = {

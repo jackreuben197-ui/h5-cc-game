@@ -37,6 +37,7 @@ function decodeExtra(extra: Uint8Array | string): string | null {
 
 // GetMsg 1121
 export function GetMsg(data: ServerMessageGetMsg.AsObject, roomID: number, matchID: number) {
+    // handleBroadcastExtra(data.extra, roomID, matchID);
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     if (!roomData) return;
     const json = decodeExtra(data.extra);

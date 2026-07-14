@@ -39,7 +39,7 @@ export function loadWebSDK(): void {
         script.onload = () => {
             _ploger.info(`[WebSDK] ${sdk.name} 声网sdk加载完成`);
             if (sdk.name === 'AgoraRTC') {
-                agoraManager.init(GameConfig.agoraKey);
+                agoraManager.init(GameConfig.AGOROKEY);
             }
         };
         script.onerror = () => {
@@ -292,7 +292,7 @@ export async function registerH5Listeners(): Promise<void> {
         _ploger.info('[H5Bridge] syncDiamondConfig 预填完成');
     });
     // syncToken：H5 在登录/续期/登出后把最新 token 推过来，写入 userStore，避免 H5/CC 两端 token 错开。
-    h5MessageManager.on('syncToken', payload => {
+    h5MessageManager.on('syncToken', (payload: any) => {
         const token = typeof payload?.token === 'string' ? payload.token.trim() : '';
         if (!token) {
             userStore.token = '';

@@ -7,9 +7,9 @@ export namespace HttpRoomUserMuteProtocol {
     export const API = '/api/user/mute';
     export class RequestData {
         /** 俱乐部ID */
-        public club_id: number = 0;
+        public club_id?: number;
         /** 联盟ID */
-        public tribe_id: number = 0;
+        public tribe_id?: number;
         /** 用户ID */
         public user_id: number = 0;
         /** 是否禁言 true = 禁言，false = 解除禁言 */

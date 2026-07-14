@@ -2,10 +2,18 @@ import { autoBindEvents, bindData, bindEvent, unBindEventsAll } from '../../../.
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
-import TexasGameRoomDataSeatsStateManager from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
+import TexasGameRoomDataSeatsStateManager, {
+    DiamondGiftBroadcastData,
+    EmojiBroadcastData,
+    ThrowPropBroadcastData
+} from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
+import ccviewData, { CCViewData } from '../../../../data/system/CCViewData';
 import { AnimateDisplayTypeButton } from '../../../../game/constant/AnimateDisplayType';
 import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconState';
+import throwPropManager, { ThrowPropSeatNodes } from '../../../util/ThrowPropManager';
+import Operation from './Operation';
 import SeatPlayer from './SeatPlayer';
+import seatPostionCaculator, { SeatPosition } from './widget/SeatPositionCaculator';
 
 const { ccclass, property, menu } = cc._decorator;
 
@@ -20,6 +28,11 @@ export default class SeatManager extends cc.Component {
     private dealNode: cc.Node = null;
     @property({ type: cc.Node, tooltip: '底池的起始节点' })
     private potNot: cc.Node = null;
+    @property({ type: cc.Node, displayName: '操作面板' })
+    private opPannelNode: cc.Node = null!;
+    @property({ type: cc.Node, displayName: '道具动画根节点' })
+    private _throwPropRootNode: cc.Node = null!;
+    private _opPannel: Operation = null!;
     private _seatManager: TexasGameRoomDataSeatsStateManager;
     private _seatNodes: cc.Node[] = [];
     private _seatNodesMap: Map<number, SeatPlayer> = new Map();
@@ -27,13 +40,31 @@ export default class SeatManager extends cc.Component {
     public initData(roomID: number, matchID: number) {
         const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
         this._seatManager = roomData.seatsStateManager;
+        this._opPannel.initData(roomData.mine);
         if (this.node.activeInHierarchy) {
             this._bindEventsAndRefresh();
         }
     }
 
+    @bindEvent(CCViewData.FRAME_SIZE_UPDATE, { dataSource: 'ccviewData', initPriority: 20 })
+    protected onFrameResize(
+        visibleSizeWidth: number,
+        visibleSizeHeight: number,
+        frameSizeWidth: number,
+        frameSizeHeight: number,
+        suggestScale: number,
+        saveAreaTop: number
+    ) {
+        this.tracelog.debug(visibleSizeWidth, suggestScale, saveAreaTop);
+        const menuHeight = 210 * suggestScale;
+        seatPostionCaculator.initWithContainer(visibleSizeWidth, visibleSizeHeight - menuHeight - saveAreaTop - 20 * suggestScale, -saveAreaTop);
+        this.node.setPosition(cc.v3(0, 200));
+    }
+
     public onLoad() {
         // 如果绑定点击写这里
+        this._opPannel = this.opPannelNode.children[0].getComponent(Operation);
+        throwPropManager.initialize(this.node, this._throwPropRootNode);
     }
 
     public onEnable(): void {
@@ -46,7 +77,27 @@ export default class SeatManager extends cc.Component {
     }
 
     private _bindEventsAndRefresh() {
-        autoBindEvents(this, { seats: this._seatManager });
+        autoBindEvents(this, { seats: this._seatManager, ccviewData: ccviewData });
+    }
+
+    @bindEvent(TexasGameRoomDataSeatsStateManager.THROW_PROP, { dataSource: 'seats', initIgnore: true })
+    private onThrowProp(data: ThrowPropBroadcastData): void {
+        const senderData = this._getThrowPropSeatNodes(data.userID);
+        const targetData = this._getThrowPropSeatNodes(data.targetUserID);
+        throwPropManager.playProp(data, senderData, targetData);
+    }
+
+    @bindEvent(TexasGameRoomDataSeatsStateManager.DIAMOND_GIFT, { dataSource: 'seats', initIgnore: true })
+    private onDiamondGift(data: DiamondGiftBroadcastData): void {
+        const senderData = this._getThrowPropSeatNodes(data.senderID);
+        const receiverData = this._getThrowPropSeatNodes(data.receiverID);
+        throwPropManager.playDiamondGift(data, senderData, receiverData);
+    }
+
+    @bindEvent(TexasGameRoomDataSeatsStateManager.EMOJI, { dataSource: 'seats', initIgnore: true })
+    private onEmoji(data: EmojiBroadcastData): void {
+        const senderData = this._getThrowPropSeatNodes(data.userID);
+        throwPropManager.playEmoji(data, senderData);
     }
 
     @bindEvent(TexasGameRoomDataSeatsStateManager.MUSHROOM_POOL_CHANGE, 'seats')
@@ -138,6 +189,9 @@ export default class SeatManager extends cc.Component {
     @bindEvent(TexasGameRoomDataSeatsStateManager.SEATS_CHANGE, { dataSource: 'seats', initPriority: 10 })
     @traceMethod()
     private onUpdateSeats(count: number) {
+        seatPostionCaculator.arrageSeatPositions(count);
+        const pos = seatPostionCaculator.getPosition(SeatPosition.BottomMiddle);
+        this._opPannel.adjustPostion(this.node, pos.position, pos.scale);
         if (this._seatNodes.length < count) {
             for (let i = this._seatNodes.length; i < count; i++) {
                 let nd = cc.instantiate(this.seatPrefab);
@@ -158,5 +212,22 @@ export default class SeatManager extends cc.Component {
                 node.active = true;
             }
         }
+    }
+
+    private _getThrowPropSeatNodes(userID: number): ThrowPropSeatNodes {
+        if (!userID) return null;
+        let result: ThrowPropSeatNodes = null;
+        this._seatNodesMap.forEach((seatPlayer, seatNo) => {
+            if (result) return;
+            const seatData = this._seatManager.getSeatPlayer(seatNo);
+            if (seatData?.userID === userID) {
+                result = {
+                    avatarNode: seatPlayer.avatarNode,
+                    propNode: seatPlayer.throwPropNode,
+                    emojiNode: seatPlayer.emojiNode
+                };
+            }
+        });
+        return result;
     }
 }

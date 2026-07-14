@@ -25,6 +25,7 @@ import type {
     WebOrgClubUserWalletRelationList,
     WebOrgTribeBlackUserList,
     WebOrgUserSelfProfitUnpayRecords,
+    WebOtherUserInfo,
     WebPropChatPropList,
     WebPropMallGoodsList,
     WebPropSignInActivityDetail,
@@ -182,7 +183,7 @@ export class WebMiscCombine extends WebCommon {
         msg_broadcast_num_req?: RequestParamsOf<typeof WebMsgMessageSystemBroadcastNum>;
         msg_red_num_req?: RequestParamsOf<typeof WebMessageRednum>;
         user_info_by_rid_req?: {
-            user_id?: number;
+            user_random_id?: Array<number>;
         };
         user_stats_by_user_rid_req?: RequestParamsOf<typeof WebStatsOtherUserStats>;
         banner_list_req?: RequestParamsOf<typeof WebMiscBannerList>;
@@ -231,7 +232,7 @@ export class WebMiscCombine extends WebCommon {
         org_self_profit_unnotify_resp?: unknown;
         user_wallet_total_resp?: ResponseDataOf<typeof WebWalletTotal>;
         mtt_platform_stats_resp?: typeof WebMiscCombine.MTTData;
-        user_info_by_rid_resp?: unknown[];
+        user_info_by_rid_resp?: ResponseDataOf<typeof WebOtherUserInfo>[];
         user_stats_by_user_rid_resp?: ResponseDataOf<typeof WebStatsOtherUserStats>;
         banner_list_resp?: ResponseDataOf<typeof WebMiscBannerList>;
         club_notice_resp?: unknown;

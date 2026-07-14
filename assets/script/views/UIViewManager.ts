@@ -248,6 +248,7 @@ class UIViewManager {
             ui.node.active = true;
             ui.node.parent = this._sceneLayer;
             ui.initialize(param);
+            ui.internalbindCCViewData();
             this._scenesPool.set(key, ui);
             // 老场景缓存
             if (this._curretScene) {
@@ -312,6 +313,7 @@ class UIViewManager {
                 maskdoe.node.active = masked;
             }
             ui.initialize(param);
+            ui.internalbindCCViewData();
             this._displayedDialogs.push(key);
             this._curretDialog = key;
             this._dialogsPool.set(key, ui);
@@ -383,15 +385,15 @@ class UIViewManager {
     /**
      * 传入配置表的 Key，count 不传默认返回包含 1 个元素的数组
      */
-    public async instantiate<K extends UIPrefabComponentType>(key: K, count?: number): Promise<InstanceType<(typeof UIPrefabComponent)[K]['UIType']>[]>;
+    public instantiate<K extends UIPrefabComponentType>(key: K, count?: number): InstanceType<(typeof UIPrefabComponent)[K]['UIType']>[];
 
     /**
      * 直接传入 cc.Prefab 和组件类，count 不传默认返回包含 1 个元素的数组
      */
-    public async instantiate<P extends cc.Component>(prefab: cc.Prefab, componentClass: { new (): P }, count?: number): Promise<P[]>;
+    public instantiate<P extends cc.Component>(prefab: cc.Prefab, componentClass: { new (): P }, count?: number): P[];
 
     // ==================== 3. 统一的底层核心实现 ====================
-    public async instantiate(firstParam: any, secondParam?: any, thirdParam?: any): Promise<any[]> {
+    public instantiate(firstParam: any, secondParam?: any, thirdParam?: any): any[] {
         try {
             let asset: cc.Prefab | null = null;
             let targetComponentClass: any = null;
@@ -400,7 +402,7 @@ class UIViewManager {
             if (typeof firstParam === 'string') {
                 // ---- 通道 A：配置表 ----
                 const uiprefab = UIPrefabComponent[firstParam as UIPrefabComponentType];
-                asset = await AssetManager.getOrLoad(uiprefab.Bundle, uiprefab.Path, cc.Prefab);
+                asset = AssetManager.mustGetLoaded(uiprefab.Bundle, uiprefab.Path, cc.Prefab);
                 targetComponentClass = uiprefab.UIType;
                 count = typeof secondParam === 'number' ? secondParam : 1; // 此时第二个参数是 count
             } else {
@@ -415,6 +417,7 @@ class UIViewManager {
             const results: any[] = [];
             for (let i = 0; i < count; i++) {
                 const uiNode = cc.instantiate(asset);
+                uiNode.active = true;
                 const ui = uiNode.getComponent(targetComponentClass);
                 if (!ui) {
                     throw new Error(`[UIViewManager] Component not found on instantiated node at index ${i}.`);

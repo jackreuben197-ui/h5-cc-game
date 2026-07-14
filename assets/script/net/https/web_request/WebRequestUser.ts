@@ -231,7 +231,100 @@ export class WebOtherUserInfo extends WebCommon {
     static CacheDataTTL: number = 24 * 60 * 60 * 1000;
     //字段声明
     static RequestParams: {} | null = null;
-    static ResponseData: {} | null = null;
+    static ResponseData: {
+        /**
+         * 辅助工具检测结果，可能值：1(是)，2(否)
+         */
+        assist: number;
+        /**
+         * Avatar
+         */
+        avatar: string;
+        /**
+         * 设备型号
+         */
+        device_model: string;
+        /**
+         * IP跳变检测结果，可能值：1(是)，2(否)
+         */
+        jump_ip: number;
+        /**
+         * Custom MJ Tag
+         */
+        mj_tag_custom: string;
+        /**
+         * MJ Tag ID
+         */
+        mj_tag_id: number;
+        /**
+         * Nickname
+         */
+        nick_name: string;
+        /**
+         * Random number
+         */
+        random_num: number;
+        /**
+         * Remark description
+         */
+        remark_desc: string;
+        /**
+         * Remark name
+         */
+        remark_name: string;
+        /**
+         * Sex
+         */
+        sex: number;
+        /**
+         * 模拟器检测结果，可能值：1(是)，2(否)
+         */
+        simulator: number;
+        /**
+         * 会员ID
+         */
+        subscription_id: number;
+        /**
+         * 会员logo
+         */
+        subscription_logo: string;
+        /**
+         * 会员名
+         */
+        subscription_name: string;
+        /**
+         * 排序大小
+         */
+        subscription_rank: number;
+        /**
+         * 会员类型 0 正常类型；1 基础会员
+         */
+        subscription_type: number;
+        /**
+         * Custom tag
+         */
+        tag_custom: string;
+        /**
+         * Tag ID
+         */
+        tag_id: number;
+        /**
+         * User ID
+         */
+        user_id: number;
+        /**
+         * 贴纸遮罩ID
+         */
+        video_mask_id: number;
+        /**
+         * 是否VIP，0否, 1是
+         */
+        vip: number;
+        /**
+         * VIP结束时间
+         */
+        vip_endtime?: Date | null;
+    } | null = null;
 
     static Request(param: typeof WebOtherUserInfo.RequestParams) {
         this.RequestParams = param;
