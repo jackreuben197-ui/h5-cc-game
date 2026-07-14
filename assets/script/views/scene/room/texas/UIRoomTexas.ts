@@ -1,13 +1,19 @@
+import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass } from '../../../../core/decorator/LogTrace';
 import storageManager from '../../../../data/LocalStorage';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
+import TexasGameRoomDataChat, { TexasDanmuMessage } from '../../../../data/room/texas/TexasGameRoomDataChat';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
+import h5MessageManager from '../../../../H5MsgMgr';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
+import { HttpRoomBringInByIDProtocol } from '../../../../net/https/data/room/HttpRoomBringInByIDProtocol';
+import { WebUserRoomBringin, WWW } from '../../../../net/https/WebRequest';
 import UIComponentBase from '../../../base/UIComponentBase';
 import { UIGuideDialogType } from '../../../dialog/mushroomandcriticalhit/UIGuideDialog';
 import viewManager from '../../../UIViewManager';
+import danmuManager from './DanmuManager';
 import TexasTableEvent from './events/TexasTableEvent';
 import InsuranceOperation from './InsuranceOperation';
 import MorePlayTypeInfo from './MorePlayTypeInfo';
@@ -51,6 +57,10 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private btnReport: cc.Button = null!;
     @property({ type: cc.Button, displayName: '牌谱按钮' })
     private btnReplay: cc.Button = null!;
+    @property({ type: cc.Button, displayName: '安全卫士按钮' })
+    private btnSafetyGuard: cc.Button = null!;
+    @property({ type: cc.Button, displayName: '客服聊天按钮' })
+    private btnIm: cc.Button = null!;
     @property({ type: InsuranceOperation, displayName: '保险弹窗触发器' })
     private insuranceOperation: InsuranceOperation = null!;
     @property({ type: MorePlayTypeInfo, displayName: '其他游戏玩法的处理节点' })
@@ -63,6 +73,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private btnEmoji: cc.Button = null;
     @property({ type: cc.Node, displayName: '聊天按钮' })
     private chatBtn: cc.Node = null;
+    @property({ type: cc.Node, displayName: '聊天红点' })
+    private chatAlertNode: cc.Node = null;
     //数据绑定
     private _mine: TexasGameRoomDataPlayerMine = null;
     @property({ type: cc.Node, displayName: '所有需要缩放的节点位置' })
@@ -79,11 +91,15 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         if (this.btnReport) this.btnReport.node.on('click', this.onClickReport, this);
         //牌谱按钮
         if (this.btnReplay) this.btnReplay.node.on('click', this.onClickReplay, this);
+        this.btnSafetyGuard.node.active = false;
+        this.btnSafetyGuard.node.on('click', this.onSafetyGuardClicked, this);
+        this.btnIm.node.on('click', this.onImClicked, this);
         //其他状态
         this._otherBindings = this.otherBindings.getComponent(OtherBindings);
         // main_menu 按钮事件注册
         if (this.btnEmoji) this.btnEmoji.node.on('click', this.onClickBtnEmoji, this);
         this.chatBtn.on('click', this.onClickChatBtn, this);
+        this._setChatAlertVisible(false);
     }
 
     private onClickReport = () => {
@@ -101,9 +117,48 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         });
     };
 
+    private onSafetyGuardClicked(): void {
+        if (!this._mine) return;
+        const tribeId = this._mine.roomData.basicInfo.tribeID;
+        if (tribeId <= 0) return;
+        h5MessageManager.sendToH5('showPanel', 1, {
+            panelType: 'safetyGuard',
+            props: { tribeId }
+        });
+    }
+
+    // UC 桌（goldType=1）且带入俱乐部ID未缓存时，先查带入钱包补齐，客服面板按带入俱乐部路由
+    private async onImClicked(): Promise<void> {
+        if (!this._mine) return;
+        const basicInfo = this._mine.roomData.basicInfo;
+        if (this._mine.currentWalletClubID <= 0 && basicInfo.goldType == 1) {
+            try {
+                const res = await WWW.Instance.CommonAPI<HttpRoomBringInByIDProtocol.ResponseData>({
+                    web_class: WebUserRoomBringin,
+                    api_id: this._mine.roomData.roomID
+                });
+                const clubId = Number(res?.data?.club_id || 0);
+                if (clubId > 0) {
+                    this._mine.currentWalletClubID = clubId;
+                }
+            } catch (e) {
+                this.tracelog.warn('supportChat bringInClubId query failed', e);
+            }
+        }
+        h5MessageManager.sendToH5('showPanel', 1, {
+            panelType: 'supportChat',
+            props: {
+                tribeId: basicInfo.tribeID,
+                clubId: this._mine.currentWalletClubID || basicInfo.clubID
+            }
+        });
+    }
+
     async initialize(param: UIRoomTexasEnterParam) {
         const roomData = roomDataManager.getRoomData<TexasGameRoomData>(param.roomID, param.matchID);
+        autoBindEvents(this, { chat: roomData.chat });
         this._mine = roomData.mine;
+        this.btnSafetyGuard.node.active = roomData.basicInfo.tribeID > 0;
         this.roomInfo.initData(param.roomID, param.matchID);
         this.potsInfo.initData(param.roomID, param.matchID);
         this.seatManager.initData(param.roomID, param.matchID);
@@ -121,6 +176,26 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         await this._showCriticalHitIntroDialog(roomData);
     }
 
+    protected onDisable(): void {
+        unBindEventsAll(this);
+        danmuManager.clearAll();
+    }
+
+    @bindEvent(TexasGameRoomDataChat.DANMU_ADDED, { dataSource: 'chat', initIgnore: true })
+    private onDanmuAdded(msg: TexasDanmuMessage): void {
+        danmuManager.playDanmu(`${msg.name || ''}: ${msg.content}`, viewManager.dialogLayer);
+    }
+
+    @bindEvent(TexasGameRoomDataChat.NEW_MESSAGE_ALERT_CHANGED, 'chat')
+    private onChatAlertChanged(hasNewMessageAlert: boolean): void {
+        this._setChatAlertVisible(hasNewMessageAlert);
+    }
+
+    private _setChatAlertVisible(visible: boolean): void {
+        if (this.chatAlertNode) {
+            this.chatAlertNode.active = visible;
+        }
+    }
     protected onFrameResize(
         visibleSizeWidth: number,
         visibleSizeHeight: number,
@@ -203,8 +278,13 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         });
     }
 
-    /** 聊天按钮（桩实现，后续接入聊天系统） */
+    /** 聊天按钮：打开牌桌聊天对话框 */
     private onClickChatBtn(): void {
-        // TODO: 接入聊天系统
+        if (!this._mine) return;
+        this._mine.roomData.chat.hideNewMessageAlert();
+        viewManager.openDialog('TexasChat', {
+            roomID: this._mine.roomData.roomID,
+            matchID: this._mine.roomData.matchID
+        });
     }
 }

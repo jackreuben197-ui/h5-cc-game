@@ -7,8 +7,10 @@ import { BroadcastCode, PropsID, THROW_PROP_IDS, getMagicEmojiTypeBase } from '.
 // BroadcastMsg 1019
 export function BroadcastMsg(data: ServerMessageBroadcastMsg.AsObject, roomID: number, matchID: number) {
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
+    if (!roomData) return;
     roomData.seatsStateManager.confirmPendingThrowProp(data.status);
     roomData.seatsStateManager.confirmPendingEmoji(data.status);
+    roomData.chat.confirmPendingMessage(data.status);
 }
 
 export function handleBroadcastExtra(extra: Uint8Array | string, roomID: number, matchID: number): void {

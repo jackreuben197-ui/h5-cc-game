@@ -224,6 +224,10 @@ class UIViewManager {
         this._toastManayer = new ToastManager(param.toastLayer, param.toastPrefab);
     }
 
+    public get dialogLayer(): cc.Node {
+        return this._dialogLayer;
+    }
+
     // switchScene 切换场景
     public async switchScene<K extends UIPrefabSceneType>(
         key: K,

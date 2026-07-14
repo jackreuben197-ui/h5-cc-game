@@ -367,8 +367,9 @@ export type BindEventConfig =
 export function bindEvent<Args extends any[]>(eventName: string, dataSourceTag: BindEventConfig, ...defaultArgs: Args) {
     return function (target: any, propertyKey: string) {
         const componentInstance = target as any;
-        if (!componentInstance[OBSERVER_KEY]) {
-            componentInstance[OBSERVER_KEY] = new Array<BindingInfo>();
+        if (!Object.prototype.hasOwnProperty.call(componentInstance, OBSERVER_KEY)) {
+            const inherited = componentInstance[OBSERVER_KEY] as BindingInfo[] | undefined;
+            componentInstance[OBSERVER_KEY] = inherited ? inherited.slice() : new Array<BindingInfo>();
         }
         let obArray = componentInstance[OBSERVER_KEY] as BindingInfo[];
         let realTag = '';

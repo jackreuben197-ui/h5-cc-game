@@ -1,6 +1,7 @@
 import { ClientMessageSeated, Code, Def, PotInsuranceBuy, RoomInfo } from '@silenthill/agreement-web';
 import { traceClass } from '../../../../../core/decorator/LogTrace';
 import TexasGameRoomData from '../../../../../data/room/texas/TexasGameRoomData';
+import TexasGameRoomDataChat from '../../../../../data/room/texas/TexasGameRoomDataChat';
 import TexasGameRoomDataPlayer from '../../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import userStore from '../../../../../data/user/UserStore';
@@ -690,6 +691,80 @@ export default class TexasTableEvent {
             (res: any): number | null => res?.data?.diamonds_wallet?.diamonds ?? null,
             (): number | null => null
         );
+    }
+
+    /**
+     * 发送牌桌聊天消息（对应 pokerqueen UIChatDlg.click_sendMsg）。
+     * 先写 pending 等 1019 status=0 确认（BroadcastMsg.ts → chat.confirmPendingMessage）后才落聊天记录。
+     */
+    public static SendChatMessage(roomData: TexasGameRoomData, text: string, sendDanmu: boolean = false): void {
+        const content = (text || '').trim();
+        if (!content) return;
+        roomData.chat.setPendingMessage({
+            name: userStore.name || '',
+            content,
+            headUrl: userStore.avatar || '',
+            sex: userStore.sex || 0,
+            time: TexasGameRoomDataChat.formatNowTime()
+        });
+        this._sendChatBroadcast(roomData, content, Def.BroadcastMsgType.BC_MSG_AVATAR, false);
+        if (sendDanmu) {
+            this._sendChatBroadcast(roomData, content, Def.BroadcastMsgType.BC_MSG_BULLET, true);
+            // 本人弹幕本地立即回显（网络回包在 GetMsg 中按 user_id 过滤，不会重复播放）
+            roomData.chat.addDanmu({
+                name: userStore.name || '',
+                content
+            });
+        }
+    }
+
+    private static _sendChatBroadcast(
+        roomData: TexasGameRoomData,
+        content: string,
+        msgType: Def.BroadcastMsgTypeMap[keyof Def.BroadcastMsgTypeMap],
+        isDanmu: boolean
+    ): void {
+        const data: {
+            name: string;
+            type: number;
+            user_id: number;
+            target_user_id: number;
+            message: string;
+            msgType: number;
+            time: number;
+            sex: number;
+            headUrl: string;
+            isDanmu?: boolean;
+            danmuType?: number;
+        } = {
+            name: userStore.name || '',
+            type: 0,
+            user_id: userStore.userID,
+            target_user_id: 0,
+            message: content,
+            msgType: 2,
+            time: Date.now(),
+            sex: userStore.sex || 0,
+            headUrl: userStore.avatar || ''
+        };
+        if (isDanmu) {
+            data.isDanmu = true;
+            data.danmuType = 1;
+        }
+        const broadcastMsgData = JSON.stringify(data);
+        const extraJson = JSON.stringify({ code: 1000, data: broadcastMsgData });
+        ProtocolAgency.Send({
+            code: Code.MSG_D_BROADCAST_MSG,
+            roomID: roomData.roomID,
+            matchID: roomData.matchID,
+            body: {
+                room: { roomId: roomData.roomID, matchId: roomData.matchID },
+                consume: Def.ConsumeType.CT_NONE,
+                msgType,
+                message: content,
+                extra: new TextEncoder().encode(extraJson)
+            }
+        });
     }
 
     public static PrefetchhReportRoomers(roomID: number, matchID: number): void {

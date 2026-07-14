@@ -1,6 +1,6 @@
 {
   "ver": "2.3.7",
-  "uuid": "b9e2d63f-729d-42b2-a42b-075fee80d8be",
+  "uuid": "b8e7b6ff-2add-4962-a3e6-2a954cb8e22e",
   "importer": "texture",
   "type": "sprite",
   "wrapMode": "clamp",
@@ -12,11 +12,11 @@
   "height": 94,
   "platformSettings": {},
   "subMetas": {
-    "chatMsgBg": {
+    "chat_msg_bg": {
       "ver": "1.0.6",
-      "uuid": "d8247c05-300b-4895-bcf5-24a2641319f1",
+      "uuid": "3ebfb7b8-aac1-4863-bb12-c71fe2c5c9fe",
       "importer": "sprite-frame",
-      "rawTextureUuid": "b9e2d63f-729d-42b2-a42b-075fee80d8be",
+      "rawTextureUuid": "b8e7b6ff-2add-4962-a3e6-2a954cb8e22e",
       "trimType": "auto",
       "trimThreshold": 1,
       "rotated": false,

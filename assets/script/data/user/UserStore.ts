@@ -30,7 +30,7 @@ export class UserStore extends cc.EventTarget {
     // 基础信息
     public userID: number;
     public userRID: number;
-    public sex: number;
+    public sex: number = 0;
     public token: string;
     @observable(UserStore.DIAMONDS_CHANGE)
     public diamonds: number = 0;
