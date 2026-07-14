@@ -6,6 +6,7 @@ import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayer from '../../../data/room/texas/TexasGameRoomDataPlayer';
+import UserStoreUtils from '../../../data/user/UserStoreUtils';
 import {
     AnimateDisplayTypeAction,
     AnimateDisplayTypeButton,
@@ -21,7 +22,6 @@ import roomReconnectManager from '../../../game/RoomReconnectManager';
 import viewManager from '../../../views/UIViewManager';
 import agoraManager from '../../agora/AgoraManager';
 import TexasVideoMediaHelper from './TexasVideoMediaHelper';
-import UserStoreUtils from '../../../data/user/UserStoreUtils';
 
 const _plog = createLogger('ServerMessageEnterRoom');
 

@@ -3,7 +3,6 @@ import MagicEmojiConfig, { MagicEmojiDefinition } from '../../../game/constant/M
 import RemoteSprite from '../../widget/RemoteSprite';
 
 const { ccclass, property, menu } = cc._decorator;
-
 /**
  * 魔法表情映射复用主分支的权威配置 MagicEmojiConfig（座位表情 / 发送面板同源）。
  * spine 路径已是 resources 下的完整路径（rc/other/effect/expressionXxx/xxx），直接 cc.resources.load 即可；

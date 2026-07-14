@@ -196,6 +196,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
             this.chatAlertNode.active = visible;
         }
     }
+
     protected onFrameResize(
         visibleSizeWidth: number,
         visibleSizeHeight: number,
