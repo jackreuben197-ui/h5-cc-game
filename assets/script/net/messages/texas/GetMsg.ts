@@ -3,6 +3,7 @@ import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataChat from '../../../data/room/texas/TexasGameRoomDataChat';
 import userStore from '../../../data/user/UserStore';
+import { handleBroadcastExtra } from './BroadcastMsg';
 
 /** GetMsg extra 内层广播数据（对应 pokerqueen BroadcastMsg.Response 的结果）。 */
 interface BroadcastMsgData {
@@ -37,9 +38,11 @@ function decodeExtra(extra: Uint8Array | string): string | null {
 
 // GetMsg 1121
 export function GetMsg(data: ServerMessageGetMsg.AsObject, roomID: number, matchID: number) {
-    // handleBroadcastExtra(data.extra, roomID, matchID);
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     if (!roomData) return;
+    // main 分支的座位实时动画路由：扔道具(600-611)→飞道具，魔法表情(≥700)→头像播 spine。
+    // 与下方“聊天面板记录”是两件事，互不冲突：魔法表情既在头像上播、也进聊天记录。
+    handleBroadcastExtra(data.extra, roomID, matchID);
     const json = decodeExtra(data.extra);
     if (!json) return;
     let envelope: { code?: number; data?: unknown };

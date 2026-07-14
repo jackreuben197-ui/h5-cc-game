@@ -61,7 +61,6 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private btnSafetyGuard: cc.Button = null!;
     @property({ type: cc.Button, displayName: '客服聊天按钮' })
     private btnIm: cc.Button = null!;
-    @property({ type: cc.Node, displayName: '操作面板' })
     @property({ type: InsuranceOperation, displayName: '保险弹窗触发器' })
     private insuranceOperation: InsuranceOperation = null!;
     @property({ type: MorePlayTypeInfo, displayName: '其他游戏玩法的处理节点' })
