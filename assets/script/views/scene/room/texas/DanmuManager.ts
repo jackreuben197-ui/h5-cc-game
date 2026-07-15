@@ -35,14 +35,15 @@ class DanmuManager {
             const node = this._tracks[i];
             if (node && node.isValid) {
                 cc.Tween.stopAllByTarget(node);
-                node.destroy();
             }
             this._tracks[i] = null;
         }
         this._queue.length = 0;
+        // 层挂在全局 dialogLayer 上，退桌时连层一起销毁，避免空节点常驻；重进时 _ensureLayer 会重建
         if (this._layerNode && this._layerNode.isValid) {
-            this._layerNode.removeAllChildren();
+            this._layerNode.destroy();
         }
+        this._layerNode = null;
     }
 
     private _trySchedule(): void {

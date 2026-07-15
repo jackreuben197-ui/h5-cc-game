@@ -36,6 +36,8 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public static readonly SQUID_ENABLED = 'SQUID_ENABLED';
     public static readonly SQUID_RESULTS = 'SQUID_RESULTS';
     public static readonly MUSHROOM_ENABLED = 'MUSHROOM_ENABLED';
+    public static readonly JACKPOT_CHANGE = 'JACKPOT_CHANGE';
+    public static readonly JACKPOT_START_ANIM = 'JACKPOT_START_ANIM';
     // 不变的信息
     // 基础信息
     public roomName: string;
@@ -181,6 +183,19 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public jackpotPool: number; // Jackpot模版奖池余额
     public jackpotConfig: RoomJackpotConfig.AsObject | null; // Jackpot模版配置
     public jackpotMainPool: number; // 主模板剩余
+    public get hasJackpot(): boolean {
+        return this.jackpot && (this.jackpotID || 0) > 0;
+    }
+    // 牌桌/战绩展示用的奖池（旧版取 jackpotParentGold，缺省回退模版奖池），单位为分
+    public get jackpotDisplayPool(): number {
+        return this.jackpotMainPool || this.jackpotPool || 0;
+    }
+    /** Jackpot 奖池变化（1129 JackpotGoldChange 更新字段后触发）。 */
+    @pureEvent(TexasGameRoomDataBasic.JACKPOT_CHANGE)
+    public jackpotChangedEmit() {}
+    /** 自己坐下后触发 Jackpot 开场动画（对应 pokerqueen Seated → PlayJackpotStartAnim）。 */
+    @pureEvent(TexasGameRoomDataBasic.JACKPOT_START_ANIM)
+    public jackpotStartAnimEmit() {}
     // 下注信息会变
     @observable(TexasGameRoomDataBasic.TABLE_BET_INFO_CHANGE)
     public sbante: tableBetInfo;

@@ -6997,7 +6997,7 @@
         "__id__": 188
       }
     ],
-    "_active": true,
+    "_active": false,
     "_components": [
       {
         "__id__": 191
@@ -15096,6 +15096,15 @@
     },
     "scaleNode": {
       "__id__": 10
+    },
+    "jackpotButton": {
+      "__id__": 184
+    },
+    "jackpotGoldLabel": {
+      "__id__": 189
+    },
+    "jackpotAnimRoot": {
+      "__id__": 398
     },
     "_id": ""
   },

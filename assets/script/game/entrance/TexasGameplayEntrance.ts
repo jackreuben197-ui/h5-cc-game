@@ -434,6 +434,8 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         roomData.basicInfo.jackpotPool = this._roomInfo.jackpotGold;
         roomData.basicInfo.jackpotConfig = this._roomInfo.jackpotConfig;
         roomData.basicInfo.jackpotMainPool = this._roomInfo.jackpotParentGold;
+        // 重连/重进复用 roomData 时通知已绑定的 UI 刷新奖池显示
+        roomData.basicInfo.jackpotChangedEmit();
         //hasBombPot
         roomData.basicInfo.checkBombPot(this._roomInfo.bombpot, this._roomInfo.rounds, this._roomInfo.subConfigsList);
         //hasCriticalHit

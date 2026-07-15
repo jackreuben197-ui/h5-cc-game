@@ -65,6 +65,8 @@ export async function Seated(data: ServerMessageSeated.AsObject, roomID: number,
     mine.autoOperationType = AutoOperationTypeTexas.NO;
     mine.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
     PlayerStoreUtils.syncSeatPlayer(seatData, roomData);
+    // 自己坐下 → 播放 Jackpot 开场动画（对应 pokerqueen Protocol_Holdem_Seated_Handler）
+    roomData.basicInfo.jackpotStartAnimEmit();
     UserStoreUtils.preparePropList().catch(error => _plog.error('prepare prop list failed', error));
     if (roomData.basicInfo.antiCheatConfig) {
         const seatedConfig = roomData.basicInfo.antiCheatConfig.getSeatedSetting();
