@@ -381,6 +381,7 @@ export default class SeatPlayer extends cc.Component {
             return;
         }
         this.squidNode.node.active = false;
+        this._refreshSquidMask();
     }
 
     @bindEvent(TexasGameRoomDataPlayer.SQUID_ESCAPED, 'player')
@@ -399,11 +400,7 @@ export default class SeatPlayer extends cc.Component {
     }
 
     private _refreshSquidMask(): void {
-        this.squidMaskNode.active =
-            this._seatPlayer.seated &&
-            this._seatPlayer.roomData.basicInfo.squidStatusEnabled &&
-            this._seatPlayer.squidIn &&
-            !this._seatPlayer.squidEscaped;
+        this.squidMaskNode.active = this._seatPlayer.squidIn && this._seatPlayer.squidCount == 0;
     }
     // =================== 鱿鱼 （END） ====================
 
