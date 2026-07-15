@@ -34,6 +34,7 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public static readonly BOMBPOT_ENABLED = 'BOMBPOT_ENABLED';
     public static readonly CRITIAL_HIT_ENABLED = 'CRITIAL_HIT_ENABLED';
     public static readonly SQUID_ENABLED = 'SQUID_ENABLED';
+    public static readonly SQUID_REMAINING_COUNT_CHANGED = 'SQUID_REMAINING_COUNT_CHANGED';
     public static readonly SQUID_RESULTS = 'SQUID_RESULTS';
     public static readonly MUSHROOM_ENABLED = 'MUSHROOM_ENABLED';
     // 不变的信息
@@ -311,6 +312,7 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
         return this._squidBase;
     }
     public squidMax: number; // 玩家鱿鱼个数上限
+    public squidTotalLimit: number = 0;
     public squidMostGet: boolean; // 独揽鱿鱼 1 开 0 关
     public squidBetGet: boolean; // 无动作获胜无鱿鱼 1 开 0 关
     public squidHead: boolean; // 头鱿鱼
@@ -385,6 +387,9 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
 
     @pureEvent(TexasGameRoomDataBasic.SQUID_RESULTS)
     public squiedResultsEmit(rows: UISquidEndItemShowData[]) {}
+
+    @pureEvent(TexasGameRoomDataBasic.SQUID_REMAINING_COUNT_CHANGED)
+    public squidRemainingCountChanged(): void {}
 
     // ============== 蘑菇玩法 ==================
     public get hasMushroom() {

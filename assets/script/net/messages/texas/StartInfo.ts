@@ -97,8 +97,15 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
     // 如果我坐着,则处理下我的加入按钮
     if (roomData.mine.seatNo > 0) {
         if (roomData.basicInfo.squidStatusEnabled && !roomData.mine.player.isKeepSeat) {
-            roomData.mine.showSquidInButton = !roomData.mine.player.squidIn;
+            const mineDealt = data.handInfo.dealOrderList.indexOf(roomData.mine.seatNo) >= 0;
+            roomData.mine.showSquidInButton =
+                !roomData.mine.player.squidIn && (!mineDealt || roomData.mine.showSquidInButton);
+        } else {
+            roomData.mine.showSquidInButton = false;
         }
+    }
+    if (roomData.basicInfo.squidStatusEnabled) {
+        roomData.basicInfo.squidRemainingCountChanged();
     }
     if (data.nextOperator) {
         const operator = data.nextOperator;

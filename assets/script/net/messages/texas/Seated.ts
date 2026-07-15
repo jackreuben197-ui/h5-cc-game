@@ -48,7 +48,9 @@ export async function Seated(data: ServerMessageSeated.AsObject, roomID: number,
     if (roomData.basicInfo.squidStatusEnabled) {
         mine.showSquidInButton = !data.squidIn;
     }
-    seatData.squidTotalLimit = data.squidTotalLimit;
+    if (data.squidTotalLimit > 0) {
+        roomData.basicInfo.squidTotalLimit = data.squidTotalLimit;
+    }
     seatData.squidRoundSeated = data.squidRoundSeated;
     // 会员
     seatData.subscriptionID = data.userSubscriptionId;

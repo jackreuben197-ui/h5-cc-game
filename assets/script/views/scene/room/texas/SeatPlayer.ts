@@ -5,6 +5,7 @@ import { HandValueType, handValueTypeToString } from '../../../../core/poker/Poe
 import soundManager, { SoundEffectKey } from '../../../../core/SoundManager';
 import { Operator, OpertionType } from '../../../../data/room/texas/model/Operator';
 import texasGamePersonalSettings, { TexasGamePersonalSettings } from '../../../../data/room/texas/TexasGamePersonalSettings';
+import TexasGameRoomDataBasic from '../../../../data/room/texas/TexasGameRoomDataBasic';
 import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import {
@@ -18,6 +19,7 @@ import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconSta
 import { StringHelper } from '../../../../helper/StringHelper';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
+import { i18nLabel } from '../../../../i18n/i18nLabel';
 import agoraManager from '../../../../net/agora/AgoraManager';
 import AssetManager, { BUNDLE_RESOURCES } from '../../../loader/AssetManager';
 import UIViewUtil from '../../../util/UIViewUtil';
@@ -90,6 +92,8 @@ export default class SeatPlayer extends cc.Component {
     private canPlayStatusNode: DisplayNode = null;
     @property({ type: cc.Button, displayName: '返回游戏按钮' })
     private returnToGameButton: cc.Button = null!;
+    @property({ type: i18nLabel, displayName: '返回游戏按钮文本' })
+    private returnToGameLabel: i18nLabel = null!;
     @property({ type: DisplayNode, displayName: '牌型节点' })
     private handValueTypeNode: DisplayNode = null!;
     @property({ type: CountDownLabel, displayName: '保险购买中气泡' })
@@ -198,7 +202,7 @@ export default class SeatPlayer extends cc.Component {
      */
     private _bindEventsAndRefresh() {
         // 统一激活绑定，注入强类型 tag 推导过滤机制
-        autoBindEvents(this, { player: this._seatPlayer, setting: texasGamePersonalSettings });
+        autoBindEvents(this, { player: this._seatPlayer, basic: this._seatPlayer.roomData.basicInfo, setting: texasGamePersonalSettings });
     }
 
     /**
@@ -381,9 +385,11 @@ export default class SeatPlayer extends cc.Component {
         this.squidNode.node.active = false;
     }
 
-    @bindEvent(TexasGameRoomDataPlayer.SQUID_ESCAPED, 'player')
-    private onSquidEscaped(b: boolean) {
-        this.squidMaskNode.active = b;
+    @bindEvent(TexasGameRoomDataPlayer.SQUID_COUNT, 'player')
+    @bindEvent(TexasGameRoomDataPlayer.SQUID_IN, 'player')
+    @bindEvent(TexasGameRoomDataBasic.SQUID_ENABLED, 'basic')
+    private onRefreshSquidMask(): void {
+        this.squidMaskNode.active = this._seatPlayer.squidIn && this._seatPlayer.squidCount == 0;
     }
     // =================== 鱿鱼 （END） ====================
 
@@ -419,7 +425,7 @@ export default class SeatPlayer extends cc.Component {
                 }
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.winPercentNode.node.active = false;
-                this.mushroomNode.node.setPosition(75, 72);
+                this.mushroomNode.node.setPosition(75, 92);
                 this.mushroomNode.node.scaleX = 1;
                 this.mushroomNode.getOpNode(0).scaleX = 1;
                 this.mushroomNode.getOpNode(1).scaleX = 1;
@@ -437,7 +443,7 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.mushroomNode.node.setPosition(75, 72);
+                this.mushroomNode.node.setPosition(75, 92);
                 this.mushroomNode.node.scaleX = 1;
                 this.mushroomNode.getOpNode(0).scaleX = 1;
                 this.mushroomNode.getOpNode(1).scaleX = 1;
@@ -454,7 +460,7 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.mushroomNode.node.setPosition(75, 72);
+                this.mushroomNode.node.setPosition(75, 92);
                 this.mushroomNode.node.scaleX = 1;
                 this.mushroomNode.getOpNode(0).scaleX = 1;
                 this.mushroomNode.getOpNode(1).scaleX = 1;
@@ -472,7 +478,7 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.mushroomNode.node.setPosition(-75, 72);
+                this.mushroomNode.node.setPosition(-75, 92);
                 this.mushroomNode.node.scaleX = -1; // 先反转
                 this.mushroomNode.getOpNode(0).scaleX = -1; // 文本再转回去
                 this.mushroomNode.getOpNode(1).scaleX = -1; // 文本再转回去
@@ -491,7 +497,7 @@ export default class SeatPlayer extends cc.Component {
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
                 this.bigCardsContainer.setScale(0.65, 0.65);
-                this.mushroomNode.node.setPosition(-75, 72);
+                this.mushroomNode.node.setPosition(-75, 92);
                 this.mushroomNode.node.scaleX = -1; // 先反转
                 this.mushroomNode.getOpNode(0).scaleX = -1; // 文本再转回去
                 this.mushroomNode.getOpNode(1).scaleX = -1; // 文本再转回去
@@ -945,6 +951,7 @@ export default class SeatPlayer extends cc.Component {
     @traceMethod()
     private onKeepSeatStart(b: boolean, deadline: number, reason: Def.KeepSeatReasonMap[keyof Def.KeepSeatReasonMap]) {
         if (b) {
+            this.returnToGameLabel.i18NString = reason == Def.KeepSeatReason.KSR_DELAY_LEAVE ? 'UIDelayLeave' : 'UITesas_Leave';
             this.keepSeatTimer.node.active = true;
             if (deadline > Date.now() / 1000) {
                 this.keepSeatTimer.startTimer({
@@ -963,6 +970,7 @@ export default class SeatPlayer extends cc.Component {
             }
             return;
         }
+        this.returnToGameLabel.i18NString = 'UITesas_Leave';
         this.keepSeatTimer.stop();
         this.keepSeatTimer.node.active = false;
     }

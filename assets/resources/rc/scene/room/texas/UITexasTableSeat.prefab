@@ -757,7 +757,7 @@
       "ctor": "Float64Array",
       "array": [
         75,
-        72,
+        92,
         0,
         0,
         0,
@@ -13452,6 +13452,9 @@
     },
     "returnToGameButton": {
       "__id__": 316
+    },
+    "returnToGameLabel": {
+      "__id__": 292
     },
     "handValueTypeNode": {
       "__id__": 242
