@@ -12535,15 +12535,15 @@
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
-      "x": 0.5,
-      "y": 0.49
+      "x": 0.64,
+      "y": 0.47
     },
     "_trs": {
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -78.66,
-        -311.0797,
+        -87.08499999999998,
+        -298.138,
         0,
         0,
         0,
@@ -12610,8 +12610,8 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        0,
-        0,
+        -13,
+        3.498,
         0,
         0,
         0,
@@ -13013,10 +13013,10 @@
     "alignMode": 1,
     "_target": null,
     "_alignFlags": 12,
-    "_left": 23.75,
+    "_left": 1.9998000000000218,
     "_right": 0,
     "_top": 0,
-    "_bottom": 6.3405999999999985,
+    "_bottom": 22.65290000000005,
     "_verticalCenter": 0,
     "_horizontalCenter": 0,
     "_isAbsLeft": true,
@@ -14048,6 +14048,18 @@
     },
     "squidButton": {
       "__id__": 323
+    },
+    "squidStandUp": {
+      "__id__": 333
+    },
+    "remainingSquidCount": {
+      "__id__": 336
+    },
+    "remainingSquidLabel": {
+      "__id__": 338
+    },
+    "remainingSquidLabelCount": {
+      "__id__": 343
     },
     "_id": ""
   },

@@ -179,8 +179,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
             },
             roomData
         );
-        autoBindEvents(this, { chat: roomData.chat, basic: roomData.basicInfo });
         this._mine = roomData.mine;
+        autoBindEvents(this, { chat: roomData.chat, basic: roomData.basicInfo, mine: roomData.mine });
         this.btnSafetyGuard.node.active = roomData.basicInfo.tribeID > 0;
         this.roomInfo.initData(param.roomID, param.matchID);
         this.potsInfo.initData(param.roomID, param.matchID);

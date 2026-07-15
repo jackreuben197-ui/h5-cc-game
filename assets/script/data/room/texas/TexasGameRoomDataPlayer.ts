@@ -43,6 +43,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public static readonly KEEPSEAT_CHANGE = 'KEEPSEAT_CHANGE';
     public static readonly ALLIN_WIN_PERCENT = 'ALLIN_WIN_PERCENT';
     public static readonly WINNER = 'WINNER';
+    public static readonly SQUID_IN = 'SQUID_IN';
     public static readonly SQUID_COUNT = 'SQUID_COUNT';
     public static readonly SQUID_ESCAPED = 'SQUID_ESCAPED';
     public static readonly MUSHROOM_COUNT = 'MUSHROOM_COUNT';
@@ -103,8 +104,8 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public mttHunterKillAward: number = 0;
     public mttHunterKillAwardOther: number = 0;
     //SQUID
+    @observable(TexasGameRoomDataPlayer.SQUID_IN)
     public squidIn: boolean = false; // 是否加入鱿鱼
-    public squidTotalLimit: number = 0; // 鱿鱼上限
     public squidRoundSeated: boolean = false; // 鱿鱼轮是否已经坐下
     @observable(TexasGameRoomDataPlayer.SQUID_ESCAPED)
     public squidEscaped: boolean = false; // 鱿鱼是否已经标记

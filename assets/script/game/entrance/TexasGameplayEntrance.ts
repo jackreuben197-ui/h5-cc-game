@@ -446,6 +446,7 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         roomData.basicInfo.squidBetGet = this._roomInfo.squidBetGet > 0;
         roomData.basicInfo.squidHead = this._roomInfo.squidHead > 0;
         roomData.basicInfo.squidTail = this._roomInfo.squidTail > 0;
+        roomData.basicInfo.squidMax = this._roomInfo.squidMax;
         roomData.basicInfo.squidForceShowCard = this._roomInfo.squidForceShowCard > 0;
         roomData.basicInfo.squidMode = this._roomInfo.squidMode; // 鱿鱼模式：0经典，1血战
         roomData.basicInfo.squidExtraCount = this._roomInfo.squidExtraCount; // 额外的鱿鱼个数（血战）

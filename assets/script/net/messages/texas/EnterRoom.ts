@@ -58,6 +58,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         roomData.basicInfo.roomUniqueID = data.roomInfo.uniqueId || '';
         roomData.basicInfo.gameStatus = data.gameStatus;
         roomData.basicInfo.deposit = data.roomInfo.deposit;
+        roomData.basicInfo.squidTotalLimit = data.roomInfo.squidTotalLimit;
         roomData.basicInfo.opDuration = data.roomInfo.opDuration;
         if (data.handInfo) {
             if (data.handInfo.pools) {
