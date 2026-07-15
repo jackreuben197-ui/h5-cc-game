@@ -85,6 +85,21 @@ export default class UIDialogSquid extends UIComponentBaseDialog<UIDialogSquidPa
         this.StartAutoLoop();
     }
 
+    protected override onFrameResize(
+        visibleSizeWidth: number,
+        visibleSizeHeight: number,
+        frameSizeWidth: number,
+        frameSizeHeight: number,
+        suggestScale: number,
+        saveAreaTop: number
+    ): void {
+        const maxHeight = 1700;
+        if (visibleSizeHeight < maxHeight) {
+            const scale = visibleSizeHeight / maxHeight;
+            this.node.setScale(scale, scale);
+        }
+    }
+
     public override close(): void {
         this.StopAutoLoop();
         if (this._onCLoseAction) {

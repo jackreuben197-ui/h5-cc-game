@@ -89,6 +89,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     @property({ type: cc.Node, displayName: 'Jackpot开场动画 JackpotAnimRoot' })
     private jackpotAnimRoot: cc.Node = null;
     private _jackpotFeature: JackpotFeature = null;
+    @property({ type: cc.Node, displayName: '中间区域' })
+    private middleLayout: cc.Node = null;
 
     protected onLoad(): void {
         //菜单项
@@ -248,6 +250,10 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         widget.top = saveAreaTop;
         widget.updateAlignment();
         this.scaleNode.setScale(suggestScale, suggestScale);
+        this.publicCardsInfo.node.scale = suggestScale;
+        const middleLayout = this.middleLayout.getComponent(cc.Widget);
+        middleLayout.top = 650 * suggestScale;
+        widget.updateAlignment();
     }
 
     private async _showSquidIntroDialog(roomData: TexasGameRoomData): Promise<boolean> {

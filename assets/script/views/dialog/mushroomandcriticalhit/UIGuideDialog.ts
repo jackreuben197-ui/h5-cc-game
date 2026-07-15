@@ -50,6 +50,21 @@ export default class UIGuideDialog extends UIComponentBaseDialog<UIGuideDialogPa
         this._actionClose = param.closeAction;
     }
 
+    protected override onFrameResize(
+        visibleSizeWidth: number,
+        visibleSizeHeight: number,
+        frameSizeWidth: number,
+        frameSizeHeight: number,
+        suggestScale: number,
+        saveAreaTop: number
+    ): void {
+        const maxHeight = 1700;
+        if (visibleSizeHeight < maxHeight) {
+            const scale = visibleSizeHeight / maxHeight;
+            this.node.setScale(scale, scale);
+        }
+    }
+
     private onCommitClick(): void {
         const noPrompt = this.NoToggle.isChecked;
         switch (this._guideType) {

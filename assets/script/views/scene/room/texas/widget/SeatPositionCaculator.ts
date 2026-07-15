@@ -84,7 +84,7 @@ export class SeatPositionCaculator {
     private _leftX = 0;
     private _rightX = 0;
     private static readonly BOTTOM_GAP = 600;
-    private static readonly TOP_GAP = 490;
+    private static readonly TOP_GAP = 520;
     private static readonly SEAT_GAP_Y = 6 * 3.5;
     private static readonly SEAT_GAP_X = 60;
     private static defaultContainerWidth = 0;
@@ -94,7 +94,7 @@ export class SeatPositionCaculator {
     private _containerH = 0;
     private _offsetY = 0; // 中心点的向上偏移
 
-    public initWithContainer(w: number, h: number, offsetY: number = 0, seatWidth: number = 270, seatHeight: number = 380) {
+    public initWithContainer(w: number, h: number, offsetY: number = 0, seatWidth: number = 270, seatHeight: number = 370) {
         this._containerH = h;
         this._containerW = w;
         this._offsetY = offsetY;

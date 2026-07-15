@@ -79,6 +79,10 @@ export default class OtherBindings extends cc.Component {
 
     @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE, 'mine')
     private async onEnableDisableCamaera(enable: boolean) {
+        if (!this._roomData.basicInfo.antiCheatConfig && this._roomData.mine) {
+            this._roomData.mine.localCameraEnabledDelayed = false;
+            return;
+        }
         const muted = !enable;
         if (agoraManager.localVideoTrack) {
             if (muted) {
@@ -146,6 +150,10 @@ export default class OtherBindings extends cc.Component {
 
     @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_MICROPHONE_STATE_CHANGE, 'mine')
     private async onEnableDisableMicrophone(enable: boolean) {
+        if (!this._roomData.basicInfo.antiCheatConfig && this._roomData.mine) {
+            this._roomData.mine.player.micIconState = MicrophoneIconState.HIDDEN;
+            return;
+        }
         const muted = !enable;
         if (agoraManager.localAudioTrack) {
             agoraManager.localAudioTrack.setMuted(muted);
