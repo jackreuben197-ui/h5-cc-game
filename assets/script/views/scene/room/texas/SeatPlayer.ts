@@ -19,6 +19,7 @@ import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconSta
 import { StringHelper } from '../../../../helper/StringHelper';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
+import { i18nLabel } from '../../../../i18n/i18nLabel';
 import agoraManager from '../../../../net/agora/AgoraManager';
 import AssetManager, { BUNDLE_RESOURCES } from '../../../loader/AssetManager';
 import UIViewUtil from '../../../util/UIViewUtil';
@@ -91,6 +92,8 @@ export default class SeatPlayer extends cc.Component {
     private canPlayStatusNode: DisplayNode = null;
     @property({ type: cc.Button, displayName: '返回游戏按钮' })
     private returnToGameButton: cc.Button = null!;
+    @property({ type: i18nLabel, displayName: '返回游戏按钮文本' })
+    private returnToGameLabel: i18nLabel = null!;
     @property({ type: DisplayNode, displayName: '牌型节点' })
     private handValueTypeNode: DisplayNode = null!;
     @property({ type: CountDownLabel, displayName: '保险购买中气泡' })
@@ -249,7 +252,6 @@ export default class SeatPlayer extends cc.Component {
         this.userSeat.active = b;
         this.emptySeat.node.active = !b;
         this.emptySeat.interactable = !b;
-        this._refreshSquidMask();
         // 本人相关,设置属性
         if (b && mine) {
             autoBindEvents(this, { mine: mine });
@@ -381,25 +383,12 @@ export default class SeatPlayer extends cc.Component {
             return;
         }
         this.squidNode.node.active = false;
-        this._refreshSquidMask();
     }
 
-    @bindEvent(TexasGameRoomDataPlayer.SQUID_ESCAPED, 'player')
-    private onSquidEscaped(): void {
-        this._refreshSquidMask();
-    }
-
+    @bindEvent(TexasGameRoomDataPlayer.SQUID_COUNT, 'player')
     @bindEvent(TexasGameRoomDataPlayer.SQUID_IN, 'player')
-    private onSquidInChanged(): void {
-        this._refreshSquidMask();
-    }
-
     @bindEvent(TexasGameRoomDataBasic.SQUID_ENABLED, 'basic')
-    private onSquidStatusChanged(): void {
-        this._refreshSquidMask();
-    }
-
-    private _refreshSquidMask(): void {
+    private onRefreshSquidMask(): void {
         this.squidMaskNode.active = this._seatPlayer.squidIn && this._seatPlayer.squidCount == 0;
     }
     // =================== 鱿鱼 （END） ====================
@@ -962,6 +951,7 @@ export default class SeatPlayer extends cc.Component {
     @traceMethod()
     private onKeepSeatStart(b: boolean, deadline: number, reason: Def.KeepSeatReasonMap[keyof Def.KeepSeatReasonMap]) {
         if (b) {
+            this.returnToGameLabel.i18NString = reason == Def.KeepSeatReason.KSR_DELAY_LEAVE ? 'UIDelayLeave' : 'UITesas_Leave';
             this.keepSeatTimer.node.active = true;
             if (deadline > Date.now() / 1000) {
                 this.keepSeatTimer.startTimer({
@@ -980,6 +970,7 @@ export default class SeatPlayer extends cc.Component {
             }
             return;
         }
+        this.returnToGameLabel.i18NString = 'UITesas_Leave';
         this.keepSeatTimer.stop();
         this.keepSeatTimer.node.active = false;
     }

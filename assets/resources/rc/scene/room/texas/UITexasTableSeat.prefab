@@ -13453,6 +13453,9 @@
     "returnToGameButton": {
       "__id__": 316
     },
+    "returnToGameLabel": {
+      "__id__": 292
+    },
     "handValueTypeNode": {
       "__id__": 242
     },
