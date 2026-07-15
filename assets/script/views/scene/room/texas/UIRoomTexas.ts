@@ -158,8 +158,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
 
     async initialize(param: UIRoomTexasEnterParam) {
         const roomData = roomDataManager.getRoomData<TexasGameRoomData>(param.roomID, param.matchID);
-        autoBindEvents(this, { chat: roomData.chat });
         this._mine = roomData.mine;
+        autoBindEvents(this, { chat: roomData.chat, basic: roomData.basicInfo, mine: roomData.mine });
         this.btnSafetyGuard.node.active = roomData.basicInfo.tribeID > 0;
         this.roomInfo.initData(param.roomID, param.matchID);
         this.potsInfo.initData(param.roomID, param.matchID);

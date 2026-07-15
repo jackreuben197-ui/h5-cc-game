@@ -5,6 +5,7 @@ import { HandValueType, handValueTypeToString } from '../../../../core/poker/Poe
 import soundManager, { SoundEffectKey } from '../../../../core/SoundManager';
 import { Operator, OpertionType } from '../../../../data/room/texas/model/Operator';
 import texasGamePersonalSettings, { TexasGamePersonalSettings } from '../../../../data/room/texas/TexasGamePersonalSettings';
+import TexasGameRoomDataBasic from '../../../../data/room/texas/TexasGameRoomDataBasic';
 import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import {
@@ -198,7 +199,7 @@ export default class SeatPlayer extends cc.Component {
      */
     private _bindEventsAndRefresh() {
         // 统一激活绑定，注入强类型 tag 推导过滤机制
-        autoBindEvents(this, { player: this._seatPlayer, setting: texasGamePersonalSettings });
+        autoBindEvents(this, { player: this._seatPlayer, basic: this._seatPlayer.roomData.basicInfo, setting: texasGamePersonalSettings });
     }
 
     /**
@@ -248,6 +249,7 @@ export default class SeatPlayer extends cc.Component {
         this.userSeat.active = b;
         this.emptySeat.node.active = !b;
         this.emptySeat.interactable = !b;
+        this._refreshSquidMask();
         // 本人相关,设置属性
         if (b && mine) {
             autoBindEvents(this, { mine: mine });
@@ -382,8 +384,26 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.SQUID_ESCAPED, 'player')
-    private onSquidEscaped(b: boolean) {
-        this.squidMaskNode.active = b;
+    private onSquidEscaped(): void {
+        this._refreshSquidMask();
+    }
+
+    @bindEvent(TexasGameRoomDataPlayer.SQUID_IN, 'player')
+    private onSquidInChanged(): void {
+        this._refreshSquidMask();
+    }
+
+    @bindEvent(TexasGameRoomDataBasic.SQUID_ENABLED, 'basic')
+    private onSquidStatusChanged(): void {
+        this._refreshSquidMask();
+    }
+
+    private _refreshSquidMask(): void {
+        this.squidMaskNode.active =
+            this._seatPlayer.seated &&
+            this._seatPlayer.roomData.basicInfo.squidStatusEnabled &&
+            this._seatPlayer.squidIn &&
+            !this._seatPlayer.squidEscaped;
     }
     // =================== 鱿鱼 （END） ====================
 

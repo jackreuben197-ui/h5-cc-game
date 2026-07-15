@@ -60,7 +60,6 @@ export default class RoomInfo extends cc.Component {
 
     @bindEvent(TexasGameRoomDataBasic.TABLE_BET_INFO_CHANGE, 'basic')
     @bindEvent(TexasGameRoomDataBasic.TABLE_HANDINFO_CHANGE, 'basic')
-    @bindEvent(TexasGameRoomDataBasic.SQUID_ENABLED, 'basic')
     @bindEvent(TexasGameRoomDataBasic.CRITIAL_HIT_ENABLED, 'basic')
     @bindEvent(TexasGameRoomDataBasic.SQUID_ENABLED, 'basic')
     private onUpdateText() {
