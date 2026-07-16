@@ -523,6 +523,22 @@ export default class TexasTableEvent {
         });
     }
 
+    public static AddTime(player: TexasGameRoomDataPlayerMine, alreadyDelayTimes: number) {
+        ProtocolAgency.Send({
+            code: Code.MSG_D_ADD_TIME,
+            roomID: player.roomData.roomID,
+            matchID: player.roomData.matchID,
+            body: {
+                room: {
+                    roomId: player.roomData.roomID,
+                    matchId: player.roomData.matchID
+                },
+                consume: alreadyDelayTimes > 0 ? Def.ConsumeType.CT_DELAY_2 : Def.ConsumeType.CT_EMOJI_3,
+                directConsume: false
+            }
+        });
+    }
+
     /** 牌谱回放:内存缓存 → 持久缓存(H5 侧 game_replays) → 服务端(回包走 PublicReplay 1018 写数据) */
     public static async RequestReplay(roomData: TexasGameRoomData, handNum: number): Promise<void> {
         const cached = roomData.replay.getCached(handNum);

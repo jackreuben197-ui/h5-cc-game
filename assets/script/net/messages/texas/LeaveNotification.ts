@@ -20,6 +20,7 @@ export function LeaveNotification(data: ServerMessageLeaveNotification.AsObject,
         TexasVideoMediaHelper.clearAllMediaStates(roomData);
     } else {
         _glog.debug('leave', data.reason, roomData);
+        return;
     }
     switch (data.reason) {
         case Def.LeaveReason.LR_ACTIVE: // 主动退出

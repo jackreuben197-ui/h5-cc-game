@@ -3,7 +3,7 @@ import { traceClass } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataReplay, { ReplayHandData } from '../../../data/room/texas/TexasGameRoomDataReplay';
-import diamondModel from '../../../data/trade/DiamondModel';
+import diamondModel, { DiamondConfig } from '../../../data/trade/DiamondModel';
 import userStore from '../../../data/user/UserStore';
 import { StringHelper } from '../../../helper/StringHelper';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
@@ -511,7 +511,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     }
 
     /** 从钻石配置中按小盲档位匹配价格 */
-    private _getPriceFromConfig(diamondConfig: { setting?: { sb: number; price: number }[] }): number {
+    private _getPriceFromConfig(diamondConfig: DiamondConfig): number {
         if (!diamondConfig?.setting) return 0;
         const sb = this._roomData.basicInfo.sbante?.sb || 0;
         for (const item of diamondConfig.setting) {

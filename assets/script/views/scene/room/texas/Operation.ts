@@ -6,6 +6,7 @@ import { OperatorMine, OpertionType } from '../../../../data/room/texas/model/Op
 import texasGamePersonalSettings, { ShortCut, TexasGamePersonalSettings } from '../../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import { AutoOperationTypeTexas } from '../../../../game/constant/AutoOpertaionType';
+import { DiamondConfigType } from '../../../../game/constant/DiamondConfigType';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
 import { UIComfirmDialogType } from '../../../dialog/confirm/UIConfirmDialog';
 import viewManager from '../../../UIViewManager';
@@ -66,6 +67,11 @@ export default class Operation extends cc.Component {
     private uiNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '位置节点freeCall' })
     private freeCallNode: cc.Node = null;
+    @property({ type: cc.Button, displayName: '加时按钮' })
+    private addTimeButton: cc.Button = null;
+    @property({ type: cc.Label, displayName: '加时Cost' })
+    private addTimeCost: cc.Label = null;
+    private _delayTimes = 0;
     private _autoOpPanel: AutoOperation = null;
     private _raiseAmount: number = 0;
     private _seatPlayer: TexasGameRoomDataPlayerMine = null;
@@ -96,10 +102,14 @@ export default class Operation extends cc.Component {
             this.freeBetSilder.setProgress(0);
         };
         this.btnRaise.node.on('click', this._onRaiseClicked, this);
+        this.addTimeButton.node.on('click', this._onAddTimeClicked, this);
     }
 
     private onFreeBetBgClicked: () => void = () => {
         this.freeBetContainer.active = false;
+    };
+    private _onAddTimeClicked: () => void = () => {
+        TexasTableEvent.AddTime(this._seatPlayer, this._delayTimes);
     };
     private _onRaiseClicked: () => void;
     private _onCheckClicked: () => void = () => {
@@ -179,6 +189,13 @@ export default class Operation extends cc.Component {
         tpos2.y += height2;
         this.freeCallNode.setPosition(tpos2);
         this._autoOpPanel.adjustPostion(targeNode, pos, scale);
+        this._autoOpPanel.node.active = true;
+    }
+
+    private async _refreshAddTime(alreadlyDelayTimes: number): Promise<void> {
+        this._delayTimes = alreadlyDelayTimes;
+        const cost = await this._seatPlayer.roomData.basicInfo.getDiamondPrice(alreadlyDelayTimes, DiamondConfigType.DiamondConfigTypeAddTime);
+        this.addTimeCost.string = '' + cost;
     }
 
     private _refreshUI(roundBetEqual: number) {
@@ -341,7 +358,9 @@ export default class Operation extends cc.Component {
                 this.opTimer.stop();
             }
         });
+        this._delayTimes = oper.alreadyDelayTImes;
         this._refreshUI(oper.roundBetEqual);
+        this._refreshAddTime(this._delayTimes);
     }
 
     protected onEnable(): void {

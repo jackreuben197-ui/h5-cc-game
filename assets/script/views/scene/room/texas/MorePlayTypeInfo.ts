@@ -196,8 +196,7 @@ export default class MorePlayTypeInfo extends cc.Component {
     }
 
     private _refreshJoinButton(): void {
-        this.joinButton.node.active =
-            this._mine.roomData.basicInfo.squidStatusEnabled && this._mine.seatNo > 0 && this._mine.showSquidInButton;
+        this.joinButton.node.active = this._mine.roomData.basicInfo.squidStatusEnabled && this._mine.seatNo > 0 && this._mine.showSquidInButton;
     }
 
     private _refreshRemainingSquidCount(): void {
@@ -212,7 +211,7 @@ export default class MorePlayTypeInfo extends cc.Component {
         });
         let total = 0;
         if (roomData.basicInfo.squidMode === SquidMode.XZ) {
-            total = roomData.basicInfo.squidTotalLimit
+            total = roomData.basicInfo.squidTotalLimit;
             if (roomData.basicInfo.squidTail) total++;
         } else {
             total = Math.max(playerCount - 1, 0);

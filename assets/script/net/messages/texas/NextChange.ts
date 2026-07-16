@@ -1,7 +1,6 @@
 import { ServerMessageNextChange } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
-import { AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDisplayType';
 
 // NextChange 1126
 export function NextChange(data: ServerMessageNextChange.AsObject, roomID: number, matchID: number) {
