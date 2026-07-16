@@ -194,7 +194,7 @@ export default class SeatManager extends cc.Component {
 
     // onUpdateSeats 座位数调整, 这个优先度必须提前要创建座位的Node
     @bindEvent(TexasGameRoomDataSeatsStateManager.SEATS_CHANGE, { dataSource: 'seats', initPriority: 10 })
-    @traceMethod()
+    @traceMethod({ level: 'debug' })
     private onUpdateSeats(count: number) {
         seatPostionCaculator.arrageSeatPositions(count);
         const pos = seatPostionCaculator.getPosition(SeatPosition.BottomMiddle);

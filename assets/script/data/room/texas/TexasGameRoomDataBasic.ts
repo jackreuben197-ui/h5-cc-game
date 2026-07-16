@@ -1,7 +1,9 @@
 import { Def, InsuranceOddsForPotsUserCount, RoomJackpotConfig, ServerMessageJackpotAward, SquidCountRateConfig, SubRoomConfig } from '@silenthill/agreement-web';
 import { bindData, IObservableBindings, observable, pureEvent } from '../../../core/decorator/DataBind';
+import { traceMethod } from '../../../core/decorator/LogTrace';
 import { AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDisplayType';
 import { ChatType } from '../../../game/constant/ChatType';
+import { DiamondConfigType } from '../../../game/constant/DiamondConfigType';
 import { GameTypeToTableCategory } from '../../../game/constant/LogicTypeConf';
 import { MushroomMode } from '../../../game/constant/Mushroom';
 import { SquidLeaveMode, SquidMode } from '../../../game/constant/Squid';
@@ -10,6 +12,7 @@ import { ViewPlayerCardsMode } from '../../../game/constant/ViewPlayerCardsMode'
 import GameplayUtil from '../../../game/util/GameplayUtil';
 import { StringHelper } from '../../../helper/StringHelper';
 import { UISquidEndItemShowData } from '../../../views/dialog/squidover/UISquidEndItem';
+import diamondModel from '../../trade/DiamondModel';
 import texasGamePersonalSettings from './TexasGamePersonalSettings';
 import TexasGameRoomData from './TexasGameRoomData';
 
@@ -143,7 +146,27 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public callTimeLimit: number; // 次数限制最小手数
     // 使用货币类型
     public goldType: number;
+    // 类型
     public originType: number;
+    public shareTable: number;
+
+    @traceMethod({ level: 'debug' })
+    public async getDiamondPrice(times: number, dct: DiamondConfigType): Promise<number> {
+        const confgExt = diamondModel.getDiamondConfigTypeExt(this.originType, this.shareTable, this.isMtt, times);
+        await diamondModel.reqDiamondConfig(dct);
+        const config = diamondModel.getDiamondConfig(confgExt, dct);
+        this.tracelog.debug('ext', confgExt, dct, config);
+        if (!config || !config.setting || config.setting.length == 0) {
+            return 0;
+        }
+        for (const item of config.setting) {
+            if (item.sb === this.sbante.sb) {
+                return item.price;
+            }
+        }
+        return 0;
+    }
+
     //安全房间
     public seatedMessage: boolean; // 坐下才有消息(也就是安全房间)
     public onlyIOS: boolean;

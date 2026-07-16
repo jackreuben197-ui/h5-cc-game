@@ -7,6 +7,7 @@
  * @FilePath: /pokerqueen/assets/script/net/https/HttpRequest.ts
  */
 import { GameConfig } from '../../config/GameConfig';
+import { traceClass } from '../../core/decorator/LogTrace';
 import HotUpdateConfigCache from './HotUpdateConfigCache';
 import HttpClient from './HttpClient';
 // import WebHelper from './WebHelper';
@@ -33,7 +34,7 @@ type HttpRequestParams = {
 /**
  * HttpRequest 在HttpClient基础上包装一层
  */
-
+@traceClass()
 export default class HttpRequest {
     static async Send({
         api = null,
@@ -102,12 +103,12 @@ export default class HttpRequest {
             };
             request && (request.Response = cachedResponse);
             // NotifyManager.instance.post(EventName.serverResponse, finalApi, (cachedResponse as any)?.data, body);
-            console.log(
+            HttpRequest.tracelog.debug(
                 `[HttpRequest][Cache] hit api=${finalApi} key=${cacheKey} ageMs=${WebApiCacheCenter.ageMs(cachedRecord)} skipRequest=${canSkipRequest}`
             );
             onSuccess && onSuccess(cachedResponse);
         } else if (shouldUseCache) {
-            console.log(`[HttpRequest][Cache] miss api=${finalApi} key=${cacheKey}`);
+            HttpRequest.tracelog.debug(`[HttpRequest][Cache] miss api=${finalApi} key=${cacheKey}`);
         }
         if (canSkipRequest) {
             return;
@@ -133,7 +134,7 @@ export default class HttpRequest {
                     typeof request?.ComputeCacheHash === 'function' ? request.ComputeCacheHash(normalized) : WebApiCacheCenter.hashFromJson(normalized);
                 if (!cachedRecord) {
                     WebApiCacheCenter.set(cacheKey, normalized, hash);
-                    console.log(`[HttpRequest][Cache] store api=${finalApi} key=${cacheKey} (no previous cache)`);
+                    HttpRequest.tracelog.debug(`[HttpRequest][Cache] store api=${finalApi} key=${cacheKey} (no previous cache)`);
                     HttpRequest.onSuccess(finalApi, request, body, onSuccess, response);
                     return;
                 }
@@ -143,11 +144,11 @@ export default class HttpRequest {
                         : cachedRecord.hash !== hash;
                 if (!shouldUpdate) {
                     WebApiCacheCenter.touch(cacheKey);
-                    console.log(`[HttpRequest][Cache] unchanged api=${finalApi} key=${cacheKey}`);
+                    HttpRequest.tracelog.debug(`[HttpRequest][Cache] unchanged api=${finalApi} key=${cacheKey}`);
                     return;
                 }
                 WebApiCacheCenter.set(cacheKey, normalized, hash);
-                console.log(`[HttpRequest][Cache] updated api=${finalApi} key=${cacheKey}`);
+                HttpRequest.tracelog.debug(`[HttpRequest][Cache] updated api=${finalApi} key=${cacheKey}`);
                 HttpRequest.onSuccess(finalApi, request, body, onSuccess, response);
             },
             headers: headers,
