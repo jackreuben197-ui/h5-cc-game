@@ -2,7 +2,10 @@ import { Def, Result, ServerMessageWinner } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { AnimateDisplayTypeCards, AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDisplayType';
+import { DiamondConfigType } from '../../../game/constant/DiamondConfigType';
+import { ViewPlayerCardsMode } from '../../../game/constant/ViewPlayerCardsMode';
 import { UISquidEndItemShowData } from '../../../views/dialog/squidover/UISquidEndItem';
+import TexasTableEvent from '../../../views/scene/room/texas/events/TexasTableEvent';
 
 // Winner 1112
 export function Winner(data: ServerMessageWinner.AsObject, roomID: number, matchID: number) {
@@ -107,4 +110,46 @@ export function Winner(data: ServerMessageWinner.AsObject, roomID: number, match
     // 战绩面板：按 Unity TexasSituationController.HandResult 增量累加 win/handNum/poolCount/mushroom/jackpot
     roomData.report.applyWinnerResult(data);
     roomData.seatsStateManager.handEnd();
+    const mineResult = data.resultsList.find(result => result.seatId == roomData.mine.seatNo);
+    const canShowSettlementButtons = canShowMineSettlementButtons(roomData, mineResult);
+    if (canShowSettlementButtons && roomData.basicInfo.viewPlayerCards !== ViewPlayerCardsMode.CLOSE) {
+        TexasTableEvent.ViewPlayerCardsNum(roomData.mine);
+    } else {
+        roomData.mine.showViewPlayerCardsButton = false;
+    }
+    if (canShowSettlementButtons && roomData.publicCards.publicCards.length < 5) {
+        calculateViewPublicCardsCost(roomData, data.round, roomData.mine.seatNo, roomData.basicInfo.handNum, roomData.publicCards.publicCards.length);
+    } else {
+        roomData.mine.showViewPublicCardsButton = false;
+    }
+}
+
+function canShowMineSettlementButtons(roomData: TexasGameRoomData, mineResult: Result.AsObject | undefined): boolean {
+    return roomData.mine.seatNo > 0 && !!roomData.mine.player && !!mineResult && !mineResult.standUp && !roomData.basicInfo.isMtt;
+}
+
+function canShowViewPublicCardsButton(roomData: TexasGameRoomData, seatNo: number, handNum: number, publicCardCount: number): boolean {
+    return (
+        roomData.basicInfo.gameStatus == Def.GameStatus.HAND_END &&
+        roomData.basicInfo.handNum == handNum &&
+        roomData.mine.seatNo == seatNo &&
+        roomData.mine.seatNo > 0 &&
+        !!roomData.mine.player &&
+        !roomData.basicInfo.isMtt &&
+        roomData.publicCards.publicCards.length == publicCardCount &&
+        roomData.publicCards.publicCards.length < 5
+    );
+}
+
+async function calculateViewPublicCardsCost(
+    roomData: TexasGameRoomData,
+    round: Def.RoundMap[keyof Def.RoundMap],
+    seatNo: number,
+    handNum: number,
+    publicCardCount: number
+) {
+    const cost = await roomData.basicInfo.getDiamondPrice(Number(round), DiamondConfigType.DiamondConfigTypeViewPublicCards);
+    if (!canShowViewPublicCardsButton(roomData, seatNo, handNum, publicCardCount)) return;
+    roomData.mine.viewPublicCardsCost = cost;
+    roomData.mine.showViewPublicCardsButton = true;
 }

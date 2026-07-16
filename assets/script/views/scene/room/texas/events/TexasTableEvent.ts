@@ -1,4 +1,4 @@
-import { ClientMessageSeated, ClientMessageShowPublicCards, ClientMessageViewPlayerCards, Code, Def, PotInsuranceBuy, RoomInfo } from '@silenthill/agreement-web';
+import { ClientMessageSeated, Code, Def, PotInsuranceBuy, RoomInfo } from '@silenthill/agreement-web';
 import { traceClass } from '../../../../../core/decorator/LogTrace';
 import TexasGameRoomData from '../../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataChat from '../../../../../data/room/texas/TexasGameRoomDataChat';
@@ -539,9 +539,9 @@ export default class TexasTableEvent {
         });
     }
 
-    public static ShowPublicCards(player:TexasGameRoomDataPlayerMine, round: Def.RoundMap[keyof Def.RoundMap]) {
+    public static ShowPublicCards(player: TexasGameRoomDataPlayerMine, round: Def.RoundMap[keyof Def.RoundMap]) {
         ProtocolAgency.Send({
-            code:  Code.MSG_D_SHOW_PUBLIC_CARDS,
+            code: Code.MSG_D_SHOW_PUBLIC_CARDS,
             roomID: player.roomData.roomID,
             matchID: player.roomData.matchID,
             body: {
@@ -549,16 +549,15 @@ export default class TexasTableEvent {
                     roomId: player.roomData.roomID,
                     matchId: player.roomData.matchID
                 },
-                round:round,
-                consume:  Def.ConsumeType.CT_VC_2,
+                round: round,
+                consume: Def.ConsumeType.CT_VC_2
             }
         });
     }
 
-
-    public static ViewPlayerCards(player:TexasGameRoomDataPlayerMine) {
+    public static ViewPlayerCards(player: TexasGameRoomDataPlayerMine) {
         ProtocolAgency.Send({
-            code:  Code.MSG_D_VIEW_PLAYER_CARDS,
+            code: Code.MSG_D_VIEW_PLAYER_CARDS,
             roomID: player.roomData.roomID,
             matchID: player.roomData.matchID,
             body: {
@@ -567,21 +566,21 @@ export default class TexasTableEvent {
                     matchId: player.roomData.matchID
                 },
                 targetSeatId: 0,
-                targetUserRid: 0,
+                targetUserRid: 0
             }
         });
     }
 
-    public static ViewPlayerCardsNum(player:TexasGameRoomDataPlayerMine) {
+    public static ViewPlayerCardsNum(player: TexasGameRoomDataPlayerMine) {
         ProtocolAgency.Send({
-            code:  Code.MSG_D_VIEW_PLAYER_CARDS_NUM,
+            code: Code.MSG_D_VIEW_PLAYER_CARDS_NUM,
             roomID: player.roomData.roomID,
             matchID: player.roomData.matchID,
             body: {
                 room: {
                     roomId: player.roomData.roomID,
                     matchId: player.roomData.matchID
-                },
+                }
             }
         });
     }
