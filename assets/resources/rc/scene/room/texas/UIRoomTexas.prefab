@@ -31,6 +31,9 @@
       },
       {
         "__id__": 429
+      },
+      {
+        "__id__": 431
       }
     ],
     "_prefab": {
@@ -15348,17 +15351,11 @@
     "scaleNode": {
       "__id__": 10
     },
-    "jackpotButton": {
-      "__id__": 184
-    },
-    "jackpotGoldLabel": {
-      "__id__": 189
-    },
-    "jackpotAnimRoot": {
-      "__id__": 398
-    },
     "middleLayout": {
       "__id__": 159
+    },
+    "jackpotFeature": {
+      "__id__": 431
     },
     "_id": ""
   },
@@ -15372,5 +15369,24 @@
     },
     "fileId": "",
     "sync": false
+  },
+  {
+    "__type__": "7779byPBgpFG4LjE1VF6y2h",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "jackpotButton": {
+      "__id__": 160
+    },
+    "goldLabel": {
+      "__id__": 165
+    },
+    "animRoot": {
+      "__id__": 370
+    },
+    "_id": ""
   }
 ]

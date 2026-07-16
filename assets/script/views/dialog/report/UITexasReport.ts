@@ -268,10 +268,10 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         if (this._curTab === 'battle') this._renderBattleList();
     }
 
-    /** 1129 JackpotGoldChange：面板打开期间奖池变化实时刷新顶栏总额 */
+    /** 1129 JackpotGoldChange：面板打开期间奖池变化实时刷新顶栏总额（displayPool 由事件参数带入，单位分） */
     @bindEvent(TexasGameRoomDataBasic.JACKPOT_CHANGE, { dataSource: 'basic', initIgnore: true })
-    private _onJackpotPoolChange(): void {
-        this._refreshJackpotTotal();
+    private _onJackpotPoolChange(_hasJackpot: boolean, displayPool: number): void {
+        this.jackpotTotalLabel.string = `${Math.floor((displayPool || 0) / 100)}`;
     }
 
     @bindEvent(TexasGameRoomDataReport.OBSERVERS_CHANGE, 'report')

@@ -3,7 +3,6 @@ import { traceClass } from '../../../../core/decorator/LogTrace';
 import storageManager from '../../../../data/LocalStorage';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
-import TexasGameRoomDataBasic from '../../../../data/room/texas/TexasGameRoomDataBasic';
 import TexasGameRoomDataChat, { TexasDanmuMessage } from '../../../../data/room/texas/TexasGameRoomDataChat';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import h5MessageManager from '../../../../H5MsgMgr';
@@ -81,14 +80,9 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private _mine: TexasGameRoomDataPlayerMine = null;
     @property({ type: cc.Node, displayName: '所有需要缩放的节点位置' })
     private scaleNode: cc.Node = null;
-    // Jackpot
-    @property({ type: cc.Node, displayName: 'Jackpot按钮 Button_Jackpot' })
-    private jackpotButton: cc.Node = null;
-    @property({ type: cc.Label, displayName: 'Jackpot奖池金额 Button_Jackpot/Label_Gold' })
-    private jackpotGoldLabel: cc.Label = null;
-    @property({ type: cc.Node, displayName: 'Jackpot开场动画 JackpotAnimRoot' })
-    private jackpotAnimRoot: cc.Node = null;
-    private _jackpotFeature: JackpotFeature = null;
+    // Jackpot（节点、事件、点击都锁在 JackpotFeature 组件内）
+    @property(JackpotFeature)
+    private jackpotFeature: JackpotFeature = null;
     @property({ type: cc.Node, displayName: '中间区域' })
     private middleLayout: cc.Node = null;
 
@@ -112,8 +106,6 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         if (this.btnEmoji) this.btnEmoji.node.on('click', this.onClickBtnEmoji, this);
         this.chatBtn.on('click', this.onClickChatBtn, this);
         this._setChatAlertVisible(false);
-        // Jackpot 按钮
-        if (this.jackpotButton) this.jackpotButton.on('click', this.onClickJackpot, this);
     }
 
     private onClickReport = () => {
@@ -170,17 +162,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
 
     async initialize(param: UIRoomTexasEnterParam) {
         const roomData = roomDataManager.getRoomData<TexasGameRoomData>(param.roomID, param.matchID);
-        this._jackpotFeature?.reset();
-        this._jackpotFeature = new JackpotFeature(
-            {
-                button: this.jackpotButton,
-                goldLabel: this.jackpotGoldLabel,
-                animRoot: this.jackpotAnimRoot
-            },
-            roomData
-        );
         this._mine = roomData.mine;
-        autoBindEvents(this, { chat: roomData.chat, basic: roomData.basicInfo, mine: roomData.mine });
+        autoBindEvents(this, { chat: roomData.chat, mine: roomData.mine });
         this.btnSafetyGuard.node.active = roomData.basicInfo.tribeID > 0;
         this.roomInfo.initData(param.roomID, param.matchID);
         this.potsInfo.initData(param.roomID, param.matchID);
@@ -193,8 +176,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         // 对应 pokerqueen UITexas.requestRoomersForCache（history=true 包含已离桌玩家）。
         TexasTableEvent.PrefetchhReportRoomers(param.roomID, param.matchID);
         this._otherBindings.initData(param.roomID, param.matchID);
-        // Jackpot：刷新奖池显示并预加载 H5 面板数据
-        this._jackpotFeature.enterGame();
+        this.jackpotFeature.initData(param.roomID, param.matchID);
         //展示介绍对话框
         await this._showSquidIntroDialog(roomData);
         await this._showMushroomIntroDialog(roomData);
@@ -204,21 +186,6 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     protected onDisable(): void {
         unBindEventsAll(this);
         danmuManager.clearAll();
-        this._jackpotFeature?.reset();
-    }
-
-    private onClickJackpot(): void {
-        this._jackpotFeature?.onClick();
-    }
-
-    @bindEvent(TexasGameRoomDataBasic.JACKPOT_CHANGE, { dataSource: 'basic', initIgnore: true })
-    private onJackpotGoldChange(): void {
-        this._jackpotFeature?.onGoldChange();
-    }
-
-    @bindEvent(TexasGameRoomDataBasic.JACKPOT_START_ANIM, { dataSource: 'basic', initIgnore: true })
-    private onJackpotStartAnim(): void {
-        this._jackpotFeature?.playStartAnim();
     }
 
     @bindEvent(TexasGameRoomDataChat.DANMU_ADDED, { dataSource: 'chat', initIgnore: true })

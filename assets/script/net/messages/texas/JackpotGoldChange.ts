@@ -8,10 +8,9 @@ export function JackpotGoldChange(data: ServerMessageJackpotGoldChange.AsObject,
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     if (!roomData) return;
     const basicInfo = roomData.basicInfo;
-    if (data.jackpotId !== undefined) {
-        basicInfo.jackpotID = Number(data.jackpotId || 0);
-    }
-    basicInfo.jackpotPool = Number(data.jackpotGold || 0);
-    basicInfo.jackpotMainPool = Number(data.jackpotParentGold || data.jackpotGold || 0);
-    basicInfo.jackpotChangedEmit();
+    basicInfo.updateJackpotPool(
+        data.jackpotId !== undefined ? Number(data.jackpotId || 0) : basicInfo.jackpotID,
+        Number(data.jackpotGold || 0),
+        Number(data.jackpotParentGold || data.jackpotGold || 0)
+    );
 }

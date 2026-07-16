@@ -1,7 +1,12 @@
+import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { createLogger } from '../../../../core/decorator/LogTrace';
+import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
+import TexasGameRoomDataBasic from '../../../../data/room/texas/TexasGameRoomDataBasic';
 import h5MessageManager from '../../../../H5MsgMgr';
 import { WebOrgJackpotTemplateInfo, WebStatsJackpotAwardLogs, WWW } from '../../../../net/https/WebRequest';
+
+const { ccclass, property, menu } = cc._decorator;
 
 const _log = createLogger('JackpotFeature');
 
@@ -16,57 +21,84 @@ interface JackpotPanelCacheData {
     awardLogs: JackpotPanelAwardLogs | null;
 }
 
-export interface JackpotFeatureHost {
-    /** Jackpot 按钮节点（Button_Jackpot） */
-    button: cc.Node;
-    /** 奖池金额标签（Button_Jackpot/Label_Gold） */
-    goldLabel: cc.Label;
-    /** 开场动画节点（JackpotAnimRoot，含 cc.Animation） */
-    animRoot: cc.Node;
-}
-
 /**
  * 牌桌内 Jackpot 展示与交互（对应 pokerqueen TexasGameJackpot）：
  * - 奖池金额显示与滚动动画（1129 JackpotGoldChange）
  * - 自己坐下后的开场动画
  * - 点击按钮 → H5 showPanel(jackpotRecord)，附带预加载的模版/获奖记录
+ * 节点、事件绑定、点击处理都锁在本组件内，UIRoomTexas 只负责 initData。
  */
-export default class JackpotFeature {
+@ccclass
+@menu('Scene/Room/Texas/JackpotFeature')
+export default class JackpotFeature extends cc.Component {
     private static readonly JACKPOT_AWARD_LIMIT: number = 15;
     private static readonly panelCache: Map<number, JackpotPanelCacheData> = new Map();
-
+    @property({ type: cc.Node, displayName: 'Jackpot按钮 Button_Jackpot' })
+    private jackpotButton: cc.Node = null;
+    @property({ type: cc.Label, displayName: 'Jackpot奖池金额 Button_Jackpot/Label_Gold' })
+    private goldLabel: cc.Label = null;
+    @property({ type: cc.Node, displayName: 'Jackpot开场动画 JackpotAnimRoot' })
+    private animRoot: cc.Node = null;
+    private _basicInfo: TexasGameRoomDataBasic = null;
+    private _roomID: number = 0;
     private _rollData: { value: number } | null = null;
+    /** 开场动画结束后金额滚动的目标值（元），由事件参数带入 */
+    private _startAnimRollTarget: number = 0;
 
-    constructor(
-        private host: JackpotFeatureHost,
-        private roomData: TexasGameRoomData
-    ) {}
+    protected onLoad(): void {
+        if (this.jackpotButton) this.jackpotButton.on('click', this.onClickJackpot, this);
+    }
 
     /** 进桌初始化：刷新显示并预加载 H5 面板数据 */
-    public enterGame(): void {
+    public initData(roomID: number, matchID: number): void {
+        const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
+        this._basicInfo = roomData.basicInfo;
+        this._roomID = roomID;
+        this._resetVisual();
+        if (this.node.activeInHierarchy) {
+            this._bindEvents();
+        }
         this._refreshUI();
-        JackpotFeature.panelCache.delete(this.roomData.roomID);
+        JackpotFeature.panelCache.delete(roomID);
         void this._preloadPanelData();
     }
 
-    /** 1129 奖池变化：滚动到最新金额 */
-    public onGoldChange(): void {
-        if (!this._shouldShow()) {
+    protected onEnable(): void {
+        if (!this._basicInfo) return;
+        this._bindEvents();
+        this._refreshUI();
+    }
+
+    protected onDisable(): void {
+        unBindEventsAll(this);
+        this._resetVisual();
+    }
+
+    private _bindEvents(): void {
+        autoBindEvents(this, { basic: this._basicInfo });
+    }
+
+    /** 1129 奖池变化：滚动到最新金额（displayPool 单位分，来自事件参数） */
+    @bindEvent(TexasGameRoomDataBasic.JACKPOT_CHANGE, { dataSource: 'basic', initIgnore: true })
+    private onJackpotPoolChange(hasJackpot: boolean, displayPool: number): void {
+        if (!hasJackpot) {
             this._hideUI();
             return;
         }
         const from = this._getCurrentDisplayGold();
         this._showUI(false);
-        this._rollGold(from, this._getDisplayGoldValue(), 3);
+        this._rollGold(from, JackpotFeature._toDisplayValue(displayPool), 3);
     }
 
-    /** 自己坐下后的开场动画，结束后金额从 0 滚动到当前值 */
-    public playStartAnim(): void {
-        if (!this._shouldShow()) {
+    /** 自己坐下后的开场动画，结束后金额从 0 滚动到事件带来的当前值 */
+    @bindEvent(TexasGameRoomDataBasic.JACKPOT_START_ANIM, { dataSource: 'basic', initIgnore: true })
+    private onJackpotStartAnim(hasJackpot: boolean, displayPool: number): void {
+        if (!hasJackpot) {
             this._hideUI();
             return;
         }
-        const animRoot = this.host.animRoot;
+        this._startAnimRollTarget = JackpotFeature._toDisplayValue(displayPool);
+        const animRoot = this.animRoot;
         const anim = animRoot?.getComponent(cc.Animation);
         if (!animRoot || !anim) {
             this._showUI();
@@ -78,8 +110,8 @@ export default class JackpotFeature {
             this._showUI();
             return;
         }
-        if (this.host.button) {
-            this.host.button.active = false;
+        if (this.jackpotButton) {
+            this.jackpotButton.active = false;
         }
         animRoot.active = true;
         anim.stop();
@@ -89,10 +121,10 @@ export default class JackpotFeature {
     }
 
     /** 点击 Jackpot 按钮 → H5 弹出奖池记录面板 */
-    public onClick(): void {
-        const basicInfo = this.roomData.basicInfo;
-        if (!this._shouldShow()) return;
-        const panelCache = JackpotFeature.panelCache.get(this.roomData.roomID) || null;
+    private onClickJackpot(): void {
+        const basicInfo = this._basicInfo;
+        if (!basicInfo?.hasJackpot) return;
+        const panelCache = JackpotFeature.panelCache.get(this._roomID) || null;
         h5MessageManager.sendToH5('showPanel', 1, {
             panelType: 'jackpotRecord',
             title: '',
@@ -113,11 +145,11 @@ export default class JackpotFeature {
         });
     }
 
-    /** 离桌/重置：停滚动、停动画、隐藏 UI */
-    public reset(): void {
+    /** 停滚动、停动画、隐藏 UI（换房/隐藏时） */
+    private _resetVisual(): void {
         this._stopGoldRoll();
         this._hideUI();
-        const animRoot = this.host.animRoot;
+        const animRoot = this.animRoot;
         const anim = animRoot?.getComponent(cc.Animation);
         anim?.off('finished', this._onStartAnimFinished, this);
         anim?.stop();
@@ -127,16 +159,16 @@ export default class JackpotFeature {
     }
 
     private _onStartAnimFinished(): void {
-        const animRoot = this.host.animRoot;
+        const animRoot = this.animRoot;
         if (animRoot && cc.isValid(animRoot)) {
             animRoot.active = false;
         }
         this._showUI(false);
-        this._rollGold(0, this._getDisplayGoldValue(), 3);
+        this._rollGold(0, this._startAnimRollTarget, 3);
     }
 
     private _refreshUI(): void {
-        if (!this._shouldShow()) {
+        if (!this._basicInfo?.hasJackpot) {
             this._hideUI();
             return;
         }
@@ -144,9 +176,9 @@ export default class JackpotFeature {
     }
 
     private async _preloadPanelData(): Promise<void> {
-        const basicInfo = this.roomData.basicInfo;
+        const basicInfo = this._basicInfo;
         const jackpotId = Number(basicInfo.jackpotID || 0);
-        const roomId = this.roomData.roomID;
+        const roomId = this._roomID;
         if (jackpotId <= 0 || roomId <= 0) {
             return;
         }
@@ -195,40 +227,33 @@ export default class JackpotFeature {
     }
 
     private _getAwardRequestKey(): string {
-        const basicInfo = this.roomData.basicInfo;
-        return [
-            Number(basicInfo.gameType || 0),
-            Number(basicInfo.pokerType || 0),
-            Number(basicInfo.betType || 0),
-            basicInfo.bombpotStatusEnabled ? 1 : 0
-        ].join('_');
-    }
-
-    private _shouldShow(): boolean {
-        return this.roomData.basicInfo.hasJackpot;
+        const basicInfo = this._basicInfo;
+        return [Number(basicInfo.gameType || 0), Number(basicInfo.pokerType || 0), Number(basicInfo.betType || 0), basicInfo.bombpotStatusEnabled ? 1 : 0].join(
+            '_'
+        );
     }
 
     private _showUI(syncLabel: boolean = true): void {
-        if (this.host.button) {
-            this.host.button.active = true;
+        if (this.jackpotButton) {
+            this.jackpotButton.active = true;
         }
-        if (this.host.animRoot) {
-            this.host.animRoot.active = false;
+        if (this.animRoot) {
+            this.animRoot.active = false;
         }
         if (syncLabel) {
-            this._setGoldLabel(`${this._getDisplayGoldValue()}`);
+            this._setGoldLabel(`${JackpotFeature._toDisplayValue(this._basicInfo?.jackpotDisplayPool || 0)}`);
         }
     }
 
     private _hideUI(): void {
-        if (this.host.button) {
-            this.host.button.active = false;
+        if (this.jackpotButton) {
+            this.jackpotButton.active = false;
         }
         this._setGoldLabel('');
     }
 
     private _setGoldLabel(value: string): void {
-        const label = this.host.goldLabel;
+        const label = this.goldLabel;
         if (!label || !label.node || !label.node.isValid) {
             return;
         }
@@ -236,12 +261,12 @@ export default class JackpotFeature {
     }
 
     /** 奖池展示值：分 → 元取整 */
-    private _getDisplayGoldValue(): number {
-        return Math.floor(Number(this.roomData.basicInfo.jackpotDisplayPool || 0) / 100);
+    private static _toDisplayValue(pool: number): number {
+        return Math.floor(Number(pool || 0) / 100);
     }
 
     private _getCurrentDisplayGold(): number {
-        const label = this.host.goldLabel;
+        const label = this.goldLabel;
         if (!label) {
             return 0;
         }

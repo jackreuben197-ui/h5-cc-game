@@ -191,12 +191,28 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public get jackpotDisplayPool(): number {
         return this.jackpotMainPool || this.jackpotPool || 0;
     }
-    /** Jackpot 奖池变化（1129 JackpotGoldChange 更新字段后触发）。 */
-    @pureEvent(TexasGameRoomDataBasic.JACKPOT_CHANGE)
-    public jackpotChangedEmit() {}
+
+    /** 更新 Jackpot 奖池并广播（1129 JackpotGoldChange / 进房、重连），赋值与通知统一走这里。 */
+    public updateJackpotPool(jackpotID: number, jackpotGold: number, jackpotMainPool: number) {
+        this.jackpotID = jackpotID;
+        this.jackpotPool = jackpotGold;
+        this.jackpotMainPool = jackpotMainPool;
+        this._jackpotChangedEmit(this.hasJackpot, this.jackpotDisplayPool);
+    }
+
     /** 自己坐下后触发 Jackpot 开场动画（对应 pokerqueen Seated → PlayJackpotStartAnim）。 */
+    public jackpotStartAnimEmit() {
+        this._jackpotStartAnimEmit(this.hasJackpot, this.jackpotDisplayPool);
+    }
+
+    /** Jackpot 奖池变化。事件参数即监听方所需全部数据，监听方不要回读 basic。displayPool 单位为分。 */
+    @pureEvent(TexasGameRoomDataBasic.JACKPOT_CHANGE)
+    private _jackpotChangedEmit(hasJackpot: boolean, displayPool: number) {}
+
+    /** Jackpot 开场动画。事件参数同上。 */
     @pureEvent(TexasGameRoomDataBasic.JACKPOT_START_ANIM)
-    public jackpotStartAnimEmit() {}
+    private _jackpotStartAnimEmit(hasJackpot: boolean, displayPool: number) {}
+
     // 下注信息会变
     @observable(TexasGameRoomDataBasic.TABLE_BET_INFO_CHANGE)
     public sbante: tableBetInfo;
