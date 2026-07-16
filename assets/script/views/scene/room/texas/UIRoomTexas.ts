@@ -80,8 +80,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private _mine: TexasGameRoomDataPlayerMine = null;
     @property({ type: cc.Node, displayName: '所有需要缩放的节点位置' })
     private scaleNode: cc.Node = null;
-    // Jackpot（节点、事件、点击都锁在 JackpotFeature 组件内）
-    @property(JackpotFeature)
+    @property({ type: JackpotFeature, displayName: 'Jackpot玩法组件 PlayType_Con' })
     private jackpotFeature: JackpotFeature = null;
     @property({ type: cc.Node, displayName: '中间区域' })
     private middleLayout: cc.Node = null;

@@ -1,4 +1,4 @@
-import { Def, InsuranceOddsForPotsUserCount, RoomJackpotConfig, SquidCountRateConfig, SubRoomConfig } from '@silenthill/agreement-web';
+import { Def, InsuranceOddsForPotsUserCount, RoomJackpotConfig, ServerMessageJackpotAward, SquidCountRateConfig, SubRoomConfig } from '@silenthill/agreement-web';
 import { bindData, IObservableBindings, observable, pureEvent } from '../../../core/decorator/DataBind';
 import { AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDisplayType';
 import { ChatType } from '../../../game/constant/ChatType';
@@ -39,6 +39,7 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public static readonly MUSHROOM_ENABLED = 'MUSHROOM_ENABLED';
     public static readonly JACKPOT_CHANGE = 'JACKPOT_CHANGE';
     public static readonly JACKPOT_START_ANIM = 'JACKPOT_START_ANIM';
+    public static readonly JACKPOT_AWARD = 'JACKPOT_AWARD';
     // 不变的信息
     // 基础信息
     public roomName: string;
@@ -192,7 +193,7 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
         return this.jackpotMainPool || this.jackpotPool || 0;
     }
 
-    /** 更新 Jackpot 奖池并广播（1129 JackpotGoldChange / 进房、重连），赋值与通知统一走这里。 */
+    // 事件参数即监听方所需全部数据（hasJackpot, displayPool 单位分），监听方不要回读 basic
     public updateJackpotPool(jackpotID: number, jackpotGold: number, jackpotMainPool: number) {
         this.jackpotID = jackpotID;
         this.jackpotPool = jackpotGold;
@@ -200,18 +201,22 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
         this._jackpotChangedEmit(this.hasJackpot, this.jackpotDisplayPool);
     }
 
-    /** 自己坐下后触发 Jackpot 开场动画（对应 pokerqueen Seated → PlayJackpotStartAnim）。 */
     public jackpotStartAnimEmit() {
         this._jackpotStartAnimEmit(this.hasJackpot, this.jackpotDisplayPool);
     }
 
-    /** Jackpot 奖池变化。事件参数即监听方所需全部数据，监听方不要回读 basic。displayPool 单位为分。 */
-    @pureEvent(TexasGameRoomDataBasic.JACKPOT_CHANGE)
+    @pureEvent(TexasGameRoomDataBasic.JACKPOT_CHANGE, {
+        initParams() {
+            return [this.hasJackpot, this.jackpotDisplayPool];
+        }
+    })
     private _jackpotChangedEmit(hasJackpot: boolean, displayPool: number) {}
 
-    /** Jackpot 开场动画。事件参数同上。 */
     @pureEvent(TexasGameRoomDataBasic.JACKPOT_START_ANIM)
     private _jackpotStartAnimEmit(hasJackpot: boolean, displayPool: number) {}
+
+    @pureEvent(TexasGameRoomDataBasic.JACKPOT_AWARD)
+    public jackpotAwardEmit(awardUsersList: ServerMessageJackpotAward.AsObject['awardUsersList']) {}
 
     // 下注信息会变
     @observable(TexasGameRoomDataBasic.TABLE_BET_INFO_CHANGE)

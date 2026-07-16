@@ -1,3 +1,4 @@
+import { ServerMessageJackpotAward } from '@silenthill/agreement-web';
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { createLogger } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
@@ -26,7 +27,7 @@ interface JackpotPanelCacheData {
  * - 奖池金额显示与滚动动画（1129 JackpotGoldChange）
  * - 自己坐下后的开场动画
  * - 点击按钮 → H5 showPanel(jackpotRecord)，附带预加载的模版/获奖记录
- * 节点、事件绑定、点击处理都锁在本组件内，UIRoomTexas 只负责 initData。
+ * - 1130 JackpotAward 中奖广播 → H5 showPanel(jackpotAward)
  */
 @ccclass
 @menu('Scene/Room/Texas/JackpotFeature')
@@ -42,8 +43,7 @@ export default class JackpotFeature extends cc.Component {
     private _basicInfo: TexasGameRoomDataBasic = null;
     private _roomID: number = 0;
     private _rollData: { value: number } | null = null;
-    /** 开场动画结束后金额滚动的目标值（元），由事件参数带入 */
-    private _startAnimRollTarget: number = 0;
+    private _startAnimRollTarget: number = 0; // 开场动画结束后金额滚动的目标值（元）
 
     protected onLoad(): void {
         if (this.jackpotButton) this.jackpotButton.on('click', this.onClickJackpot, this);
@@ -118,6 +118,17 @@ export default class JackpotFeature extends cc.Component {
         anim.off('finished', this._onStartAnimFinished, this);
         anim.on('finished', this._onStartAnimFinished, this);
         anim.play(clipName);
+    }
+
+    /** 1130 中奖广播 → H5 弹获奖面板 */
+    @bindEvent(TexasGameRoomDataBasic.JACKPOT_AWARD, { dataSource: 'basic', initIgnore: true })
+    private onJackpotAward(awardUsersList: ServerMessageJackpotAward.AsObject['awardUsersList']): void {
+        if (!awardUsersList?.length) return;
+        h5MessageManager.sendToH5('showPanel', 1, {
+            panelType: 'jackpotAward',
+            title: '',
+            props: { awardUsersList }
+        });
     }
 
     /** 点击 Jackpot 按钮 → H5 弹出奖池记录面板 */
