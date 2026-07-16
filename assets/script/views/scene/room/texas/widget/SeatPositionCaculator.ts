@@ -92,6 +92,9 @@ export class SeatPositionCaculator {
     private _map: Map<SeatPosition, positionWithScale> = new Map();
     private _containerW = 0;
     private _containerH = 0;
+    public get containerH() {
+        return this._containerH;
+    }
     private _offsetY = 0; // 中心点的向上偏移
 
     public initWithContainer(w: number, h: number, offsetY: number = 0, seatWidth: number = 270, seatHeight: number = 370) {

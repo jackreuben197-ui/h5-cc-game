@@ -414,6 +414,7 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         roomData.basicInfo.clubID = this._roomInfo.clubId;
         roomData.basicInfo.tribeID = this._roomInfo.tribeId;
         roomData.basicInfo.originType = this._roomInfo.originType;
+        roomData.basicInfo.shareTable = this._roomInfo.shareTable;
         roomData.basicInfo.limitIP = this._roomInfo.limitIpOn > 0;
         roomData.basicInfo.limitGPS = this._roomInfo.limitGpsOn > 0;
         roomData.basicInfo.setRandomAnte(this._roomInfo.randomAnte);

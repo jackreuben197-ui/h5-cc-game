@@ -3,50 +3,43 @@
  * @description 钻石配置代号
  */
 export enum DiamondConfigType {
-    NONE = 0,
-    /** 创建牌桌 */
-    CREATE_TABLE = 1,
-    /** 牌桌内加时 */
-    ADD_TIME = 2,
-    /** 语音桌 */
-    AUDIO_TABLE = 3,
-    /** 人脸识别桌 */
-    FACE_VERIFICATION = 4,
-    /** 视频桌（全时长） */
-    VIDEO_FULL_TIME = 5,
-    /** 视频桌（随机验证） */
-    VIDEO_RANDOM = 6,
-    /** 视频桌（麦序） */
-    VIDEO_SEQUENCE = 7,
-    /** 延迟看牌 */
-    DELAY_LOOK = 8,
-    /** 聊天 */
-    CHAT = 10,
-    /** 区块链 */
-    BLOCKCHAIN = 18,
-    /** 麻将 */
-    MAHJONG = 19,
-    /** 保险 */
-    INSURANCE = 22,
-    IP = 23,
-    GPS = 24,
-    /** 暴击 */
-    CRIT = 25,
-    /** 蘑菇 */
-    MUSH = 26,
-    /** 鱿鱼 */
-    SQUID = 27,
-    JACKPOT = 28,
-    /** 牛仔 */
-    Cowboy = 29,
-    /** 看全部公牌 */
-    ViewAllPublicCards = 31,
-    /** 麻将语音 */
-    MahjongAudio = 32,
-    /** 麻将视频全时长 */
-    MahjongVideoFullTime = 33,
-    /** 麻将视频随机验证 */
-    MahjongVideoRandom = 34,
-    /** 麻将视频麦序 */
-    MahjongVideoSequence = 35
+    DiamondConfigTypeCreateRoom = 1, // 创建房间
+    DiamondConfigTypeAddTime, //延时
+    DiamondConfigTypeAudio, //语音桌
+    DiamondConfigTypeFace, //人脸识别桌
+    DiamondConfigTypeVideoFull, //视频桌（全时长）
+    DiamondConfigTypeVideoRandom, //视频桌（随机验证）
+    DiamondConfigTypeVideoOrder, //视频桌（麦序）
+    DiamondConfigTypeViewPublicCards, //查看公共牌
+    DiamondConfigTypeRecordFee, //记录费
+    DiamondConfigTypeRoomChat, //牌桌聊天室
+    DiamondConfigTypeCreateMtt, //创建MTT
+    DiamondConfigTypeMttVideoFull, //mtt视频（全时长）
+    DiamondConfigTypeMttVideoRandom, //mtt视频（随机验证）
+    DiamondConfigTypeMttVideoOrder, //mtt视频（麦序）
+    DiamondConfigTypePayWatchOtherCard = 17, // 付费看手牌(看单人)
+    DiamondConfigTypeEncryptCards, // 加密洗牌/切牌
+    DiamondConfigTypeCreateMahjongRoom, // 创建麻将房间
+    DiamondConfigTypeCreatGuandanRoom, // 创建掼蛋房间
+    DiamondConfigTypeTribePayWatchCard, // 联盟付费看手牌
+    DiamondConfigTypeRoomInsurance, // 牌桌保险
+    DiamondConfigTypeRoomLimitIP, // 牌桌IP限制
+    DiamondConfigTypeRoomLimitGPS, // 牌桌gps限制
+    DiamondConfigTypeRoomCriticalHit, // 牌桌暴击
+    DiamondConfigTypeRoomMushroom, // 牌桌蘑菇
+    DiamondConfigTypeRoomSquid, // 牌桌鱿鱼
+    DiamondConfigTypeRoomJackpot, // 牌桌jackpot
+    DiamondConfigTypeCreateCowboyRoom, // 创建牛仔房间
+    DiamondConfigTypePayWatchOtherCardWatchAll, // 付费看手牌（看全部）
+    DiamondConfigTypeViewPublicCardsAll, // 查看公共牌(全看)
+    DiamondConfigTypeMahjongAudio, // 麻将语音桌
+    DiamondConfigTypeMahjongVideoFull, // 麻将视频桌（全时长）
+    DiamondConfigTypeMahjongVideoRandom, // 麻将视频桌（随机验证）
+    DiamondConfigTypeMahjongVideoOrder, // 麻将视频桌（麦序）
+    DiamondConfigTypeMTTChat, // MTT牌桌聊天收费（十位数是座位数，个位数是货币类型）
+    DiamondConfigTypeMttAudio, // MTT语音桌
+    DiamondConfigTypeMJCreateMtt, //创建麻将MTT
+    DiamondConfigTypeMJMttVideoFull, //麻将mtt视频（全时长）
+    DiamondConfigTypeMJMttVideoRandom, //麻将mtt视频（随机验证）
+    DiamondConfigTypeMJMttVideoOrder //麻将mtt视频（麦序）
 }

@@ -523,6 +523,68 @@ export default class TexasTableEvent {
         });
     }
 
+    public static AddTime(player: TexasGameRoomDataPlayerMine, alreadyDelayTimes: number) {
+        ProtocolAgency.Send({
+            code: Code.MSG_D_ADD_TIME,
+            roomID: player.roomData.roomID,
+            matchID: player.roomData.matchID,
+            body: {
+                room: {
+                    roomId: player.roomData.roomID,
+                    matchId: player.roomData.matchID
+                },
+                consume: alreadyDelayTimes > 0 ? Def.ConsumeType.CT_DELAY_2 : Def.ConsumeType.CT_EMOJI_3,
+                directConsume: false
+            }
+        });
+    }
+
+    public static ShowPublicCards(player: TexasGameRoomDataPlayerMine, round: Def.RoundMap[keyof Def.RoundMap]) {
+        ProtocolAgency.Send({
+            code: Code.MSG_D_SHOW_PUBLIC_CARDS,
+            roomID: player.roomData.roomID,
+            matchID: player.roomData.matchID,
+            body: {
+                room: {
+                    roomId: player.roomData.roomID,
+                    matchId: player.roomData.matchID
+                },
+                round: round,
+                consume: Def.ConsumeType.CT_VC_2
+            }
+        });
+    }
+
+    public static ViewPlayerCards(player: TexasGameRoomDataPlayerMine) {
+        ProtocolAgency.Send({
+            code: Code.MSG_D_VIEW_PLAYER_CARDS,
+            roomID: player.roomData.roomID,
+            matchID: player.roomData.matchID,
+            body: {
+                room: {
+                    roomId: player.roomData.roomID,
+                    matchId: player.roomData.matchID
+                },
+                targetSeatId: 0,
+                targetUserRid: 0
+            }
+        });
+    }
+
+    public static ViewPlayerCardsNum(player: TexasGameRoomDataPlayerMine) {
+        ProtocolAgency.Send({
+            code: Code.MSG_D_VIEW_PLAYER_CARDS_NUM,
+            roomID: player.roomData.roomID,
+            matchID: player.roomData.matchID,
+            body: {
+                room: {
+                    roomId: player.roomData.roomID,
+                    matchId: player.roomData.matchID
+                }
+            }
+        });
+    }
+
     /** 牌谱回放:内存缓存 → 持久缓存(H5 侧 game_replays) → 服务端(回包走 PublicReplay 1018 写数据) */
     public static async RequestReplay(roomData: TexasGameRoomData, handNum: number): Promise<void> {
         const cached = roomData.replay.getCached(handNum);
