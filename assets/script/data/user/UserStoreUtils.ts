@@ -27,10 +27,7 @@ export default class UserStoreUtils {
                 web_class: WebMiscCombine,
                 body,
                 juhua: false,
-                useCache: true,
-                timeoutRetryCount: 3,
-                timeoutRetryIntervalMs: 30000,
-                timeoutMs: 30000
+                useCache: true
             });
         } catch (error) {
             if (error === 'timeout') return;

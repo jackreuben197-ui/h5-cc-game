@@ -1,7 +1,7 @@
 /**
  * Http请求接口
  */
-import HttpRequest from './HttpRequest';
+import HttpRequest, {HttpRequestParams} from './HttpRequest';
 import WebApiCacheCenter, { WebApiCacheContext } from './WebApiCacheCenter';
 
 export class WebCommon {
@@ -86,7 +86,7 @@ export class WWW {
         while (true) {
             try {
                 return await new Promise<T>((resolve, reject) => {
-                    let obj: any = {
+                    let obj: HttpRequestParams = {
                         request: param.web_class,
                         body: param.web_class.Request(param.body),
                         onSuccess: function () {
@@ -98,7 +98,8 @@ export class WWW {
                         juhua: param.juhua,
                         useCache: !!param.useCache,
                         silentTimeout: timeoutRetryCount > 0,
-                        timeoutMs: param.timeoutMs
+                        timeoutMs: param.timeoutMs,
+                        waitForNetwork: timeoutRetryCount > 0
                     };
                     (param.api_id ?? 0) > 0 && (obj.api = param.web_class.API.replace('{id}', `${param.api_id}`));
                     let headers = [];

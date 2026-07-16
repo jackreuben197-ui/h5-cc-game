@@ -524,6 +524,26 @@ export default class TexasTableEvent {
     }
 
     public static AddTime(player: TexasGameRoomDataPlayerMine, alreadyDelayTimes: number) {
+        let consume: Def.ConsumeTypeMap[keyof Def.ConsumeTypeMap] = Def.ConsumeType.CT_NONE;
+        switch (alreadyDelayTimes) {
+            case 0:
+            case 1:
+            case 2:
+                consume = Def.ConsumeType.CT_DELAY_2;
+                break;
+            case 3:
+                consume = Def.ConsumeType.CT_DELAY_3;
+                break;
+            case 4:
+                consume = Def.ConsumeType.CT_DELAY_4;
+                break;
+            case 5:
+                consume = Def.ConsumeType.CT_DELAY_5;
+                break;
+            default:
+                consume = Def.ConsumeType.CT_DELAY_6;
+                break;
+        }
         ProtocolAgency.Send({
             code: Code.MSG_D_ADD_TIME,
             roomID: player.roomData.roomID,
@@ -533,7 +553,7 @@ export default class TexasTableEvent {
                     roomId: player.roomData.roomID,
                     matchId: player.roomData.matchID
                 },
-                consume: alreadyDelayTimes > 0 ? Def.ConsumeType.CT_DELAY_2 : Def.ConsumeType.CT_EMOJI_3,
+                consume: consume,
                 directConsume: false
             }
         });
