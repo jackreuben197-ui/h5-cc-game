@@ -28,6 +28,8 @@ type HttpRequestParams = {
     isGet?: boolean;
     juhua?: boolean;
     useCache?: boolean;
+    silentTimeout?: boolean;
+    timeoutMs?: number;
 };
 
 /**
@@ -46,7 +48,9 @@ export default class HttpRequest {
         isJson = true,
         isGet = false,
         juhua = true,
-        useCache = false
+        useCache = false,
+        silentTimeout = false,
+        timeoutMs
     }: HttpRequestParams) {
         const host = cuscomHost || GameConfig.Network.WebHost || '';
         const finalApi = api || request?.API || '';
@@ -154,7 +158,9 @@ export default class HttpRequest {
             needJuhua: needJuhua,
             isJson: isJson,
             needConsole: needConsole,
-            api: finalApi
+            api: finalApi,
+            silentTimeout,
+            timeoutMs
         });
     }
 
