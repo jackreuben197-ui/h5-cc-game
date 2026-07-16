@@ -41,6 +41,12 @@ export default class OtherBindings extends cc.Component {
     private hideVideoOpenBtn: cc.Node = null;
     @property({ type: cc.Node, displayName: '远端视频控制节点(close)' })
     private hideVideoCloseBtn: cc.Node = null;
+    @property({ type: cc.Button, displayName: '偷偷看' })
+    private viewPlayerCards: cc.Button = null;
+    private _viewPlayerCardsCost: number;
+    @property({ type: cc.Button, displayName: '发发看' })
+    private viewPublicCards: cc.Button = null;
+    private _viewPublicCardsCost: number;
     private _roomData: TexasGameRoomData;
 
     public initData(roomID: number, matchID: number) {
@@ -56,10 +62,13 @@ export default class OtherBindings extends cc.Component {
         this.btnAudio.node.on('click', this.onClickLocalMicrophoneBtn, this);
         this.btnCamera.node.on('click', this.onClickLocalCameraBtn, this);
         // 远端音视频控制事件注册
-        this.muteMicOpenBtn?.on('click', this.onClickRemoteMicrophoneOn, this);
-        this.muteMicCloseBtn?.on('click', this.onClickReomteMicrophoneOff, this);
-        this.hideVideoOpenBtn?.on('click', this.onClickRemoteCameraOn, this);
-        this.hideVideoCloseBtn?.on('click', this.onClickRemoteCameraOff, this);
+        this.muteMicOpenBtn.on('click', this.onClickRemoteMicrophoneOn, this);
+        this.muteMicCloseBtn.on('click', this.onClickReomteMicrophoneOff, this);
+        this.hideVideoOpenBtn.on('click', this.onClickRemoteCameraOn, this);
+        this.hideVideoCloseBtn.on('click', this.onClickRemoteCameraOff, this);
+        //
+        this.viewPlayerCards.node.on('click', this.onCLickViewPlayerCards, this);
+        this.viewPublicCards.node.on('click', this.onClickViewPublicCards, this);
     }
 
     public onEnable(): void {
@@ -345,6 +354,14 @@ export default class OtherBindings extends cc.Component {
                 mine.realShowMaskID = oldMaskId;
             }
         }
+    }
+
+    private onCLickViewPlayerCards() {
+
+    }
+
+    private onClickViewPublicCards() {
+        
     }
 
     /** 远端音频：openBtn 被点击 → 关闭（静音远端） */

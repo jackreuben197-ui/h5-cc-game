@@ -1,4 +1,4 @@
-import { ClientMessageSeated, Code, Def, PotInsuranceBuy, RoomInfo } from '@silenthill/agreement-web';
+import { ClientMessageSeated, ClientMessageShowPublicCards, ClientMessageViewPlayerCards, Code, Def, PotInsuranceBuy, RoomInfo } from '@silenthill/agreement-web';
 import { traceClass } from '../../../../../core/decorator/LogTrace';
 import TexasGameRoomData from '../../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataChat from '../../../../../data/room/texas/TexasGameRoomDataChat';
@@ -535,6 +535,53 @@ export default class TexasTableEvent {
                 },
                 consume: alreadyDelayTimes > 0 ? Def.ConsumeType.CT_DELAY_2 : Def.ConsumeType.CT_EMOJI_3,
                 directConsume: false
+            }
+        });
+    }
+
+    public static ShowPublicCards(player:TexasGameRoomDataPlayerMine, round: Def.RoundMap[keyof Def.RoundMap]) {
+        ProtocolAgency.Send({
+            code:  Code.MSG_D_SHOW_PUBLIC_CARDS,
+            roomID: player.roomData.roomID,
+            matchID: player.roomData.matchID,
+            body: {
+                room: {
+                    roomId: player.roomData.roomID,
+                    matchId: player.roomData.matchID
+                },
+                round:round,
+                consume:  Def.ConsumeType.CT_VC_2,
+            }
+        });
+    }
+
+
+    public static ViewPlayerCards(player:TexasGameRoomDataPlayerMine) {
+        ProtocolAgency.Send({
+            code:  Code.MSG_D_VIEW_PLAYER_CARDS,
+            roomID: player.roomData.roomID,
+            matchID: player.roomData.matchID,
+            body: {
+                room: {
+                    roomId: player.roomData.roomID,
+                    matchId: player.roomData.matchID
+                },
+                targetSeatId: 0,
+                targetUserRid: 0,
+            }
+        });
+    }
+
+    public static ViewPlayerCardsNum(player:TexasGameRoomDataPlayerMine) {
+        ProtocolAgency.Send({
+            code:  Code.MSG_D_VIEW_PLAYER_CARDS_NUM,
+            roomID: player.roomData.roomID,
+            matchID: player.roomData.matchID,
+            body: {
+                room: {
+                    roomId: player.roomData.roomID,
+                    matchId: player.roomData.matchID
+                },
             }
         });
     }
