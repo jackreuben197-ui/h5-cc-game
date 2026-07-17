@@ -277,6 +277,12 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
 
     public _showWalletArea(b: boolean) {
         this.walletArea.active = b;
+        // 显示钱包选择，则保证一般确认按钮显示
+        if (b) {
+            this.buttonCommit2.node.parent.active = false;
+        } else {
+            this.buttonCommit2.node.parent.active = true;
+        }
     }
 
     public _showBringInArea(b: boolean) {
