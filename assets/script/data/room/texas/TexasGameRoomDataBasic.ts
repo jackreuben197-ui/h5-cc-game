@@ -100,6 +100,7 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
         return this._tableCategory;
     }
     public set roomType(r: number) {
+        this._roomType = r;
         const { gameType, pokerType, betType, isMTT } = GameplayUtil.RoomTypeExtract(r);
         this.gameType = gameType;
         this._tableCategory = GameTypeToTableCategory(gameType);
@@ -155,7 +156,7 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
         const confgExt = diamondModel.getDiamondConfigTypeExt(this.originType, this.shareTable, this.isMtt, times);
         await diamondModel.reqDiamondConfig(dct);
         const config = diamondModel.getDiamondConfig(confgExt, dct);
-        this.tracelog.debug('ext', confgExt, dct, config);
+        this.tracelog.debug('ext', confgExt, dct, config, this.isMtt, this._roomType);
         if (!config || !config.setting || config.setting.length == 0) {
             return 0;
         }

@@ -25,6 +25,10 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public static readonly AUTO_OPERATION_TYPE_CHANGE = 'AUTO_OPERATION_TYPE_CHANGE';
     public static readonly VALID_AUTO_OPERATIONS_CHANGE = 'VALID_AUTO_OPERATIONS_CHANGE';
     public static readonly SHOW_SQUID_IN = 'SHOW_SQUID_IN';
+    public static readonly SHOW_VIEW_PLAYER_CARDS_BUTTON = 'SHOW_VIEW_PLAYER_CARDS_BUTTON';
+    public static readonly VIEW_PLAYER_CARDS_COST = 'VIEW_PLAYER_CARDS_COST';
+    public static readonly SHOW_VIEW_PUBLIC_CARDS_BUTTON = 'SHOW_VIEW_PUBLIC_CARDS_BUTTON';
+    public static readonly VIEW_PUBLIC_CARDS_COST = 'VIEW_PUBLIC_CARDS_COST';
     public static readonly LOCAL_CAMERA_STATE_CHANGE = 'LOCAL_CAMERA_STATE_CHANGE';
     public static readonly LOCAL_CAMERA_BTN_STATE_CHANGE = 'LOCAL_CAMERA_BTN_STATE_CHANGE';
     public static readonly LOCAL_CAMERA_STATE_CHANGE_DELAY = 'LOCAL_CAMERA_STATE_CHANGE_DELAY';
@@ -187,6 +191,14 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
 
     @observable(TexasGameRoomDataPlayerMine.SHOW_SQUID_IN)
     public showSquidInButton: boolean = false;
+    @observable(TexasGameRoomDataPlayerMine.SHOW_VIEW_PLAYER_CARDS_BUTTON, { forceEmit: true })
+    public showViewPlayerCardsButton: boolean = false;
+    @observable(TexasGameRoomDataPlayerMine.VIEW_PLAYER_CARDS_COST)
+    public viewPlayerCardsCost: number = 0;
+    @observable(TexasGameRoomDataPlayerMine.SHOW_VIEW_PUBLIC_CARDS_BUTTON, { forceEmit: true })
+    public showViewPublicCardsButton: boolean = false;
+    @observable(TexasGameRoomDataPlayerMine.VIEW_PUBLIC_CARDS_COST)
+    public viewPublicCardsCost: number = 0;
     public isPlaying: boolean = false;
 
     /** 计算当前能带入的上下限 */
@@ -270,6 +282,8 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
 
     public handStart() {
         this.isPlaying = true;
+        this.showViewPlayerCardsButton = false;
+        this.showViewPublicCardsButton = false;
     }
 
     public handEnd() {
@@ -281,6 +295,8 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
 
     public handClear() {
         this.handValueType = '';
+        this.showViewPlayerCardsButton = false;
+        this.showViewPublicCardsButton = false;
     }
 
     public clearData() {
@@ -291,6 +307,8 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
         this.deposit = 0;
         //this.unmuteEvents();
         this.handValueType = '';
+        this.showViewPlayerCardsButton = false;
+        this.showViewPublicCardsButton = false;
         this.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
         this.autoOperationType = AutoOperationTypeTexas.NO;
     }

@@ -1,3 +1,4 @@
+import { Def } from '@silenthill/agreement-web';
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
@@ -9,6 +10,7 @@ import agoraManager from '../../../../net/agora/AgoraManager';
 import { WebUserSetVideoMask, WWW } from '../../../../net/https/WebRequest';
 import UIViewUtil from '../../../util/UIViewUtil';
 import SpriteSwitcher from '../../../widget/SpriteSwitcher';
+import TexasTableEvent from './events/TexasTableEvent';
 
 const { ccclass, property, menu } = cc._decorator;
 
@@ -41,6 +43,14 @@ export default class OtherBindings extends cc.Component {
     private hideVideoOpenBtn: cc.Node = null;
     @property({ type: cc.Node, displayName: '远端视频控制节点(close)' })
     private hideVideoCloseBtn: cc.Node = null;
+    @property({ type: cc.Button, displayName: '偷偷看' })
+    private viewPlayerCards: cc.Button = null;
+    @property({ type: cc.Label, displayName: '偷偷看花费' })
+    private viewPlayerCardsCost: cc.Label = null;
+    @property({ type: cc.Button, displayName: '发发看' })
+    private viewPublicCards: cc.Button = null;
+    @property({ type: cc.Label, displayName: '发发看花费' })
+    private viewPublicCardsCost: cc.Label = null;
     private _roomData: TexasGameRoomData;
 
     public initData(roomID: number, matchID: number) {
@@ -56,10 +66,13 @@ export default class OtherBindings extends cc.Component {
         this.btnAudio.node.on('click', this.onClickLocalMicrophoneBtn, this);
         this.btnCamera.node.on('click', this.onClickLocalCameraBtn, this);
         // 远端音视频控制事件注册
-        this.muteMicOpenBtn?.on('click', this.onClickRemoteMicrophoneOn, this);
-        this.muteMicCloseBtn?.on('click', this.onClickReomteMicrophoneOff, this);
-        this.hideVideoOpenBtn?.on('click', this.onClickRemoteCameraOn, this);
-        this.hideVideoCloseBtn?.on('click', this.onClickRemoteCameraOff, this);
+        this.muteMicOpenBtn.on('click', this.onClickRemoteMicrophoneOn, this);
+        this.muteMicCloseBtn.on('click', this.onClickReomteMicrophoneOff, this);
+        this.hideVideoOpenBtn.on('click', this.onClickRemoteCameraOn, this);
+        this.hideVideoCloseBtn.on('click', this.onClickRemoteCameraOff, this);
+        //
+        this.viewPlayerCards.node.on('click', this.onCLickViewPlayerCards, this);
+        this.viewPublicCards.node.on('click', this.onClickViewPublicCards, this);
     }
 
     public onEnable(): void {
@@ -75,6 +88,28 @@ export default class OtherBindings extends cc.Component {
         autoBindEvents(this, {
             mine: this._roomData.mine
         });
+    }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.SHOW_VIEW_PLAYER_CARDS_BUTTON, 'mine')
+    private onShowViewPlayerCardsButtonChanged(show: boolean): void {
+        this.viewPlayerCards.node.active = show;
+        this.viewPlayerCards.interactable = show;
+    }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.VIEW_PLAYER_CARDS_COST, 'mine')
+    private onUpdateViewPlayerCardsCost(cost: number): void {
+        this.viewPlayerCardsCost.string = cost + '';
+    }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.SHOW_VIEW_PUBLIC_CARDS_BUTTON, 'mine')
+    private onShowViewPublicCardsButtonChanged(show: boolean): void {
+        this.viewPublicCards.node.active = show;
+        this.viewPublicCards.interactable = show;
+    }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.VIEW_PUBLIC_CARDS_COST, 'mine')
+    private onUpdateViewPublicCardsCost(cost: number): void {
+        this.viewPublicCardsCost.string = cost + '';
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE, 'mine')
@@ -345,6 +380,34 @@ export default class OtherBindings extends cc.Component {
                 mine.realShowMaskID = oldMaskId;
             }
         }
+    }
+
+    private onCLickViewPlayerCards() {
+        if (!this._roomData || !this._roomData.mine.showViewPlayerCardsButton) return;
+        this.viewPlayerCards.interactable = false;
+        TexasTableEvent.ViewPlayerCards(this._roomData.mine);
+    }
+
+    private onClickViewPublicCards() {
+        if (!this._roomData || !this._roomData.mine.showViewPublicCardsButton) return;
+        const publicCardCount = this._roomData.publicCards.publicCards.length;
+        if (publicCardCount >= 5) {
+            this._roomData.mine.showViewPublicCardsButton = false;
+            return;
+        }
+        let round: Def.RoundMap[keyof Def.RoundMap];
+        if (publicCardCount == 0) {
+            round = Def.Round.FLOP;
+        } else if (publicCardCount == 3) {
+            round = Def.Round.TURN;
+        } else if (publicCardCount == 4) {
+            round = Def.Round.RIVER;
+        } else {
+            this._roomData.mine.showViewPublicCardsButton = false;
+            return;
+        }
+        this.viewPublicCards.interactable = false;
+        TexasTableEvent.ShowPublicCards(this._roomData.mine, round);
     }
 
     /** 远端音频：openBtn 被点击 → 关闭（静音远端） */

@@ -99,7 +99,7 @@ export class DiamondModel {
     }
 
     public getDiamondConfigTypeExt(originType: number, share: number, isMTT: boolean, addTimeTimes: number): number {
-        const last = isMTT ? 0 : 1;
+        const last = isMTT ? 1 : 0;
         // 不区分共享桌的币种
         if (share >= 2) {
             share = 2;

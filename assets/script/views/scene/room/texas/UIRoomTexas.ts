@@ -84,6 +84,9 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private jackpotFeature: JackpotFeature = null;
     @property({ type: cc.Node, displayName: '中间区域' })
     private middleLayout: cc.Node = null;
+    @property({ type: cc.Button, displayName: '带入筹码按钮右上角' })
+    private bringInButton: cc.Button = null;
+    private _roomData: TexasGameRoomData = null;
 
     protected onLoad(): void {
         //菜单项
@@ -104,7 +107,13 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         // main_menu 按钮事件注册
         if (this.btnEmoji) this.btnEmoji.node.on('click', this.onClickBtnEmoji, this);
         this.chatBtn.on('click', this.onClickChatBtn, this);
+        // bring in
+        this.bringInButton.node.on('click', this.onClickBringIn, this);
         this._setChatAlertVisible(false);
+    }
+
+    private onClickBringIn() {
+        TexasTableEvent.BringIn(this._roomData.mine);
     }
 
     private onClickReport = () => {
@@ -161,6 +170,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
 
     async initialize(param: UIRoomTexasEnterParam) {
         const roomData = roomDataManager.getRoomData<TexasGameRoomData>(param.roomID, param.matchID);
+        this._roomData = roomData;
         this._mine = roomData.mine;
         autoBindEvents(this, { chat: roomData.chat, mine: roomData.mine });
         this.btnSafetyGuard.node.active = roomData.basicInfo.tribeID > 0;
@@ -195,6 +205,16 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     @bindEvent(TexasGameRoomDataChat.NEW_MESSAGE_ALERT_CHANGED, 'chat')
     private onChatAlertChanged(hasNewMessageAlert: boolean): void {
         this._setChatAlertVisible(hasNewMessageAlert);
+    }
+
+    //(优先于seated执行保证展示正确)
+    @bindEvent(TexasGameRoomDataPlayerMine.SEATNO_CHANGED, 'mine')
+    private onUpdateSeated(seatNo: number) {
+        if (seatNo == 0) {
+            this.bringInButton.node.active = false;
+            return;
+        }
+        this.bringInButton.node.active = true;
     }
 
     private _setChatAlertVisible(visible: boolean): void {
