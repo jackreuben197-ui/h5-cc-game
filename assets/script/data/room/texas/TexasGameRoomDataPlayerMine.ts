@@ -40,6 +40,7 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public static readonly RANDOM_VIDEO_ACTIVE_CHANGE = 'RANDOM_VIDEO_ACTIVE_CHANGE';
     public static readonly RANDOM_VIDEO_END_TIME_CHANGE = 'RANDOM_VIDEO_END_TIME_CHANGE';
     public static readonly ROOM_ADMIN_PERMISSIONS_CHANGE = 'ROOM_ADMIN_PERMISSIONS_CHANGE';
+    public static readonly CALL_TIME_CHANGE = 'CALL_TIME_CHANGE';
     private _roomData: TexasGameRoomData;
     public get roomData() {
         return this._roomData;
@@ -148,10 +149,12 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
         this.tmpCurrentWalletClubID = v;
     }
     public tmpCurrentWalletClubID: number = 0;
-    // calltime手数
+    // calltime当前连续手数
+    @observable(TexasGameRoomDataPlayerMine.CALL_TIME_CHANGE)
     public callTimeCount: number = 0;
-    // callTimeStay 满足条件了是否必须还得留下
-    public callTimeStay: number = 0;
+    // callTimeStay 满足盈利条件后是否必须留桌打满手数
+    @observable(TexasGameRoomDataPlayerMine.CALL_TIME_CHANGE)
+    public callTimeStay: boolean = false;
     // public videoMaskId: number = 0;
     @observable(TexasGameRoomDataPlayerMine.HAND_VALUE_TYPE_CHANGE)
     public handValueType: string = '';
@@ -311,6 +314,8 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
         this.showViewPublicCardsButton = false;
         this.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
         this.autoOperationType = AutoOperationTypeTexas.NO;
+        this.callTimeCount = 0;
+        this.callTimeStay = false;
     }
 }
 

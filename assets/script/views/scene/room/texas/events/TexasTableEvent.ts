@@ -11,6 +11,7 @@ import { GameType } from '../../../../../game/constant/LogicTypeConf';
 import ProcedureDefine from '../../../../../game/procedure/ProcedureDefine';
 import ProcedureManager from '../../../../../game/procedure/ProcedureManager';
 import h5MessageManager from '../../../../../H5MsgMgr';
+import { StringHelper } from '../../../../../helper/StringHelper';
 import { CPErrorCode } from '../../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../../i18n/i18nMgr';
 import agoraManager from '../../../../../net/agora/AgoraManager';
@@ -398,6 +399,25 @@ export default class TexasTableEvent {
             ProcedureManager.StartProcedure(ProcedureDefine.Return); // 直接离开 不做处理
             return;
         }
+        const basicInfo = player.roomData.basicInfo;
+        // CallTime 触发中: 盈利达标但手数未打满, 离开会进入系统托管, 需要玩家确认
+        if (basicInfo.hasCallTime && player.callTimeStay) {
+            viewManager.openDialog('ConfirmOrNotice', {
+                content: StringHelper.Format(i18nMgr.Get('UICallTimeQuitRoom'), [
+                    basicInfo.callTimeWinline,
+                    basicInfo.callTimeLimit,
+                    basicInfo.callTimeWinline
+                ]),
+                commit: i18nMgr.Get('UITexas_LeaveTheTable'),
+                cancel: CPErrorCode.LanguageDescription(10013),
+                commit_click: () => TexasTableEvent._sendLeave(player)
+            });
+            return;
+        }
+        TexasTableEvent._sendLeave(player);
+    }
+
+    private static _sendLeave(player: TexasGameRoomDataPlayerMine) {
         if (h5MessageManager.handshakeDone) {
             //GameCache.Instance.isActiveLeaving = true;
             ProtocolAgency.Send({
