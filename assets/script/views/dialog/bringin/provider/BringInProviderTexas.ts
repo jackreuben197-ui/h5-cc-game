@@ -25,8 +25,10 @@ export class BringInProviderTexas extends BringInProvider {
         this._commitFn = commitFn;
     }
 
+    @traceMethod({ level: 'debug' })
     protected beforeBind(): void {
         this._ui._showBalance(this._data.roomData.basicInfo.bringInType);
+        this.tracelog.debug('bringType', this._data.roomData.basicInfo.bringInType);
         switch (this._data.roomData.basicInfo.bringInType) {
             case 1:
                 this._ui._showWalletArea(true);
