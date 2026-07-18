@@ -16,6 +16,7 @@ interface TexasGameRoomDataPlayerMine extends IObservableBindings<TexasGameRoomD
 @traceClass()
 class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public static readonly STORECHIPS_CHANGE = 'STORECHIPS_CHANGE';
+    public static readonly STORE_CHIPS_RESULT = 'STORE_CHIPS_RESULT';
     public static readonly PREPARE_OPERATION_MINE = 'PREPARE_OPERATION_MINE';
     public static readonly TOTAL_CHIPS = 'TOTAL_CHIPS'; // 在这个牌桌上的所有输赢的总和
     public static readonly TABLE_USER_DEPOSIT = 'TABLE_USER_DEPOSIT';
@@ -52,6 +53,10 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
 
     @observable(TexasGameRoomDataPlayerMine.STORECHIPS_CHANGE)
     public storeChips: number = 0;
+
+    @pureEvent(TexasGameRoomDataPlayerMine.STORE_CHIPS_RESULT)
+    public storeChipsResult(status: number) {}
+
     @observable(TexasGameRoomDataPlayerMine.PREPARE_OPERATION_MINE)
     public operator: OperatorMine = null;
     @observable(TexasGameRoomDataPlayerMine.TOTAL_CHIPS)
