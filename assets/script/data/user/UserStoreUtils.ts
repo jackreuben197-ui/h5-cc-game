@@ -21,12 +21,18 @@ export default class UserStoreUtils {
         const body = new HttpMiscCombine.RequestData();
         body.api_list = [WebMiscCombine.ApiType.CHAT_PROP_LIST];
         body.get_chat_shop_prop_list_req = propRequest;
-        const res = await WWW.Instance.CommonAPI<HttpMiscCombine.ResponseData>({
-            web_class: WebMiscCombine,
-            body,
-            juhua: false,
-            useCache: true
-        });
+        let res: HttpMiscCombine.ResponseData;
+        try {
+            res = await WWW.Instance.CommonAPI<HttpMiscCombine.ResponseData>({
+                web_class: WebMiscCombine,
+                body,
+                juhua: false,
+                useCache: true
+            });
+        } catch (error) {
+            if (error === 'timeout') return;
+            throw error;
+        }
         if (res.code != 0) {
             UserStoreUtils.tracelog.error('get prop list by HttpMiscCombine error', res.code);
             return;

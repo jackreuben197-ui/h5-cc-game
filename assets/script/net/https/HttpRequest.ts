@@ -17,7 +17,7 @@ type HttpCallback = Function | null;
 
 type HttpHeaders = Array<[string, string]> | any[] | null;
 
-type HttpRequestParams = {
+export type HttpRequestParams = {
     api?: string | null;
     request?: any;
     body?: any;
@@ -29,6 +29,9 @@ type HttpRequestParams = {
     isGet?: boolean;
     juhua?: boolean;
     useCache?: boolean;
+    silentTimeout?: boolean;
+    timeoutMs?: number;
+    waitForNetwork?: boolean;
 };
 
 /**
@@ -47,7 +50,10 @@ export default class HttpRequest {
         isJson = true,
         isGet = false,
         juhua = true,
-        useCache = false
+        useCache = false,
+        silentTimeout = false,
+        timeoutMs,
+        waitForNetwork = false
     }: HttpRequestParams) {
         const host = cuscomHost || GameConfig.Network.WebHost || '';
         const finalApi = api || request?.API || '';
@@ -93,7 +99,7 @@ export default class HttpRequest {
                   : WebApiCacheCenter.DEFAULT_SKIP_REQUEST_TTL_MS;
         const cachedRecord = shouldUseCache ? WebApiCacheCenter.get(cacheKey, cacheTTL) : null;
         const canSkipRequest = !!cachedRecord && WebApiCacheCenter.isWithin(cachedRecord, skipRequestTTL);
-        if (cachedRecord) {
+        if (cachedRecord && !waitForNetwork) {
             const cachedResponse = WebApiCacheCenter.deepClone(cachedRecord.response);
             (cachedResponse as any).__cacheMeta = {
                 source: 'memory',
@@ -107,10 +113,10 @@ export default class HttpRequest {
                 `[HttpRequest][Cache] hit api=${finalApi} key=${cacheKey} ageMs=${WebApiCacheCenter.ageMs(cachedRecord)} skipRequest=${canSkipRequest}`
             );
             onSuccess && onSuccess(cachedResponse);
-        } else if (shouldUseCache) {
+        } else if (!cachedRecord && shouldUseCache) {
             HttpRequest.tracelog.debug(`[HttpRequest][Cache] miss api=${finalApi} key=${cacheKey}`);
         }
-        if (canSkipRequest) {
+        if (canSkipRequest && !waitForNetwork) {
             return;
         }
         const send = isGet ? HttpClient.get : HttpClient.post;
@@ -119,7 +125,7 @@ export default class HttpRequest {
             body: body,
             onFailure: function (error: any) {
                 // 已返回缓存时，后台同步失败不打断界面流程
-                if (cachedRecord) {
+                if (cachedRecord && !waitForNetwork) {
                     return;
                 }
                 onFailure && onFailure(error);
@@ -145,6 +151,9 @@ export default class HttpRequest {
                 if (!shouldUpdate) {
                     WebApiCacheCenter.touch(cacheKey);
                     HttpRequest.tracelog.debug(`[HttpRequest][Cache] unchanged api=${finalApi} key=${cacheKey}`);
+                    if (waitForNetwork) {
+                        HttpRequest.onSuccess(finalApi, request, body, onSuccess, response);
+                    }
                     return;
                 }
                 WebApiCacheCenter.set(cacheKey, normalized, hash);
@@ -155,7 +164,9 @@ export default class HttpRequest {
             needJuhua: needJuhua,
             isJson: isJson,
             needConsole: needConsole,
-            api: finalApi
+            api: finalApi,
+            silentTimeout,
+            timeoutMs
         });
     }
 

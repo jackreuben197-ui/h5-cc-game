@@ -397,11 +397,11 @@ export default class OtherBindings extends cc.Component {
         }
         let round: Def.RoundMap[keyof Def.RoundMap];
         if (publicCardCount == 0) {
-            round = Def.Round.FLOP;
+            round = Def.Round.PREFLOP;
         } else if (publicCardCount == 3) {
-            round = Def.Round.TURN;
+            round = Def.Round.FLOP;
         } else if (publicCardCount == 4) {
-            round = Def.Round.RIVER;
+            round = Def.Round.TURN;
         } else {
             this._roomData.mine.showViewPublicCardsButton = false;
             return;

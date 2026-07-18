@@ -20,6 +20,8 @@ type HttpSendParams = {
     isJson?: boolean;
     needConsole?: boolean;
     api?: string;
+    silentTimeout?: boolean;
+    timeoutMs?: number;
 };
 
 /**
@@ -43,7 +45,9 @@ export default class HttpClient {
         needJuhua = true,
         isJson = true,
         needConsole = true,
-        api = ''
+        api = '',
+        silentTimeout = false,
+        timeoutMs = HttpClient.TimeOut
     }: HttpSendParams) {
         const rawBody = body;
         if (isJson) {
@@ -51,12 +55,12 @@ export default class HttpClient {
         }
         needConsole && HttpClient.tracelog.debug('>>>>> http post - request : ', url, rawBody);
         needJuhua && viewManager.showPrompting();
-        let response: string = await HttpClient.__request(url, false, body, headers, isJson);
+        let response: string = await HttpClient.__request(url, false, body, headers, isJson, timeoutMs);
         needJuhua && viewManager.hidePrompting();
         let obj = response;
         if (obj != 'timeout' && obj != 'error') obj = JSON.parse(obj);
         needConsole && HttpClient.tracelog.debug('>>>>> http post - response : ', url, obj);
-        HttpClient.__response(response, onFailure, onSuccess, api);
+        HttpClient.__response(response, onFailure, onSuccess, api, silentTimeout);
     }
 
     /**
@@ -71,21 +75,25 @@ export default class HttpClient {
         needJuhua = true,
         isJson = true,
         needConsole = true,
-        api = ''
+        api = '',
+        silentTimeout = false,
+        timeoutMs = HttpClient.TimeOut
     }: HttpSendParams) {
         body = JSON.stringify(body);
         needConsole && HttpClient.tracelog.debug('>>>>> http get - request : ', url, body);
         needJuhua && viewManager.showPrompting();
-        let response: string = await HttpClient.__request(url, true, body, headers, isJson);
+        let response: string = await HttpClient.__request(url, true, body, headers, isJson, timeoutMs);
         needJuhua && viewManager.hidePrompting();
         needConsole && HttpClient.tracelog.debug('>>>>> http get - response : ', url, response);
-        HttpClient.__response(response, onFailure, onSuccess, api);
+        HttpClient.__response(response, onFailure, onSuccess, api, silentTimeout);
     }
 
-    static __response(response: string, onFailure: HttpCallback, onSuccess: HttpCallback, api: string) {
+    static __response(response: string, onFailure: HttpCallback, onSuccess: HttpCallback, api: string, silentTimeout: boolean) {
         switch (response) {
             case 'timeout':
-                viewManager.showToast(CPErrorCode.LanguageDescription(10126));
+                if (!silentTimeout) {
+                    viewManager.showToast(CPErrorCode.LanguageDescription(10126));
+                }
                 onFailure && onFailure(response);
                 break;
             case 'error':
@@ -113,7 +121,14 @@ export default class HttpClient {
         }
     }
 
-    static async __request(url: string, isGet: boolean = false, body: any = null, headers: HttpHeaders = null, isJson: boolean = true): Promise<string> {
+    static async __request(
+        url: string,
+        isGet: boolean = false,
+        body: any = null,
+        headers: HttpHeaders = null,
+        isJson: boolean = true,
+        timeoutMs: number = HttpClient.TimeOut
+    ): Promise<string> {
         return new Promise((resolve, reject) => {
             var xhr = new XMLHttpRequest();
             var isTimeout = false; //是否超时
@@ -121,7 +136,7 @@ export default class HttpClient {
                 isTimeout = true;
                 xhr.abort(); //请求中止
                 resolve('timeout');
-            }, HttpClient.TimeOut);
+            }, timeoutMs);
             xhr.onreadystatechange = function () {
                 if (xhr.readyState === 4 && xhr.status >= 200 && xhr.status < 400) {
                     var response = xhr.responseText;
@@ -142,7 +157,7 @@ export default class HttpClient {
             };
             let reqUrl = this.checkGetUrl(url, body, isGet);
             xhr.open(isGet ? 'GET' : 'POST', reqUrl);
-            xhr.timeout = HttpClient.TimeOut;
+            xhr.timeout = timeoutMs;
             if (isJson) {
                 xhr.setRequestHeader('Content-Type', 'application/json');
             }

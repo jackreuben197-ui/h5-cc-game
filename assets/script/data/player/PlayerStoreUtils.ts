@@ -77,7 +77,10 @@ export default class PlayerStoreUtils {
             web_class: WebMiscCombine,
             body,
             juhua: false,
-            useCache
+            useCache,
+            timeoutRetryCount: 3,
+            timeoutRetryIntervalMs: 30000,
+            timeoutMs: 10000
         });
         if (res.code != 0) {
             PlayerStoreUtils.tracelog.error('get HttpMiscCombine player data error', res.code);

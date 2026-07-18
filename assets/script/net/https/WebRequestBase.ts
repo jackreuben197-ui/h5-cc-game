@@ -1,7 +1,7 @@
 /**
  * Http请求接口
  */
-import HttpRequest from './HttpRequest';
+import HttpRequest, {HttpRequestParams} from './HttpRequest';
 import WebApiCacheCenter, { WebApiCacheContext } from './WebApiCacheCenter';
 
 export class WebCommon {
@@ -69,34 +69,51 @@ export class WWW {
         )
      * @returns
      */
-    CommonAPI<T>(param: {
+    public async CommonAPI<T>(param: {
         web_class: { API: string; Request: (param: any) => any; Response: any };
         body?: any;
         api_id?: number;
         club_id?: number;
         juhua?: boolean;
         useCache?: boolean;
+        timeoutRetryCount?: number;
+        timeoutRetryIntervalMs?: number;
+        timeoutMs?: number;
     }): Promise<T> {
-        return new Promise((resolve, reject) => {
-            let obj: any = {
-                request: param.web_class,
-                body: param.web_class.Request(param.body),
-                onSuccess: function () {
-                    resolve(param.web_class.Response as T);
-                }.bind(this),
-                onFailure: function (content: any) {
-                    reject(content);
-                }.bind(this),
-                juhua: param.juhua,
-                useCache: !!param.useCache
-            };
-            //设置动态id参数
-            (param.api_id ?? 0) > 0 && (obj.api = param.web_class.API.replace('{id}', `${param.api_id}`));
-            //设置header
-            let headers = [];
-            (param.club_id ?? 0) > 0 && headers.push(['X-Club', param.club_id]);
-            obj.headers = headers;
-            HttpRequest.Send(obj);
-        });
+        const timeoutRetryCount = Math.max(0, param.timeoutRetryCount || 0);
+        const timeoutRetryIntervalMs = Math.max(0, param.timeoutRetryIntervalMs || 0);
+        let retriedCount = 0;
+        while (true) {
+            try {
+                return await new Promise<T>((resolve, reject) => {
+                    let obj: HttpRequestParams = {
+                        request: param.web_class,
+                        body: param.web_class.Request(param.body),
+                        onSuccess: function () {
+                            resolve(param.web_class.Response as T);
+                        }.bind(this),
+                        onFailure: function (content: any) {
+                            reject(content);
+                        }.bind(this),
+                        juhua: param.juhua,
+                        useCache: !!param.useCache,
+                        silentTimeout: timeoutRetryCount > 0,
+                        timeoutMs: param.timeoutMs,
+                        waitForNetwork: timeoutRetryCount > 0
+                    };
+                    (param.api_id ?? 0) > 0 && (obj.api = param.web_class.API.replace('{id}', `${param.api_id}`));
+                    let headers = [];
+                    (param.club_id ?? 0) > 0 && headers.push(['X-Club', param.club_id]);
+                    obj.headers = headers;
+                    HttpRequest.Send(obj);
+                });
+            } catch (error) {
+                if (error !== 'timeout' || retriedCount >= timeoutRetryCount) {
+                    throw error;
+                }
+                retriedCount++;
+                await new Promise(resolve => setTimeout(resolve, timeoutRetryIntervalMs));
+            }
+        }
     }
 }
