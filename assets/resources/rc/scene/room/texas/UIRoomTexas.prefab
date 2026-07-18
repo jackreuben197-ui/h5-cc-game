@@ -6172,7 +6172,7 @@
         "__id__": 165
       }
     ],
-    "_active": true,
+    "_active": false,
     "_components": [
       {
         "__id__": 168
@@ -11953,6 +11953,9 @@
       },
       {
         "__id__": 384
+      },
+      {
+        "__id__": 433
       }
     ],
     "_prefab": {
@@ -15456,6 +15459,9 @@
     "bringInButton": {
       "__id__": 31
     },
+    "jackpotFeature": {
+      "__id__": 433
+    },
     "_id": ""
   },
   {
@@ -15468,5 +15474,24 @@
     },
     "fileId": "",
     "sync": false
+  },
+  {
+    "__type__": "7779byPBgpFG4LjE1VF6y2h",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 323
+    },
+    "_enabled": true,
+    "jackpotButton": {
+      "__id__": 161
+    },
+    "goldLabel": {
+      "__id__": 166
+    },
+    "animRoot": {
+      "__id__": 372
+    },
+    "_id": ""
   }
 ]

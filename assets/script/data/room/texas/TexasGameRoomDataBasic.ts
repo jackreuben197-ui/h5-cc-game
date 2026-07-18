@@ -1,4 +1,4 @@
-import { Def, InsuranceOddsForPotsUserCount, RoomJackpotConfig, SquidCountRateConfig, SubRoomConfig } from '@silenthill/agreement-web';
+import { Def, InsuranceOddsForPotsUserCount, RoomJackpotConfig, ServerMessageJackpotAward, SquidCountRateConfig, SubRoomConfig } from '@silenthill/agreement-web';
 import { bindData, IObservableBindings, observable, pureEvent } from '../../../core/decorator/DataBind';
 import { traceMethod } from '../../../core/decorator/LogTrace';
 import { AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDisplayType';
@@ -40,6 +40,9 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public static readonly SQUID_REMAINING_COUNT_CHANGED = 'SQUID_REMAINING_COUNT_CHANGED';
     public static readonly SQUID_RESULTS = 'SQUID_RESULTS';
     public static readonly MUSHROOM_ENABLED = 'MUSHROOM_ENABLED';
+    public static readonly JACKPOT_CHANGE = 'JACKPOT_CHANGE';
+    public static readonly JACKPOT_START_ANIM = 'JACKPOT_START_ANIM';
+    public static readonly JACKPOT_AWARD = 'JACKPOT_AWARD';
     // 不变的信息
     // 基础信息
     public roomName: string;
@@ -206,6 +209,39 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public jackpotPool: number; // Jackpot模版奖池余额
     public jackpotConfig: RoomJackpotConfig.AsObject | null; // Jackpot模版配置
     public jackpotMainPool: number; // 主模板剩余
+    public get hasJackpot(): boolean {
+        return this.jackpot && (this.jackpotID || 0) > 0;
+    }
+    // 牌桌/战绩展示用的奖池（旧版取 jackpotParentGold，缺省回退模版奖池），单位为分
+    public get jackpotDisplayPool(): number {
+        return this.jackpotMainPool || this.jackpotPool || 0;
+    }
+
+    // 事件参数即监听方所需全部数据（hasJackpot, displayPool 单位分），监听方不要回读 basic
+    public updateJackpotPool(jackpotID: number, jackpotGold: number, jackpotMainPool: number) {
+        this.jackpotID = jackpotID;
+        this.jackpotPool = jackpotGold;
+        this.jackpotMainPool = jackpotMainPool;
+        this._jackpotChangedEmit(this.hasJackpot, this.jackpotDisplayPool);
+    }
+
+    public jackpotStartAnimEmit() {
+        this._jackpotStartAnimEmit(this.hasJackpot, this.jackpotDisplayPool);
+    }
+
+    @pureEvent(TexasGameRoomDataBasic.JACKPOT_CHANGE, {
+        initParams() {
+            return [this.hasJackpot, this.jackpotDisplayPool];
+        }
+    })
+    private _jackpotChangedEmit(hasJackpot: boolean, displayPool: number) {}
+
+    @pureEvent(TexasGameRoomDataBasic.JACKPOT_START_ANIM)
+    private _jackpotStartAnimEmit(hasJackpot: boolean, displayPool: number) {}
+
+    @pureEvent(TexasGameRoomDataBasic.JACKPOT_AWARD)
+    public jackpotAwardEmit(awardUsersList: ServerMessageJackpotAward.AsObject['awardUsersList']) {}
+
     // 下注信息会变
     @observable(TexasGameRoomDataBasic.TABLE_BET_INFO_CHANGE)
     public sbante: tableBetInfo;

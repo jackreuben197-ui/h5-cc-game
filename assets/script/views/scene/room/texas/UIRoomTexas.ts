@@ -17,6 +17,7 @@ import viewManager from '../../../UIViewManager';
 import danmuManager from './DanmuManager';
 import TexasTableEvent from './events/TexasTableEvent';
 import InsuranceOperation from './InsuranceOperation';
+import JackpotFeature from './JackpotFeature';
 import MorePlayTypeInfo from './MorePlayTypeInfo';
 import OtherBindings from './OtherBindings';
 import PotsInfo from './PotsInfo';
@@ -80,6 +81,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private _mine: TexasGameRoomDataPlayerMine = null;
     @property({ type: cc.Node, displayName: '所有需要缩放的节点位置' })
     private scaleNode: cc.Node = null;
+    @property({ type: JackpotFeature, displayName: 'Jackpot玩法组件 PlayType_Con' })
+    private jackpotFeature: JackpotFeature = null;
     @property({ type: cc.Node, displayName: '中间区域' })
     private middleLayout: cc.Node = null;
     @property({ type: cc.Button, displayName: '带入筹码按钮右上角' })
@@ -183,6 +186,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         // 对应 pokerqueen UITexas.requestRoomersForCache（history=true 包含已离桌玩家）。
         TexasTableEvent.PrefetchhReportRoomers(param.roomID, param.matchID);
         this._otherBindings.initData(param.roomID, param.matchID);
+        this.jackpotFeature.initData(param.roomID, param.matchID);
         //展示介绍对话框
         await this._showSquidIntroDialog(roomData);
         await this._showMushroomIntroDialog(roomData);

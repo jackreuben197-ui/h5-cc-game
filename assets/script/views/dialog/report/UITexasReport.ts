@@ -3,6 +3,7 @@ import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../core/decora
 import { traceClass } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
+import TexasGameRoomDataBasic from '../../../data/room/texas/TexasGameRoomDataBasic';
 import TexasGameRoomDataReport, {
     TexasReportInsuranceRecord,
     TexasReportJackpotRecord,
@@ -257,7 +258,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
 
     private _bindEventsAndRefresh(): void {
         if (!this._report) return;
-        autoBindEvents(this, { report: this._report });
+        autoBindEvents(this, { report: this._report, basic: this._roomData.basicInfo });
     }
     // ============================================================
     // @bindEvent —— 数据驱动刷新
@@ -265,6 +266,12 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     @bindEvent(TexasGameRoomDataReport.PLAYERS_CHANGE, 'report')
     private _onPlayersChange(_players: TexasReportPlayerInfo[]): void {
         if (this._curTab === 'battle') this._renderBattleList();
+    }
+
+    /** 1129 JackpotGoldChange：面板打开期间奖池变化实时刷新顶栏总额（displayPool 由事件参数带入，单位分） */
+    @bindEvent(TexasGameRoomDataBasic.JACKPOT_CHANGE, { dataSource: 'basic', initIgnore: true })
+    private _onJackpotPoolChange(_hasJackpot: boolean, displayPool: number): void {
+        this.jackpotTotalLabel.string = `${Math.floor((displayPool || 0) / 100)}`;
     }
 
     @bindEvent(TexasGameRoomDataReport.OBSERVERS_CHANGE, 'report')
@@ -511,7 +518,8 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     }
 
     private _refreshJackpotTotal(): void {
-        const total = Math.floor((this._roomData.basicInfo.jackpotPool || 0) / 100);
+        // 与旧版一致：优先主奖池 jackpotParentGold，缺省回退模版奖池
+        const total = Math.floor((this._roomData.basicInfo.jackpotDisplayPool || 0) / 100);
         this.jackpotTotalLabel.string = `${total}`;
     }
 
