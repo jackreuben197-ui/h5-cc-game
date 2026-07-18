@@ -1,4 +1,11 @@
-import { Def, InsuranceOddsForPotsUserCount, RoomJackpotConfig, ServerMessageJackpotAward, SquidCountRateConfig, SubRoomConfig } from '@silenthill/agreement-web';
+import {
+    Def,
+    InsuranceOddsForPotsUserCount,
+    RoomJackpotConfig,
+    ServerMessageJackpotAward,
+    SquidCountRateConfig,
+    SubRoomConfig
+} from '@silenthill/agreement-web';
 import { bindData, IObservableBindings, observable, pureEvent } from '../../../core/decorator/DataBind';
 import { traceMethod } from '../../../core/decorator/LogTrace';
 import { AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDisplayType';

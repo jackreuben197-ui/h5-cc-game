@@ -1,7 +1,7 @@
 /**
  * Http请求接口
  */
-import HttpRequest, {HttpRequestParams} from './HttpRequest';
+import HttpRequest, { HttpRequestParams } from './HttpRequest';
 import WebApiCacheCenter, { WebApiCacheContext } from './WebApiCacheCenter';
 
 export class WebCommon {
