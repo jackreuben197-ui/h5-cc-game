@@ -1,4 +1,5 @@
 // import UIBringIn from './dialog/bringin/UIBringIn';
+import UIAgreeSecondPcs from './dialog/agreeSecondPcs/UIAgreeSecondPcs';
 import UIBringIn from './dialog/bringin/UIBringIn';
 import UIBringOut from './dialog/bringout/UIBringInOut';
 import UIChatDlg from './dialog/chat/UIChatDlg';
@@ -30,6 +31,12 @@ import UIPromptComponent from './scene/UIPromptComponent';
 // }
 // export type UIPrefabType = 'BringInDialog';
 export const UIPrefabDialog = {
+    AgreeSecondPcs: {
+        UIType: UIAgreeSecondPcs,
+        Name: '第二套公共牌投票',
+        Bundle: BUNDLE_RESOURCES,
+        Path: 'rc/dialog/agreeSecondPcs/UIAgreeSecondPcs'
+    },
     MushroomIntroduction: {
         UIType: UIGuideDialog,
         Name: '蘑菇介绍',

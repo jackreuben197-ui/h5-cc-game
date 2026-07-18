@@ -9,6 +9,7 @@ import TexasGameRoomDataReplay from './TexasGameRoomDataReplay';
 import TexasGameRoomDataReport from './TexasGameRoomDataReport';
 import TexasGameRoomDataRoundState from './TexasGameRoomDataRoundState';
 import TexasGameRoomDataSeatsStateManager from './TexasGameRoomDataSeatsStateManager';
+import TexasGameRoomDataSecondPcs from './TexasGameRoomDataSecondPcs';
 
 export default class TexasGameRoomData extends RoomData {
     public closed: boolean;
@@ -24,6 +25,8 @@ export default class TexasGameRoomData extends RoomData {
     public readonly roundState = new TexasGameRoomDataRoundState();
     // 座位信息
     public readonly seatsStateManager = new TexasGameRoomDataSeatsStateManager(this);
+    // 第二套公共牌信息
+    public readonly secondPcs = new TexasGameRoomDataSecondPcs();
     // 自己信息
     public readonly mine = new TexasGameRoomDataPlayerMine(this);
     // 牌桌战绩

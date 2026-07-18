@@ -36,6 +36,7 @@ export default class TexasGameRoomDataPublicCards extends cc.EventTarget {
     @pureEvent(TexasGameRoomDataPublicCards.ALL_PUBLICCARDS_RESET)
     public resetAllPublicCard() {
         this._publicCards = [];
+        this._secondPublicCards = [];
     }
 
     private _secondPublicCards: number[] = [];
