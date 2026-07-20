@@ -37,6 +37,10 @@ export default class MorePlayTypeInfo extends cc.Component {
     private remainingSquidLabel: cc.Node = null!;
     @property({ type: cc.Label, displayName: '剩余鱿鱼数量' })
     private remainingSquidLabelCount: cc.Label = null!;
+    @property({ type: cc.Node, displayName: 'CallTime提示区域' })
+    private callTimeArea: cc.Node = null;
+    @property({ type: cc.Label, displayName: 'CallTime进度描述' })
+    private callTimeLabel: cc.Label = null;
     private _mine: TexasGameRoomDataPlayerMine = null!;
     private _onJoinSquidClicked: () => void;
 
@@ -189,6 +193,18 @@ export default class MorePlayTypeInfo extends cc.Component {
             }
         }
         TexasTableEvent.Standup(this._mine);
+    }
+
+    //===================== CallTime ==========================================
+
+    @bindEvent(TexasGameRoomDataPlayerMine.CALL_TIME_CHANGE, 'mine')
+    private onCallTimeChanged(): void {
+        if (!this.callTimeArea) return;
+        const basicInfo = this._mine.roomData.basicInfo;
+        const show = basicInfo.hasCallTime && this._mine.callTimeStay;
+        this.callTimeArea.active = show;
+        if (!this.callTimeLabel) return;
+        this.callTimeLabel.string = show ? `Profit ${basicInfo.callTimeWinline}BB ${this._mine.callTimeCount}/${basicInfo.callTimeLimit} hands` : '';
     }
 
     private _refreshSquidStandUp(): void {

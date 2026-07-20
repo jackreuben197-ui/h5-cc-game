@@ -49,6 +49,8 @@ export function Winner(data: ServerMessageWinner.AsObject, roomID: number, match
             let mine = seatData.mine;
             mine.totalChips = result.totalChips;
             mine.storeChips = result.storeChips;
+            mine.callTimeCount = result.callTimeCount;
+            mine.callTimeStay = result.callTimeStay;
             let pubH: number[] = [];
             let pub2H: number[] = [];
             let myCardsH: number[] = [];

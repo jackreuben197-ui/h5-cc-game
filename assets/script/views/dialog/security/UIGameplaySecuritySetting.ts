@@ -160,7 +160,7 @@ export default class UIGameplaySecuritySetting extends UIComponentBaseDialog<UIG
     /** 刷新安全设置内容 */
     private RefreshUI(): void {
         const callTimeWinline = this._roomData.basicInfo.callTimeWinline;
-        const callTimeLimitCount = this._mine?.callTimeCount ?? 0;
+        const callTimeLimitCount = this._roomData.basicInfo.callTimeLimit;
         if (this.callTimeTips) {
             this.callTimeTips.active = this._roomData.basicInfo.hasCallTime;
         }

@@ -183,6 +183,8 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             }
             roomData.mine.storeChips = data.myInfo.storeChips;
             roomData.mine.totalChips = data.myInfo.totalChips;
+            roomData.mine.callTimeCount = data.myInfo.callTimeCount;
+            roomData.mine.callTimeStay = data.myInfo.callTimeStay;
             roomData.mine.caculateHandValueTypeAndHighlight();
         }
         data.operatorList.forEach(operator => {
