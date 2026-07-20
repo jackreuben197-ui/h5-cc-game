@@ -10,6 +10,7 @@ const _plog = createLogger('ServerMessagePublicCards');
 // PublicCards 1104
 export function PublicCards(data: ServerMessagePublicCards.AsObject, roomID: number, matchID: number) {
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
+    roomData.secondPcs.finish();
     roomData.publicCards.addPublicCards(data.publicCardsArrayList, AnimateDisplayTypePublicCards.Deal);
     if (data.publicCardsArray2List.length > 0) {
         roomData.publicCards.addSecondPublicCards(data.publicCardsArray2List, AnimateDisplayTypePublicCards.Deal);

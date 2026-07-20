@@ -1,11 +1,14 @@
-import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../../core/decorator/DataBind';
+import { RoomInfo } from '@silenthill/agreement-web';
+import { autoBindEvents, bindEvent, unBindEvents, unBindEventsAll } from '../../../../core/decorator/DataBind';
 import { traceClass } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
+import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import ccviewData, { CCViewData } from '../../../../data/system/CCViewData';
 import { SquidMode } from '../../../../game/constant/Squid';
 import h5MessageManager from '../../../../H5MsgMgr';
+import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
 import viewManager from '../../../UIViewManager';
 import SwitchNode from '../../../widget/SwitchNode';
@@ -18,26 +21,36 @@ const { ccclass, property, menu } = cc._decorator;
 @menu('Scene/Room/Texas/UITexasMenu')
 export default class UITexasMenu extends cc.Component {
     //Menu_Buttons: cc.Node = null;
-    @property(cc.Button)
+    @property({ type: cc.Button, displayName: '个性设置按钮' })
     public btnSetting: cc.Button = null;
-    @property(cc.Button)
+    @property({ type: cc.Button, displayName: '规则按钮' })
     public btnRules: cc.Button = null;
-    @property(cc.Button)
+    @property({ type: cc.Button, displayName: '保险规则按钮' })
     public btnInsure: cc.Button = null;
-    @property(cc.Button)
+    @property({ type: cc.Button, displayName: '补充筹码按钮' })
     public btnBet: cc.Button = null;
-    @property(cc.Button)
+    @property({ type: cc.Button, displayName: '带出筹码按钮' })
+    public btnBringOut: cc.Button = null;
+    @property({ type: cc.Label, displayName: '带出筹码文本' })
+    public btnBringOutLabel: cc.Label = null;
+    @property({ type: cc.Button, displayName: '留座离桌按钮' })
     public btnHalfLeave: cc.Button = null;
-    @property(cc.Button)
+    @property({ type: cc.Button, displayName: '显示BB按钮' })
     public btnShowBB: cc.Button = null;
-    @property(SwitchNode)
+    @property({ type: SwitchNode, displayName: '显示BB开关' })
     public showBBSwitch: SwitchNode = null!;
-    @property(cc.Button)
+    @property({ type: cc.Button, displayName: '站起围观按钮' })
     public btnStand: cc.Button = null;
-    @property(cc.Button)
+    @property({ type: cc.Button, displayName: '离开房间按钮' })
     public btnLeaveGame: cc.Button = null;
-    @property(cc.Button)
+    @property({ type: cc.Button, displayName: '解散牌桌按钮' })
     public btnDissolve: cc.Button = null;
+    @property({ type: cc.Node, displayName: '存储信息节点' })
+    public storeNode: cc.Node = null;
+    @property({ type: cc.Label, displayName: '存储标题文本' })
+    public storeTitleLabel: cc.Label = null;
+    @property({ type: cc.Label, displayName: '存储金额文本' })
+    public storeChipsLabel: cc.Label = null;
     //按钮模板节点
     //Menu_Button: cc.Node = null;
     outTipNode: cc.Node = null;
@@ -45,12 +58,12 @@ export default class UITexasMenu extends cc.Component {
     gold_click: cc.Node = null;
     ////////////////////////////////////
     //面板
-    @property(cc.Node)
+    @property({ type: cc.Node, displayName: '菜单面板' })
     $panel: cc.Node = null;
     //黑色挡板
-    @property(cc.Node)
+    @property({ type: cc.Node, displayName: '菜单黑色遮罩' })
     $black: cc.Node = null;
-    @property(cc.Node)
+    @property({ type: cc.Node, displayName: '菜单触摸阻挡节点' })
     $block: cc.Node = null;
     private _roomData: TexasGameRoomData = null!;
 
@@ -90,7 +103,7 @@ export default class UITexasMenu extends cc.Component {
     private _bindEventsAndRefresh() {
         // 统一激活绑定，注入强类型 tag 推导过滤机制
         if (!this._roomData) return;
-        autoBindEvents(this, { mine: this._roomData.mine, ccviewData: ccviewData });
+        autoBindEvents(this, { mine: this._roomData.mine, player: this._roomData.mine.player, ccviewData: ccviewData });
     }
 
     //(优先于seated执行保证展示正确)
@@ -98,18 +111,37 @@ export default class UITexasMenu extends cc.Component {
     private onUpdateSeated(seatNo: number) {
         const isDissolve = false; //gc._isRoomManager && gc._isHasDisbandRoomPrivileges;
         this.btnInsure.node.active = this._roomData.basicInfo.hasInsurance;
+        this.storeNode.active = seatNo > 0 && this._roomData.basicInfo.retainType !== RoomInfo.RetainType.RT_DISABLE;
         if (seatNo > 0) {
+            autoBindEvents(this, { player: this._roomData.mine.player });
             this.btnBet.node.active = true;
+            this.btnBringOut.node.active = this._roomData.basicInfo.retainType === RoomInfo.RetainType.RT_MANUAL;
+            this._refreshBringOutButton();
             this.btnHalfLeave.node.active = true;
             this.btnStand.node.active = true;
             if (this.btnDissolve) this.btnDissolve.node.active = isDissolve;
             return;
         }
         this.showBBSwitch.onoff(this._roomData.setting.showBB);
+        unBindEvents(this, 'player');
         this.btnBet.node.active = false;
+        this.btnBringOut.node.active = false;
         this.btnHalfLeave.node.active = false;
         this.btnStand.node.active = false;
         if (this.btnDissolve) this.btnDissolve.node.active = isDissolve;
+    }
+
+    @bindEvent(TexasGameRoomDataPlayer.CHIPS_CHANGE, 'player')
+    private onMineChipsChanged(): void {
+        this._refreshBringOutButton();
+    }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.STORECHIPS_CHANGE, 'mine')
+    private onStoreChipsChanged(storeChips: number): void {
+        this.storeTitleLabel.node.color = cc.Color.WHITE;
+        this.storeTitleLabel.string = i18nMgr.Get('UITexas_storage') || '存储';
+        this.storeChipsLabel.node.color = cc.Color.WHITE;
+        this.storeChipsLabel.string = StringHelper.GetLongString(storeChips || 0);
     }
 
     private regiterTouchEvents() {
@@ -125,6 +157,7 @@ export default class UITexasMenu extends cc.Component {
         this.btnRules.node.on('click', this.click_rule_tips, this);
         this.btnHalfLeave.node.on('click', this.click_leave_table, this);
         this.btnBet.node.on('click', this.click_bringin, this);
+        this.btnBringOut.node.on('click', this.onBringOutClicked, this);
         this.btnInsure.node.on('click', this.click_insurance, this);
         this.btnLeaveGame.node.on('click', this.click_leave, this);
         this.btnShowBB.node.on('click', this.click_bb, this);
@@ -318,17 +351,19 @@ export default class UITexasMenu extends cc.Component {
         TexasTableEvent.BringIn(this._roomData.mine);
     }
 
-    //手动带出
-    click_bringout() {
-        // if (null == this.MenuButtons_Dic.Button_TakeOut || !this.MenuButtons_Dic.Button_TakeOut.node.getComponent(cc.Button).interactable) {
-        //     return;
-        // }
+    private onBringOutClicked(): void {
+        if (!this.btnBringOut.interactable) return;
         this.click_black();
-        // 弹代入框CurretainMinRate
-        // UIComponent.Instance.ShowUI<OutClipsData>(PrefabUI.UIBringOut, {
-        //     currentMinRate: this._roomData.basicInfo.currentMinRate,
-        //     tableChips: this._roomData.basicInfo.mainPlayer.chips
-        // });
+        viewManager.openDialog('BringOut', {
+            RoomPlayer: this._roomData.mine
+        });
+    }
+
+    private _refreshBringOutButton(): void {
+        const minimumOnTable = this._roomData.basicInfo.retainMinRate * this._roomData.basicInfo.sbante.sb * 2;
+        const enabled = this._roomData.mine.seatNo > 0 && this._roomData.mine.player.chip > minimumOnTable;
+        this.btnBringOut.interactable = enabled;
+        this.btnBringOutLabel.node.color = enabled ? cc.Color.WHITE : cc.Color.GRAY;
     }
 
     click_trust() {

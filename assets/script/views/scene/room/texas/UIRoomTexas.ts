@@ -5,6 +5,7 @@ import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataChat, { TexasDanmuMessage } from '../../../../data/room/texas/TexasGameRoomDataChat';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
+import TexasGameRoomDataSecondPcs from '../../../../data/room/texas/TexasGameRoomDataSecondPcs';
 import h5MessageManager from '../../../../H5MsgMgr';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
@@ -172,7 +173,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         const roomData = roomDataManager.getRoomData<TexasGameRoomData>(param.roomID, param.matchID);
         this._roomData = roomData;
         this._mine = roomData.mine;
-        autoBindEvents(this, { chat: roomData.chat, mine: roomData.mine });
+        autoBindEvents(this, { chat: roomData.chat, basic: roomData.basicInfo, mine: roomData.mine, secondPcs: roomData.secondPcs });
         this.btnSafetyGuard.node.active = roomData.basicInfo.tribeID > 0;
         this.roomInfo.initData(param.roomID, param.matchID);
         this.potsInfo.initData(param.roomID, param.matchID);
@@ -205,6 +206,23 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     @bindEvent(TexasGameRoomDataChat.NEW_MESSAGE_ALERT_CHANGED, 'chat')
     private onChatAlertChanged(hasNewMessageAlert: boolean): void {
         this._setChatAlertVisible(hasNewMessageAlert);
+    }
+
+    @bindEvent(TexasGameRoomDataSecondPcs.ACTIVE_CHANGED, 'secondPcs')
+    private async onSecondPcsActiveChanged(active: boolean): Promise<void> {
+        if (active) {
+            await viewManager.openDialog(
+                'AgreeSecondPcs',
+                {
+                    roomID: this._roomData.roomID,
+                    matchID: this._roomData.matchID
+                },
+                false
+            );
+            if (!this._roomData.secondPcs.active) viewManager.closeDialog('AgreeSecondPcs');
+            return;
+        }
+        viewManager.closeDialog('AgreeSecondPcs');
     }
 
     //(优先于seated执行保证展示正确)

@@ -1,6 +1,7 @@
 // import UIBringIn from './dialog/bringin/UIBringIn';
+import UIAgreeSecondPcs from './dialog/agreeSecondPcs/UIAgreeSecondPcs';
 import UIBringIn from './dialog/bringin/UIBringIn';
-import UIBringOut from './dialog/bringout/UIBringInOut';
+import UIBringOut from './dialog/bringout/UIBringOut';
 import UIChatDlg from './dialog/chat/UIChatDlg';
 import UIConfirmDialog from './dialog/confirm/UIConfirmDialog';
 import UIEmojiDlg from './dialog/emoji/UIEmojiDlg';
@@ -30,6 +31,12 @@ import UIPromptComponent from './scene/UIPromptComponent';
 // }
 // export type UIPrefabType = 'BringInDialog';
 export const UIPrefabDialog = {
+    AgreeSecondPcs: {
+        UIType: UIAgreeSecondPcs,
+        Name: '第二套公共牌投票',
+        Bundle: BUNDLE_RESOURCES,
+        Path: 'rc/dialog/agreeSecondPcs/UIAgreeSecondPcs'
+    },
     MushroomIntroduction: {
         UIType: UIGuideDialog,
         Name: '蘑菇介绍',
@@ -86,9 +93,9 @@ export const UIPrefabDialog = {
     },
     BringOut: {
         UIType: UIBringOut,
-        Name: '带入弹框',
+        Name: '带出弹框',
         Bundle: BUNDLE_RESOURCES,
-        Path: 'rc/dialog/bringin/UIBringIn'
+        Path: 'rc/dialog/bringout/UIBringOut'
     },
     RechargeDiamond: {
         UIType: UIRechargeDiamond,
