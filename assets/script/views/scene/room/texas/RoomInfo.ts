@@ -27,6 +27,8 @@ export default class RoomInfo extends cc.Component {
     private _matchID: number;
     private _roomBaseInfo: TexasGameRoomDataBasic;
     private _currentDeskType: number = -1;
+    private _leftUpblindSeconds: number = 0;
+    private _timer: number = 0;
 
     public initData(roomID: number, matchID: number) {
         this._roomID = roomID;
@@ -48,6 +50,9 @@ export default class RoomInfo extends cc.Component {
 
     public onDisable(): void {
         unBindEventsAll(this);
+        if (this._timer != 0) {
+            clearInterval(this._timer);
+        }
     }
 
     private _bindEventsAndRefresh() {
@@ -56,6 +61,31 @@ export default class RoomInfo extends cc.Component {
             basic: this._roomBaseInfo,
             setting: texasGamePersonalSettings
         });
+    }
+
+    @bindEvent(TexasGameRoomDataBasic.NEXT_UPBLIND_LEFTTIME, 'basic')
+    private onUpdateTimeCountdowm(s: number) {
+        if (this._timer != 0) {
+            clearInterval(this._timer);
+        }
+        if (s == 0) {
+            this._leftUpblindSeconds = 0;
+            this.onUpdateText();
+            return;
+        }
+        if (s > 0) {
+            this._leftUpblindSeconds = s;
+            this.onUpdateText();
+            this._timer = setInterval(() => {
+                this._leftUpblindSeconds--;
+                if (this._leftUpblindSeconds >= 0) {
+                    this.onUpdateText();
+                }
+                if (this._leftUpblindSeconds == 0) {
+                    clearInterval(this._timer);
+                }
+            }, 1000);
+        }
     }
 
     @bindEvent(TexasGameRoomDataBasic.TABLE_BET_INFO_CHANGE, 'basic')
@@ -74,6 +104,22 @@ export default class RoomInfo extends cc.Component {
         if (this._roomBaseInfo.hasBombPot) {
             // BB straddle
             info += `\n${CPErrorCode.LanguageDescription(20006)} ${StringHelper.GetLongString(this._roomBaseInfo.sbante.sb * 2)} ${this._roomBaseInfo.straddle ? 'straddle' : ''}`;
+        } else if (this._roomBaseInfo.isMtt) {
+            // SB/BB(ANTE) straddle
+            info += `\n${i18nMgr.Get('UITexasReport_Text_MatchCurrBlindTip')} ${StringHelper.GetLongString(this._roomBaseInfo.sbante.sb)}/${StringHelper.GetLongString(this._roomBaseInfo.sbante.sb * 2)}`;
+            if (this._roomBaseInfo.sbante.ante > 0) {
+                info += `(${StringHelper.GetLongString(this._roomBaseInfo.sbante.ante)})`;
+            }
+            info += ` ${this._roomBaseInfo.straddle ? 'straddle' : ''}`;
+            if (this._roomBaseInfo.mttNextSbante != null) {
+                info += `\n${i18nMgr.Get('UITexasReport_Text_MatchNextBlindTip')} ${StringHelper.GetLongString(this._roomBaseInfo.mttNextSbante.sb)}/${StringHelper.GetLongString(this._roomBaseInfo.mttNextSbante.sb * 2)}`;
+                if (this._roomBaseInfo.mttNextSbante.ante > 0) {
+                    info += `(${StringHelper.GetLongString(this._roomBaseInfo.mttNextSbante.ante)})`;
+                }
+                if (this._leftUpblindSeconds > 0) {
+                    info += `\n${i18nMgr.Get('UITexasReport_Text_MatchZmsysjTip')} ${this._leftUpblindSeconds}s`;
+                }
+            }
         } else {
             // SB/BB(ANTE) straddle
             info += `\n${CPErrorCode.LanguageDescription(20006)} ${StringHelper.GetLongString(this._roomBaseInfo.sbante.sb)}/${StringHelper.GetLongString(this._roomBaseInfo.sbante.sb * 2)}`;

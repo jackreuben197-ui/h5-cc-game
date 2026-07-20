@@ -50,6 +50,7 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public static readonly JACKPOT_CHANGE = 'JACKPOT_CHANGE';
     public static readonly JACKPOT_START_ANIM = 'JACKPOT_START_ANIM';
     public static readonly JACKPOT_AWARD = 'JACKPOT_AWARD';
+    public static readonly NEXT_UPBLIND_LEFTTIME = 'NEXT_UPBLIND_LEFTTIME';
     // 不变的信息
     // 基础信息
     public roomName: string;
@@ -252,6 +253,17 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     // 下注信息会变
     @observable(TexasGameRoomDataBasic.TABLE_BET_INFO_CHANGE)
     public sbante: tableBetInfo;
+    public mttNextSbante: tableBetInfo = null;
+
+    public updateMttUpblind(leftTime: number, sbante: tableBetInfo, nextsbante: tableBetInfo) {
+        this.mttNextSbante = nextsbante;
+        this.sbante = sbante;
+        this.mttNextUpblindTimeLeft = leftTime;
+    }
+
+    @observable(TexasGameRoomDataBasic.NEXT_UPBLIND_LEFTTIME)
+    public mttNextUpblindTimeLeft: number = 0; // (s)
+    public mttCurrentBlindLevel: number = 0;
 
     public showNumberWithShowBB(value: number): string {
         const base = this.sbante.sb * 2;

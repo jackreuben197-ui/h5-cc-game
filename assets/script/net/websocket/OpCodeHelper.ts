@@ -19,7 +19,11 @@ export default class OpCodeHelper {
         Code.MSG_D_ENTER_ROOM,
         Code.MSG_S_WINNER,
         Code.MSG_S_START_INFO,
-        Code.MSG_D_ADD_TIME
+        Code.MSG_D_ADD_TIME,
+        Code.MSG_D_SYNC_ENTER,
+        Code.MSG_S_UP_BLIND,
+        Code.MSG_S_NEXT_CHANGE,
+        Code.MSG_D_ADD_ON
     ];
 
     static NeedLog(code: (typeof Code)[keyof typeof Code]): boolean {

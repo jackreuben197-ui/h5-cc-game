@@ -230,6 +230,26 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             }
         });
     }
+    if (matchID > 0) {
+        //已经设置过了
+        const sbante = roomData.basicInfo.sbante;
+        if (data.mttProgress) {
+            if (data.mttProgress.blindLevel > 0 && data.mttProgress.upBlindLeftTime == 0) {
+                roomData.basicInfo.updateMttUpblind(0, sbante, null);
+            }
+            if (data.mttProgress.blindLevel > 0 && data.mttProgress.upBlindLeftTime > 0) {
+                roomData.basicInfo.updateMttUpblind(data.mttProgress.upBlindLeftTime, sbante, {
+                    sb: data.mttProgress.nextSmallBlind,
+                    ante: data.mttProgress.nextAnte
+                });
+            }
+            if (data.mttProgress.blindLevel == 0) {
+                roomData.basicInfo.updateMttUpblind(0, sbante, null);
+            }
+        } else {
+            roomData.basicInfo.updateMttUpblind(0, sbante, null);
+        }
+    }
     roomData.mine.localCameraBtnState = ButtonState.DISABLE;
     roomData.mine.localCameraEnabled = false;
     roomData.mine.localCameraEnabledDelayed = false;

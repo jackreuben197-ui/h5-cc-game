@@ -31,6 +31,26 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
     const myOp = myseat > 0 && data.operatorList.filter(v => v.seatId == myseat && !v.isAgreeSecondPc && !v.isInsurance).length > 0;
     const defaultHandCards = new Array(roomData.basicInfo.handCardNum).fill(0);
     roomData.basicInfo.sbante = { sb: data.roomInfo.smallBlind, ante: data.roomInfo.ante };
+    if (matchID > 0) {
+        //已经设置过了
+        const sbante = roomData.basicInfo.sbante;
+        if (data.mttProgress) {
+            if (data.mttProgress.blindLevel > 0 && data.mttProgress.upBlindLeftTime == 0) {
+                roomData.basicInfo.updateMttUpblind(0, sbante, null);
+            }
+            if (data.mttProgress.blindLevel > 0 && data.mttProgress.upBlindLeftTime > 0) {
+                roomData.basicInfo.updateMttUpblind(data.mttProgress.upBlindLeftTime, sbante, {
+                    sb: data.mttProgress.nextSmallBlind,
+                    ante: data.mttProgress.nextAnte
+                });
+            }
+            if (data.mttProgress.blindLevel == 0) {
+                roomData.basicInfo.updateMttUpblind(0, sbante, null);
+            }
+        } else {
+            roomData.basicInfo.updateMttUpblind(0, sbante, null);
+        }
+    }
     roomData.basicInfo.roomUniqueID = data.roomInfo.uniqueId || '';
     roomData.basicInfo.gameStatus = data.gameStatus;
     roomData.basicInfo.deposit = data.roomInfo.deposit;

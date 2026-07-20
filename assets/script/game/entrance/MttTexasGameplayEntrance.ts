@@ -2,6 +2,7 @@ import { ClientMessageEnterRoom, Code, Def, ServerMessageMttDetail } from '@sile
 import roomDataManager from '../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../data/room/texas/TexasGameRoomData';
 import ProtocolAgency from '../../net/websocket/ProtocolAgency';
+import { AntiCheatType } from '../constant/AntiCheatType';
 import { MttPlayerStatus } from '../constant/Constants';
 import { VideoAntiCheatConfig } from '../constant/VideoModel';
 import AGameplayEntrance, { LoadIndicator } from './AGameplayEntrance';
@@ -244,20 +245,24 @@ export default class MttTexasGameplayEntrance extends AGameplayEntrance {
         roomData.basicInfo.clubID = this._mttDetails.mtt.clubId;
         roomData.basicInfo.tribeID = this._mttDetails.mtt.tribeId;
         roomData.basicInfo.goldType = this._mttDetails.mtt.goldType;
-        roomData.basicInfo.antiCheatConfig = new VideoAntiCheatConfig(
-            this._mttDetails.mtt.antiCheatType,
-            this._mttDetails.mtt.antiCheatTimelimit,
-            this._mttDetails.mtt.antiCheatVideoType,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            this._mttDetails.mtt.antiCheatOrderType,
-            this._mttDetails.mtt.videoVerifyType
-        );
+        if (this._mttDetails.mtt.antiCheatType == AntiCheatType.VIDEO || this._mttDetails.mtt.antiCheatType == AntiCheatType.AUDIO) {
+            roomData.basicInfo.antiCheatConfig = new VideoAntiCheatConfig(
+                this._mttDetails.mtt.antiCheatType,
+                this._mttDetails.mtt.antiCheatTimelimit,
+                this._mttDetails.mtt.antiCheatVideoType,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                this._mttDetails.mtt.antiCheatOrderType,
+                this._mttDetails.mtt.videoVerifyType
+            );
+        } else {
+            roomData.basicInfo.antiCheatConfig = null;
+        }
         roomData.seatsStateManager.seatsCount = this._mttDetails.mtt.seatCount;
         roomDataManager.setRoomData(this._roomId, this.matchId, roomData);
         const body: ClientMessageEnterRoom.AsObject = {
