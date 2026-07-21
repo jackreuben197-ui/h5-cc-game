@@ -56,10 +56,7 @@ function insertBefore(html, marker, content) {
   return html.replace(marker, `${content}\n${marker}`)
 }
 
-const COCOS_VIEWPORT_RESIZE_PATCH = `        /**
-         * 视口变化后同步 Cocos frame/design size，并通知场景刷新布局。
-         */
-        function forceCocosRefit(canvas, heightOverride) {
+const COCOS_VIEWPORT_RESIZE_PATCH = `function forceCocosRefit(canvas, heightOverride) {
           try {
             canvas = canvas || document.getElementById('GameCanvas')
             if (!window.cc || !cc.view || !canvas) return false
@@ -117,7 +114,7 @@ function hasViewportResizeBindCall(html) {
 
 function patchCocosViewportResize(html) {
   let out = html
-  const refitRe = /        \/\*\*[\s\S]*?\r?\n         \*\/\r?\n        function forceCocosRefit[\s\S]*?\r?\n\r?\n        \/\*\*\r?\n         \* Telegram/
+  const refitRe = /function forceCocosRefit[\s\S]*?\r?\n\r?\n        \/\*\*\r?\n         \* Telegram/
   if (refitRe.test(out)) {
     out = out.replace(refitRe, `${COCOS_VIEWPORT_RESIZE_PATCH}\n\n        /**\n         * Telegram`)
   } else {
