@@ -1,6 +1,7 @@
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../core/decorator/DataBind';
 import { traceClass } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
+import { CCViewData } from '../../../data/system/CCViewData';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataReplay, { ReplayHandData } from '../../../data/room/texas/TexasGameRoomDataReplay';
 import diamondModel, { DiamondConfig } from '../../../data/trade/DiamondModel';
@@ -38,6 +39,8 @@ const { ccclass, property, menu } = cc._decorator;
 @menu('Dialog/History/UITexasHistory')
 export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistoryParam> {
     // ==================== 编辑器绑定(prefab 内对应老节点名) ====================
+    @property({ type: cc.Node, displayName: '内容背景节点(bg)' })
+    private bgNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '背景点击关闭节点($bg_click)' })
     private bgClickNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '顶部全屏遮挡(top_block,onLoad 禁用其 BlockInputEvents)' })
@@ -196,6 +199,20 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
 
     protected onEnable(): void {
         this._bindEventsAndRefresh();
+    }
+
+    @bindEvent(CCViewData.FRAME_SIZE_UPDATE, { dataSource: 'ccviewData', initPriority: 20 })
+    protected onFrameResize(
+        visibleSizeWidth: number,
+        visibleSizeHeight: number,
+        frameSizeWidth: number,
+        frameSizeHeight: number,
+        suggestScale: number,
+        saveAreaTop: number
+    ): void {
+        const bgWidget = this.bgNode.getComponent(cc.Widget);
+        bgWidget.top = saveAreaTop;
+        bgWidget.updateAlignment();
     }
 
     protected onDisable(): void {
