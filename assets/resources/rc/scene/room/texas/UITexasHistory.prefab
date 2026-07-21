@@ -19723,6 +19723,9 @@
       "__id__": 1
     },
     "_enabled": true,
+    "bgNode": {
+      "__id__": 13
+    },
     "bgClickNode": {
       "__id__": 15
     },

@@ -14512,6 +14512,9 @@
     "bgClickNode": {
       "__id__": 3
     },
+    "bgNode": {
+      "__id__": 13
+    },
     "publicAreaNode": {
       "__id__": 267
     },

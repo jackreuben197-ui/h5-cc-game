@@ -2,6 +2,7 @@ import { Code } from '@silenthill/agreement-web';
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../core/decorator/DataBind';
 import { traceClass } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
+import { CCViewData } from '../../../data/system/CCViewData';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataBasic from '../../../data/room/texas/TexasGameRoomDataBasic';
 import TexasGameRoomDataReport, {
@@ -84,6 +85,8 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     private exitBtn: cc.Node = null;
     @property({ type: cc.Node, displayName: '[蒙层] 外部点击关闭区 bg_click' })
     private bgClickNode: cc.Node = null;
+    @property({ type: cc.Node, displayName: '[背景] 内容背景 bg' })
+    private bgNode: cc.Node = null;
     // ─── 公共统计区（publicArea）──────────────────────
     @property({ type: cc.Node, displayName: '[公共] 容器 publicArea' })
     private publicAreaNode: cc.Node = null;
@@ -244,6 +247,20 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
             }
         }
         this._startRemainTimeTick();
+    }
+
+    @bindEvent(CCViewData.FRAME_SIZE_UPDATE, { dataSource: 'ccviewData', initPriority: 20 })
+    protected onFrameResize(
+        visibleSizeWidth: number,
+        visibleSizeHeight: number,
+        frameSizeWidth: number,
+        frameSizeHeight: number,
+        suggestScale: number,
+        saveAreaTop: number
+    ) {
+        const bgWidget = this.bgNode.getComponent(cc.Widget);
+        bgWidget.top = saveAreaTop;
+        bgWidget.updateAlignment();
     }
 
     protected onEnable(): void {
