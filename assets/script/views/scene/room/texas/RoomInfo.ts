@@ -21,8 +21,6 @@ export default class RoomInfo extends cc.Component {
     private roomInfoLabel: cc.Label = null;
     @property(cc.Sprite)
     private bgSprite: cc.Sprite = null!;
-    @property(sp.Skeleton)
-    private bgAnim: sp.Skeleton = null;
     private _roomID: number;
     private _matchID: number;
     private _roomBaseInfo: TexasGameRoomDataBasic;
@@ -193,28 +191,6 @@ export default class RoomInfo extends cc.Component {
         const bgData = await dlTexasRoomBackground.getBackground(deskType);
         if (this._currentDeskType !== deskType) return; // 防异步冲突
         this._fitDeskCover(bgData.SpriteFrame);
-        if (bgData.Animation) {
-            this._playDeskSpine(bgData.Animation);
-        } else {
-            this._stopDeskSpine();
-        }
-    }
-
-    /**
-     * 根据 deskType 播放对应的桌布 Spine 动画
-     * 非动画桌布类型会清理已有节点
-     */
-    private _playDeskSpine(data: sp.SkeletonData): void {
-        this.bgAnim.node.active = true;
-        this.bgAnim.skeletonData = data;
-        this.bgAnim.setAnimation(0, 'animation', true);
-    }
-
-    private _stopDeskSpine(): void {
-        if (this.bgAnim.skeletonData) {
-            this.bgAnim.clearTracks();
-            this.bgAnim.node.active = false;
-        }
     }
 
     /**

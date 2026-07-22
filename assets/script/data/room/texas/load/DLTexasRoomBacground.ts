@@ -5,12 +5,10 @@ const { ccclass, property } = cc._decorator;
 export interface DLItem {
     bundle: string;
     path: string;
-    animationPath?: string;
 }
 
 export interface BackgroundData {
     SpriteFrame: cc.SpriteFrame;
-    Animation?: sp.SkeletonData;
 }
 
 const defaultDynamicLoadingPrefx = 'dynamic/';
@@ -51,33 +49,35 @@ export class DLTexasRoomBackground {
         },
         9: {
             bundle: BUNDLE_RESOURCES,
-            path: 'table/desk8',
-            animationPath: 'table/anim/desk8/33background'
+            path: 'table/desk8'
         },
         10: {
             bundle: BUNDLE_RESOURCES,
-            path: 'table/desk9',
-            animationPath: 'table/anim/desk9/44paizuo'
+            path: 'table/desk9'
         },
         11: {
             bundle: BUNDLE_RESOURCES,
-            path: 'table/desk10',
-            animationPath: 'table/anim/desk10/skeleton'
+            path: 'table/desk10'
         },
         12: {
             bundle: BUNDLE_RESOURCES,
-            path: 'table/desk11',
-            animationPath: 'table/anim/desk11/77Background'
+            path: 'table/desk11'
         },
         13: {
             bundle: BUNDLE_RESOURCES,
-            path: 'table/desk12',
-            animationPath: 'table/anim/desk12/nature_japan88'
+            path: 'table/desk12'
         },
         14: {
             bundle: BUNDLE_RESOURCES,
-            path: 'table/desk13',
-            animationPath: 'table/anim/desk13/backgroud99'
+            path: 'table/desk13'
+        },
+        15: {
+            bundle: BUNDLE_RESOURCES,
+            path: 'table/desk14'
+        },
+        16: {
+            bundle: BUNDLE_RESOURCES,
+            path: 'table/desk15'
         }
     };
 
@@ -86,17 +86,7 @@ export class DLTexasRoomBackground {
         if (data == null) {
             console.error('null', deskType);
         }
-        const promises: Promise<unknown>[] = [];
-        promises.push(AssetManager.getOrLoad(data.bundle, defaultDynamicLoadingPrefx + data.path, cc.SpriteFrame));
-        if (data.animationPath) {
-            promises.push(AssetManager.getOrLoad(data.bundle, defaultDynamicLoadingPrefx + data.animationPath, sp.SkeletonData));
-            const [ap, sp2] = await Promise.all(promises);
-            return {
-                SpriteFrame: ap as cc.SpriteFrame,
-                Animation: sp2 as sp.SkeletonData
-            };
-        }
-        const [ap] = await Promise.all(promises);
+        const ap = await AssetManager.getOrLoad(data.bundle, defaultDynamicLoadingPrefx + data.path, cc.SpriteFrame);
         return {
             SpriteFrame: ap as cc.SpriteFrame
         };
