@@ -21,17 +21,23 @@ class GameConfig {
     static Web_Host_Test1 = 'test2.awanptest.com';
     static Web_Host_Dev1 = 'dev1.awanptest.com';
     static Web_Host_Dev = 'dev.awanptest.com';
+    //OlaVamos 测试环境（与 h5-game 的 VITE_API_BASE_URL / websocket 同域，token 才通用）
+    static Web_Host_Dev2 = 'preview.trackyourchoice.com';
     //0: http://dev.awanptest.com
     //1: http://test2.awanptest.com
     //2: http://dev1.awanptest.com
     //3: https://test2.awanptest.com
     //4: https://dev1.awanptest.com
-    static readonly BUILD_TYPE: number = 5;
+    //5: https://test2.awanptest.com (outsource 旧测试环境)
+    //6: https://preview.trackyourchoice.com (OlaVamos 测试环境)
+    // ⚠️ Cocos 侧 HTTP 走 XMLHttpRequest 直连 GameConfig.Network.WebHost（不经 H5 桥接），
+    //    若与 h5-game 登录所用后端不一致，token 会被拒绝 → {code:90010,'toke auth fail'}。
+    static readonly BUILD_TYPE: number = 6;
     //版本号
     static readonly VERSION: string = '20230109_2130';
     static readonly DEFAULT_LANGUAGE: string = 'cn';
     //是否启用声网 Agora（false 则跳过 SDK 加载、初始化等全部流程
-    static readonly AGOROKEY: string = 'da91afd18fa84618bee90c5468b06a5f';
+    static readonly AGOROKEY: string = 'e69ee18461df4de5a1880b2f20390047';
     static get enableAgora(): boolean {
         return !!GameConfig.AGOROKEY?.trim();
     }
@@ -96,6 +102,12 @@ class GameConfig {
                 GameConfig.Network = {
                     WebHost: `https://${GameConfig.Web_Host_Test1}`,
                     WSS: `wss://${GameConfig.Web_Host_Test1}{0}`
+                };
+                break;
+            case 6:
+                GameConfig.Network = {
+                    WebHost: `https://${GameConfig.Web_Host_Dev2}`,
+                    WSS: `wss://${GameConfig.Web_Host_Dev2}{0}`
                 };
                 break;
         }

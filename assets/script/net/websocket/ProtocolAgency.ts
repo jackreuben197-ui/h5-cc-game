@@ -311,8 +311,11 @@ export default class ProtocolAgency extends cc.Component {
     static Receive(data: ArrayBuffer) {
         if (!data) return;
         let ua = new Uint8Array(data);
+        // 入站包不含 dataLength，故各字段偏移需减去 DataLength 的长度。
+        // 新协议 CharsFlag(BQMN) 位于 code 之后，入站偏移为 2（旧协议 YM 在最前，偏移为 0）。
+        const charsFlagOffset = packetHead.FieldOffset.CharsFlag - packetHead.FieldSize.DataLength;
         for (let i = 0; i < packetHead.CharsFlag.length; i++) {
-            if (ua[i] != packetHead.CharsFlag[i]) {
+            if (ua[charsFlagOffset + i] != packetHead.CharsFlag[i]) {
                 this.tracelog.debug('charsflag is no match');
                 return;
             }

@@ -10,9 +10,11 @@ const http = require('http');
 const url = require('url');
 const { RtcTokenBuilder, RtcRole } = require('agora-token');
 
-// ============ 配置（与 AgoraManager.ts 保持一致）============
-const APP_ID = 'da91afd18fa84618bee90c5468b06a5f';
-const APP_CERTIFICATE = '569bd27e2ef74ff4b2904910b359cf9d';
+// ============ 配置（与 GameConfig.AGOROKEY 保持一致）============
+const APP_ID = 'e69ee18461df4de5a1880b2f20390047';
+// ⚠️ 必须替换为【新 App ID 对应的】App Certificate，否则生成的 token 与新 App ID 不匹配，
+//    Agora 加入频道会鉴权失败。旧证书 '569bd27e2ef74ff4b2904910b359cf9d' 属于旧 App ID，已失效。
+const APP_CERTIFICATE = 'REPLACE_WITH_NEW_APP_CERTIFICATE';
 // ==========================================================
 
 const PORT = 3333;
