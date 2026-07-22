@@ -15,6 +15,7 @@ import UIComponentBase from '../../../base/UIComponentBase';
 import { UIGuideDialogType } from '../../../dialog/mushroomandcriticalhit/UIGuideDialog';
 import viewManager from '../../../UIViewManager';
 import danmuManager from './DanmuManager';
+import TexasReportEvent from './events/TexasReportEvent';
 import TexasTableEvent from './events/TexasTableEvent';
 import InsuranceOperation from './InsuranceOperation';
 import JackpotFeature from './JackpotFeature';
@@ -184,7 +185,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this.squidInfo.initData(this._mine);
         // 入桌即拉一次 Roomers 填战绩缓存：后续 Seated/Standup/ChipsChange/Winner 在消息层做增量。
         // 对应 pokerqueen UITexas.requestRoomersForCache（history=true 包含已离桌玩家）。
-        TexasTableEvent.PrefetchhReportRoomers(param.roomID, param.matchID);
+        TexasReportEvent.PrefetchRoomers(param.roomID, param.matchID);
         this._otherBindings.initData(param.roomID, param.matchID);
         this.jackpotFeature.initData(param.roomID, param.matchID);
         //展示介绍对话框
