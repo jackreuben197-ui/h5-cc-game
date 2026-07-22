@@ -255,7 +255,14 @@ export default class UIPersonalSettings extends UIComponentBaseDialog<UIPersonal
         pm2.onCheckedCallback = (v: cc.Toggle, pc: PokerCardType) => {
             texasGamePersonalSettings.setPokerCardTypeToStorage(pc);
         };
-        this._cardTypes.push(pm1, pm2);
+        const c3 = cc.instantiate(this.cardTypePrefab);
+        c3.parent = this.cardGroup;
+        const pm3 = c3.getComponent(PokerCardTypeItem);
+        pm3.setCardNums(AssetCollectionType.SpriteFrameCard2, 10, 26, 43, 58);
+        pm3.onCheckedCallback = (v: cc.Toggle, pc: PokerCardType) => {
+            texasGamePersonalSettings.setPokerCardTypeToStorage(pc);
+        };
+        this._cardTypes.push(pm1, pm2, pm3);
     }
 
     private _initCardSelected(): void {

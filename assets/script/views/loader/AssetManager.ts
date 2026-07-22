@@ -38,6 +38,7 @@ export const PreloadDefinitionSound: PreloadDefinition = {
 export type AssetTypeMapping = {
     [AssetCollectionType.SpriteFrameCard0]: cc.SpriteFrame;
     [AssetCollectionType.SpriteFrameCard1]: cc.SpriteFrame;
+    [AssetCollectionType.SpriteFrameCard2]: cc.SpriteFrame;
     [AssetCollectionType.SpriteFrameTableSmall]: cc.SpriteFrame;
     [AssetCollectionType.AudioSourceSound]: cc.AudioClip;
     [AssetCollectionType.Common]: cc.Component; // 或者是你的其他通用基类

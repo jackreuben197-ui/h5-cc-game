@@ -10,10 +10,14 @@ export enum AssetCollectionType {
     //牌类型1
     SpriteFrameTableSmall,
     //声音
-    AudioSourceSound
+    AudioSourceSound,
+    SpriteFrameCard2
 }
 
-export type PokerCardType = AssetCollectionType.SpriteFrameCard0 | AssetCollectionType.SpriteFrameCard1;
+export type PokerCardType =
+    | AssetCollectionType.SpriteFrameCard0
+    | AssetCollectionType.SpriteFrameCard1
+    | AssetCollectionType.SpriteFrameCard2;
 
 const { ccclass, property, executionOrder, menu } = cc._decorator;
 
