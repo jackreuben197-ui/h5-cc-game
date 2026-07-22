@@ -37,13 +37,14 @@ export default class UserStoreUtils {
             UserStoreUtils.tracelog.error('get prop list by HttpMiscCombine error', res.code);
             return;
         }
+        const now = Date.now() / 1000;
         userStore.propList = (res.data?.get_chat_shop_prop_list_resp?.list || []).map(item => ({
             propID: item.prop_id,
             propType: item.prop_type,
             priceID: item.price_id,
             propCode: item.prop_code,
             rawPrice: item.raw_price,
-            payPrice: item.pay_price,
+            payPrice: item.start_time <= now && now <= item.end_time ? item.pay_price : item.raw_price,
             subscriptionName: item.subscription_name,
             propAmount: item.prop_amount,
             gamePropID: item.game_prop_id
