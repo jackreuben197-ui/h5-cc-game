@@ -80,6 +80,18 @@ export default class SeatPlayer extends cc.Component {
     private otherPersonActionCountdown: ShiningPathTimer = null!;
     @property({ type: sp.Skeleton, displayName: '获胜动画' })
     private winAnimation: sp.Skeleton = null!;
+    @property({ type: sp.SkeletonData, displayName: '自己获胜动画(YouWin)骨骼' })
+    private youWinData: sp.SkeletonData = null;
+    /** winAnimation 上原本挂的骨骼（他人获胜用），首次播放时缓存 */
+    private _otherWinData: sp.SkeletonData = null;
+    // ===== 获胜动画缩放 =====
+    // 新导入的骨骼比本项目原来的大很多，按包围盒换算回原始尺寸(1608.5 x 1109.34)：
+    //   他人获胜 skeleton.skel : 4000.00 x 2865.86  -> 0.3871
+    //   自己获胜 youwin.skel   : 2583.38 x 1140.76  -> 0.6226
+    // 再乘 WIN_SIZE_FACTOR 整体调小。要改大小只动 WIN_SIZE_FACTOR 一个值即可（越小动画越小）。
+    private static readonly WIN_FIT_OTHER = 0.3871;
+    private static readonly WIN_FIT_SELF = 0.6226;
+    private static readonly WIN_SIZE_FACTOR = 0.4;
     @property({ type: sp.Skeleton, displayName: 'ALLIN动画' })
     private allInAnimation: sp.Skeleton = null!;
     @property({ type: sp.Skeleton, displayName: 'ALLIN(other)动画' })
@@ -891,6 +903,18 @@ export default class SeatPlayer extends cc.Component {
                 this.animatingChips.active = false;
             })
             .start();
+        // 自己赢播放 YouWin 动画，他人赢播放原来的 Spine_Winner 动画
+        if (!this._otherWinData) {
+            this._otherWinData = this.winAnimation.skeletonData;
+        }
+        const isSelfWin = this._seatPlayer.mine && !!this.youWinData;
+        const winData = isSelfWin ? this.youWinData : this._otherWinData;
+        if (winData && this.winAnimation.skeletonData !== winData) {
+            this.winAnimation.skeletonData = winData;
+        }
+        // 新骨骼原始尺寸过大，这里缩回本项目原来的尺寸（不改 prefab 布局）
+        const fit = isSelfWin ? SeatPlayer.WIN_FIT_SELF : SeatPlayer.WIN_FIT_OTHER;
+        this.winAnimation.node.setScale(fit * SeatPlayer.WIN_SIZE_FACTOR);
         this.winAnimation.node.active = true;
         this.winAnimation.setAnimation(0, 'animation', false);
         this.winAnimation.setCompleteListener(() => {

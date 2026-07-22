@@ -42,7 +42,8 @@ export enum SoundMusicKey {
 export class SoundManager {
     private _soundOn: boolean = false;
     private _playingMusic: number = -1;
-    private _lastMusicKey: SoundMusicKey = SoundMusicKey.BgmGame;
+    // 牌桌背景音乐已关闭，这里不能默认成 BgmGame，否则声音开关和 iOS 恢复会把它重新播起来
+    private _lastMusicKey: SoundMusicKey = null;
     private _lastMusicVolume: number = 0.3;
     public get isOn() {
         return this._soundOn;
@@ -59,8 +60,9 @@ export class SoundManager {
     }
 
     // ==================== 公开 API ====================
+    /** 牌桌背景音乐已关闭，保留空实现，音效（SFX）不受影响 */
     playBGM() {
-        return this.playMusic(SoundMusicKey.BgmGame, true, 0.3);
+        return -1;
     }
 
     /** 播放 BGM，返回 audioID。自动停掉上次的 BGM，保证同一时刻只有一个 BGM */

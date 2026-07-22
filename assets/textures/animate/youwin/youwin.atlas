@@ -1,34 +1,33 @@
-
 youwin.png
-size: 1024,256
+size: 400,400
 format: RGBA8888
 filter: Linear,Linear
 repeat: none
-WIN!
+images/shark_00032
   rotate: false
-  xy: 2, 2
-  size: 295, 90
-  orig: 297, 92
-  offset: 1, 1
+  xy: 2, 229
+  size: 393, 166
+  orig: 500, 225
+  offset: 45, 22
   index: -1
-YOU
+images/win_text_00032
   rotate: false
-  xy: 333, 131
-  size: 280, 93
-  orig: 282, 95
-  offset: 1, 1
+  xy: 123, 134
+  size: 182, 93
+  orig: 500, 225
+  offset: 217, 38
   index: -1
-shine
+images/you_text_00032
   rotate: false
-  xy: 615, 110
-  size: 114, 114
-  orig: 128, 128
-  offset: 7, 7
-  index: -1
-shineline
-  rotate: false
-  xy: 2, 94
-  size: 329, 130
-  orig: 329, 130
+  xy: 2, 131
+  size: 119, 96
+  orig: 119, 96
   offset: 0, 0
+  index: -1
+images/you_text_00033
+  rotate: false
+  xy: 307, 132
+  size: 67, 95
+  orig: 67, 96
+  offset: 0, 1
   index: -1

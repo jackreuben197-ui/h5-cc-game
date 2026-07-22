@@ -13489,7 +13489,10 @@
     "_emojiNode": {
       "__id__": 375
     },
-    "_id": ""
+    "_id": "",
+    "youWinData": {
+      "__uuid__": "6dbafda3-fb2d-4462-99c3-cf3692c1e4a6"
+    }
   },
   {
     "__type__": "cc.PrefabInfo",
