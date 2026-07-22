@@ -35,11 +35,13 @@ import seatPostionCaculator, { SeatPosition } from './widget/SeatPositionCaculat
 
 const { ccclass, property, menu } = cc._decorator;
 
-const redColor = cc.Color.fromHEX(new cc.Color(), '#FA2B4B');
-
-const greenColor = cc.Color.fromHEX(new cc.Color(), '#78E4E4');
-
-const yellowColor = cc.Color.fromHEX(new cc.Color(), '#F9CA9F');
+// 操作气泡颜色，取自 pokerqueen。
+// pokerqueen 是每个操作各一张底图（new_texture/game/bubble/Rectangle 1278*.png，均不着色），
+// 本项目是同一张 seat/action.png 用代码着色，所以这里把那几张图的颜色取出来按操作对应上。
+const raiseColor = cc.Color.fromHEX(new cc.Color(), '#FFC34F'); // 加注/下注/前注
+const checkColor = cc.Color.fromHEX(new cc.Color(), '#3FCB4A'); // 看牌
+const callColor = cc.Color.fromHEX(new cc.Color(), '#B670EE'); // 跟注
+const allinColor = cc.Color.fromHEX(new cc.Color(), '#FF465D'); // ALLIN
 
 @ccclass
 @menu('Scene/Room/Texas/SeatPlayer')
@@ -85,13 +87,15 @@ export default class SeatPlayer extends cc.Component {
     /** winAnimation 上原本挂的骨骼（他人获胜用），首次播放时缓存 */
     private _otherWinData: sp.SkeletonData = null;
     // ===== 获胜动画缩放 =====
-    // 新导入的骨骼比本项目原来的大很多，按包围盒换算回原始尺寸(1608.5 x 1109.34)：
-    //   他人获胜 skeleton.skel : 4000.00 x 2865.86  -> 0.3871
-    //   自己获胜 youwin.skel   : 2583.38 x 1140.76  -> 0.6226
-    // 再乘 WIN_SIZE_FACTOR 整体调小。要改大小只动 WIN_SIZE_FACTOR 一个值即可（越小动画越小）。
-    private static readonly WIN_FIT_OTHER = 0.3871;
-    private static readonly WIN_FIT_SELF = 0.6226;
-    private static readonly WIN_SIZE_FACTOR = 0.4;
+    // 注意：prefab 里 Spine_Winner 节点自带 scale 0.5，下面 setScale 是【绝对值】会覆盖它，
+    // 所以基准要用「原骨骼尺寸 x 0.5」＝ 804.25 x 554.67，而不是骨骼本身的 1608.5 x 1109.34。
+    // 把新骨骼按包围盒缩到这个原始渲染尺寸（两个轴都不超出）：
+    //   他人获胜 skeleton.skel : 4000.00 x 2865.86  -> 0.1936
+    //   自己获胜 youwin.skel   : 2583.38 x 1140.76  -> 0.3113
+    // 此时＝原来的大小；再乘 WIN_SIZE_FACTOR 继续调小。改大小只动 WIN_SIZE_FACTOR（越小越小）。
+    private static readonly WIN_FIT_OTHER = 0.1936;
+    private static readonly WIN_FIT_SELF = 0.3113;
+    private static readonly WIN_SIZE_FACTOR = 0.5;
     @property({ type: sp.Skeleton, displayName: 'ALLIN动画' })
     private allInAnimation: sp.Skeleton = null!;
     @property({ type: sp.Skeleton, displayName: 'ALLIN(other)动画' })
@@ -734,11 +738,11 @@ export default class SeatPlayer extends cc.Component {
         switch (action) {
             case Def.Action.BET:
                 this.seatActionDisplay.node.active = true;
-                this.seatActionDisplay.showAction(i18nMgr.Get('UITexas_Bet'), greenColor);
+                this.seatActionDisplay.showAction(i18nMgr.Get('UITexas_Bet'), raiseColor);
                 break;
             case Def.Action.CALL:
                 this.seatActionDisplay.node.active = true;
-                this.seatActionDisplay.showAction(i18nMgr.Get('adaptation10044'), yellowColor);
+                this.seatActionDisplay.showAction(i18nMgr.Get('adaptation10044'), callColor);
                 break;
             case Def.Action.FOLD:
                 this.seatActionDisplay.node.active = true;
@@ -779,14 +783,14 @@ export default class SeatPlayer extends cc.Component {
                     soundManager.playEffect(SoundEffectKey.Check);
                 }
                 this.seatActionDisplay.node.active = true;
-                this.seatActionDisplay.showAction(i18nMgr.Get('adaptation10046'), yellowColor);
+                this.seatActionDisplay.showAction(i18nMgr.Get('adaptation10046'), checkColor);
                 break;
             case Def.Action.RAISE:
                 // if (aat == AnimateDisplayTypeAction.Done) {
                 //     soundManager.playEffect(SoundEffectKey.RaiseBetCallPost);
                 // }
                 this.seatActionDisplay.node.active = true;
-                this.seatActionDisplay.showAction(i18nMgr.Get('adaptation10045'), greenColor);
+                this.seatActionDisplay.showAction(i18nMgr.Get('adaptation10045'), raiseColor);
                 break;
             case Def.Action.ALLIN:
                 if (aat == AnimateDisplayTypeAction.Done) {
@@ -798,7 +802,7 @@ export default class SeatPlayer extends cc.Component {
                             //cc.log("动画结束");
                             this.allInAnimation.node.active = false;
                             this.seatActionDisplay.node.active = true;
-                            this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), redColor);
+                            this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), allinColor);
                         });
                         break;
                     }
@@ -808,12 +812,12 @@ export default class SeatPlayer extends cc.Component {
                         //cc.log("动画结束");
                         this.allInOtherAnimation.node.active = false;
                         this.seatActionDisplay.node.active = true;
-                        this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), redColor);
+                        this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), allinColor);
                     });
                     break;
                 }
                 this.seatActionDisplay.node.active = true;
-                this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), redColor);
+                this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), allinColor);
                 break;
             case Def.Action.POST:
             case Def.Action.POSTANTE:
@@ -821,7 +825,7 @@ export default class SeatPlayer extends cc.Component {
                 //     soundManager.playEffect(SoundEffectKey.RaiseBetCallPost);
                 // }
                 this.seatActionDisplay.node.active = true;
-                this.seatActionDisplay.showAction(i18nMgr.Get('UITexas_addBlind'), yellowColor);
+                this.seatActionDisplay.showAction(i18nMgr.Get('UITexas_addBlind'), raiseColor);
                 break;
             case Def.Action.SB:
                 if (aat == AnimateDisplayTypeAction.Done) {
