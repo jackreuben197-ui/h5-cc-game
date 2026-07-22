@@ -37,5 +37,4 @@ export default class ReportObserverItem extends cc.Component {
     private onItemClicked(): void {
         if (this._observer && this._onClick) this._onClick(this._observer);
     }
-
 }

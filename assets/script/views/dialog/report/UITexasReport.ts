@@ -367,7 +367,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
             this._createDataItem(content).showPlayer(p, {
                 mode: this._subType,
                 atTable: tableUserIDs.has(Number(p.userRid)),
-                currentUserID: userStore.userID,
+                currentUserID: userStore.userRID,
                 onClick: player => this._openPlayerInfo(player)
             });
         }
@@ -411,7 +411,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
             return;
         }
         for (const r of records) {
-            this._createDataItem(this.jackpotContent).showJackpot(r, userStore.userID);
+            this._createDataItem(this.jackpotContent).showJackpot(r, userStore.userRID);
         }
         this._updateNoDataState();
     }
@@ -425,7 +425,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     private _renderInsuranceList(): void {
         this.battleContent.removeAllChildren();
         for (const r of this._report.insuranceRecords) {
-            this._createDataItem(this.battleContent).showInsurance(r, userStore.userID);
+            this._createDataItem(this.battleContent).showInsurance(r, userStore.userRID);
         }
         this._updateNoDataState();
     }
@@ -435,7 +435,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         content.removeAllChildren();
         const records = this._currentSquidRecords();
         for (const r of records) {
-            this._createDataItem(content).showModeRecord(r, this._subType, userStore.userID);
+            this._createDataItem(content).showModeRecord(r, this._subType, userStore.userRID);
         }
         this._updateNoDataState();
     }

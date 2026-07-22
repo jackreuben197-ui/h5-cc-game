@@ -19783,6 +19783,33 @@
     "favoBtnNode": {
       "__id__": 521
     },
+    "roomNameLabel": {
+      "__id__": 28
+    },
+    "roomBlindLabel": {
+      "__id__": 32
+    },
+    "playerCountLabel": {
+      "__id__": 40
+    },
+    "roomHandLabel": {
+      "__id__": 20
+    },
+    "exitBtnNode": {
+      "__id__": 15
+    },
+    "detailsArrow": {
+      "__id__": 61
+    },
+    "peekCostLabel": {
+      "__id__": 488
+    },
+    "viewPubCostLabel": {
+      "__id__": 511
+    },
+    "favoStar": {
+      "__id__": 526
+    },
     "_id": ""
   },
   {
