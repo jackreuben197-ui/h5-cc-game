@@ -270,11 +270,9 @@ class UIViewManager {
 
     // hideCurrentScene
     public hideCurrentScene(): void {
-        console.log('onUpdateCards', 'hide1');
         if (!this._curretScene) return;
         const ui = this._scenesPool.get(this._curretScene);
         if (!ui) return;
-        console.log('onUpdateCards', 'hide');
         ui.node.active = false;
         ui.node.stopAllActions();
         ui.node.parent = this._caceLayer;

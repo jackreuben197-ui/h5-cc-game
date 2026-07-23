@@ -97,7 +97,7 @@ export class SeatPositionCaculator {
     }
     private _offsetY = 0; // 中心点的向上偏移
 
-    public initWithContainer(w: number, h: number, offsetY: number = 0, seatWidth: number = 270, seatHeight: number = 370) {
+    public initWithContainer(w: number, h: number, offsetY: number = 0, seatWidth: number = 300, seatHeight: number = 370) {
         this._containerH = h;
         this._containerW = w;
         this._offsetY = offsetY;

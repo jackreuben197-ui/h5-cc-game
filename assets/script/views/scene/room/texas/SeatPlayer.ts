@@ -784,8 +784,8 @@ export default class SeatPlayer extends cc.Component {
                         this.allInAnimation.setAnimation(0, 'animation', false);
                         this.allInAnimation.setCompleteListener(() => {
                             //cc.log("动画结束");
-                            this.allInAnimation.node.active = false;
-                            this.seatActionDisplay.node.active = true;
+                            //this.allInAnimation.node.active = false;
+                            this.seatActionDisplay.node.active = false;
                             this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), redColor);
                         });
                         break;
@@ -794,13 +794,28 @@ export default class SeatPlayer extends cc.Component {
                     this.allInOtherAnimation.setAnimation(0, 'animation', false);
                     this.allInOtherAnimation.setCompleteListener(() => {
                         //cc.log("动画结束");
-                        this.allInOtherAnimation.node.active = false;
-                        this.seatActionDisplay.node.active = true;
+                        //this.allInOtherAnimation.node.active = false;
+                        this.seatActionDisplay.node.active = false;
                         this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), redColor);
                     });
                     break;
                 }
-                this.seatActionDisplay.node.active = true;
+                if (this._seatPlayer.mine) {
+                    this.allInAnimation.node.active = true;
+                    this.allInAnimation.setAnimation(0, 'animation', false);
+                } else {
+                    this.allInOtherAnimation.node.active = true;
+                    this.allInOtherAnimation.setAnimation(0, 'animation', false);
+                }
+                // entry.trackTime = entry.animationEnd;
+                // this.allInAnimation.
+                // const raw = this.allInOtherAnimation as any;
+                // if (raw.update) {
+                //     raw.update(0);
+                // } else if (raw._updateRealtime) {
+                //     raw._updateRealtime(0);
+                // }
+                // this.allInAnimation.paused = true;
                 this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), redColor);
                 break;
             case Def.Action.POST:
@@ -822,6 +837,8 @@ export default class SeatPlayer extends cc.Component {
                 }
                 break;
             default:
+                this.allInAnimation.node.active = false;
+                this.allInOtherAnimation.node.active = false;
                 this.seatActionDisplay.node.active = false;
                 break;
         }
