@@ -405,7 +405,8 @@ export default class SeatPlayer extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayer.SQUID_IN, 'player')
     @bindEvent(TexasGameRoomDataBasic.SQUID_ENABLED, 'basic')
     private onRefreshSquidMask(): void {
-        this.squidMaskNode.active = this._seatPlayer.squidIn && this._seatPlayer.squidCount == 0;
+        // 头像上的鱿鱼触手遮罩已按需求彻底移除，始终隐藏。
+        this.squidMaskNode.active = false;
     }
     // =================== 鱿鱼 （END） ====================
 
@@ -571,6 +572,8 @@ export default class SeatPlayer extends cc.Component {
         // reset
         if (l == 0) {
             this._bigCards.forEach(v => v.reset());
+            // 新一局：停掉上一局残留的 ALLIN 循环特效
+            this._stopAllinAnim();
         }
         if (l > 0 && this._seatPlayer.action == Def.Action.FOLD) {
             this.smallCardsContainer.active = false;
@@ -735,6 +738,9 @@ export default class SeatPlayer extends cc.Component {
             this.otherPersonActionCountdown.stop();
             this.otherPersonActionCountdown.node.active = false;
         }
+        // pokerqueen 的 ALLIN 特效是循环播放的，直到该玩家有下一步操作/新一局才停。
+        // 这里在每次动作变化时先停掉上一次的 ALLIN 环形特效，ALLIN 分支再重新循环起来。
+        this._stopAllinAnim();
         switch (action) {
             case Def.Action.BET:
                 this.seatActionDisplay.node.active = true;
@@ -793,31 +799,17 @@ export default class SeatPlayer extends cc.Component {
                 this.seatActionDisplay.showAction(i18nMgr.Get('adaptation10045'), raiseColor);
                 break;
             case Def.Action.ALLIN:
-                if (aat == AnimateDisplayTypeAction.Done) {
-                    soundManager.playEffect(SoundEffectKey.AllIn);
-                    if (this._seatPlayer.mine) {
-                        this.allInAnimation.node.active = true;
-                        this.allInAnimation.setAnimation(0, 'animation', false);
-                        this.allInAnimation.setCompleteListener(() => {
-                            //cc.log("动画结束");
-                            this.allInAnimation.node.active = false;
-                            this.seatActionDisplay.node.active = true;
-                            this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), allinColor);
-                        });
-                        break;
-                    }
-                    this.allInOtherAnimation.node.active = true;
-                    this.allInOtherAnimation.setAnimation(0, 'animation', false);
-                    this.allInOtherAnimation.setCompleteListener(() => {
-                        //cc.log("动画结束");
-                        this.allInOtherAnimation.node.active = false;
-                        this.seatActionDisplay.node.active = true;
-                        this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), allinColor);
-                    });
-                    break;
-                }
+                // pokerqueen：ALLIN 时立刻显示气泡文字，同时环形特效【循环】播放（不是播一次就停），
+                // 一直转到该玩家下一步操作/新一局由本函数顶部的 _stopAllinAnim() 或重置清掉。
                 this.seatActionDisplay.node.active = true;
                 this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), allinColor);
+                if (aat == AnimateDisplayTypeAction.Done) {
+                    soundManager.playEffect(SoundEffectKey.AllIn);
+                    const anim = this._seatPlayer.mine ? this.allInAnimation : this.allInOtherAnimation;
+                    anim.setCompleteListener(null);
+                    anim.node.active = true;
+                    anim.setAnimation(0, 'animation', true); // loop，与 pokerqueen 一致
+                }
                 break;
             case Def.Action.POST:
             case Def.Action.POSTANTE:
@@ -925,6 +917,20 @@ export default class SeatPlayer extends cc.Component {
             //cc.log("动画结束");
             this.winAnimation.node.active = false;
         });
+    }
+
+    /** 停掉 ALLIN 环形循环特效（自己/他人两个节点都停）。对应 pokerqueen 的 StopAllinArmature。 */
+    private _stopAllinAnim() {
+        if (this.allInAnimation && this.allInAnimation.node.active) {
+            this.allInAnimation.setCompleteListener(null);
+            this.allInAnimation.clearTracks();
+            this.allInAnimation.node.active = false;
+        }
+        if (this.allInOtherAnimation && this.allInOtherAnimation.node.active) {
+            this.allInOtherAnimation.setCompleteListener(null);
+            this.allInOtherAnimation.clearTracks();
+            this.allInOtherAnimation.node.active = false;
+        }
     }
 
     private _clickReturnToGame() {
