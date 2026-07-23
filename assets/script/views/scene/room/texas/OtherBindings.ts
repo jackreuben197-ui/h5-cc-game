@@ -43,6 +43,8 @@ export default class OtherBindings extends cc.Component {
     private hideVideoOpenBtn: cc.Node = null;
     @property({ type: cc.Node, displayName: '远端视频控制节点(close)' })
     private hideVideoCloseBtn: cc.Node = null;
+    @property({ type: cc.Node, displayName: '认证横幅' })
+    private certBanner: cc.Node = null;
     @property({ type: cc.Button, displayName: '偷偷看' })
     private viewPlayerCards: cc.Button = null;
     @property({ type: cc.Label, displayName: '偷偷看花费' })
@@ -55,8 +57,26 @@ export default class OtherBindings extends cc.Component {
 
     public initData(roomID: number, matchID: number) {
         this._roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
+        this._applyVideoRoomLayout();
         if (this.node.activeInHierarchy) {
             this._bindEventsAndRefresh();
+        }
+    }
+
+    private _applyVideoRoomLayout(): void {
+        const isVideoRoom = this._roomData.basicInfo.isInVideoRoom;
+        this.btnEffect.node.active = isVideoRoom;
+        this.btnAudio.node.active = isVideoRoom;
+        this.btnCamera.node.active = isVideoRoom;
+        if (this.certBanner) {
+            this.certBanner.x = isVideoRoom ? 0 : 410;
+        }
+        if (!isVideoRoom) return;
+        const layout = this.btnCamera.node.parent.getComponent(cc.Layout);
+        if (layout) {
+            layout.paddingRight = 51;
+            layout.spacingX = 20;
+            layout.updateLayout();
         }
     }
 

@@ -186,11 +186,21 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         // 对应 pokerqueen UITexas.requestRoomersForCache（history=true 包含已离桌玩家）。
         TexasTableEvent.PrefetchhReportRoomers(param.roomID, param.matchID);
         this._otherBindings.initData(param.roomID, param.matchID);
+        this._applyMainMenuLayout();
         this.jackpotFeature.initData(param.roomID, param.matchID);
         //展示介绍对话框
         await this._showSquidIntroDialog(roomData);
         await this._showMushroomIntroDialog(roomData);
         await this._showCriticalHitIntroDialog(roomData);
+    }
+
+    private _applyMainMenuLayout(): void {
+        const isVideoRoom = this._roomData.basicInfo.isInVideoRoom;
+        const layout = this.btnReport.node.parent.getComponent(cc.Layout);
+        if (!layout) return;
+        layout.paddingLeft = isVideoRoom ? 51 : 160;
+        layout.spacingX = isVideoRoom ? 20 : 152;
+        layout.updateLayout();
     }
 
     protected onDisable(): void {
