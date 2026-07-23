@@ -20,10 +20,10 @@ export namespace HttpPropChatPropList {
         public prop_type: number = 0;
         public price_id: number = 0;
         public prop_code: string = '';
-        public raw_price: number = 0;
-        public pay_price: number = 0;
-        public start_time: number = 0;
-        public end_time: number = 0;
+        public raw_price: number = 0; // 原价
+        public pay_price: number = 0; // 折扣价格
+        public start_time: number = 0; // 折扣开始时间
+        public end_time: number = 0; // 折扣结束时间
         public subscription_name: string = '';
         public prop_amount: number = 0;
         public game_prop_id: number = 0;

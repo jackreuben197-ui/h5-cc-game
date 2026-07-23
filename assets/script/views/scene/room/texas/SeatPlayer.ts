@@ -518,6 +518,7 @@ export default class SeatPlayer extends cc.Component {
         }
         this.node.setScale(realPos.scale, realPos.scale);
         this.node.setPosition(realPos.position);
+        this.onUpdateCards(this._seatPlayer.cards, AnimateDisplayTypeCards.Static);
     }
 
     @bindEvent(TexasGameRoomDataPlayer.ROUND_BET_CHANGE, 'player', AnimateDisplayTypeRoundBet.Static)

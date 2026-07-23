@@ -15,6 +15,8 @@ const { ccclass, property, menu } = cc._decorator;
 export default class PublicCardsInfo extends cc.Component {
     private _publicCards: CardView[] = [];
     private _secPublicCards: CardView[] = [];
+    private _publicCardPositions: cc.Vec3[] = [];
+    private _secPublicCardPositions: cc.Vec3[] = [];
     private _publicCardsData: TexasGameRoomDataPublicCards;
 
     public initData(roomID: number, matchID: number) {
@@ -28,11 +30,16 @@ export default class PublicCardsInfo extends cc.Component {
     public onLoad() {
         // 如果绑定点击写这里
         for (let i = 0; i < 5; i++) {
-            this._publicCards.push(this.node.children[i].getComponent(CardView));
+            const card = this.node.children[i].getComponent(CardView);
+            this._publicCards.push(card);
+            this._publicCardPositions.push(cc.v3(card.node.position.x, card.node.position.y, card.node.position.z));
         }
         for (let i = 5; i < 10; i++) {
-            this._secPublicCards.push(this.node.children[i].getComponent(CardView));
+            const card = this.node.children[i].getComponent(CardView);
+            this._secPublicCards.push(card);
+            this._secPublicCardPositions.push(cc.v3(card.node.position.x, card.node.position.y, card.node.position.z));
         }
+        cc.game.on(cc.game.EVENT_SHOW, this.onGameShow, this);
     }
 
     public onEnable(): void {
@@ -44,19 +51,43 @@ export default class PublicCardsInfo extends cc.Component {
         unBindEventsAll(this);
     }
 
+    public onDestroy(): void {
+        cc.game.off(cc.game.EVENT_SHOW, this.onGameShow, this);
+    }
+
     private _bindEventsAndRefresh() {
         autoBindEvents(this, { publicCards: this._publicCardsData });
     }
 
     @bindEvent(TexasGameRoomDataPublicCards.ALL_PUBLICCARDS_RESET, { dataSource: 'publicCards', initIgnore: true })
     public onUpdateResetPublicCards() {
-        this._publicCards.forEach(v => {
-            v.node.active = false;
-            v.reset();
-        });
-        this._secPublicCards.forEach(v => {
-            v.node.active = false;
-            v.reset();
+        this._syncPublicCards();
+        this._publicCards.forEach(v => v.reset());
+        this._secPublicCards.forEach(v => v.reset());
+    }
+
+    private onGameShow(): void {
+        this._syncPublicCards();
+    }
+
+    private _syncPublicCards(): void {
+        if (!this._publicCardsData) return;
+        cc.Tween.stopAllByTarget(this.node);
+        this._syncCardViews(this._publicCards, this._publicCardPositions, this._publicCardsData.publicCards);
+        this._syncCardViews(this._secPublicCards, this._secPublicCardPositions, this._publicCardsData.secondPublicCards);
+    }
+
+    private _syncCardViews(views: CardView[], positions: cc.Vec3[], cards: number[]): void {
+        views.forEach((view, index) => {
+            cc.Tween.stopAllByTarget(view.node);
+            view.node.setPosition(positions[index]);
+            view.node.setScale(1, 1);
+            view.node.angle = 0;
+            view.node.active = index < cards.length;
+            if (index < cards.length) {
+                view.storeCardNum = cards[index];
+                view.cardNum = cards[index];
+            }
         });
     }
 
