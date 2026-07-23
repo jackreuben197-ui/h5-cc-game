@@ -474,7 +474,6 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
      * Image_Dialog 自身也是 resize=CONTAINER 的纵向 Layout，ScrollViewRoot 高度变化后它会自动整体收缩重排。
      */
     private _adjustScrollViewHeight(): void {
-        if (!this.scrollViewRoot || !this.scrollViewport || !this.insuranceCardsRoot) return;
         this.insuranceCardsOverContent?.getComponent(cc.Layout)?.updateLayout();
         this.insuranceCardsSplitContent?.getComponent(cc.Layout)?.updateLayout();
         this.insuranceCardsOver?.getComponent(cc.Layout)?.updateLayout();
