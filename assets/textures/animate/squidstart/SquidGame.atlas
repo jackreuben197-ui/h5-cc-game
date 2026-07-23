@@ -1,0 +1,48 @@
+
+SquidGame.png
+size: 1304,1304
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+SquidGame0
+  rotate: true
+  xy: 2, 324
+  size: 348, 573
+  orig: 348, 573
+  offset: 0, 0
+  index: -1
+SquidGame1
+  rotate: true
+  xy: 887, 427
+  size: 874, 414
+  orig: 874, 414
+  offset: 0, 0
+  index: -1
+SquidGame2
+  rotate: false
+  xy: 2, 674
+  size: 883, 627
+  orig: 883, 627
+  offset: 0, 0
+  index: -1
+SquidGame3
+  rotate: false
+  xy: 577, 413
+  size: 259, 259
+  orig: 259, 259
+  offset: 0, 0
+  index: -1
+SquidGame4
+  rotate: false
+  xy: 838, 189
+  size: 236, 236
+  orig: 236, 236
+  offset: 0, 0
+  index: -1
+SquidGame5
+  rotate: true
+  xy: 577, 149
+  size: 262, 232
+  orig: 262, 232
+  offset: 0, 0
+  index: -1

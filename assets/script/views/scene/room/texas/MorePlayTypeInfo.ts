@@ -23,8 +23,8 @@ export default class MorePlayTypeInfo extends cc.Component {
     private rootNode: cc.Button = null!;
     @property({ type: cc.Button, displayName: '加入鱿鱼按钮' })
     private joinButton: cc.Button = null!;
-    @property({ type: cc.Animation, displayName: '鱿鱼开场动画' })
-    private squidStartAnimation: cc.Animation = null!;
+    @property({ type: sp.Skeleton, displayName: '鱿鱼开场动画' })
+    private squidStartAnimation: sp.Skeleton = null!;
     @property({ type: cc.Animation, displayName: '暴击开场动画' })
     private critialHitStartAnimation: cc.Animation = null!;
     @property({ type: cc.Node, displayName: '左边鱿鱼按钮' })
@@ -51,7 +51,7 @@ export default class MorePlayTypeInfo extends cc.Component {
         };
         this.joinButton.node.on('click', this._onJoinSquidClicked, this);
         this.squidStartAnimation.node.active = false;
-        this.squidStartAnimation.on('finished', () => {
+        this.squidStartAnimation.setCompleteListener(() => {
             this.squidStartAnimation.node.active = false;
         });
         this.squidStandUp.node.on('click', this.onSquidStandUpClicked, this);
@@ -111,7 +111,7 @@ export default class MorePlayTypeInfo extends cc.Component {
     private onSquieStatusChange(b: boolean, ant: AnimateDisplayTypePlayType = AnimateDisplayTypePlayType.Staic) {
         if (b && ant == AnimateDisplayTypePlayType.Start) {
             this.squidStartAnimation.node.active = true;
-            this.squidStartAnimation.play('squid_start');
+            this.squidStartAnimation.setAnimation(0, 'animation', false);
         }
     }
 
