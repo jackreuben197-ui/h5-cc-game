@@ -17,6 +17,7 @@ export function Winner(data: ServerMessageWinner.AsObject, roomID: number, match
     let maxResult: Result.AsObject = null;
     data.resultsList.forEach(result => {
         const seatData = roomData.seatsStateManager.getSeatPlayer(result.seatId);
+        seatData.action = Def.Action.NONE; // 清理下状态
         // 已经站起
         if (seatData.userID == 0 || result.standUp) return;
         // 更新筹码

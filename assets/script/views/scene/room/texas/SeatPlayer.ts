@@ -830,6 +830,8 @@ export default class SeatPlayer extends cc.Component {
                 }
                 break;
             default:
+                this.allInAnimation.node.active = false;
+                this.allInOtherAnimation.node.active = false;
                 this.seatActionDisplay.node.active = false;
                 break;
         }

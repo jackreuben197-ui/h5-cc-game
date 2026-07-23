@@ -1,10 +1,9 @@
 import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../core/decorator/DataBind';
 import { traceClass } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
-import { CCViewData } from '../../../data/system/CCViewData';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataReplay, { ReplayHandData } from '../../../data/room/texas/TexasGameRoomDataReplay';
-import diamondModel, { DiamondConfig } from '../../../data/trade/DiamondModel';
+import { CCViewData } from '../../../data/system/CCViewData';
 import userStore from '../../../data/user/UserStore';
 import { StringHelper } from '../../../helper/StringHelper';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
@@ -15,6 +14,7 @@ import TexasTableEvent from '../../scene/room/texas/events/TexasTableEvent';
 import viewManager from '../../UIViewManager';
 import StepSlider from '../../widget/StepSlider';
 import HistoryPlayerCardItem from './HistoryPlayerCardItem';
+import HistoryPricing from './HistoryPricing';
 import { getViewPubRound, hasHiddenCards, hasHiddenPublicCards, HistoryHandModel, parseHistoryHand } from './HistoryReplayModel';
 import HistoryScoreSection, { ScoreRowMode } from './HistoryScoreSection';
 import HistoryStreetSection from './HistoryStreetSection';
@@ -28,8 +28,8 @@ const { ccclass, property, menu } = cc._decorator;
 
 /**
  * 牌谱回放对话框。
- * prefab 迁自 pokerqueen(UITexasHistory.prefab):主节点走 @property 编辑器绑定,
- * 已绑定节点内部的子节点(价格标签/箭头等)按路径查找。
+ * prefab 迁自 pokerqueen(UITexasHistory.prefab):所有节点(含顶栏标签/价格标签/箭头等深层子节点)
+ * 均走 @property 编辑器绑定,不做运行时路径查找。
  * 详情区块组件化:$Score/$Preflop 是 prefab 常驻节点(编辑器绑定组件),
  * Flop/Turn/River 与 Showdown/Showdown2 由通用区块 prefab 运行时实例化。
  * 翻页滑条为 prefab 内置的通用 StepSlider 节点,编辑器绑定,接线方式对齐 UITexasReport。
@@ -45,13 +45,11 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     private bgClickNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '顶部全屏遮挡(top_block,onLoad 禁用其 BlockInputEvents)' })
     private topBlockNode: cc.Node = null;
-    @property({ type: cc.Node, displayName: '顶部房间信息($Top,含 room_name_label 等子标签与 exit_button)' })
-    private topNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '总滚动容器($content,首包前隐藏)' })
     private contentNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '概览卡容器($Dashboard,运行时填 HistoryPlayerCardItem)' })
     private dashboardNode: cc.Node = null;
-    @property({ type: cc.Node, displayName: '详情展开按钮($DetailsBtn,含 Background/arrowsp 箭头)' })
+    @property({ type: cc.Node, displayName: '详情展开按钮($DetailsBtn)' })
     private detailsBtnNode: cc.Node = null;
     @property({ type: HistoryScoreSection, displayName: 'Score结算区组件($Score)' })
     private scoreSection: HistoryScoreSection = null;
@@ -73,16 +71,30 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     private rightBtnNode: cc.Node = null;
     @property({ type: cc.Label, displayName: '钻石余额标签($DiamondNum)' })
     private diamondNumLabel: cc.Label = null;
-    @property({ type: cc.Node, displayName: '偷偷看按钮($PeekButton,含 diamondIcon/$PeekCost 价格子标签)' })
+    @property({ type: cc.Node, displayName: '偷偷看按钮($PeekButton)' })
     private peekBtnNode: cc.Node = null;
-    @property({ type: cc.Node, displayName: '发发看按钮($ViewPubButton,含 diamondIcon/$ViewPubCost 价格子标签)' })
+    @property({ type: cc.Node, displayName: '发发看按钮($ViewPubButton)' })
     private viewPubBtnNode: cc.Node = null;
-    @property({ type: cc.Node, displayName: '收藏按钮($favoBtn,含 Background/$star 星星子节点)' })
+    @property({ type: cc.Node, displayName: '收藏按钮($favoBtn)' })
     private favoBtnNode: cc.Node = null;
-    // ==================== 已绑定节点内部的子节点(onLoad 路径查找) ====================
+    // ==================== 编辑器绑定(深层子节点) ====================
+    @property({ type: cc.Label, displayName: '顶部房间名($Top/room_name_label)' })
+    private roomNameLabel: cc.Label = null;
+    @property({ type: cc.Label, displayName: '顶部盲注($Top/room_bb_label)' })
+    private roomBlindLabel: cc.Label = null;
+    @property({ type: cc.Label, displayName: '顶部人数($Top/player_count_label)' })
+    private playerCountLabel: cc.Label = null;
+    @property({ type: cc.Label, displayName: '顶部桌号-手数($Top/room_id_label)' })
+    private roomHandLabel: cc.Label = null;
+    @property({ type: cc.Node, displayName: '关闭按钮($Top/exit_button)' })
+    private exitBtnNode: cc.Node = null;
+    @property({ type: cc.Node, displayName: '详情展开箭头($DetailsBtn/Background/arrowsp)' })
     private detailsArrow: cc.Node = null;
+    @property({ type: cc.Label, displayName: '偷偷看价格($PeekButton/diamondIcon/$PeekCost)' })
     private peekCostLabel: cc.Label = null;
+    @property({ type: cc.Label, displayName: '发发看价格($ViewPubButton/diamondIcon/$ViewPubCost)' })
     private viewPubCostLabel: cc.Label = null;
+    @property({ type: cc.Node, displayName: '收藏星星($favoBtn/Background/$star)' })
     private favoStar: cc.Node = null;
     // ==================== 运行时实例化的详情区块 ====================
     private flopSection: HistoryStreetSection = null;
@@ -101,29 +113,16 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     private _dashboardItems: HistoryPlayerCardItem[] = [];
     private _playerCardPrefab: cc.Prefab = null;
     private static readonly COLLECTED_STAR_COLOR = cc.color(255, 200, 50);
-    // 偷偷看阶梯收费: config_type=30, type_ext = 11 + 10 * 次数(最多4次)
-    private static readonly DIAMOND_CONFIG_PEEK = 30;
-    // 发发看: config_type=8, type_ext 千位 = 轮次(1 flop / 2 turn / 3 river)
-    private static readonly DIAMOND_CONFIG_VIEW_PUB = 8;
+    // 服务端:该手牌尚未同步到历史记录
+    private static readonly CODE_REPLAY_NOT_SYNCED = 90003;
 
     protected onLoad(): void {
-        this._resolveChildNodes();
-        this._buildSections();
-        this._registerTouchEvents();
-        this._loadPrefabs();
-    }
-    // ====================================================
-    // 已绑定节点内部的子节点解析
-    // ====================================================
-
-    private _resolveChildNodes() {
         // top_block 的 BlockInputEvents 覆盖全屏会拦截滚动拖拽,禁用(对齐老版)
         const blockComp = this.topBlockNode?.getComponent(cc.BlockInputEvents);
         if (blockComp) blockComp.enabled = false;
-        this.detailsArrow = cc.find('Background/arrowsp', this.detailsBtnNode);
-        this.peekCostLabel = cc.find('diamondIcon/$PeekCost', this.peekBtnNode)?.getComponent(cc.Label);
-        this.viewPubCostLabel = cc.find('diamondIcon/$ViewPubCost', this.viewPubBtnNode)?.getComponent(cc.Label);
-        this.favoStar = cc.find('Background/$star', this.favoBtnNode);
+        this._buildSections();
+        this._registerTouchEvents();
+        this._loadPrefabs();
     }
 
     /**
@@ -154,8 +153,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
 
     private _registerTouchEvents() {
         this.bgClickNode.on('click', this.onCloseClicked, this);
-        const exitBtn = this.topNode.getChildByName('exit_button');
-        if (exitBtn) exitBtn.on(cc.Node.EventType.TOUCH_END, this.onCloseClicked, this);
+        if (this.exitBtnNode) this.exitBtnNode.on(cc.Node.EventType.TOUCH_END, this.onCloseClicked, this);
         this.detailsBtnNode.on('click', this.onDetailsClicked, this);
         this.leftBtnNode.on('click', this.onPrevPageClicked, this);
         this.rightBtnNode.on('click', this.onNextPageClicked, this);
@@ -302,14 +300,9 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     // 渲染
     // ====================================================
 
-    private _setTopLabel(name: string, text: string) {
-        const label = this.topNode.getChildByName(name)?.getComponent(cc.Label);
-        if (label) label.string = text;
-    }
-
     private _initTopInfo() {
         const basicInfo = this._roomData.basicInfo;
-        this._setTopLabel('room_name_label', basicInfo.roomName ?? '');
+        this.roomNameLabel.string = basicInfo.roomName ?? '';
         const sb = basicInfo.sbante?.sb ?? 0;
         const ante = basicInfo.sbante?.ante ?? 0;
         // 对齐老版:有前注时显示 sb/bb(ante)
@@ -317,9 +310,9 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         if (ante > 0) {
             blindStr += `(${StringHelper.GetLongString(ante)})`;
         }
-        this._setTopLabel('room_bb_label', blindStr);
-        this._setTopLabel('player_count_label', '0');
-        this._setTopLabel('room_id_label', `${this._roomData.roomID}-0`);
+        this.roomBlindLabel.string = blindStr;
+        this.playerCountLabel.string = '0';
+        this.roomHandLabel.string = `${this._roomData.roomID}-0`;
         this.contentNode.active = false;
         // Preflop 标题空心牌数量按手牌数显示(奥马哈4/5/6张)
         this.preflopTitleCards.children.forEach((item, index) => {
@@ -334,8 +327,8 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         const model = this._model;
         const basicInfo = this._roomData.basicInfo;
         this.contentNode.active = true;
-        this._setTopLabel('player_count_label', `${model.playerCount}/${basicInfo.seatsCount}`);
-        this._setTopLabel('room_id_label', `${this._roomData.roomID}-${this._currentPage}`);
+        this.playerCountLabel.string = `${model.playerCount}/${basicInfo.seatsCount}`;
+        this.roomHandLabel.string = `${this._roomData.roomID}-${this._currentPage}`;
         this._renderDashboard();
         this._renderSections();
         this._refreshPeekButton();
@@ -512,31 +505,15 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         }
     }
 
-    /** 偷偷看价格(阶梯收费,按已偷看次数取档) */
+    /** 偷偷看价格(阶梯收费,计价规则见 HistoryPricing) */
     private async _reqPeekPrice() {
         try {
-            const peekCount = await TexasTableEvent.ReqReplayPeekTimes(this._roomData);
-            const times = Math.min(peekCount, 4);
-            const typeExt = 11 + 10 * times;
-            await diamondModel.reqDiamondConfig(UITexasHistory.DIAMOND_CONFIG_PEEK);
-            const config = diamondModel.getDiamondConfig(typeExt, UITexasHistory.DIAMOND_CONFIG_PEEK);
+            const price = await HistoryPricing.getPeekPrice(this._roomData);
             if (!cc.isValid(this.node)) return;
-            this.peekCostLabel.string = `${this._getPriceFromConfig(config)}`;
+            this.peekCostLabel.string = `${price}`;
         } catch (e) {
             this.tracelog.warn('_reqPeekPrice failed', e);
         }
-    }
-
-    /** 从钻石配置中按小盲档位匹配价格 */
-    private _getPriceFromConfig(diamondConfig: DiamondConfig): number {
-        if (!diamondConfig?.setting) return 0;
-        const sb = this._roomData.basicInfo.sbante?.sb || 0;
-        for (const item of diamondConfig.setting) {
-            if (item.sb === sb) {
-                return item.price || 0;
-            }
-        }
-        return diamondConfig.setting.length > 0 ? diamondConfig.setting[0].price || 0 : 0;
     }
     // ====================================================
     // 发发看
@@ -544,9 +521,8 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
 
     private _refreshViewPubButton() {
         const model = this._model;
-        const riverRevealed = model.publicCards[4] !== 0;
-        const canView = !riverRevealed && model.hasMe;
-        const hasHidden = canView && hasHiddenPublicCards(model.publicCards);
+        // 参与过这手牌且还有未发出的公共牌才可发发看
+        const hasHidden = model.hasMe && hasHiddenPublicCards(model.publicCards);
         this._setButtonEnabled(this.viewPubBtnNode, hasHidden);
         if (hasHidden) this._reqViewPubPrice();
     }
@@ -561,8 +537,8 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         if (result.code === 0) {
             // 成功后合并数据已同步触发 REPLAY_DATA_CHANGE → _refreshViewPubButton 决定按钮态,此处不强制恢复高亮
             this._reqDiamondBalance();
-        } else if (result.code === 90003) {
-            // 该手牌尚未同步到历史记录(无专用 i18n key,用通用"服务器正忙,请稍后再试")
+        } else if (result.code === UITexasHistory.CODE_REPLAY_NOT_SYNCED) {
+            // 无专用 i18n key,用通用"服务器正忙,请稍后再试"
             this._setButtonEnabled(this.viewPubBtnNode, true);
             viewManager.showToast(i18nMgr.Get('error997'));
         } else {
@@ -571,7 +547,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         }
     }
 
-    /** 发发看价格(VIP 免费次数优先,否则按轮次取钻石配置) */
+    /** 发发看价格(VIP 免费次数优先,否则按轮次取钻石配置,计价规则见 HistoryPricing) */
     private async _reqViewPubPrice() {
         try {
             const freeCount = await TexasTableEvent.ReqReplayViewPubFreeCount(this._roomData);
@@ -580,12 +556,9 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
                 this.viewPubCostLabel.string = `${i18nMgr.Get('UIMIneVIPFreeTip')} ${freeCount}`;
                 return;
             }
-            const round = getViewPubRound(this._model.publicCards);
-            const typeExt = round * 1000;
-            await diamondModel.reqDiamondConfig(UITexasHistory.DIAMOND_CONFIG_VIEW_PUB);
-            const config = diamondModel.getDiamondConfig(typeExt, UITexasHistory.DIAMOND_CONFIG_VIEW_PUB);
+            const price = await HistoryPricing.getViewPubPrice(this._roomData, getViewPubRound(this._model.publicCards));
             if (!cc.isValid(this.node)) return;
-            this.viewPubCostLabel.string = `${this._getPriceFromConfig(config)}`;
+            this.viewPubCostLabel.string = `${price}`;
         } catch (e) {
             this.tracelog.warn('_reqViewPubPrice failed', e);
         }
