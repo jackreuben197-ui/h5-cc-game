@@ -95,6 +95,8 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
         this.chatEditBox.node.on('text-submit', this.onClickSendMsg, this);
         // 修复 WebH5 构建后原生 <input> 被 H5 层 #app(z-index:10) 遮挡导致输入不可见
         this.chatEditBox.node.on('editing-did-began', (editbox: cc.EditBox) => {
+            const prepareKeyboard = (window as any).__H5_PREPARE_KEYBOARD__;
+            if (typeof prepareKeyboard === 'function') prepareKeyboard();
             if (cc.sys.isBrowser && (editbox as any)._impl && (editbox as any)._impl._elem) {
                 const elem = (editbox as any)._impl._elem as HTMLElement;
                 elem.style.zIndex = '20';
