@@ -63,7 +63,7 @@ export async function Seated(data: ServerMessageSeated.AsObject, roomID: number,
     mine.deposit = data.deposit;
     // 战绩面板：累加本人的总带入（对应 Unity TexasSituationController.SitDown）
     // report 里的玩家统一以随机ID(userRID)为 key,与 Roomers/SeatedOthers 的 userRid 同口径
-    roomData.report.applySitDown(userStore.userRID, data.totalBringin || data.chips, data.deposit, userStore.name, userStore.avatar);
+    roomData.report.applySitDown(userStore.userRID, data.totalBringin || data.chips, data.deposit, userStore.name, userStore.avatar, data.recvSeatId);
     // 操作面板(不显示)
     mine.autoOperationType = AutoOperationTypeTexas.NO;
     mine.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
