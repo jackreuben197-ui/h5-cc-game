@@ -245,10 +245,10 @@ class UIViewManager {
                     return;
                 }
             }
-            ui.node.active = true;
             ui.node.parent = this._sceneLayer;
             ui.initialize(param);
             ui.internalbindCCViewData();
+            ui.node.active = true;
             this._scenesPool.set(key, ui);
             // 老场景缓存
             if (this._curretScene) {
@@ -257,15 +257,28 @@ class UIViewManager {
                     s.node.active = false;
                     s.node.stopAllActions();
                     s.node.parent = this._caceLayer;
-                    this._curretScene = key;
                 }
             }
+            this._curretScene = key;
             ui.scheduleOnce(() => {
                 this._hidePreloading();
             }, 0);
         } catch (e) {
             this.tracelog.error('switchScene', e);
         }
+    }
+
+    // hideCurrentScene
+    public hideCurrentScene(): void {
+        console.log('onUpdateCards', 'hide1');
+        if (!this._curretScene) return;
+        const ui = this._scenesPool.get(this._curretScene);
+        if (!ui) return;
+        console.log('onUpdateCards', 'hide');
+        ui.node.active = false;
+        ui.node.stopAllActions();
+        ui.node.parent = this._caceLayer;
+        this._curretScene = null;
     }
 
     // openDialog 打开对话框

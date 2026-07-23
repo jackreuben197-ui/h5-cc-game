@@ -24,7 +24,7 @@ export default class OpCodeHelper {
         Code.MSG_S_UP_BLIND,
         Code.MSG_S_NEXT_CHANGE,
         Code.MSG_D_ADD_ON,
-        Code.MSG_S_PUBLIC_CARDS,
+        Code.MSG_S_PUBLIC_CARDS
     ];
 
     static NeedLog(code: (typeof Code)[keyof typeof Code]): boolean {

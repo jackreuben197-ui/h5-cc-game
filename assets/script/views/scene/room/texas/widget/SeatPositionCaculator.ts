@@ -83,7 +83,7 @@ export class SeatPositionCaculator {
     private _bottomY = 0;
     private _leftX = 0;
     private _rightX = 0;
-    private static readonly BOTTOM_GAP = 600;
+    private static readonly BOTTOM_GAP = 710;
     private static readonly TOP_GAP = 520;
     private static readonly SEAT_GAP_Y = 6 * 3.5;
     private static readonly SEAT_GAP_X = 60;

@@ -431,6 +431,11 @@ export default class TexasTableEvent {
                     }
                 }
             });
+            if (player.player) {
+                player.player.clearData();
+            }
+            player.clearData();
+            ProcedureManager.StartProcedure(ProcedureDefine.Return);
         } else {
             ProcedureManager.StartProcedure(ProcedureDefine.Return); // 直接离开 不做处理
             return;
