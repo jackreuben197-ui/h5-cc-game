@@ -91,10 +91,22 @@ export default class TexasGameRoomDataReplay extends cc.EventTarget {
     public mergeViewedPublicCards(handNum: number, viewData: { pub_cards?: string; pub_cards2?: string }) {
         const cached = this._cache.get(handNum);
         if (!cached || !viewData) return;
-        if (viewData.pub_cards) cached.pub_cards = viewData.pub_cards;
-        if (viewData.pub_cards2) cached.pub_cards2 = viewData.pub_cards2;
+        if (viewData.pub_cards) cached.pub_cards = this._mergeViewedCardString(cached.pub_cards, viewData.pub_cards);
+        if (viewData.pub_cards2) cached.pub_cards2 = this._mergeViewedCardString(cached.pub_cards2, viewData.pub_cards2);
         this.persist(handNum, cached);
         this.applyReplay(cached);
+    }
+
+    private _mergeViewedCardString(cachedCards: string, viewedCards: string): string {
+        const cards = cachedCards ? cachedCards.split(',') : [];
+        while (cards.length < 5) cards.push('0');
+        const viewed = viewedCards.split(',').filter(card => Number(card) > 0);
+        let viewedIndex = 0;
+        for (let i = 0; i < 5 && viewedIndex < viewed.length; i++) {
+            if (Number(cards[i]) !== 0) continue;
+            cards[i] = viewed[viewedIndex++];
+        }
+        return cards.slice(0, 5).join(',');
     }
 
     /** 收藏状态(合并在手牌缓存记录上,null 表示尚未查询过) */
