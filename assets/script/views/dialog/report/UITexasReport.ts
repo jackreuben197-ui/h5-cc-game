@@ -222,17 +222,16 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         this._refreshTablePlayerToggle();
         this._refreshListBar();
         this._bindEventsAndRefresh();
-        if (!this._report.roomersFetched) {
-            this._requestRoomers();
-        }
+        // 常驻缓存负责秒开，服务端整表负责把后来入座、离桌的人再对准一次。
+        this._requestRoomers();
         if (this._subType !== 'none') {
-            if (this._report.squidRounds.size === 0) {
-                this._fetchSquidRound(0);
-            } else {
+            if (this._report.squidRounds.size > 0) {
                 this._squidCurRound = TexasReportPresentation.getLatestRound(this._report.squidRounds);
                 this._setupSlider();
                 this._refreshPageText();
             }
+            // 缓存先拿来展示，但最新轮数还是问一次服务端，免得一直停在旧轮次。
+            this._fetchSquidRound(0);
         }
         this._startRemainTimeTick();
     }
@@ -453,8 +452,9 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         this._refreshContentVisible();
         this._refreshListBar();
         this._refreshCurrentList();
-        if (tab === 'mode' && this._currentSquidRecords().length === 0) {
-            this._fetchSquidRound(this._squidCurRound || 0);
+        if (tab === 'mode') {
+            // 每次切进来都顺手校验最新一轮，鱿鱼和蘑菇走的是同一套逻辑。
+            this._fetchSquidRound(0);
             return;
         }
         if (tab === 'jackpot' && !this._report.jackpotFetched) this._requestJackpotSummary();
@@ -620,6 +620,8 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         const requestGeneration = this._requestGeneration;
         const report = this._report;
         const pendingRounds = this._squidPendingRounds;
+        const currentRoundWhenRequested = this._squidCurRound;
+        const latestRoundWhenRequested = TexasReportPresentation.getLatestRound(report.squidRounds);
         pendingRounds.add(round);
         TexasReportEvent.RequestRound(this._roomData, subType, round).then(result => {
             pendingRounds.delete(round);
@@ -628,7 +630,10 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
                 this._updateNoDataState();
                 return;
             }
-            if (this._squidCurRound === 0 || this._squidCurRound === round) this._squidCurRound = result.round;
+            const stillOnRequestedRound = this._squidCurRound === currentRoundWhenRequested;
+            const wasLookingAtLatest = currentRoundWhenRequested === 0 || currentRoundWhenRequested === latestRoundWhenRequested;
+            // 查最新轮时只有用户没翻页才跟到最新；查普通页时也只接住原来那一页。
+            if (stillOnRequestedRound && (round > 0 || wasLookingAtLatest)) this._squidCurRound = result.round;
             report.setSquidRound(result.round, result.snapshot);
             this._setupSlider();
             this._refreshPageText();
