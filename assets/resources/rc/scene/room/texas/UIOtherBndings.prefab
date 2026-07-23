@@ -27,7 +27,7 @@
         "__id__": 110
       },
       {
-        "__id__": 175
+        "__id__": 177
       }
     ],
     "_active": true,
@@ -6452,6 +6452,9 @@
     "hideVideoCloseBtn": {
       "__id__": 88
     },
+    "certBanner": {
+      "__id__": 177
+    },
     "viewPlayerCards": {
       "__id__": 138
     },
@@ -6463,9 +6466,6 @@
     },
     "viewPublicCardsCost": {
       "__id__": 160
-    },
-    "certBanner": {
-      "__id__": 175
     },
     "_id": ""
   },
@@ -6491,14 +6491,14 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 176
+        "__id__": 178
       },
       {
-        "__id__": 177
+        "__id__": 179
       }
     ],
     "_prefab": {
-      "__id__": 178
+      "__id__": 180
     },
     "_opacity": 255,
     "_color": {
@@ -6552,7 +6552,7 @@
     "_name": "",
     "_objFlags": 0,
     "node": {
-      "__id__": 175
+      "__id__": 177
     },
     "_enabled": true,
     "_materials": [
@@ -6584,7 +6584,7 @@
     "_name": "",
     "_objFlags": 0,
     "node": {
-      "__id__": 175
+      "__id__": 177
     },
     "_enabled": true,
     "alignMode": 1,
