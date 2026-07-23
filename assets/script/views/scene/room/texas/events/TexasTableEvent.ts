@@ -431,6 +431,11 @@ export default class TexasTableEvent {
                     }
                 }
             });
+            if (player.player) {
+                player.player.clearData();
+            }
+            player.clearData();
+            ProcedureManager.StartProcedure(ProcedureDefine.Return);
         } else {
             ProcedureManager.StartProcedure(ProcedureDefine.Return); // 直接离开 不做处理
             return;
@@ -865,21 +870,6 @@ export default class TexasTableEvent {
                 msgType,
                 message: content,
                 extra: new TextEncoder().encode(extraJson)
-            }
-        });
-    }
-
-    public static PrefetchhReportRoomers(roomID: number, matchID: number): void {
-        if (!roomID) return;
-        ProtocolAgency.Send({
-            code: Code.MSG_D_ROOMERS,
-            roomID,
-            matchID,
-            body: {
-                room: { roomId: roomID, matchId: matchID },
-                history: true,
-                historyOffset: 0,
-                historyLimit: 1000
             }
         });
     }

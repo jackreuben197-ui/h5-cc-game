@@ -13,7 +13,9 @@ export interface IBetBtnData {
 }
 
 export function caculatePotsBet(scs: ShortCut[], roundBet: number, minRaise: number, player: TexasGameRoomDataPlayer): IBetBtnData[] {
-    if (!player || !player.mine) return;
+    if (!player || !player.mine) return [];
+    const actionLimitList = player.mine.operator.actionLimitList;
+    if (!actionLimitList.some(v => v.action == Def.Action.BET || v.action == Def.Action.RAISE)) return [];
     const pot = player.roomData.potInfo.allPot + roundBet - player.roundBet;
     const myCall = roundBet - player.roundBet;
     const myChip = player.chip;

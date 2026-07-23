@@ -209,8 +209,8 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this._bindOpButton('chatCloseToggle', this._clickChatClose);
         this._bindOpButton('audioCloseToggle', this._clickAudioClose);
         this._bindOpButton('videoCloseToggle', this._clickVideoClose);
-        this._bindOpButton('shieldToggle', this._clickShield);
-        this._bindOpButton('ReportBtn', this._clickReport);
+        // this._bindOpButton('shieldToggle', this._clickShield);
+        // this._bindOpButton('ReportBtn', this._clickReport);
         userStore.on(UserStore.DIAMONDS_CHANGE, this._refreshDiamondBalance, this);
         userStore.on(UserStore.PROP_LIST_CHANGE, this._refreshPropList, this);
     }
@@ -227,7 +227,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this._isAudioClosed = UIPlayerInfo.audioClosedUsers.has(this._requestRID);
         this._isVideoClosed = UIPlayerInfo.videoClosedUsers.has(this._requestRID);
         this._refreshToggleVisual('chatCloseToggle', false);
-        this._refreshToggleVisual('shieldToggle', UIPlayerInfo.shieldUsers.has(this._requestRID));
+        // this._refreshToggleVisual('shieldToggle', UIPlayerInfo.shieldUsers.has(this._requestRID));
         this._refreshDiamondNotice();
     }
 
@@ -562,8 +562,8 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             !this._isSelf && (basic.antiCheatType === AntiCheatType.AUDIO || basic.antiCheatType === AntiCheatType.VIDEO)
         );
         this._setButtonActive('videoCloseToggle', !this._isSelf && basic.antiCheatType === AntiCheatType.VIDEO);
-        this._setButtonActive('shieldToggle', !this._isSelf && basic.antiCheatType < AntiCheatType.FACE_VERIFY && basic.chatType !== ChatType.CLOSE);
-        this._setButtonActive('ReportBtn', !this._isSelf);
+        // this._setButtonActive('shieldToggle', !this._isSelf && basic.antiCheatType < AntiCheatType.FACE_VERIFY && basic.chatType !== ChatType.CLOSE);
+        // this._setButtonActive('ReportBtn', !this._isSelf);
         this.opButtonNode.active = this.opButtonNode.children.some(node => node.active);
         this._refreshDialogLayout();
     }

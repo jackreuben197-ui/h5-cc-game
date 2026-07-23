@@ -80,6 +80,16 @@ export interface TexasReportSquidRoundSnapshot {
     records: TexasReportSquidRecord[];
 }
 
+export type TexasReportObserver = Roomer.AsObject;
+
+export interface TexasReportSummary {
+    totalPot: number;
+    totalBringin: number;
+    totalHand: number;
+    insurance: number;
+    startTime: number;
+}
+
 /**
  * 战绩数据子对象（挂在 TexasGameRoomData.report 上）。
  *
@@ -102,16 +112,10 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
     public players: TexasReportPlayerInfo[] = [];
     /** 观众列表 */
     @observable(TexasGameRoomDataReport.OBSERVERS_CHANGE, { forceEmit: true })
-    public observers: Roomer.AsObject[] = [];
+    public observers: TexasReportObserver[] = [];
     /** 牌桌总览数据（总底池/总带入/总手数/保险池/开桌时间）—— 公共区域。 */
     @observable(TexasGameRoomDataReport.SUMMARY_CHANGE, { forceEmit: true })
-    public summary: {
-        totalPot: number;
-        totalBringin: number;
-        totalHand: number;
-        insurance: number;
-        startTime: number;
-    } = { totalPot: 0, totalBringin: 0, totalHand: 0, insurance: 0, startTime: 0 };
+    public summary: TexasReportSummary = { totalPot: 0, totalBringin: 0, totalHand: 0, insurance: 0, startTime: 0 };
     /** Jackpot 记录列表（来源：服务端 PlayerJackpotSummary 整表覆盖 + Winner 局部累加）。 */
     @observable(TexasGameRoomDataReport.JACKPOT_CHANGE, { forceEmit: true })
     public jackpotRecords: TexasReportJackpotRecord[] = [];
@@ -123,6 +127,9 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
     public squidRounds: Map<number, TexasReportSquidRoundSnapshot> = new Map();
     /** 标记 Roomers 是否已经从服务端拉过一次。面板根据它决定是否要等首屏数据。 */
     public roomersFetched: boolean = false;
+    // 空数组也算拉取成功，记下来后重新打开就不会一直重复请求。
+    public jackpotFetched: boolean = false;
+    public insuranceFetched: boolean = false;
 
     constructor(roomData: TexasGameRoomData) {
         super();
@@ -150,6 +157,7 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
 
     /** 用 PlayerJackpotSummary 整表覆盖 Jackpot 列表。 */
     public applyJackpotSummary(data: ServerMessagePlayerJackpotSummary.AsObject): void {
+        this.jackpotFetched = true;
         if (!data || Number(data.status || 0) !== 0) {
             this.jackpotRecords = [];
             return;
@@ -178,6 +186,7 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
 
     /** 用 HTTP 保险历史回填。整表覆盖。 */
     public setInsuranceRecords(records: TexasReportInsuranceRecord[]): void {
+        this.insuranceFetched = true;
         this.insuranceRecords = (records || []).slice();
     }
 
@@ -197,7 +206,8 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
      */
     public applyWinnerResult(response: ServerMessageWinner.AsObject): void {
         if (!response) return;
-        const players = this.players.slice();
+        // 先拷贝再改，避免把上一份数据里的玩家对象一起改掉。
+        const players = this.players.map(player => ({ ...player }));
         let totalPot = this.summary.totalPot;
         let totalHand = response.handNum || this.summary.totalHand;
         const mushroomBase = this._roomData.basicInfo.mushroomBase || 0;
@@ -252,7 +262,7 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
      * 对应 Unity TexasSituationController.SitDown。已存在则更新带入/在线状态。
      */
     public applySitDown(userRid: number, totalBringIn: number, deposit: number, name: string, avatar: string): void {
-        const players = this.players.slice();
+        const players = this.players.map(player => ({ ...player }));
         const mushroomBase = this._roomData.basicInfo.mushroomBase || 0;
         const existing = players.find(p => Number(p.userRid) === Number(userRid));
         if (existing) {
@@ -275,7 +285,7 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
 
     /** 对应 Unity TexasSituationController.StandUp。累加带出，置为离线。 */
     public applyStandUp(userRid: number, bringOut: number, name: string, avatar: string): void {
-        const players = this.players.slice();
+        const players = this.players.map(player => ({ ...player }));
         const mushroomBase = this._roomData.basicInfo.mushroomBase || 0;
         const existing = players.find(p => Number(p.userRid) === Number(userRid));
         if (existing) {
@@ -299,7 +309,7 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
      * 调用方应只在 ChipChangeReason == CC_NONE 时调用（消息层负责过滤）。
      */
     public applyChipChange(userRid: number, newBringIn: number, name: string, avatar: string): void {
-        const players = this.players.slice();
+        const players = this.players.map(player => ({ ...player }));
         const mushroomBase = this._roomData.basicInfo.mushroomBase || 0;
         const existing = players.find(p => Number(p.userRid) === Number(userRid));
         if (existing) {
@@ -334,6 +344,8 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
         this.insuranceRecords = [];
         this.squidRounds = new Map();
         this.roomersFetched = false;
+        this.jackpotFetched = false;
+        this.insuranceFetched = false;
     }
     // ============================================================
     // 内部辅助

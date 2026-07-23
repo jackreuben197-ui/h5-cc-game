@@ -20,6 +20,7 @@ export default class ProcedureReturn extends ProcedureBase {
         // 主动离桌 / 被踢 / 服务端关闭都会归到这里，统一清掉重连上下文
         roomReconnectManager.clearAllContext();
         soundManager.volumeOnOff(false);
+        viewManager.hideCurrentScene();
         viewManager.showPreloadingLayer();
         agoraManager.clear();
         if (param && param.routeData) {
