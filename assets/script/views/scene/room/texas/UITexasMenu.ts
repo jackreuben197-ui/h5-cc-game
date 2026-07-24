@@ -90,7 +90,7 @@ export default class UITexasMenu extends cc.Component {
         if (visibleSizeHeight < maxHeight) {
             const scale = visibleSizeHeight / maxHeight;
             this.node.setScale(scale, scale);
-        }else{
+        } else {
             this.node.scale = suggestScale;
         }
     }

@@ -56,10 +56,6 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private sideMenuNode: cc.Node = null;
     private _sideMenuTexasMenu: UITexasMenu = null;
     private _onSideMenuClicked: () => void = null!;
-    @property({ type: cc.Button, displayName: '战绩按钮' })
-    private btnReport: cc.Button = null!;
-    @property({ type: cc.Button, displayName: '牌谱按钮' })
-    private btnReplay: cc.Button = null!;
     @property({ type: cc.Button, displayName: '安全卫士按钮' })
     private btnSafetyGuard: cc.Button = null!;
     @property({ type: cc.Button, displayName: '客服聊天按钮' })
@@ -72,8 +68,6 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private otherBindings: cc.Node = null;
     private _otherBindings: OtherBindings = null;
     // main_menu 底部按钮
-    @property({ type: cc.Button, displayName: '表情按钮' })
-    private btnEmoji: cc.Button = null;
     @property({ type: cc.Node, displayName: '聊天按钮' })
     private chatBtn: cc.Node = null;
     @property({ type: cc.Node, displayName: '聊天红点' })
@@ -97,17 +91,12 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         };
         this.sideMenu.node.on('click', this._onSideMenuClicked, this);
         this._sideMenuTexasMenu = this.sideMenuNode.getComponent(UITexasMenu);
-        //战绩按钮
-        if (this.btnReport) this.btnReport.node.on('click', this.onClickReport, this);
-        //牌谱按钮
-        if (this.btnReplay) this.btnReplay.node.on('click', this.onClickReplay, this);
         this.btnSafetyGuard.node.active = false;
         this.btnSafetyGuard.node.on('click', this.onSafetyGuardClicked, this);
         this.btnIm.node.on('click', this.onImClicked, this);
         //其他状态
         this._otherBindings = this.otherBindings.getComponent(OtherBindings);
         // main_menu 按钮事件注册
-        if (this.btnEmoji) this.btnEmoji.node.on('click', this.onClickBtnEmoji, this);
         this.chatBtn.on('click', this.onClickChatBtn, this);
         // bring in
         this.bringInButton.node.on('click', this.onClickBringIn, this);
@@ -117,21 +106,6 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private onClickBringIn() {
         TexasTableEvent.BringIn(this._roomData.mine);
     }
-
-    private onClickReport = () => {
-        if (!this._mine) return;
-        viewManager.openDialog('TexasReport', {
-            roomID: this._mine.roomData.roomID,
-            matchID: this._mine.roomData.matchID
-        });
-    };
-    private onClickReplay = () => {
-        if (!this._mine) return;
-        viewManager.openDialog('TexasHistory', {
-            roomID: this._mine.roomData.roomID,
-            matchID: this._mine.roomData.matchID
-        });
-    };
 
     private onSafetyGuardClicked(): void {
         if (!this._mine) return;
@@ -317,14 +291,6 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
                     resovle(true);
                 }
             });
-        });
-    }
-
-    private onClickBtnEmoji(): void {
-        if (!this._mine || !this._mine.player || this._mine.player.seatNo == 0) return;
-        viewManager.openDialog('Emoji', {
-            roomID: this._mine.roomData.roomID,
-            matchID: this._mine.roomData.matchID
         });
     }
 
