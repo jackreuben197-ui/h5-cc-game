@@ -56,69 +56,19 @@ function insertBefore(html, marker, content) {
   return html.replace(marker, `${content}\n${marker}`)
 }
 
-const COCOS_VIEWPORT_RESIZE_PATCH = `function forceCocosRefit(canvas, heightOverride) {
-          try {
-            canvas = canvas || document.getElementById('GameCanvas')
-            if (!window.cc || !cc.view || !canvas) return false
-            var vv = window.visualViewport
-            var doc = document.documentElement || {}
-            var w = Math.round((vv && vv.width) || window.innerWidth || doc.clientWidth || canvas.clientWidth || 0)
-            var h = Math.round(heightOverride || (vv && vv.height) || window.innerHeight || doc.clientHeight || canvas.clientHeight || 0)
-            if (!w || !h) return false
-
-            var view = cc.view
-            if (typeof view.setFrameSize === 'function') {
-              view.setFrameSize(w, h)
-            } else if (view._frameSize) {
-              view._frameSize.width = w
-              view._frameSize.height = h
-            }
-
-            if (cc.Canvas && cc.Canvas.instance) {
-              var designW = cc.Canvas.instance.designResolution.width
-              var designH = cc.Canvas.instance.designResolution.height
-              var policy = w / h > 0.75 ? cc.ResolutionPolicy.FIXED_HEIGHT : cc.ResolutionPolicy.FIXED_WIDTH
-              view.setDesignResolutionSize(designW, designH, policy)
-            }
-
-            view.emit('canvas-resize')
-            return true
-          } catch (e) {
-            return false
-          }
-        }
-
-        function bindCocosViewportResize() {
-          if (window.__H5_CC_VIEWPORT_RESIZE_BOUND__) return
-          window.__H5_CC_VIEWPORT_RESIZE_BOUND__ = true
-          var timer = 0
-          var run = function () {
-            forceCocosRefit(document.getElementById('GameCanvas'))
-          }
-          var schedule = function () {
-            window.clearTimeout(timer)
-            timer = window.setTimeout(run, 80)
-          }
-          window.addEventListener('resize', schedule, { passive: true })
-          window.addEventListener('orientationchange', schedule, { passive: true })
-          if (window.visualViewport && window.visualViewport.addEventListener) {
-            window.visualViewport.addEventListener('resize', schedule, { passive: true })
-          }
-          window.addEventListener('load', schedule, { passive: true })
-          schedule()
-        }`
-
 function hasViewportResizeBindCall(html) {
   return /^\s*bindCocosViewportResize\(\)\s*$/m.test(html)
 }
 
 function patchCocosViewportResize(html) {
   let out = html
-  const refitRe = /function forceCocosRefit[\s\S]*?\r?\n\r?\n        \/\*\*\r?\n         \* Telegram/
-  if (refitRe.test(out)) {
-    out = out.replace(refitRe, `${COCOS_VIEWPORT_RESIZE_PATCH}\n\n        /**\n         * Telegram`)
-  } else {
-    console.warn('⚠ 未找到 forceCocosRefit，跳过 Cocos viewport resize 补丁')
+  // 键盘/视口策略由 h5-game/index.html 统一维护。这里不能再用 visualViewport
+  // 高度覆盖它，否则每次 sync:template 都会把稳定画布重新改成键盘态高度。
+  const hasViewportResizeImplementation = out.includes('function bindCocosViewportResize()')
+    && out.includes('function forceCocosRefit(')
+  if (!hasViewportResizeImplementation) {
+    console.warn('⚠ h5-game 缺少 Cocos viewport resize 实现，跳过绑定')
+    return out
   }
 
   if (!hasViewportResizeBindCall(out)) {

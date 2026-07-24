@@ -58,5 +58,7 @@ export function SeatedOthers(data: ServerMessageSeatedOthers.AsObject, roomID: n
     }
     // 标记入座
     seatData.setSeated(true, null);
+    // 别人坐下也要进战绩缓存，不能只把牌桌座位刷出来。
+    roomData.report.applySitDown(userRid, data.totalBringin || data.chips, data.deposit, data.name, data.avatar, seatId);
     PlayerStoreUtils.syncSeatPlayer(seatData, roomData);
 }

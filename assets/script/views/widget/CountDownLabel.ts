@@ -12,6 +12,8 @@ export interface ICountDownOptions {
     format?: CountDownFormat;
     /** 文本前缀 */
     prefix?: string;
+    /** 自定义整条文案（如多语言模板"购买中##s"按剩余秒数生成）；提供时忽略 format/prefix */
+    formatter?: (remainSeconds: number) => string;
     /** 倒计时结束回调 */
     onComplete?: () => void;
 }
@@ -32,11 +34,14 @@ export default class CountDownLabel extends cc.Component {
     private _format = CountDownFormat.MM_SS;
     /** 文本前缀 */
     private _prefix = '';
+    /** 自定义整条文案 */
+    private _formatter: ((remainSeconds: number) => string) | null = null;
 
     onLoad() {
-        this.label = this.getComponent(cc.Label);
+        // 编辑器已绑定 label（可能是子节点上的）时不能覆盖：
+        // 组件常挂在背景 Sprite 节点上，addComponent(cc.Label) 会与 Sprite 渲染冲突导致背景不显示
         if (!this.label) {
-            this.label = this.addComponent(cc.Label);
+            this.label = this.getComponent(cc.Label) || this.addComponent(cc.Label);
         }
     }
 
@@ -44,10 +49,11 @@ export default class CountDownLabel extends cc.Component {
      * 开始倒计时
      */
     public startCountDown(options: ICountDownOptions) {
-        const { durationSeconds, format = CountDownFormat.MM_SS, prefix = '', onComplete } = options;
+        const { durationSeconds, format = CountDownFormat.MM_SS, prefix = '', formatter = null, onComplete } = options;
         this._remainSeconds = Math.max(0, Math.floor(durationSeconds));
         this._format = format;
         this._prefix = prefix;
+        this._formatter = formatter;
         this._onTimeUpCallback = onComplete ?? null;
         this._elapsed = 0;
         this._running = true;
@@ -92,6 +98,10 @@ export default class CountDownLabel extends cc.Component {
 
     private updateLabelString() {
         if (!this.label) {
+            return;
+        }
+        if (this._formatter) {
+            this.label.string = this._formatter(this._remainSeconds);
             return;
         }
         let text = '';

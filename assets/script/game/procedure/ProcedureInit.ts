@@ -65,13 +65,23 @@ export default class ProcedureInit extends ProcedureBase {
 
     @traceMethod({ level: 'debug' })
     static updateFitMode(): void {
-        const w = window.innerWidth;
-        const h = window.innerHeight;
+        if ((window as any).__H5_KEYBOARD_OPEN__ || (window as any).__H5_KEYBOARD_CLOSING__) return;
+        const canvasElement = document.getElementById('GameCanvas');
+        const rect = canvasElement?.getBoundingClientRect();
+        // 以宿主锁定后的 Canvas CSS 尺寸为准。移动端键盘只改变 visual viewport，
+        // 不能再用键盘态 innerHeight 切换适配策略。
+        const w = Math.round(rect?.width || canvasElement?.clientWidth || window.innerWidth);
+        const h = Math.round(rect?.height || canvasElement?.clientHeight || window.innerHeight);
+        if (!w || !h) return;
         const w_h_r = w / h;
         this.tracelog.debug('窗口实际分辨率', w, h);
         const view = cc.view as any;
-        view._frameSize.width = w;
-        view._frameSize.height = h;
+        if (typeof view.setFrameSize === 'function') {
+            view.setFrameSize(w, h);
+        } else {
+            view._frameSize.width = w;
+            view._frameSize.height = h;
+        }
         const canvas = cc.Canvas.instance;
         const designW = canvas.designResolution.width;
         const designH = canvas.designResolution.height;
@@ -80,6 +90,7 @@ export default class ProcedureInit extends ProcedureBase {
         } else {
             cc.view.setDesignResolutionSize(designW, designH, cc.ResolutionPolicy.FIXED_WIDTH);
         }
+        cc.view.emit('canvas-resize');
         ccviewData.initData();
     }
 
@@ -90,7 +101,53 @@ export default class ProcedureInit extends ProcedureBase {
         this.tracelog.debug('set frame rate');
         cc.game.setFrameRate(GameConfig.FRAME_RATE); // FPS 设置
         cc.macro.ENABLE_MULTI_TOUCH = GameConfig.ENABLE_MULTI_TOUCH; // 禁止多点触摸
+        ProcedureInit.guardEngineResizeForKeyboard();
+        ProcedureInit.guardEditBoxAutoScroll();
         const isTelegram = !!(window as any).Telegram?.WebApp;
         cc.view.resizeWithBrowserSize(!isTelegram);
+    }
+
+    /**
+     * 软键盘期间吞掉引擎自身的 resize 适配。
+     *
+     * iOS Safari 页签内弹出软键盘会压缩 window.innerHeight 并触发 window.resize，
+     * 引擎 _resizeEvent（resizeWithBrowserSize 注册的 _resize/_orientationChange
+     * 最终都动态查找它）会按键盘态高度重设 cc.game.container 样式并重算适配，
+     * 牌桌被压小挤到顶部、下方大面积灰色。standalone（保存到桌面）里键盘是
+     * 覆盖式的、innerHeight 不变所以正常——此守卫让浏览器页签获得同样行为。
+     * 键盘收起的动画期间也继续吞掉 resize；宿主确认视口恢复后再通过
+     * __H5_FORCE_COCOS_REFIT__ 统一恢复，避免收起中间帧再次压扁画布。
+     *
+     * 宿主 index.html 也装了同一守卫（同一防重标志 __H5_KB_RESIZE_GUARDED__），
+     * 先到先包，双保险。
+     */
+    static guardEngineResizeForKeyboard(): void {
+        const view = cc.view as any;
+        if (!view || typeof view._resizeEvent !== 'function' || view.__H5_KB_RESIZE_GUARDED__) {
+            return;
+        }
+        const origResizeEvent = view._resizeEvent as (forceOrEvent?: unknown) => void;
+        view.__H5_KB_RESIZE_GUARDED__ = true;
+        view._resizeEvent = function (this: unknown, forceOrEvent?: unknown) {
+            if ((window as any).__H5_KEYBOARD_OPEN__ === true || (window as any).__H5_KEYBOARD_CLOSING__ === true) return;
+            const el = document.activeElement;
+            if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) return;
+            return origResizeEvent.call(this, forceOrEvent);
+        };
+    }
+
+    /**
+     * Cocos 2.4.8 Android 的 Web EditBox 会在聚焦 800ms 后执行 smooth scrollIntoView。
+     * 全屏游戏没有文档滚动内容，这个滚动只会暴露 GameDiv 外的灰色区域。
+     * H5 宿主已通过 __H5_PREPARE_KEYBOARD__ 和容器位移保证输入框可见，因此禁用它。
+     */
+    static guardEditBoxAutoScroll(): void {
+        if (typeof (window as any).__H5_PREPARE_KEYBOARD__ !== 'function') return;
+        const implPrototype = (cc.EditBox as any)?._ImplClass?.prototype;
+        if (!implPrototype || implPrototype.__H5_KB_SCROLL_GUARDED__) return;
+        implPrototype.__H5_KB_SCROLL_GUARDED__ = true;
+        implPrototype._adjustWindowScroll = function () {
+            (window as any).__H5_PREPARE_KEYBOARD__();
+        };
     }
 }

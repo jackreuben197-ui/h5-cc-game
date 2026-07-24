@@ -25,7 +25,7 @@ import AssetManager, { BUNDLE_RESOURCES } from '../../../loader/AssetManager';
 import UIViewUtil from '../../../util/UIViewUtil';
 import AgoraVideoRender from '../../../widget/AgoraVideoRender';
 import CardView from '../../../widget/CardView';
-import CountDownLabel, { CountDownFormat } from '../../../widget/CountDownLabel';
+import CountDownLabel from '../../../widget/CountDownLabel';
 import { DisplayNode } from '../../../widget/DisplayNode';
 import RemoteSprite from '../../../widget/RemoteSprite';
 import ShiningPathTimer from '../../../widget/ShiningPathTimer';
@@ -119,6 +119,8 @@ export default class SeatPlayer extends cc.Component {
     @property({ type: cc.Node, displayName: '表情动画节点' })
     private _emojiNode: cc.Node = null!;
     private _seatPlayer: TexasGameRoomDataPlayer = null!;
+    /** 保险购买中：此状态下隐藏全下等 action 气泡，只显示【购买中XXs】 */
+    private _insuranceBuying = false;
     private _cardBacks: cc.Node[] = [];
     private _bigCards: CardView[] = [];
     // 动画的池的位置（可能是发起，也可能是结尾,计算坐标使用)
@@ -183,6 +185,7 @@ export default class SeatPlayer extends cc.Component {
     }
 
     protected onDisable(): void {
+        this._insuranceBuying = false;
         this.insuranceCountdownBubble.node.active = false;
         this.avatarVideoRender.stopMask();
         this.avatarVideoRender.stopOverlay();
@@ -258,6 +261,7 @@ export default class SeatPlayer extends cc.Component {
             return;
         }
         if (!b) {
+            this._insuranceBuying = false;
             this.insuranceCountdownBubble.node.active = false;
             this.avatarVideoRender.stopMask();
             this.avatarVideoRender.stopOverlay();
@@ -784,9 +788,8 @@ export default class SeatPlayer extends cc.Component {
                         this.allInAnimation.setAnimation(0, 'animation', false);
                         this.allInAnimation.setCompleteListener(() => {
                             //cc.log("动画结束");
-                            //this.allInAnimation.node.active = false;
-                            this.seatActionDisplay.node.active = false;
-                            this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), redColor);
+                            // this.allInAnimation.node.active = false;
+                            this._showAllinAction();
                         });
                         break;
                     }
@@ -794,9 +797,8 @@ export default class SeatPlayer extends cc.Component {
                     this.allInOtherAnimation.setAnimation(0, 'animation', false);
                     this.allInOtherAnimation.setCompleteListener(() => {
                         //cc.log("动画结束");
-                        //this.allInOtherAnimation.node.active = false;
-                        this.seatActionDisplay.node.active = false;
-                        this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), redColor);
+                        // this.allInOtherAnimation.node.active = false;
+                        this._showAllinAction();
                     });
                     break;
                 }
@@ -816,7 +818,7 @@ export default class SeatPlayer extends cc.Component {
                 //     raw._updateRealtime(0);
                 // }
                 // this.allInAnimation.paused = true;
-                this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), redColor);
+                this._showAllinAction();
                 break;
             case Def.Action.POST:
             case Def.Action.POSTANTE:
@@ -844,27 +846,50 @@ export default class SeatPlayer extends cc.Component {
         }
     }
 
+    /** 显示【全下】气泡；保险购买中不显示（只显示【购买中XXs】气泡） */
+    private _showAllinAction(): void {
+        if (this._insuranceBuying) return;
+        this.seatActionDisplay.node.active = false;
+        this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), redColor);
+    }
+
+    /** 退出保险购买态：隐藏保险气泡，若玩家仍处于全下则恢复【全下】气泡 */
+    private _exitInsuranceBuying(): void {
+        if (!this._insuranceBuying) return;
+        this._insuranceBuying = false;
+        this.insuranceCountdownBubble.stop();
+        this.insuranceCountdownBubble.node.active = false;
+        if (this._seatPlayer?.action === Def.Action.ALLIN) {
+            this._showAllinAction();
+        }
+    }
+
     @bindEvent(TexasGameRoomDataPlayer.PREPARE_OPERATION, 'player')
     private onPrepareAction(oper: Operator) {
         // this.tracelog.debug(oper, this._seatPlayer.seatNo);
         if (!oper) {
             this.otherPersonActionCountdown.stop();
             this.otherPersonActionCountdown.node.active = false;
+            this._exitInsuranceBuying();
             this.insuranceCountdownBubble.stop();
             this.insuranceCountdownBubble.node.active = false;
             return;
         }
         if (oper.opType === OpertionType.INSURANCE) {
+            // 购买保险状态：隐藏全下等 action 气泡，只显示【购买中XXs】
+            this._insuranceBuying = true;
+            this.seatActionDisplay.node.active = false;
             this.insuranceCountdownBubble.node.active = true;
             this.insuranceCountdownBubble.startCountDown({
                 durationSeconds: oper.leftOpDuration,
-                format: CountDownFormat.PURE_SEC,
-                prefix: CPErrorCode.LanguageDescription(20062),
+                // 多语言模板 adaptation20062=购买中##s，## 为剩余秒数占位符
+                formatter: s => CPErrorCode.LanguageDescription(20062, [String(s)]),
                 onComplete: () => {
-                    this.insuranceCountdownBubble.stop();
-                    this.insuranceCountdownBubble.node.active = false;
+                    this._exitInsuranceBuying();
                 }
             });
+        } else {
+            this._exitInsuranceBuying();
         }
         this.otherPersonActionCountdown.node.active = true;
         this.otherPersonActionCountdown.startTimer({

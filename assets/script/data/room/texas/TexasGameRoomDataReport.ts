@@ -212,17 +212,21 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
         let totalHand = response.handNum || this.summary.totalHand;
         const mushroomBase = this._roomData.basicInfo.mushroomBase || 0;
         for (const winner of response.resultsList || []) {
-            let player = players.find(p => p.seatId != null && p.seatId === winner.seatId);
-            if (!player) {
-                // 退化匹配：用座位上的 userID 反查 player
-                const seat = this._roomData.seatsStateManager.getSeatPlayer(winner.seatId);
-                const userID = seat?.userID || 0;
-                if (userID > 0) {
-                    player = players.find(p => Number(p.userRid) === Number(userID));
-                    if (player && !player.seatId) player.seatId = winner.seatId;
-                }
+            const seat = this._roomData.seatsStateManager.getSeatPlayer(winner.seatId);
+            const userID = Number(seat?.userID || 0);
+            // 座位会换人，先按玩家 ID 找，避免把新玩家的输赢算到上一位身上。
+            let player = userID > 0 ? players.find(p => Number(p.userRid) === userID) : null;
+            if (!player && userID <= 0) {
+                player = players.find(p => p.seatId != null && p.seatId === winner.seatId);
+            }
+            if (!player && userID > 0) {
+                // 极端消息时序下名单还没补到，先用座位资料把这一行接住。
+                player = this._emptyPlayer(userID, seat?.name || '', seat?.avatar || '');
+                player.sex = Number(seat?.sex || 0);
+                players.push(player);
             }
             if (!player) continue;
+            player.seatId = winner.seatId;
             player.poolCount = (player.poolCount || 0) + (winner.inPool ? 1 : 0);
             player.handNum = (player.handNum || 0) + 1;
             player.isOnline = true;
@@ -261,12 +265,15 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
     /**
      * 对应 Unity TexasSituationController.SitDown。已存在则更新带入/在线状态。
      */
-    public applySitDown(userRid: number, totalBringIn: number, deposit: number, name: string, avatar: string): void {
+    public applySitDown(userRid: number, totalBringIn: number, deposit: number, name: string, avatar: string, seatId?: number): void {
         const players = this.players.map(player => ({ ...player }));
         const mushroomBase = this._roomData.basicInfo.mushroomBase || 0;
         const existing = players.find(p => Number(p.userRid) === Number(userRid));
         if (existing) {
             existing.isOnline = true;
+            if (name) existing.name = name;
+            if (avatar) existing.avatar = avatar;
+            if (seatId != null && seatId > 0) existing.seatId = seatId;
             existing.bringInTotal = totalBringIn;
             existing.deposit = mushroomBase > 0 ? mushroomBase : deposit;
             const totalBringin = players.reduce((s, p) => s + (p.bringInTotal || 0), 0);
@@ -275,6 +282,7 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
             return;
         }
         const player: TexasReportPlayerInfo = this._emptyPlayer(userRid, name, avatar);
+        if (seatId != null && seatId > 0) player.seatId = seatId;
         player.bringInTotal = totalBringIn;
         player.deposit = mushroomBase > 0 ? mushroomBase : deposit;
         player.isOnline = true;
@@ -291,6 +299,8 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
         if (existing) {
             existing.bringOutTotal = (existing.bringOutTotal || 0) + bringOut;
             existing.isOnline = false;
+            // 人已经离座，这个座位号不能再拿去匹配后面的赢家。
+            existing.seatId = undefined;
             if (mushroomBase > 0) existing.deposit = 0;
             this.players = players;
             return;
