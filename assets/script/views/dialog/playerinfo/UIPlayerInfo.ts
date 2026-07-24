@@ -102,6 +102,24 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         { propCode: 'flower_Button', type: PropsID.PROPSFLOWER },
         { propCode: 'shark_Button', type: PropsID.PROPSSHARK }
     ];
+    /** pokerqueen 道具网格显示顺序(按 $propOp_N 名称)；末尾 2/6=撒钱/鱼头始终隐藏 */
+    private static readonly PROP_VISUAL_ORDER: number[] = [12, 3, 9, 5, 10, 7, 1, 11, 8, 4, 2, 6];
+    private static readonly PROP_HIDDEN_INDEXES: number[] = [2, 6];
+    /** 各道具图标按 pokerqueen 等比适配到 128 盒内的尺寸 [w,h]，键=$propOp_N */
+    private static readonly PROP_ICON_SIZE: Record<number, [number, number]> = {
+        1: [128, 68],
+        2: [128, 125],
+        3: [62, 128],
+        4: [128, 67],
+        5: [128, 113],
+        6: [128, 128],
+        7: [119, 128],
+        8: [91, 128],
+        9: [128, 100.57],
+        10: [128, 112],
+        11: [84, 128],
+        12: [126, 128]
+    };
     private static readonly shieldUsers: Set<number> = new Set();
     private static readonly audioClosedUsers: Set<number> = new Set();
     private static readonly videoClosedUsers: Set<number> = new Set();
@@ -383,7 +401,20 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             const node = this.propOpNode.getChildByName('$propOp_' + (index + 1));
             this._bindClick(node, () => this._clickProp(definition, node));
         });
+        this._applyPropGridLayout();
         this._refreshPropList(userStore.propList);
+    }
+
+    /** 按 pokerqueen 排布道具网格：调整显示顺序 + 各图标等比尺寸(对齐参考图) */
+    private _applyPropGridLayout(): void {
+        UIPlayerInfo.PROP_VISUAL_ORDER.forEach((propNo, siblingIdx) => {
+            const node = this.propOpNode.getChildByName('$propOp_' + propNo);
+            if (!node) return;
+            node.setSiblingIndex(siblingIdx);
+            const size = UIPlayerInfo.PROP_ICON_SIZE[propNo];
+            const icon = node.getChildByName('propIcon');
+            if (icon && size) icon.setContentSize(size[0], size[1]);
+        });
     }
 
     private _applyTargetLayout(): void {
@@ -409,7 +440,8 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this.diamondShowNode.setPosition(0, -1070);
         this.diamondShowNode.active = this._canGiftDiamond();
         this.propOpNode.setPosition(0, -823);
-        this.propOpNode.setContentSize(1000, 394);
+        // 宽度 870 对齐 pokerqueen：128 宽按钮 + 30 间距时每行恰好 5 个(1000 会挤成 6 个)
+        this.propOpNode.setContentSize(870, 394);
     }
 
     private _refreshDialogLayout(): void {
@@ -632,12 +664,17 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         UIPlayerInfo.PROP_DEFINITIONS.forEach((definition, index) => {
             const data = propList.find(item => item.propCode === definition.propCode) || null;
             const propNode = this.propOpNode.getChildByName('$propOp_' + (index + 1));
-            propNode.active = !!data;
-            if (!data) return;
-            this._propListData.set(definition.type, data);
+            if (!propNode) return;
+            // pokerqueen 逻辑：固定展示所有道具(不按是否拥有隐藏)；撒钱(2)/鱼头(6)始终隐藏
+            const hidden = UIPlayerInfo.PROP_HIDDEN_INDEXES.indexOf(index + 1) >= 0;
+            propNode.active = !hidden;
+            if (data) this._propListData.set(definition.type, data);
             const diamondCost = propNode.getChildByName('diamondCost');
-            diamondCost.active = !userStore.isPropFree(data);
-            diamondCost.getChildByName('costNum').getComponent(cc.Label).string = `${data.payPrice}`;
+            if (diamondCost) {
+                diamondCost.active = data ? !userStore.isPropFree(data) : true;
+                const costLabel = diamondCost.getChildByName('costNum')?.getComponent(cc.Label);
+                if (costLabel && data && data.payPrice > 0) costLabel.string = `${data.payPrice}`;
+            }
         });
     }
 
@@ -789,7 +826,12 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private _clickProp(definition: ThrowPropDefinition, clickNode: cc.Node): void {
         this._playClickScale(clickNode, true);
         const propData = this._propListData.get(definition.type);
-        const consume = (userStore.isPropFree(propData) ? Def.ConsumeType.CT_NONE : propData.priceID) as ClientMessageBroadcastMsg.AsObject['consume'];
+        // pokerqueen 逻辑：未拥有的道具用默认 consumeType(CT_EMOJI_2) 也能发送
+        const consume = (propData
+            ? userStore.isPropFree(propData)
+                ? Def.ConsumeType.CT_NONE
+                : propData.priceID
+            : Def.ConsumeType.CT_EMOJI_2) as ClientMessageBroadcastMsg.AsObject['consume'];
         this._roomData.seatsStateManager.setPendingThrowProp({
             type: definition.type,
             userID: userStore.userRID,
@@ -818,7 +860,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             matchID: this._roomData.matchID,
             body: body
         });
-        if (propData.propAmount > 0) {
+        if (propData && propData.propAmount > 0) {
             UserStoreUtils.consumeUserProp(propData.gamePropID).catch(error => cc.warn('[UIPlayerInfo] consume user prop failed', error));
         }
     }

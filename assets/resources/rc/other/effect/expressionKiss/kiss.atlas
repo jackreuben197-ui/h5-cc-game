@@ -1,34 +1,48 @@
 
 kiss.png
-size: 512,128
+size: 512,512
 format: RGBA8888
 filter: Linear,Linear
 repeat: none
-kiss_0
+images/heart 1
   rotate: false
-  xy: 0, 0
-  size: 134, 114
-  orig: 134, 114
+  xy: 359, 413
+  size: 72, 72
+  orig: 72, 72
   offset: 0, 0
   index: -1
-kiss_1
+images/heart 2
   rotate: false
-  xy: 134, 58
-  size: 149, 56
-  orig: 149, 56
+  xy: 359, 413
+  size: 72, 72
+  orig: 72, 72
   offset: 0, 0
   index: -1
-kiss_2
+images/heart 3
   rotate: false
-  xy: 134, 3
-  size: 123, 55
-  orig: 123, 55
+  xy: 433, 381
+  size: 51, 50
+  orig: 51, 50
   offset: 0, 0
   index: -1
-kiss_3
+images/heart 4
   rotate: false
-  xy: 283, 84
-  size: 73, 30
-  orig: 73, 30
+  xy: 433, 433
+  size: 52, 52
+  orig: 52, 52
+  offset: 0, 0
+  index: -1
+images/lips normal
+  rotate: false
+  xy: 2, 376
+  size: 204, 109
+  orig: 204, 109
+  offset: 0, 0
+  index: -1
+images/lips-kiss
+  rotate: false
+  xy: 208, 377
+  size: 149, 108
+  orig: 149, 108
   offset: 0, 0
   index: -1

@@ -24,7 +24,16 @@ interface PropClipConfig {
     anim: string;
     soundName?: RoleValue<string | string[]>;
     loop?: boolean;
+    /** 模式A分段：飞行过程中播放的飞行段动画；播完自然衔接命中段(anim) */
+    flyAnim?: string;
+    /** 模式A分段：飞行段固定时长(秒)；不填则用飞行动画真实时长 */
+    flyDur?: number;
+    /** 命中动画自带位移(如开枪/摸头)：不搬动节点，直接在目标处静止播放一次 */
+    atTarget?: boolean;
 }
+
+/** 座位特效缩放，对齐 pokerqueen AVATAR_ANIM_SCALE */
+const PROP_ANIM_SCALE = 0.7;
 
 interface PropAnimConfig {
     clips: Record<string, PropClipConfig>;
@@ -55,64 +64,59 @@ class ThrowPropManager {
         [PropsID.PROPSTOMATO]: {
             duration: 4.5,
             clips: {
-                hit: { spine: 'rc/other/effect/expressionTomato/skeleton', anim: '1', soundName: 'sound/PropOp/sfx_tomato_mus' }
+                hit: { spine: 'rc/other/effect/expressionTomato/skeleton', anim: 'dirt_splash', flyAnim: 'dirt_flying', soundName: 'sound/PropOp/sfx_tomato_mus' }
             }
         },
         [PropsID.PROPSFLOWER]: {
             duration: 4.5,
             clips: {
-                hit: { spine: 'rc/other/effect/expressionFlower/skeleton', anim: 'animation', soundName: 'sound/PropOp/sfx_rose_mus' }
+                hit: { spine: 'rc/other/effect/expressionFlower/skeleton', anim: 'hand_wave', soundName: 'sound/PropOp/sfx_rose_mus' }
             }
         },
         [PropsID.PROPSKISS]: {
             duration: 4.5,
             clips: {
-                hit: { spine: 'rc/other/effect/expressionKiss/kiss', anim: '1', soundName: 'sound/PropOp/sfx_kiss_mus' }
+                hit: { spine: 'rc/other/effect/expressionKiss/kiss', anim: 'lip_kissing', soundName: 'sound/PropOp/sfx_kiss_mus' }
             }
         },
         [PropsID.PROPSGOOD]: {
             duration: 4.5,
             clips: {
-                hit: { spine: 'rc/other/effect/expressionGood/skeleton', anim: 'animation', soundName: 'sound/PropOp/sfx_like_mus' }
+                hit: { spine: 'rc/other/effect/expressionGood/skeleton', anim: 'thumbs_up', flyAnim: 'fist_flying', soundName: 'sound/PropOp/sfx_like_mus' }
             }
         },
+        // 干杯(604)→pokerqueen新beer：单骨骼 beer_cheers，在双方座位头顶各播一次(不再有全屏)
         [PropsID.PROPSCHEERS]: {
-            fullscreen: { sender: true, receiver: true, bystander: false },
-            duration: 5,
+            duration: 4.5,
             clips: {
-                screen: { spine: 'rc/other/effect/expressionBeerScreen/cheers_1', anim: '1', soundName: 'sound/PropOp/sfx_beer_screen' },
-                seatScreen: { spine: 'rc/other/effect/expressionBeer/cheers_2', anim: '3' },
-                seat: { spine: 'rc/other/effect/expressionBeer/cheers_2', anim: '2', soundName: 'sound/PropOp/sfx_cheers_mus' }
+                hit: { spine: 'rc/other/effect/expressionBeer/cheers_2', anim: 'beer_cheers', soundName: 'sound/PropOp/sfx_cheers_mus' }
             }
         },
         [PropsID.PROPSTOUCH]: {
             duration: 3.5,
             clips: {
-                hit: { spine: 'rc/other/effect/expressionTouch/touch', anim: 'animation', soundName: 'sound/PropOp/sfx_touch_mus', loop: true }
+                hit: { spine: 'rc/other/effect/expressionTouch/touch', anim: 'hand_patting', atTarget: true, soundName: 'sound/PropOp/sfx_touch_mus' }
             }
         },
         [PropsID.PROPSSHARK]: {
             duration: 4,
             clips: {
-                sender: { spine: 'rc/other/effect/expressionShark/shark', anim: 'shark_set', soundName: 'sound/PropOp/sfx_shark_mus' },
-                receiver: { spine: 'rc/other/effect/expressionShark/shark', anim: 'shark_receive' }
+                hit: { spine: 'rc/other/effect/expressionShark/shark', anim: 'babyshark' },
+                eaten: { spine: 'rc/other/effect/expressionShark/shark', anim: 'shark_eaten' }
             }
         },
         [PropsID.PROPSCHICKEN]: {
             duration: 4,
             clips: {
-                hand: { spine: 'rc/other/effect/expressionChicken/chicken_spine', anim: 'chicken_set', soundName: 'sound/PropOp/sfx_zhuaji_mus' },
-                receiver: { spine: 'rc/other/effect/expressionChicken/chicken_spine', anim: 'chicken_receive' }
+                hand: { spine: 'rc/other/effect/expressionChicken/chicken_spine', anim: 'hand_flying', soundName: 'sound/PropOp/sfx_zhuaji_mus' },
+                receiver: { spine: 'rc/other/effect/expressionChicken/chicken_spine', anim: 'hen_struggling' }
             }
         },
+        // 拳击(608)→pokerqueen新gun：子弹/火球从发送者朝目标飞去(bullets-fireballs)
         [PropsID.PROPSBOXING]: {
-            fullscreen: { sender: true, receiver: true, bystander: false },
-            duration: { sender: 6, receiver: 6, bystander: 4 },
+            duration: 4,
             clips: {
-                senderScreen: { spine: 'rc/other/effect/expressionBoxScreen/box_full', anim: 'box_full_1', soundName: 'sound/PropOp/sfx_boxing_sender1' },
-                senderHit: { spine: 'rc/other/effect/expressionBox/box_local', anim: 'box_local_1', soundName: 'sound/PropOp/sfx_boxing_sender2' },
-                receiverPunch: { spine: 'rc/other/effect/expressionBox/box_local', anim: 'box_local_2', soundName: 'sound/PropOp/sfx_boxing_beaten1' },
-                receiverScreen: { spine: 'rc/other/effect/expressionBoxScreen/box_full', anim: 'box_full_2', soundName: 'sound/PropOp/sfx_boxing_beaten2' }
+                hit: { spine: 'rc/other/effect/expressionBox/box_local', anim: 'bullets-fireballs', soundName: 'sound/PropOp/sfx_boxing_sender1' }
             }
         },
         [PropsID.PROPSMONEY]: {
@@ -143,19 +147,11 @@ class ThrowPropManager {
                 waveOther: { spine: 'rc/other/effect/expressionFishWave/hl', anim: 'hl3' }
             }
         },
+        // 棒球(611)→pokerqueen新bomb blast：炸弹从发送者飞向目标(飞行由补间完成)，在目标处 blast 爆炸
         [PropsID.PROPSBASEBALL]: {
-            duration: { sender: 8, receiver: 8, bystander: 10 },
+            duration: 4,
             clips: {
-                senderStart: { spine: 'rc/other/effect/expressionBaseballSender/skeleton', anim: '1', soundName: 'sound/PropOp/sfx_baseball' },
-                senderFly: { spine: 'rc/other/effect/expressionBaseballSender/skeleton', anim: '2' },
-                senderHit: { spine: 'rc/other/effect/expressionBaseballSender/skeleton', anim: '3' },
-                receiverStart: { spine: 'rc/other/effect/expressionBaseballReceiver/ballfolder1', anim: '1', soundName: 'sound/PropOp/sfx_baseball' },
-                receiverFly: { spine: 'rc/other/effect/expressionBaseballReceiver/ballfolder1', anim: '2' },
-                receiverHit: { spine: 'rc/other/effect/expressionBaseballReceiver/ballfolder1', anim: '3' },
-                otherStart: { spine: 'rc/other/effect/expressionBaseballOther/skeleton', anim: '1', soundName: 'sound/PropOp/sfx_baseball' },
-                otherFly: { spine: 'rc/other/effect/expressionBaseballOther/skeleton', anim: '2' },
-                otherHit: { spine: 'rc/other/effect/expressionBaseballOther/skeleton', anim: '3' },
-                otherExit: { spine: 'rc/other/effect/expressionBaseballOther/skeleton', anim: '4' }
+                hit: { spine: 'rc/other/effect/expressionBaseballSender/skeleton', anim: 'blast', flyAnim: 'bomb_flying', soundName: 'sound/PropOp/sfx_baseball' }
             }
         }
     };
@@ -455,48 +451,49 @@ class ThrowPropManager {
     }
 
     private _playTouch(task: ThrowPropTask): void {
-        const clip = this._getClip(task.config, 'hit');
-        const skeletonData = this._getSkeleton(clip.spine);
-        if (!this._isRootValid()) return;
-        const node = this._createSpineNode(skeletonData, '', false, this._getLocalPos(task.senderData.avatarNode), task.senderData.propNode);
-        const skeleton = node.getComponent(sp.Skeleton);
-        const endPos = this._getLocalPos(task.targetData.avatarNode);
-        cc.tween(node)
-            .to(0.5, this._toTweenPosForNode(node, endPos), { easing: 'quadInOut' })
-            .call(() => {
-                if (!cc.isValid(node)) return;
-                this._setSkeletonClip(skeleton, clip);
-                this._playClipSound(clip, task.role);
-                this._destroyAfterDelay(node, 3);
-            })
-            .start();
+        // 摸头：动画自带摸头动作，直接在目标头顶静止播放一次(atTarget)
+        this._playFlyToTargetClip(task, 'hit');
     }
 
+    // 鲨鱼(对齐 pokerqueen)：同一骨骼单轨顺序播放 babyshark(出水) → shark_eaten(咬人)，都在目标处
     private _playShark(task: ThrowPropTask): void {
-        const senderPos = this._getLocalPos(task.senderData.avatarNode);
         const targetPos = this._getLocalPos(task.targetData.avatarNode);
         if (!this._isRootValid()) return;
-        const senderClip = this._getClip(task.config, 'sender');
-        const receiverClip = this._getClip(task.config, 'receiver');
-        const senderEffect = this._createClipNode(senderClip, senderPos, task.senderData.propNode);
-        const targetEffect = this._createClipNode(receiverClip, targetPos, task.targetData.propNode);
-        this._destroyAfterComplete(senderEffect, 4);
-        this._destroyAfterComplete(targetEffect, 4);
-        this._playClipSound(senderClip, task.role);
+        const clip = this._getClip(task.config, 'hit');
+        const eaten = this._getClip(task.config, 'eaten');
+        const node = this._spawnPropSpine(this._getSkeleton(clip.spine), clip.anim, false, targetPos);
+        const skeleton = node.getComponent(sp.Skeleton);
+        skeleton.addAnimation(0, eaten.anim, false, 0);
+        this._destroyAfterDelay(node, 4);
+        // 鲨鱼按需静音，不播放音效(对齐 pokerqueen)
     }
 
+    // 抓鸡(对齐 pokerqueen)：伸手 hand_flying 从发送者飞到目标(真实飞行时长)，衔接 hen_struggling
     private _playChicken(task: ThrowPropTask): void {
         const senderPos = this._getLocalPos(task.senderData.avatarNode);
         const targetPos = this._getLocalPos(task.targetData.avatarNode);
         if (!this._isRootValid()) return;
         const handClip = this._getClip(task.config, 'hand');
-        const receiverClip = this._getClip(task.config, 'receiver');
-        const handNode = this._createClipNode(handClip, senderPos, task.senderData.propNode);
-        this._destroyAfterComplete(handNode, 4);
-        cc.tween(handNode).to(0.5, this._toTweenPosForNode(handNode, targetPos), { easing: 'quadInOut' }).start();
-        const targetEffect = this._createClipNode(receiverClip, targetPos, task.targetData.propNode);
-        this._destroyAfterComplete(targetEffect, 4);
-        this._playClipSound(handClip, task.role);
+        const henClip = this._getClip(task.config, 'receiver');
+        const handNode = this._spawnPropSpine(this._getSkeleton(handClip.spine), '', false, senderPos);
+        const handSkeleton = handNode.getComponent(sp.Skeleton);
+        const flyEntry = handSkeleton.setAnimation(0, handClip.anim, false);
+        let flyDur = Math.max(0.3, Math.min(this._getEntryDuration(flyEntry, 0.5), 2.0));
+        cc.tween(handNode).to(flyDur, this._toTweenPosForNode(handNode, targetPos), { easing: 'quadInOut' }).start();
+        let henPlayed = false;
+        const playHen = () => {
+            if (henPlayed) return;
+            henPlayed = true;
+            if (cc.isValid(handNode)) this._releaseSpineNode(handNode);
+            const henNode = this._spawnPropSpine(this._getSkeleton(henClip.spine), henClip.anim, false, targetPos);
+            this._destroyAfterComplete(henNode, 4);
+            this._playClipSound(handClip, task.role);
+        };
+        handSkeleton.setCompleteListener(() => {
+            handSkeleton.setCompleteListener(() => {});
+            playHen();
+        });
+        cc.tween(this._root).delay(flyDur + 0.1).call(() => playHen()).start();
     }
 
     private _playMoney(task: ThrowPropTask): void {
@@ -508,57 +505,52 @@ class ThrowPropManager {
         this._playClipSound(clip, task.role);
     }
 
+    // pokerqueen新beer=模式A：从发送者飞向目标，到达后播 beer_cheers
     private _playBeer(task: ThrowPropTask): void {
-        const senderPos = this._getLocalPos(task.senderData.avatarNode);
-        const targetPos = this._getLocalPos(task.targetData.avatarNode);
-        if (!this._isRootValid()) return;
-        if (task.role === 'sender' || task.role === 'receiver') {
-            const screenClip = this._getClip(task.config, 'screen');
-            const seatClip = this._getClip(task.config, 'seatScreen');
-            this._playClipSound(screenClip, task.role);
-            this._destroyAfterComplete(this._createClipNode(screenClip, this._getScreenCenter()), 5);
-            this._destroyAfterComplete(this._createClipNode(seatClip, senderPos), 5);
-            this._destroyAfterComplete(this._createClipNode(seatClip, targetPos), 5);
-            return;
-        }
-        const seatClip = this._getClip(task.config, 'seat');
-        this._playClipSound(seatClip, task.role);
-        this._destroyAfterComplete(this._createClipNode(seatClip, senderPos, task.senderData.propNode), 5);
-        this._destroyAfterComplete(this._createClipNode(seatClip, targetPos, task.targetData.propNode), 5);
+        this._playFlyToTargetClip(task, 'hit', true);
     }
 
+    // 枪(608, 对齐 pokerqueen playGun)：3个独立实例组合——①枪停发送者头像并对准目标
+    // ②火球旋转对准+按距离缩放，从枪口飞向目标 ③0.7s后目标头像处爆出枪火
     private _playBoxing(task: ThrowPropTask): void {
+        if (!this._isRootValid()) return;
+        const clip = this._getClip(task.config, 'hit');
+        const data = this._getSkeleton(clip.spine);
         const senderPos = this._getLocalPos(task.senderData.avatarNode);
         const targetPos = this._getLocalPos(task.targetData.avatarNode);
-        const screenCenter = this._getScreenCenter();
-        if (!this._isRootValid()) return;
-        if (task.role === 'sender') {
-            const screenClip = this._getClip(task.config, 'senderScreen');
-            const hitClip = this._getClip(task.config, 'senderHit');
-            this._playClipSound(screenClip, task.role);
-            this._chainSpine(this._createClipNode(screenClip, screenCenter), () => {
-                this._playClipSound(hitClip, task.role);
-                this._destroyAfterComplete(this._createClipNode(hitClip, targetPos), 4);
-            });
-            return;
-        }
-        if (task.role === 'receiver') {
-            const punchClip = this._getClip(task.config, 'receiverPunch');
-            const screenClip = this._getClip(task.config, 'receiverScreen');
-            this._playClipSound(punchClip, task.role);
-            this._chainSpine(this._createClipNode(punchClip, senderPos), () => {
-                this._playClipSound(screenClip, task.role);
-                this._destroyAfterComplete(this._createClipNode(screenClip, screenCenter), 5);
-            });
-            return;
-        }
-        const punchClip = this._getClip(task.config, 'receiverPunch');
-        const hitClip = this._getClip(task.config, 'senderHit');
-        this._playClipSound(punchClip, task.role);
-        this._chainSpine(this._createClipNode(punchClip, senderPos, task.senderData.propNode), () => {
-            this._playClipSound(hitClip, task.role);
-            this._destroyAfterComplete(this._createClipNode(hitClip, targetPos, task.targetData.propNode), 4);
-        });
+        const dx = targetPos.x - senderPos.x;
+        const dy = targetPos.y - senderPos.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        // 原生枪口/子弹朝 +Y。node.angle 逆时针为正，令局部+Y对准目标 = atan2(-dx, dy)
+        const aimAngle = (Math.atan2(-dx, dy) * 180) / Math.PI;
+        const aimX = dist > 0 ? dx / dist : 0;
+        const aimY = dist > 0 ? dy / dist : 1;
+        const spawn = (anim: string, pos: cc.Vec3, angle: number, scale: number, life: number) => {
+            const node = this._createSpineNode(data, anim, false, pos);
+            node.angle = angle;
+            node.setScale(scale);
+            this._destroyAfterComplete(node, life);
+            return node;
+        };
+        // ① 枪：停在发送者头像、对准目标(原生尺寸)
+        spawn('gun', senderPos, aimAngle, 1, 4);
+        // ② 火球：缩放+前移，使其从枪口出发飞到目标
+        const MUZZLE = 86;
+        const FB_START = -240;
+        const FB_SPAN = 740;
+        let fbScale = dist > 0 ? (dist - MUZZLE) / FB_SPAN : 0.7;
+        fbScale = Math.max(0.5, Math.min(1.8, fbScale));
+        const fbOffset = MUZZLE - FB_START * fbScale;
+        const fbPos = cc.v3(senderPos.x + aimX * fbOffset, senderPos.y + aimY * fbOffset, senderPos.z);
+        spawn('bullets-fireballs', fbPos, aimAngle, fbScale, 4);
+        // ③ 命中：子弹飞到后在目标头像处爆出枪火
+        cc.tween(this._root)
+            .delay(0.7)
+            .call(() => {
+                if (!this._isRootValid()) return;
+                spawn('bullet_shots', targetPos, 0, 1, 4);
+            })
+            .start();
     }
 
     private _playFish(task: ThrowPropTask): void {
@@ -609,106 +601,77 @@ class ThrowPropManager {
         this._destroyAfterComplete(this._createClipNode(this._getClip(task.config, 'waveOther'), center), 6);
     }
 
+    // pokerqueen新bomb blast(611)：炸弹从发送者飞向目标(飞行由补间完成)，在目标处 blast 爆炸
     private _playBaseball(task: ThrowPropTask): void {
-        const senderPos = this._getLocalPos(task.senderData.avatarNode);
-        const targetPos = this._getLocalPos(task.targetData.avatarNode);
+        this._playFlyToTargetClip(task, 'hit', true);
+    }
+
+    // 模式A(对齐 pokerqueen playPatternA)：从发送者飞向目标；有 flyAnim 则飞行段播飞行动画、
+    // 播完自然衔接命中段；atTarget 则命中动画自带位移，直接目标处播放一次。
+    private _playFlyToTargetClip(task: ThrowPropTask, clipName: string, _playSoundOnStart: boolean = false): void {
+        const clip = this._getClip(task.config, clipName);
+        const skeletonData = this._getSkeleton(clip.spine);
         if (!this._isRootValid()) return;
-        if (task.role === 'sender') {
-            this._playBaseballSequence(
-                [this._getClip(task.config, 'senderStart'), this._getClip(task.config, 'senderFly'), this._getClip(task.config, 'senderHit')],
-                senderPos,
-                targetPos,
-                false,
-                task.senderData.propNode,
-                task.role
-            );
-        } else if (task.role === 'receiver') {
-            this._playBaseballSequence(
-                [this._getClip(task.config, 'receiverStart'), this._getClip(task.config, 'receiverFly'), this._getClip(task.config, 'receiverHit')],
-                senderPos,
-                targetPos,
-                false,
-                task.senderData.propNode,
-                task.role
-            );
+        const startPos = this._getLocalPos(task.senderData.avatarNode);
+        const endPos = this._getLocalPos(task.targetData.avatarNode);
+        const impactAnim = clip.anim;
+
+        // 命中动画自带运动：直接在目标处静止播放
+        if (clip.atTarget) {
+            const node = this._spawnPropSpine(skeletonData, impactAnim, !!clip.loop, endPos);
+            this._destroyAfterComplete(node, 4);
+            this._playClipSound(clip, task.role);
+            return;
+        }
+
+        const node = this._spawnPropSpine(skeletonData, '', false, startPos);
+        const skeleton = node.getComponent(sp.Skeleton);
+        let arrived = false;
+        const onArrive = () => {
+            if (arrived || !cc.isValid(node)) return;
+            arrived = true;
+            this._setRootLocalPosition(node, endPos);
+            if (impactAnim) {
+                skeleton.setAnimation(0, impactAnim, !!clip.loop);
+                this._destroyAfterComplete(node, 4);
+            } else {
+                this._destroyAfterDelay(node, 0.5);
+            }
+            this._playClipSound(clip, task.role);
+        };
+
+        if (clip.flyAnim) {
+            const entry = skeleton.setAnimation(0, clip.flyAnim, false);
+            let flyDur = clip.flyDur != null ? clip.flyDur : this._getEntryDuration(entry, 0.5);
+            flyDur = Math.max(0.3, Math.min(flyDur, 2.0));
+            cc.tween(node).to(flyDur, this._toTweenPosForNode(node, endPos), { easing: 'quadInOut' }).start();
+            skeleton.setCompleteListener(() => {
+                skeleton.setCompleteListener(() => {});
+                onArrive();
+            });
+            cc.tween(this._root).delay(flyDur + 0.1).call(() => onArrive()).start();
         } else {
-            this._playBaseballSequence(
-                [
-                    this._getClip(task.config, 'otherStart'),
-                    this._getClip(task.config, 'otherFly'),
-                    this._getClip(task.config, 'otherHit'),
-                    this._getClip(task.config, 'otherExit')
-                ],
-                senderPos,
-                targetPos,
-                true,
-                task.senderData.propNode,
-                task.role
-            );
+            cc.tween(node)
+                .to(0.5, this._toTweenPosForNode(node, endPos), { easing: 'quadInOut' })
+                .call(() => onArrive())
+                .start();
         }
     }
 
-    private _playBaseballSequence(
-        clips: PropClipConfig[],
-        startPos: cc.Vec3,
-        targetPos: cc.Vec3,
-        exitAfterHit: boolean,
-        propNode: cc.Node,
-        role: PropRole
-    ): void {
-        const [startClip, flyClip, hitClip, exitClip] = clips;
-        this._playClipSound(startClip, role);
-        const node = this._createClipNode(startClip, startPos, propNode);
-        const skeleton = node.getComponent(sp.Skeleton);
-        skeleton.setCompleteListener(() => {
-            if (!cc.isValid(node)) return;
-            skeleton.setCompleteListener(() => {});
-            this._setSkeletonClip(skeleton, flyClip);
-            cc.tween(node).to(0.333, this._toTweenPosForNode(node, targetPos), { easing: 'quadInOut' }).start();
-            cc.tween(node)
-                .delay(0.333)
-                .call(() => {
-                    if (!cc.isValid(node)) return;
-                    this._setSkeletonClip(skeleton, hitClip);
-                    if (!exitAfterHit) {
-                        this._destroyAfterComplete(node, 5);
-                        return;
-                    }
-                    skeleton.setCompleteListener(() => {
-                        if (!cc.isValid(node)) return;
-                        this._setSkeletonClip(skeleton, exitClip);
-                        const dir = cc.v2(targetPos.x - startPos.x, targetPos.y - startPos.y).normalize();
-                        const exitPos = cc.v3(targetPos.x + dir.x * 2000, targetPos.y + dir.y * 2000, 0);
-                        cc.tween(node)
-                            .to(1, this._toTweenPosForNode(node, exitPos), { easing: 'quadIn' })
-                            .call(() => {
-                                this._releaseSpineNode(node);
-                            })
-                            .start();
-                    });
-                })
-                .start();
-        });
-        this._destroyAfterDelay(node, exitAfterHit ? 10 : 8);
+    /** 创建一个带 pokerqueen 座位缩放(0.7)的独立 Spine 节点 */
+    private _spawnPropSpine(skeletonData: sp.SkeletonData, anim: string, loop: boolean, rootLocalPos: cc.Vec3): cc.Node {
+        const node = this._createSpineNode(skeletonData, anim, loop, rootLocalPos);
+        node.setScale(PROP_ANIM_SCALE);
+        return node;
     }
 
-    private _playFlyToTargetClip(task: ThrowPropTask, clipName: string, playSoundOnStart: boolean = false): void {
-        const clip = this._getClip(task.config, clipName);
-        if (playSoundOnStart) this._playClipSound(clip, task.role);
-        const skeletonData = this._getSkeleton(clip.spine);
-        if (!this._isRootValid()) return;
-        const node = this._createSpineNode(skeletonData, '', false, this._getLocalPos(task.senderData.avatarNode), task.senderData.propNode);
-        const skeleton = node.getComponent(sp.Skeleton);
-        const endPos = this._getLocalPos(task.targetData.avatarNode);
-        cc.tween(node)
-            .to(0.5, this._toTweenPosForNode(node, endPos), { easing: 'quadInOut' })
-            .call(() => {
-                if (!cc.isValid(node)) return;
-                this._setSkeletonClip(skeleton, clip);
-                this._destroyAfterComplete(node, 4);
-                this._playClipSoundDelay(clip, task.role, 1);
-            })
-            .start();
+    /** 安全读取 Spine TrackEntry 动画真实时长(秒)，失败返回 fallback */
+    private _getEntryDuration(entry: sp.spine.TrackEntry, fallback: number): number {
+        try {
+            const anim = entry && (entry as any).animation;
+            if (anim && typeof anim.duration === 'number' && anim.duration > 0) return anim.duration;
+        } catch (e) {}
+        return fallback;
     }
 
     private _getClip(config: PropAnimConfig, name: string): PropClipConfig {

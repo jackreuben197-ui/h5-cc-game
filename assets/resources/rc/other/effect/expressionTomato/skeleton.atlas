@@ -1,132 +1,41 @@
 
 skeleton.png
-size: 1024,512
+size: 1024,1024
 format: RGBA8888
 filter: Linear,Linear
 repeat: none
-1_tomato_1
-  rotate: true
-  xy: 919, 292
-  size: 20, 40
-  orig: 20, 40
-  offset: 0, 0
-  index: -1
-1_tomato_2
-  rotate: true
-  xy: 919, 312
-  size: 101, 84
-  orig: 101, 84
-  offset: 0, 0
-  index: -1
-1_tomato_2_shadow
+images/fly 1
   rotate: false
-  xy: 92, 79
-  size: 103, 85
-  orig: 103, 85
-  offset: 0, 0
+  xy: 847, 857
+  size: 39, 29
+  orig: 39, 30
+  offset: 0, 1
   index: -1
-1_tomato_base
+images/fly 3
   rotate: false
-  xy: 725, 113
-  size: 202, 179
-  orig: 202, 179
-  offset: 0, 0
+  xy: 847, 857
+  size: 39, 29
+  orig: 39, 30
+  offset: 0, 1
   index: -1
-2_tomato_1
+images/sh-1
   rotate: false
-  xy: 919, 413
-  size: 93, 99
-  orig: 93, 99
+  xy: 541, 411
+  size: 259, 228
+  orig: 259, 228
   offset: 0, 0
   index: -1
-2_tomato_1_shadow
+images/splash
   rotate: false
-  xy: 0, 63
-  size: 92, 101
-  orig: 92, 101
-  offset: 0, 0
+  xy: 2, 405
+  size: 537, 481
+  orig: 573, 510
+  offset: 36, 0
   index: -1
-2_tomato_2
+images/splash-2
   rotate: false
-  xy: 725, 292
-  size: 194, 220
-  orig: 194, 220
-  offset: 0, 0
-  index: -1
-2_tomato_4
-  rotate: false
-  xy: 367, 204
-  size: 358, 308
-  orig: 358, 308
-  offset: 0, 0
-  index: -1
-2_tomato_5
-  rotate: false
-  xy: 0, 164
-  size: 367, 348
-  orig: 367, 348
-  offset: 0, 0
-  index: -1
-body
-  rotate: true
-  xy: 367, 164
-  size: 40, 93
-  orig: 40, 93
-  offset: 0, 0
-  index: -1
-leg_l_1
-  rotate: false
-  xy: 460, 176
-  size: 29, 28
-  orig: 29, 28
-  offset: 0, 0
-  index: -1
-leg_l_2
-  rotate: false
-  xy: 39, 45
-  size: 44, 18
-  orig: 44, 18
-  offset: 0, 0
-  index: -1
-leg_l_3
-  rotate: false
-  xy: 195, 124
-  size: 38, 40
-  orig: 38, 40
-  offset: 0, 0
-  index: -1
-tomato4
-  rotate: true
-  xy: 92, 63
-  size: 16, 17
-  orig: 16, 17
-  offset: 0, 0
-  index: -1
-tomato5
-  rotate: false
-  xy: 233, 151
-  size: 19, 13
-  orig: 19, 13
-  offset: 0, 0
-  index: -1
-tomato6
-  rotate: false
-  xy: 195, 105
-  size: 14, 19
-  orig: 14, 19
-  offset: 0, 0
-  index: -1
-tomato7
-  rotate: false
-  xy: 927, 275
-  size: 13, 17
-  orig: 13, 17
-  offset: 0, 0
-  index: -1
-wing_l
-  rotate: false
-  xy: 0, 0
-  size: 39, 63
-  orig: 39, 63
-  offset: 0, 0
+  xy: 541, 641
+  size: 304, 245
+  orig: 334, 246
+  offset: 8, 0
   index: -1

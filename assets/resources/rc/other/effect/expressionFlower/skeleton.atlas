@@ -1,90 +1,27 @@
 
 skeleton.png
-size: 1024,1024
+size: 512,512
 format: RGBA8888
 filter: Linear,Linear
 repeat: none
-Sprite_1
+images/hand
   rotate: false
-  xy: 0, 800
-  size: 200, 200
-  orig: 200, 200
+  xy: 2, 349
+  size: 253, 84
+  orig: 253, 85
   offset: 0, 0
   index: -1
-Sprite_10
-  rotate: false
-  xy: 600, 800
-  size: 200, 200
-  orig: 200, 200
-  offset: 0, 0
+images/hand-wave
+  rotate: true
+  xy: 257, 352
+  size: 81, 176
+  orig: 127, 194
+  offset: 27, 8
   index: -1
-Sprite_11
+images/nice
   rotate: false
-  xy: 0, 0
-  size: 200, 200
-  orig: 200, 200
-  offset: 0, 0
-  index: -1
-Sprite_12
-  rotate: false
-  xy: 200, 335
-  size: 31, 65
-  orig: 31, 65
-  offset: 0, 0
-  index: -1
-Sprite_2
-  rotate: false
-  xy: 0, 600
-  size: 200, 200
-  orig: 200, 200
-  offset: 0, 0
-  index: -1
-Sprite_3
-  rotate: false
-  xy: 200, 800
-  size: 200, 200
-  orig: 200, 200
-  offset: 0, 0
-  index: -1
-Sprite_4
-  rotate: false
-  xy: 0, 400
-  size: 200, 200
-  orig: 200, 200
-  offset: 0, 0
-  index: -1
-Sprite_5
-  rotate: false
-  xy: 200, 600
-  size: 200, 200
-  orig: 200, 200
-  offset: 0, 0
-  index: -1
-Sprite_6
-  rotate: false
-  xy: 400, 800
-  size: 200, 200
-  orig: 200, 200
-  offset: 0, 0
-  index: -1
-Sprite_7
-  rotate: false
-  xy: 0, 200
-  size: 200, 200
-  orig: 200, 200
-  offset: 0, 0
-  index: -1
-Sprite_8
-  rotate: false
-  xy: 200, 400
-  size: 200, 200
-  orig: 200, 200
-  offset: 0, 0
-  index: -1
-Sprite_9
-  rotate: false
-  xy: 400, 600
-  size: 200, 200
-  orig: 200, 200
-  offset: 0, 0
+  xy: 2, 263
+  size: 220, 84
+  orig: 221, 85
+  offset: 1, 0
   index: -1

@@ -1,139 +1,132 @@
 
 box_local.png
-size: 2048,2048
+size: 1024,1024
 format: RGBA8888
 filter: Linear,Linear
 repeat: none
-img/box_r_in1
+images/fire-ball 1
   rotate: false
-  xy: 1341, 1568
-  size: 367, 449
-  orig: 367, 449
+  xy: 2, 246
+  size: 15, 208
+  orig: 16, 208
+  offset: 1, 0
+  index: -1
+images/fire-ball 2
+  rotate: false
+  xy: 40, 299
+  size: 20, 155
+  orig: 20, 156
+  offset: 0, 1
+  index: -1
+images/fire-ball 3
+  rotate: false
+  xy: 2, 48
+  size: 17, 196
+  orig: 17, 197
+  offset: 0, 1
+  index: -1
+images/fire-ball 5
+  rotate: false
+  xy: 2, 48
+  size: 17, 196
+  orig: 17, 197
+  offset: 0, 1
+  index: -1
+images/fire-ball 6
+  rotate: false
+  xy: 2, 48
+  size: 17, 196
+  orig: 17, 197
+  offset: 0, 1
+  index: -1
+images/fire-ball 7
+  rotate: false
+  xy: 2, 48
+  size: 17, 196
+  orig: 17, 197
+  offset: 0, 1
+  index: -1
+images/fire-ball 4
+  rotate: false
+  xy: 19, 298
+  size: 19, 156
+  orig: 20, 156
+  offset: 1, 0
+  index: -1
+images/gun 1
+  rotate: false
+  xy: 2, 740
+  size: 100, 282
+  orig: 145, 297
+  offset: 30, 12
+  index: -1
+images/gun 2
+  rotate: false
+  xy: 2, 456
+  size: 100, 282
+  orig: 145, 297
+  offset: 30, 12
+  index: -1
+images/gunshot 1
+  rotate: false
+  xy: 2, 2
+  size: 44, 44
+  orig: 52, 52
+  offset: 4, 4
+  index: -1
+images/gunshot 2
+  rotate: false
+  xy: 2, 2
+  size: 44, 44
+  orig: 52, 52
+  offset: 4, 4
+  index: -1
+images/gunshot 3
+  rotate: false
+  xy: 19, 252
+  size: 44, 44
+  orig: 52, 52
+  offset: 4, 4
+  index: -1
+images/gunshot 4
+  rotate: false
+  xy: 19, 252
+  size: 44, 44
+  orig: 52, 52
+  offset: 4, 4
+  index: -1
+images/gunshot 5
+  rotate: false
+  xy: 19, 252
+  size: 44, 44
+  orig: 52, 52
+  offset: 4, 4
+  index: -1
+images/gunshot 6
+  rotate: false
+  xy: 62, 342
+  size: 35, 36
+  orig: 36, 36
   offset: 0, 0
   index: -1
-img/box_r_in2
+images/gunshot 9
   rotate: false
-  xy: 372, 213
-  size: 350, 448
-  orig: 350, 448
+  xy: 62, 342
+  size: 35, 36
+  orig: 36, 36
   offset: 0, 0
   index: -1
-img/box_r_in3
-  rotate: true
-  xy: 475, 1168
-  size: 342, 442
-  orig: 342, 442
-  offset: 0, 0
-  index: -1
-img/box_r_in4
+images/gunshot 7
   rotate: false
-  xy: 0, 227
-  size: 372, 434
-  orig: 372, 434
-  offset: 0, 0
+  xy: 62, 418
+  size: 36, 36
+  orig: 37, 36
+  offset: 1, 0
   index: -1
-img/box_r_in5
+images/gunshot 8
   rotate: false
-  xy: 0, 661
-  size: 408, 421
-  orig: 408, 421
-  offset: 0, 0
-  index: -1
-img/box_r_in7
-  rotate: false
-  xy: 455, 800
-  size: 423, 368
-  orig: 423, 368
-  offset: 0, 0
-  index: -1
-img/box_side_r1
-  rotate: false
-  xy: 958, 1541
-  size: 383, 476
-  orig: 383, 476
-  offset: 0, 0
-  index: -1
-img/box_top_l1
-  rotate: false
-  xy: 878, 800
-  size: 378, 341
-  orig: 378, 341
-  offset: 0, 0
-  index: -1
-img/pulse1/pulse1_00000
-  rotate: false
-  xy: 722, 400
-  size: 400, 400
-  orig: 400, 400
-  offset: 0, 0
-  index: -1
-img/pulse1/pulse1_00002
-  rotate: false
-  xy: 722, 0
-  size: 400, 400
-  orig: 400, 400
-  offset: 0, 0
-  index: -1
-img/pulse1/pulse1_00004
-  rotate: false
-  xy: 958, 1141
-  size: 400, 400
-  orig: 400, 400
-  offset: 0, 0
-  index: -1
-img/pulse1/pulse1_00006
-  rotate: false
-  xy: 1358, 1168
-  size: 400, 400
-  orig: 400, 400
-  offset: 0, 0
-  index: -1
-img/pulse1/pulse1_00008
-  rotate: false
-  xy: 1122, 400
-  size: 400, 400
-  orig: 400, 400
-  offset: 0, 0
-  index: -1
-img/pulse1/pulse1_00010
-  rotate: false
-  xy: 1122, 0
-  size: 400, 400
-  orig: 400, 400
-  offset: 0, 0
-  index: -1
-img/pulse1/pulse1_00012
-  rotate: false
-  xy: 1522, 768
-  size: 400, 400
-  orig: 400, 400
-  offset: 0, 0
-  index: -1
-img/pulse1/pulse_2_a
-  rotate: false
-  xy: 0, 1082
-  size: 455, 419
-  orig: 455, 419
-  offset: 0, 0
-  index: -1
-img/pulse1/pulse_2_b
-  rotate: false
-  xy: 0, 1501
-  size: 475, 516
-  orig: 475, 516
-  offset: 0, 0
-  index: -1
-img/pulse1/pulse_2_c
-  rotate: false
-  xy: 475, 1510
-  size: 483, 507
-  orig: 483, 507
-  offset: 0, 0
-  index: -1
-img/spot
-  rotate: false
-  xy: 0, 177
-  size: 50, 50
-  orig: 50, 50
-  offset: 0, 0
+  xy: 62, 380
+  size: 36, 36
+  orig: 37, 36
+  offset: 1, 0
   index: -1

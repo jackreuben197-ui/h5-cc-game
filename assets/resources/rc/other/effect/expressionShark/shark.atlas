@@ -1,153 +1,124 @@
-
 shark.png
-size: 1024,1024
+size: 2048,2048
 format: RGBA8888
 filter: Linear,Linear
 repeat: none
-img/fish_body
-  rotate: false
-  xy: 560, 378
-  size: 160, 104
-  orig: 160, 104
-  offset: 0, 0
-  index: -1
-img/fish_eye_black
-  rotate: false
-  xy: 889, 813
-  size: 10, 12
-  orig: 10, 12
-  offset: 0, 0
-  index: -1
-img/fish_eye_white
-  rotate: false
-  xy: 352, 402
-  size: 15, 16
-  orig: 15, 16
-  offset: 0, 0
-  index: -1
-img/fish_mouth_sad
+images/Shark 2
   rotate: true
-  xy: 1010, 1007
-  size: 16, 9
-  orig: 16, 9
-  offset: 0, 0
+  xy: 289, 1548
+  size: 275, 282
+  orig: 417, 416
+  offset: 128, 2
   index: -1
-img/fish_mouth_smile
+images/blood 10
   rotate: false
-  xy: 627, 812
-  size: 20, 13
-  orig: 20, 13
+  xy: 605, 1819
+  size: 154, 109
+  orig: 155, 109
   offset: 0, 0
   index: -1
-img/shark_arm
-  rotate: true
-  xy: 269, 195
-  size: 223, 83
-  orig: 223, 83
-  offset: 0, 0
-  index: -1
-img/shark_back
+images/blood 11
   rotate: false
-  xy: 269, 36
-  size: 85, 159
-  orig: 85, 159
+  xy: 287, 1853
+  size: 99, 75
+  orig: 100, 75
   offset: 0, 0
   index: -1
-img/shark_black_1
+images/blood 5
   rotate: false
-  xy: 0, 806
-  size: 627, 217
-  orig: 627, 217
+  xy: 761, 1818
+  size: 155, 110
+  orig: 155, 110
   offset: 0, 0
   index: -1
-img/shark_black_2
+images/blood 6
   rotate: true
-  xy: 370, 373
-  size: 433, 190
-  orig: 433, 190
+  xy: 490, 1825
+  size: 103, 113
+  orig: 103, 113
   offset: 0, 0
   index: -1
-img/shark_body
+images/blood 12
+  rotate: true
+  xy: 490, 1825
+  size: 103, 113
+  orig: 103, 113
+  offset: 0, 0
+  index: -1
+images/blood 7
   rotate: false
-  xy: 0, 418
-  size: 370, 388
-  orig: 370, 388
+  xy: 388, 1852
+  size: 100, 76
+  orig: 100, 76
   offset: 0, 0
   index: -1
-img/shark_eyeball_black_l
+images/blood 8
+  rotate: true
+  xy: 1214, 1772
+  size: 156, 213
+  orig: 156, 213
+  offset: 0, 0
+  index: -1
+images/blood 9
+  rotate: true
+  xy: 1429, 1772
+  size: 156, 213
+  orig: 156, 213
+  offset: 0, 0
+  index: -1
+images/close tooth
   rotate: false
-  xy: 720, 443
-  size: 22, 39
-  orig: 22, 39
-  offset: 0, 0
+  xy: 2, 1857
+  size: 283, 71
+  orig: 286, 75
+  offset: 3, 2
   index: -1
-img/shark_eyeball_l
+images/eye glow
+  rotate: true
+  xy: 573, 1525
+  size: 291, 315
+  orig: 339, 318
+  offset: 29, 1
+  index: -1
+images/open tooth
   rotate: false
-  xy: 849, 725
-  size: 40, 100
-  orig: 40, 100
-  offset: 0, 0
+  xy: 918, 1786
+  size: 294, 142
+  orig: 294, 148
+  offset: 0, 2
   index: -1
-img/shark_eyelid_l
+images/shadow
   rotate: true
-  xy: 269, 5
-  size: 31, 79
-  orig: 31, 79
+  xy: 2, 1105
+  size: 418, 858
+  orig: 418, 858
   offset: 0, 0
   index: -1
-img/shark_mouth_corner_l
+images/shark 3
+  rotate: true
+  xy: 890, 1424
+  size: 346, 351
+  orig: 416, 416
+  offset: 66, 0
+  index: -1
+images/shark full
+  rotate: true
+  xy: 1243, 1207
+  size: 511, 520
+  orig: 511, 520
+  offset: 0, 0
+  index: -1
+images/tiny fish 2
   rotate: false
-  xy: 712, 482
-  size: 58, 28
-  orig: 58, 28
-  offset: 0, 0
+  xy: 1644, 1720
+  size: 284, 208
+  orig: 325, 331
+  offset: 17, 49
   index: -1
-img/shark_mouth_corner_r
-  rotate: true
-  xy: 849, 668
-  size: 57, 28
-  orig: 57, 28
-  offset: 0, 0
-  index: -1
-img/shark_mouth_in
+images/tiny fish smile
   rotate: false
-  xy: 770, 500
-  size: 10, 10
-  orig: 10, 10
-  offset: 0, 0
-  index: -1
-img/shark_mouth_white
-  rotate: true
-  xy: 0, 0
-  size: 418, 269
-  orig: 418, 269
-  offset: 0, 0
-  index: -1
-img/shark_swim
-  rotate: true
-  xy: 906, 796
-  size: 227, 104
-  orig: 227, 104
-  offset: 0, 0
-  index: -1
-img/shark_tail
-  rotate: true
-  xy: 627, 825
-  size: 198, 279
-  orig: 198, 279
-  offset: 0, 0
-  index: -1
-img/shark_tooth_low
-  rotate: true
-  xy: 712, 510
-  size: 315, 137
-  orig: 315, 137
-  offset: 0, 0
-  index: -1
-img/shark_tooth_up
-  rotate: true
-  xy: 560, 482
-  size: 324, 152
-  orig: 324, 152
-  offset: 0, 0
+  xy: 2, 1642
+  size: 285, 209
+  orig: 326, 331
+  offset: 17, 48
   index: -1

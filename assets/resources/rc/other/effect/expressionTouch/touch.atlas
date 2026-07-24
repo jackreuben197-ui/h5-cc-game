@@ -1,34 +1,20 @@
 
 touch.png
-size: 256,32
+size: 512,512
 format: RGBA8888
 filter: Linear,Linear
 repeat: none
-touch_0
+images/hand-pat 1
   rotate: false
-  xy: 98, 7
-  size: 53, 25
-  orig: 53, 25
+  xy: 2, 136
+  size: 269, 137
+  orig: 269, 138
   offset: 0, 0
   index: -1
-touch_1
+images/hand-pat 2
   rotate: false
-  xy: 0, 0
-  size: 98, 32
-  orig: 98, 32
-  offset: 0, 0
-  index: -1
-touch_2
-  rotate: false
-  xy: 151, 2
-  size: 33, 30
-  orig: 33, 30
-  offset: 0, 0
-  index: -1
-touch_3
-  rotate: true
-  xy: 184, 0
-  size: 32, 33
-  orig: 32, 33
-  offset: 0, 0
+  xy: 2, 2
+  size: 265, 132
+  orig: 267, 140
+  offset: 1, 7
   index: -1
