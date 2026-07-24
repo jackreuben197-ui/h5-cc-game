@@ -80,6 +80,8 @@ export interface TexasReportSquidRoundSnapshot {
     records: TexasReportSquidRecord[];
 }
 
+export type TexasReportRoundMode = 'mush' | 'squid';
+
 export type TexasReportObserver = Roomer.AsObject;
 
 export interface TexasReportSummary {
@@ -125,6 +127,8 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
     /** 鱿鱼/蘑菇 按 round 缓存的分页数据。 */
     @observable(TexasGameRoomDataReport.SQUID_ROUND_CHANGE, { forceEmit: true })
     public squidRounds: Map<number, TexasReportSquidRoundSnapshot> = new Map();
+    /** 当前分页缓存来自哪个玩法，防止蘑菇和鱿鱼共用 Map 时串数据。 */
+    public squidRoundMode: TexasReportRoundMode | null = null;
     /** 标记 Roomers 是否已经从服务端拉过一次。面板根据它决定是否要等首屏数据。 */
     public roomersFetched: boolean = false;
     // 空数组也算拉取成功，记下来后重新打开就不会一直重复请求。
@@ -190,9 +194,18 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
         this.insuranceRecords = (records || []).slice();
     }
 
+    public prepareSquidRoundMode(mode: TexasReportRoundMode): boolean {
+        if (this.squidRoundMode === mode) return false;
+        this.squidRoundMode = mode;
+        // 玩法换了就把旧页丢掉，不能拿蘑菇回包冒充鱿鱼。
+        this.squidRounds = new Map();
+        return true;
+    }
+
     /** 用 HTTP 鱿鱼/蘑菇分页结果写入指定 round 缓存。 */
-    public setSquidRound(round: number, snapshot: TexasReportSquidRoundSnapshot): void {
-        const next = new Map(this.squidRounds);
+    public setSquidRound(mode: TexasReportRoundMode, round: number, snapshot: TexasReportSquidRoundSnapshot): void {
+        const next = this.squidRoundMode === mode ? new Map(this.squidRounds) : new Map<number, TexasReportSquidRoundSnapshot>();
+        this.squidRoundMode = mode;
         next.set(round, snapshot);
         this.squidRounds = next;
     }
@@ -353,6 +366,7 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
         this.jackpotRecords = [];
         this.insuranceRecords = [];
         this.squidRounds = new Map();
+        this.squidRoundMode = null;
         this.roomersFetched = false;
         this.jackpotFetched = false;
         this.insuranceFetched = false;
