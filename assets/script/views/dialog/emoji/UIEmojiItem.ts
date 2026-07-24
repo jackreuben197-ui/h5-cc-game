@@ -26,6 +26,52 @@ export default class UIEmojiItem extends UIComponentBase<UIEmojiItemParam> {
     private _animation = '';
     private _onClick: () => void = null;
 
+    /** 静态图版本（图鉴表情 em16-65 的选择器用静态 png，动画在座位上播放） */
+    public initializeStatic(param: { spriteFrame: cc.SpriteFrame; showDiamond: boolean; diamond?: number; onClick: () => void }): void {
+        this._onClick = param.onClick;
+        if (this.emojiSkeleton) {
+            try { this.emojiSkeleton.clearTracks(); } catch (e) {}
+            this.emojiSkeleton.enabled = false;
+            const host = this.emojiSkeleton.node;
+            let iconNode = host.parent.getChildByName('StaticEmoji');
+            if (!iconNode) {
+                iconNode = new cc.Node('StaticEmoji');
+                iconNode.parent = host.parent;
+                iconNode.setPosition(host.getPosition());
+                iconNode.addComponent(cc.Sprite);
+            }
+            const sprite = iconNode.getComponent(cc.Sprite);
+            sprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
+            sprite.spriteFrame = param.spriteFrame;
+            const orig = param.spriteFrame.getOriginalSize();
+            const scale = UIEmojiItem.PREVIEW_MAX_SIZE / Math.max(orig.width, orig.height);
+            iconNode.setContentSize(orig.width * scale, orig.height * scale);
+        }
+        this.diamondNode.active = param.showDiamond;
+        this.numDiamondNode.active = param.showDiamond;
+        this.selectSignNode.active = false;
+        // 钻石图标改用 pokerqueen 蓝钻(emoji/diamond)。选择器走的是本静态版本，
+        // 之前只在 initialize() 里换钻石，导致面板仍显示旧紫钻。此处补上。
+        if (param.showDiamond) this._applyBlueDiamond();
+        const diamondLabel = this.numDiamondNode.getComponent(cc.Label);
+        if (diamondLabel && param.diamond != null) diamondLabel.string = `${param.diamond}`;
+    }
+
+    /** 把钻石图标换成 pokerqueen 蓝钻。图标可能挂在 diamondNode 的子节点上。 */
+    private _applyBlueDiamond(): void {
+        const diamondSprite = this.diamondNode.getComponent(cc.Sprite) || this.diamondNode.getComponentInChildren(cc.Sprite);
+        if (!diamondSprite) {
+            cc.warn('[UIEmojiItem] diamond sprite not found on diamondNode');
+            return;
+        }
+        cc.resources.load('emoji/diamond', cc.SpriteFrame, (err, sf: cc.SpriteFrame) => {
+            if (!err && sf && cc.isValid(diamondSprite.node)) {
+                diamondSprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
+                diamondSprite.spriteFrame = sf;
+            }
+        });
+    }
+
     public initialize(param: UIEmojiItemParam): void {
         this._animation = param.animation;
         this._onClick = param.onClick;
@@ -36,6 +82,7 @@ export default class UIEmojiItem extends UIComponentBase<UIEmojiItemParam> {
         this.diamondNode.active = param.showDiamond;
         this.numDiamondNode.active = param.showDiamond;
         this.selectSignNode.active = false;
+        if (param.showDiamond) this._applyBlueDiamond();
         const diamondLabel = this.numDiamondNode.getComponent(cc.Label);
         if (diamondLabel && param.diamond != null) diamondLabel.string = `${param.diamond}`;
     }

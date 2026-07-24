@@ -158,6 +158,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this._refreshOpButtons();
         this._switchTab(0);
         this._loadAsyncData();
+        this._playOpenAnimation();
     }
 
     protected onLoad(): void {
@@ -861,6 +862,17 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             sprite.spriteFrame = anySprite._playerInfoOrigFrame;
             anySprite._playerInfoOrigFrame = null;
         }
+    }
+
+    /** 弹窗开场动画：对齐 pokerqueen（scale 从 0.7 弹入，easeBackOut 0.3s）。只作用于弹窗主体，不影响整体屏幕适配缩放。 */
+    private _playOpenAnimation(): void {
+        const body = this.dialogNode;
+        if (!body || !body.isValid) return;
+        body.stopAllActions();
+        body.setScale(0.7, 0.7);
+        cc.tween(body)
+            .to(0.3, { scale: 1 }, { easing: 'backOut' })
+            .start();
     }
 
     private _playClickScale(node: cc.Node, closeAfter: boolean): void {

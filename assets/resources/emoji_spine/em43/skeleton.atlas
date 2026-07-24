@@ -1,0 +1,34 @@
+
+skeleton.png
+size: 2890,733
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+images/shinchan-cycle 1
+  rotate: false
+  xy: 724, 2
+  size: 720, 729
+  orig: 720, 729
+  offset: 0, 0
+  index: -1
+images/shinchan-cycle 2
+  rotate: false
+  xy: 1446, 2
+  size: 720, 729
+  orig: 720, 729
+  offset: 0, 0
+  index: -1
+images/shinchan-cycle 3
+  rotate: false
+  xy: 2168, 2
+  size: 720, 729
+  orig: 720, 729
+  offset: 0, 0
+  index: -1
+images/shinchan-cycle 3-1
+  rotate: false
+  xy: 2, 2
+  size: 720, 729
+  orig: 720, 729
+  offset: 0, 0
+  index: -1

@@ -2,14 +2,10 @@ import type { ClientMessageBroadcastMsg } from '@silenthill/agreement-web';
 import { Code, Def } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
-import userStore, { UserPropData, UserStore } from '../../../data/user/UserStore';
-import UserStoreUtils from '../../../data/user/UserStoreUtils';
-import { BroadcastCode } from '../../../game/constant/BroadcastCode';
-import { GameplayChatPropType } from '../../../game/constant/GameplayChatPropType';
-import MagicEmojiConfig, { MagicEmojiDefinition } from '../../../game/constant/MagicEmojiConfig';
+import userStore from '../../../data/user/UserStore';
+import { BroadcastCode, pickerEmojiTypeFromIndex } from '../../../game/constant/BroadcastCode';
 import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
-import AssetManager, { BUNDLE_RESOURCES } from '../../loader/AssetManager';
 import UIEmojiItem from './UIEmojiItem';
 
 const { ccclass, menu, property } = cc._decorator;
@@ -19,6 +15,12 @@ export interface UIEmojiDlgParam {
     matchID: number;
 }
 
+/**
+ * 表情面板（与 pokerqueen 对齐）：底部 5 个分类标签，每类 10 个表情（em16-65）。
+ * 选择器用静态 png，点击后广播 type = 500 + (序号-1)，动画+语音在座位头像上播放。
+ * 素材：图标 emoji/em16-65、标签 emoji/emtab1-5、下划线 emoji/emunderline，
+ *      动画 emoji_spine/em{idx}/skeleton，语音 emoji_audio/em{idx}。
+ */
 @ccclass
 @menu('CrazyPoker/Texas/Dialog/UIEmojiDlg')
 export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
@@ -32,18 +34,38 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
     private viewport: cc.Node = null;
     @property({ type: cc.Prefab, displayName: '表情条目预制体' })
     private itemPrefab: cc.Prefab = null;
+
+    // ===== 分类配置：标签顺序 Mushroom → Shinchan → Teddy → Frog → Dog =====
+    private static readonly CATEGORIES: { name: string; icon: string; indices: number[] }[] = [
+        { name: 'MushroomHead', icon: 'emtab2', indices: [26, 27, 28, 29, 30, 31, 32, 33, 34, 35] },
+        { name: 'Shinchan', icon: 'emtab3', indices: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45] },
+        { name: 'Teddy', icon: 'emtab1', indices: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25] },
+        { name: 'Frog', icon: 'emtab4', indices: [46, 47, 48, 49, 50, 51, 52, 53, 54, 55] },
+        { name: 'Dog', icon: 'emtab5', indices: [56, 57, 58, 59, 60, 61, 62, 63, 64, 65] }
+    ];
+    private static readonly EMOJI_COST = 10;
+    private static readonly TAB_Y = -255;
+    private static readonly TAB_ICON_SIZE = 96;
+    private static readonly TAB_UNDERLINE_Y = -60;
+    private static readonly GRID_PADDING_BOTTOM = 180;
+
     private _roomData: TexasGameRoomData = null;
     private _targetY = 0;
     private _startY = 0;
-    private _loadVersion = 0;
     private _viewportVerticalInset = 0;
+    private _tabBar: cc.Node = null;
+    private _tabUnderline: cc.Node = null;
+    private _curCategory = 0;
+    private _loadVersion = 0;
 
     public initialize(param: UIEmojiDlgParam): void {
         this._roomData = roomDataManager.getRoomData<TexasGameRoomData>(param.roomID, param.matchID);
         this._applyLayout();
-        userStore.targetOff(this);
-        userStore.on(UserStore.PROP_LIST_CHANGE, this._loadEmojiItems, this);
-        this._loadEmojiItems();
+        const layout = this.scrollContent.getComponent(cc.Layout);
+        if (layout) layout.paddingBottom = UIEmojiDlg.GRID_PADDING_BOTTOM;
+        this._updatePanelHeight(UIEmojiDlg.CATEGORIES[0].indices.length);
+        this._buildCategoryTabs();
+        this._selectCategory(0);
         this._playShowAnimation();
     }
 
@@ -60,7 +82,6 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
         this.node.targetOff(this);
         this.panelClick.targetOff(this);
         this.contentView.targetOff(this);
-        userStore.targetOff(this);
         this.unscheduleAllCallbacks();
     }
 
@@ -78,34 +99,95 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
         cc.tween(this.contentView).to(0.4, { y: this._targetY, opacity: 255 }, { easing: 'sineOut' }).start();
     }
 
-    private async _loadEmojiItems(): Promise<void> {
+    // ===== 底部分类标签栏 =====
+    private _buildCategoryTabs(): void {
+        if (this._tabBar || !this.contentView) return;
+        const cats = UIEmojiDlg.CATEGORIES;
+        const bar = new cc.Node('CategoryTabs');
+        bar.setParent(this.contentView);
+        bar.setPosition(0, UIEmojiDlg.TAB_Y);
+        this._tabBar = bar;
+        const size = UIEmojiDlg.TAB_ICON_SIZE;
+        const totalW = 900;
+        const step = totalW / cats.length;
+        cats.forEach((cat, i) => {
+            const tab = new cc.Node('tab' + i);
+            tab.setParent(bar);
+            tab.setPosition(-totalW / 2 + step * (i + 0.5), 0);
+            tab.setContentSize(size, size);
+            const sp = tab.addComponent(cc.Sprite);
+            sp.sizeMode = cc.Sprite.SizeMode.CUSTOM;
+            cc.resources.load(`emoji/${cat.icon}`, cc.SpriteFrame, (err, sf: cc.SpriteFrame) => {
+                if (!err && sf && cc.isValid(tab)) {
+                    sp.spriteFrame = sf;
+                    tab.setContentSize(size, size);
+                }
+            });
+            tab.on(
+                cc.Node.EventType.TOUCH_END,
+                (e: cc.Event.EventTouch) => {
+                    e.stopPropagation();
+                    this._selectCategory(i);
+                },
+                this
+            );
+        });
+        const underline = new cc.Node('underline');
+        underline.setParent(bar);
+        underline.setContentSize(74, 6);
+        underline.y = UIEmojiDlg.TAB_UNDERLINE_Y;
+        const usp = underline.addComponent(cc.Sprite);
+        usp.sizeMode = cc.Sprite.SizeMode.CUSTOM;
+        cc.resources.load('emoji/emunderline', cc.SpriteFrame, (err, sf: cc.SpriteFrame) => {
+            if (!err && sf && cc.isValid(underline)) {
+                usp.spriteFrame = sf;
+                underline.setContentSize(74, 6);
+            }
+        });
+        this._tabUnderline = underline;
+    }
+
+    private _selectCategory(index: number): void {
+        if (!this._tabBar || !this.scrollContent) return;
+        this._curCategory = index;
+        this._tabBar.children.forEach(tab => {
+            const idx = parseInt(tab.name.replace('tab', ''));
+            if (isNaN(idx)) return;
+            const selected = idx === index;
+            tab.scale = selected ? 1.3 : 1.05;
+            tab.opacity = selected ? 255 : 210;
+            if (selected && this._tabUnderline) this._tabUnderline.x = tab.x;
+        });
         const version = ++this._loadVersion;
         this.scrollContent.removeAllChildren();
-        const items = userStore
-            .getPropListByType(GameplayChatPropType.CHAT_PROP)
-            .map(data => ({ data, config: MagicEmojiConfig.getByPropCode(data.propCode) }))
-            .filter(item => !!item.config);
-        this._updatePanelHeight(items.length);
-        try {
-            const skeletonPaths = items.map(item => item.config.spine).filter((path, index, list) => list.indexOf(path) === index);
-            const loadedSkeletonData = await Promise.all(skeletonPaths.map(path => AssetManager.getOrLoad(BUNDLE_RESOURCES, path, sp.SkeletonData)));
-            if (!cc.isValid(this.node) || !this.node.activeInHierarchy || this._loadVersion !== version) return;
-            items.forEach(itemData => {
-                const itemNode = cc.instantiate(this.itemPrefab);
-                itemNode.parent = this.scrollContent;
-                const item = itemNode.getComponent(UIEmojiItem);
-                const isFree = userStore.isPropFree(itemData.data);
-                item.initialize({
-                    skeletonData: loadedSkeletonData[skeletonPaths.indexOf(itemData.config.spine)],
-                    animation: itemData.config.animation,
-                    showDiamond: !isFree,
-                    diamond: itemData.data.payPrice,
-                    onClick: () => this.onEmojiClicked(itemData.data, itemData.config)
+        const cats = UIEmojiDlg.CATEGORIES;
+        const indices = cats[index] ? cats[index].indices : [];
+        for (const i of indices) this._loadAndAddEmoji(i, version);
+    }
+
+    private _loadAndAddEmoji(index: number, version: number): void {
+        cc.resources.load(`emoji/em${index}`, cc.SpriteFrame, (err, spriteFrame: cc.SpriteFrame) => {
+            if (err || !spriteFrame) return;
+            if (!cc.isValid(this.node) || this._loadVersion !== version) return;
+            const itemNode = cc.instantiate(this.itemPrefab);
+            itemNode.parent = this.scrollContent;
+            // 异步加载完成顺序不定，按序号插入正确位置，保证网格顺序
+            (itemNode as any).emojiIndex = index;
+            let siblingIdx = 0;
+            for (const child of this.scrollContent.children) {
+                if (child !== itemNode && ((child as any).emojiIndex || 0) < index) siblingIdx++;
+            }
+            itemNode.setSiblingIndex(siblingIdx);
+            const item = itemNode.getComponent(UIEmojiItem);
+            if (item) {
+                item.initializeStatic({
+                    spriteFrame,
+                    showDiamond: true,
+                    diamond: UIEmojiDlg.EMOJI_COST,
+                    onClick: () => this._onEmojiClicked(index)
                 });
-            });
-        } catch (error) {
-            cc.warn('[UIEmojiDlg] load emoji failed', error);
-        }
+            }
+        });
     }
 
     private _updatePanelHeight(itemCount: number): void {
@@ -122,20 +204,17 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
         this._targetY = this.contentView.y;
     }
 
-    private onEmojiClicked = (propData: UserPropData, config: MagicEmojiDefinition): void => {
-        this._sendEmojiBroadcast(propData, config);
+    private _onEmojiClicked(index: number): void {
+        this._sendEmojiBroadcast(pickerEmojiTypeFromIndex(index));
         this.scheduleOnce(() => this.close(), 0.26);
-    };
+    }
 
-    private _sendEmojiBroadcast(propData: UserPropData, config: MagicEmojiDefinition): void {
-        this._roomData.seatsStateManager.setPendingEmoji({
-            type: config.type,
-            userID: userStore.userRID
-        });
+    private _sendEmojiBroadcast(type: number): void {
+        this._roomData.seatsStateManager.setPendingEmoji({ type, userID: userStore.userRID });
         const msgType = Def.BroadcastMsgType.BC_MSG_EMOJI;
         const inner = JSON.stringify({
             name: userStore.name,
-            type: config.type,
+            type,
             user_id: userStore.userRID,
             target_user_id: 0,
             message: '',
@@ -149,7 +228,7 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
                 roomId: this._roomData.roomID,
                 matchId: this._roomData.matchID
             },
-            consume: userStore.isPropFree(propData) ? Def.ConsumeType.CT_NONE : (propData.priceID as Def.ConsumeTypeMap[keyof Def.ConsumeTypeMap]),
+            consume: Def.ConsumeType.CT_NONE,
             message: '',
             extra: this._stringToBytes(JSON.stringify({ code: BroadcastCode.BroadcastMsg, data: inner })),
             msgType
@@ -160,9 +239,6 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
             matchID: this._roomData.matchID,
             body
         });
-        if (propData.propAmount > 0) {
-            UserStoreUtils.consumeUserProp(propData.gamePropID).catch(error => cc.warn('[UIEmojiDlg] consume user prop failed', error));
-        }
     }
 
     private _bindTouchEnd(node: cc.Node, handler: () => void): void {

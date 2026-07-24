@@ -1,0 +1,153 @@
+
+skeleton.png
+size: 3762,754
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+images/shinchan doubt 1
+  rotate: false
+  xy: 2, 2
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 10
+  rotate: false
+  xy: 1506, 2
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 11
+  rotate: false
+  xy: 1882, 378
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 12
+  rotate: false
+  xy: 1882, 2
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 13
+  rotate: false
+  xy: 2258, 378
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 14
+  rotate: false
+  xy: 2258, 2
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 15
+  rotate: false
+  xy: 2634, 378
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 16
+  rotate: false
+  xy: 2634, 2
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 17
+  rotate: false
+  xy: 3010, 378
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 18
+  rotate: false
+  xy: 3010, 2
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 19
+  rotate: false
+  xy: 3386, 378
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 2
+  rotate: false
+  xy: 378, 378
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 20
+  rotate: false
+  xy: 3386, 2
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 21
+  rotate: false
+  xy: 3386, 2
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 3
+  rotate: false
+  xy: 378, 2
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 4
+  rotate: false
+  xy: 754, 378
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 5
+  rotate: false
+  xy: 754, 2
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 6
+  rotate: false
+  xy: 1130, 378
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 7
+  rotate: false
+  xy: 1130, 2
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 8
+  rotate: false
+  xy: 1506, 378
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1
+images/shinchan doubt 9
+  rotate: false
+  xy: 2, 378
+  size: 374, 374
+  orig: 375, 375
+  offset: 0, 1
+  index: -1

@@ -1,0 +1,41 @@
+
+skeleton.png
+size: 3604,720
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+images/shinchan-frog 1
+  rotate: false
+  xy: 723, 2
+  size: 719, 716
+  orig: 719, 716
+  offset: 0, 0
+  index: -1
+images/shinchan-frog 2
+  rotate: false
+  xy: 1444, 2
+  size: 719, 716
+  orig: 719, 716
+  offset: 0, 0
+  index: -1
+images/shinchan-frog 3
+  rotate: false
+  xy: 2886, 2
+  size: 716, 716
+  orig: 719, 716
+  offset: 3, 0
+  index: -1
+images/shinchan-frog 4
+  rotate: false
+  xy: 2165, 2
+  size: 719, 716
+  orig: 719, 716
+  offset: 0, 0
+  index: -1
+images/shinchan-frog 5
+  rotate: false
+  xy: 2, 2
+  size: 719, 716
+  orig: 719, 716
+  offset: 0, 0
+  index: -1

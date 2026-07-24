@@ -1,0 +1,90 @@
+
+skeleton.png
+size: 2435,641
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+images/teddy 1
+  rotate: true
+  xy: 2023, 2
+  size: 334, 410
+  orig: 490, 621
+  offset: 78, 105
+  index: -1
+images/teddy 10
+  rotate: true
+  xy: 2, 345
+  size: 294, 402
+  orig: 490, 621
+  offset: 98, 109
+  index: -1
+images/teddy 11
+  rotate: true
+  xy: 1190, 342
+  size: 297, 407
+  orig: 490, 621
+  offset: 97, 107
+  index: -1
+images/teddy 12
+  rotate: true
+  xy: 1192, 10
+  size: 326, 414
+  orig: 490, 621
+  offset: 82, 103
+  index: -1
+images/teddy 2
+  rotate: true
+  xy: 2, 40
+  size: 303, 381
+  orig: 490, 621
+  offset: 93, 120
+  index: -1
+images/teddy 3
+  rotate: true
+  xy: 1599, 338
+  size: 301, 379
+  orig: 490, 621
+  offset: 95, 121
+  index: -1
+images/teddy 4
+  rotate: true
+  xy: 788, 342
+  size: 297, 400
+  orig: 490, 621
+  offset: 96, 110
+  index: -1
+images/teddy 5
+  rotate: true
+  xy: 1980, 338
+  size: 301, 406
+  orig: 490, 621
+  offset: 94, 108
+  index: -1
+images/teddy 6
+  rotate: true
+  xy: 770, 16
+  size: 324, 420
+  orig: 490, 621
+  offset: 83, 101
+  index: -1
+images/teddy 7
+  rotate: true
+  xy: 1608, 4
+  size: 332, 413
+  orig: 490, 621
+  offset: 79, 103
+  index: -1
+images/teddy 8
+  rotate: true
+  xy: 385, 37
+  size: 305, 383
+  orig: 490, 621
+  offset: 93, 117
+  index: -1
+images/teddy 9
+  rotate: true
+  xy: 406, 344
+  size: 295, 380
+  orig: 490, 621
+  offset: 98, 120
+  index: -1

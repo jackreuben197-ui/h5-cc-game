@@ -1,0 +1,62 @@
+
+skeleton.png
+size: 3978,752
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+images/mush-dnce 1
+  rotate: false
+  xy: 3028, 26
+  size: 477, 724
+  orig: 852, 1116
+  offset: 187, 195
+  index: -1
+images/mush-dnce 2
+  rotate: false
+  xy: 1090, 30
+  size: 502, 720
+  orig: 852, 1116
+  offset: 187, 194
+  index: -1
+images/mush-dnce 3
+  rotate: false
+  xy: 3507, 20
+  size: 469, 730
+  orig: 852, 1116
+  offset: 211, 189
+  index: -1
+images/mush-dnce 4
+  rotate: false
+  xy: 2081, 2
+  size: 475, 748
+  orig: 852, 1116
+  offset: 236, 187
+  index: -1
+images/mush-dnce 5
+  rotate: false
+  xy: 2558, 6
+  size: 468, 744
+  orig: 852, 1116
+  offset: 243, 190
+  index: -1
+images/mush-dnce 6
+  rotate: false
+  xy: 2, 11
+  size: 565, 739
+  orig: 852, 1116
+  offset: 221, 186
+  index: -1
+images/mush-dnce 7
+  rotate: false
+  xy: 569, 6
+  size: 519, 744
+  orig: 852, 1116
+  offset: 235, 191
+  index: -1
+images/mush-dnce 8
+  rotate: false
+  xy: 1594, 9
+  size: 485, 741
+  orig: 852, 1116
+  offset: 211, 194
+  index: -1

@@ -2435,7 +2435,7 @@
     "node": {
       "__id__": 57
     },
-    "_enabled": true,
+    "_enabled": false,
     "_materials": [
       {
         "__uuid__": "eca5d2f2-8ef6-41c2-bbe6-f9c79d09c432"
@@ -6560,7 +6560,7 @@
     "node": {
       "__id__": 171
     },
-    "_enabled": true,
+    "_enabled": false,
     "_materials": [
       {
         "__uuid__": "eca5d2f2-8ef6-41c2-bbe6-f9c79d09c432"

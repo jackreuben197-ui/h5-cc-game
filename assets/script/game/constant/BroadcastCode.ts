@@ -119,3 +119,19 @@ export function getMagicEmojiTypeBase(): number {
 export function getThrowPropTypeBase(): number {
     return PropsID.PROPSTOMATO;
 }
+
+// ===== 图鉴表情（分类选择器 em16-65，与 pokerqueen 对齐）=====
+// 广播 type = 免费表情基数(500) + (表情序号 - 1)。em16 → 515, em65 → 564。
+export const PICKER_EMOJI_MIN_INDEX = 16;
+export const PICKER_EMOJI_MAX_INDEX = 65;
+
+/** 表情序号(16-65) → 广播 type */
+export function pickerEmojiTypeFromIndex(index: number): number {
+    return PropsID.FREEAUDIENCE + (index - 1);
+}
+
+/** 广播 type → 表情序号；不在 em16-65 区间时返回 -1 */
+export function pickerEmojiIndexFromType(type: number): number {
+    const index = type - PropsID.FREEAUDIENCE + 1;
+    return index >= PICKER_EMOJI_MIN_INDEX && index <= PICKER_EMOJI_MAX_INDEX ? index : -1;
+}

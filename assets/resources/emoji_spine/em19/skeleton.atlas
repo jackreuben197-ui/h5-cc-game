@@ -1,0 +1,34 @@
+
+skeleton.png
+size: 1301,716
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+images/naruto 1
+  rotate: false
+  xy: 2, 368
+  size: 646, 346
+  orig: 702, 458
+  offset: 27, 56
+  index: -1
+images/naruto 2
+  rotate: false
+  xy: 649, 2
+  size: 645, 362
+  orig: 702, 458
+  offset: 27, 40
+  index: -1
+images/naruto 3
+  rotate: false
+  xy: 650, 366
+  size: 649, 348
+  orig: 702, 458
+  offset: 26, 53
+  index: -1
+images/naruto 4
+  rotate: false
+  xy: 2, 4
+  size: 645, 362
+  orig: 702, 458
+  offset: 29, 40
+  index: -1

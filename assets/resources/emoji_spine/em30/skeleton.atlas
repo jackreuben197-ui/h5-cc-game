@@ -1,0 +1,69 @@
+
+skeleton.png
+size: 2045,2039
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+images/mush-glass 1
+  rotate: true
+  xy: 683, 1360
+  size: 677, 679
+  orig: 1040, 1000
+  offset: 181, 160
+  index: -1
+images/mush-glass 2
+  rotate: true
+  xy: 1364, 1360
+  size: 677, 679
+  orig: 1040, 1000
+  offset: 181, 160
+  index: -1
+images/mush-glass 3
+  rotate: true
+  xy: 2, 681
+  size: 677, 679
+  orig: 1040, 1000
+  offset: 181, 160
+  index: -1
+images/mush-glass 4
+  rotate: true
+  xy: 683, 681
+  size: 677, 679
+  orig: 1040, 1000
+  offset: 181, 160
+  index: -1
+images/mush-glass 5
+  rotate: true
+  xy: 1364, 681
+  size: 677, 679
+  orig: 1040, 1000
+  offset: 181, 158
+  index: -1
+images/mush-glass 6
+  rotate: true
+  xy: 2, 2
+  size: 677, 679
+  orig: 1040, 1000
+  offset: 181, 160
+  index: -1
+images/mush-glass 7
+  rotate: true
+  xy: 683, 2
+  size: 677, 679
+  orig: 1040, 1000
+  offset: 181, 160
+  index: -1
+images/mush-glass 8
+  rotate: true
+  xy: 1364, 2
+  size: 677, 679
+  orig: 1040, 1000
+  offset: 181, 160
+  index: -1
+images/mush-glass 9
+  rotate: true
+  xy: 2, 1360
+  size: 677, 679
+  orig: 1040, 1000
+  offset: 181, 158
+  index: -1

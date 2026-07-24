@@ -2,7 +2,7 @@ import { ServerMessageBroadcastMsg } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { EmojiBroadcastData, ThrowPropBroadcastData } from '../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
-import { BroadcastCode, PropsID, THROW_PROP_IDS, getMagicEmojiTypeBase } from '../../../game/constant/BroadcastCode';
+import { BroadcastCode, PropsID, THROW_PROP_IDS, getMagicEmojiTypeBase, pickerEmojiIndexFromType } from '../../../game/constant/BroadcastCode';
 
 // BroadcastMsg 1019
 export function BroadcastMsg(data: ServerMessageBroadcastMsg.AsObject, roomID: number, matchID: number) {
@@ -27,7 +27,8 @@ export function handleBroadcastExtra(extra: Uint8Array | string, roomID: number,
         roomData.seatsStateManager.throwPropEvent(propData);
         return;
     }
-    if (innerData.type >= getMagicEmojiTypeBase()) {
+    // 图鉴表情(em16-65, type 515-564)或魔法表情(>=700) 都走表情动画
+    if (pickerEmojiIndexFromType(innerData.type) >= 0 || innerData.type >= getMagicEmojiTypeBase()) {
         const emojiData: EmojiBroadcastData = {
             type: innerData.type,
             userID: innerData.userID

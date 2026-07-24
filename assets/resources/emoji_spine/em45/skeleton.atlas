@@ -1,0 +1,13 @@
+
+skeleton.png
+size: 611,606
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+images/with-pet
+  rotate: false
+  xy: 2, 2
+  size: 607, 602
+  orig: 607, 602
+  offset: 0, 0
+  index: -1

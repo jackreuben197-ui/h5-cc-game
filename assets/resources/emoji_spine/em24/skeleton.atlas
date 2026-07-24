@@ -1,0 +1,34 @@
+
+skeleton.png
+size: 1556,438
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+images/smile-star-1
+  rotate: false
+  xy: 2, 8
+  size: 407, 428
+  orig: 463, 510
+  offset: 27, 28
+  index: -1
+images/smile-star-2
+  rotate: false
+  xy: 1182, 3
+  size: 372, 433
+  orig: 463, 510
+  offset: 67, 25
+  index: -1
+images/smile-star-3
+  rotate: false
+  xy: 808, 2
+  size: 372, 434
+  orig: 463, 510
+  offset: 61, 24
+  index: -1
+images/smile-star-4
+  rotate: false
+  xy: 411, 2
+  size: 395, 434
+  orig: 463, 510
+  offset: 68, 28
+  index: -1

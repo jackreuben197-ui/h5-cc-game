@@ -1,0 +1,34 @@
+
+skeleton.png
+size: 1728,474
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+images/emoj-smile-1
+  rotate: false
+  xy: 616, 4
+  size: 594, 468
+  orig: 800, 689
+  offset: 126, 94
+  index: -1
+images/emoj-smile-3
+  rotate: false
+  xy: 1212, 2
+  size: 514, 470
+  orig: 800, 689
+  offset: 107, 94
+  index: -1
+images/emoj-smile-4
+  rotate: false
+  xy: 2, 4
+  size: 612, 468
+  orig: 800, 689
+  offset: 127, 95
+  index: -1
+images/emoj-smile-2
+  rotate: false
+  xy: 2, 4
+  size: 612, 468
+  orig: 800, 689
+  offset: 127, 95
+  index: -1

@@ -1,9 +1,19 @@
 import soundManager from '../../core/SoundManager';
 import { DiamondGiftBroadcastData, EmojiBroadcastData, ThrowPropBroadcastData } from '../../data/room/texas/TexasGameRoomDataSeatsStateManager';
 import userStore from '../../data/user/UserStore';
-import { PropsID } from '../../game/constant/BroadcastCode';
+import { PropsID, pickerEmojiIndexFromType } from '../../game/constant/BroadcastCode';
 import MagicEmojiConfig from '../../game/constant/MagicEmojiConfig';
 import AssetManager, { BUNDLE_RESOURCES } from '../loader/AssetManager';
+import { sampleLiveBounds, getAnimDuration } from './SpineBoundsUtil';
+
+/** 图鉴表情动画归一化目标尺寸(较大边像素) */
+const PICKER_EMOJI_TARGET_SIZE = 220;
+/** 测量包围盒前的临时缩放，避免首帧巨大 */
+const PICKER_EMOJI_TEMP_SCALE = 0.3;
+/** 图鉴表情循环播放的停留时长(秒)，之后淡出——保证短动画也稳定可见 */
+const PICKER_EMOJI_HOLD = 5.0;
+/** 图鉴表情语音加强层音量（满音量：主层+加强层都满，最大响度） */
+const PICKER_EMOJI_SOUND_BOOST = 1.0;
 
 type PropRole = 'sender' | 'receiver' | 'bystander';
 
@@ -305,6 +315,12 @@ class ThrowPropManager {
     }
 
     public async playEmoji(data: EmojiBroadcastData, senderData: ThrowPropSeatNodes): Promise<void> {
+        // 图鉴表情(em16-65)：从 emoji_spine / emoji_audio 加载并播放
+        const pickerIndex = pickerEmojiIndexFromType(data.type);
+        if (pickerIndex >= 0) {
+            await this._playPickerEmoji(pickerIndex, senderData);
+            return;
+        }
         const config = MagicEmojiConfig.getByType(data.type);
         if (!config || !senderData || !this._root || !cc.isValid(this._root)) return;
         const avatarNode = senderData.avatarNode;
@@ -334,6 +350,92 @@ class ThrowPropManager {
         emojiNode.setPosition(startPos);
         skeleton.setAnimation(0, config.animation, false);
         this._playSound(config.sound);
+    }
+
+    /** 播放图鉴表情(em16-65)：spine 动画放在发送者头像上，同时播放对应语音 */
+    private async _playPickerEmoji(index: number, senderData: ThrowPropSeatNodes): Promise<void> {
+        if (!senderData || !this._root || !cc.isValid(this._root)) return;
+        const avatarNode = senderData.avatarNode;
+        const emojiNode = senderData.emojiNode;
+        const token = (this._emojiPlayTokens.get(emojiNode) || 0) + 1;
+        this._emojiPlayTokens.set(emojiNode, token);
+        let skeletonData: sp.SkeletonData = null;
+        try {
+            skeletonData = await AssetManager.getOrLoad(BUNDLE_RESOURCES, `emoji_spine/em${index}/skeleton`, sp.SkeletonData);
+        } catch (error) {
+            cc.warn('[ThrowPropManager] load picker emoji spine failed', index, error);
+            return;
+        }
+        if (!this._isRootValid() || !cc.isValid(avatarNode) || !cc.isValid(emojiNode) || this._emojiPlayTokens.get(emojiNode) !== token) return;
+        // 运行时取第一个动画名（各表情动画名不统一，如 animation / walk 等）
+        let animName = 'animation';
+        try {
+            const rt: any = (skeletonData as any).getRuntimeData ? (skeletonData as any).getRuntimeData() : null;
+            if (rt && rt.animations && rt.animations.length) animName = rt.animations[0].name;
+        } catch (e) {}
+        const skeleton = emojiNode.getComponent(sp.Skeleton);
+        skeleton.setCompleteListener(() => {});
+        skeleton.skeletonData = skeletonData;
+        this._resetSkeleton(skeleton);
+        this._bringNodeToTop(emojiNode);
+        emojiNode.stopAllActions();
+        emojiNode.active = true;
+        emojiNode.opacity = 255;
+        // 头像上方作为居中锚点；先给个临时小缩放避免首帧巨大
+        const anchor = this._convertNodePosToNodeParent(emojiNode, avatarNode, cc.v3(0, avatarNode.height / 4, 0));
+        emojiNode.setScale(PICKER_EMOJI_TEMP_SCALE);
+        emojiNode.setPosition(anchor);
+        // 循环播放，固定时长后淡出（与 pokerqueen 一致：短动画也能稳定可见，不会一闪而过）
+        skeleton.setAnimation(0, animName, true);
+        // 各表情 spine 导出尺寸差异极大：延迟一帧量包围盒，归一化到目标尺寸并按包围盒居中
+        const dur = getAnimDuration(skeleton, animName);
+        skeleton.scheduleOnce(() => {
+            if (!cc.isValid(emojiNode) || this._emojiPlayTokens.get(emojiNode) !== token) return;
+            const b = sampleLiveBounds(skeleton, dur);
+            if (b.max > 0) {
+                const scale = PICKER_EMOJI_TARGET_SIZE / b.max;
+                emojiNode.setScale(scale);
+                emojiNode.setPosition(anchor.x - (b.offX + b.szX / 2) * scale, anchor.y - (b.offY + b.szY / 2) * scale);
+            } else {
+                // 量不到包围盒：改用骨骼导出尺寸归一化，保证可见（避免停在临时缩放上不显示）
+                let dmax = 0;
+                try {
+                    const rt: any = (skeletonData as any).getRuntimeData ? (skeletonData as any).getRuntimeData() : null;
+                    if (rt) dmax = Math.max(rt.width || 0, rt.height || 0);
+                } catch (e) {}
+                emojiNode.setScale(dmax > 0 ? PICKER_EMOJI_TARGET_SIZE / dmax : PICKER_EMOJI_TEMP_SCALE);
+                emojiNode.setPosition(anchor);
+            }
+        }, 0);
+        cc.tween(emojiNode)
+            .delay(PICKER_EMOJI_HOLD)
+            .to(0.5, { opacity: 0 }, { easing: 'sineIn' })
+            .call(() => {
+                if (this._emojiPlayTokens.get(emojiNode) !== token) return;
+                emojiNode.active = false;
+                emojiNode.opacity = 255;
+            })
+            .start();
+        this._playEmojiVoice(index);
+    }
+
+    /** 播放图鉴表情语音(emoji_audio/em{idx})：文件扩展名混合，按路径解析；无文件则静默。
+     *  录音音量偏小：主层满音量 + 叠加一层加强层，整体更响。 */
+    private _playEmojiVoice(index: number): void {
+        if (!soundManager.isOn) return;
+        AssetManager.getOrLoad(BUNDLE_RESOURCES, `emoji_audio/em${index}`, cc.AudioClip)
+            .then(clip => {
+                if (!clip || !soundManager.isOn) return;
+                const id1 = cc.audioEngine.playEffect(clip, false);
+                try {
+                    cc.audioEngine.setVolume(id1, 1.0);
+                } catch (e) {}
+                const id2 = cc.audioEngine.playEffect(clip, false);
+                try {
+                    cc.audioEngine.setVolume(id2, PICKER_EMOJI_SOUND_BOOST);
+                } catch (e) {}
+            })
+            .catch(() => {});
     }
 
     private _playTomato(task: ThrowPropTask): void {

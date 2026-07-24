@@ -1,0 +1,76 @@
+
+skeleton.png
+size: 1512,606
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+images/shiba_left-right 1
+  rotate: false
+  xy: 2, 2
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+images/shiba_left-right 10
+  rotate: false
+  xy: 1210, 2
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+images/shiba_left-right 2
+  rotate: false
+  xy: 304, 304
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+images/shiba_left-right 3
+  rotate: false
+  xy: 304, 2
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+images/shiba_left-right 4
+  rotate: false
+  xy: 606, 304
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+images/shiba_left-right 5
+  rotate: false
+  xy: 606, 2
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+images/shiba_left-right 6
+  rotate: false
+  xy: 908, 304
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+images/shiba_left-right 7
+  rotate: false
+  xy: 908, 2
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+images/shiba_left-right 8
+  rotate: false
+  xy: 1210, 304
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+images/shiba_left-right 9
+  rotate: false
+  xy: 2, 304
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1

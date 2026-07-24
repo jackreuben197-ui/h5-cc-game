@@ -1,0 +1,62 @@
+
+skeleton.png
+size: 1591,1095
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+images/bubble-walk 1
+  rotate: true
+  xy: 1074, 734
+  size: 359, 515
+  orig: 580, 671
+  offset: 110, 34
+  index: -1
+images/bubble-walk 2
+  rotate: true
+  xy: 482, 367
+  size: 362, 587
+  orig: 580, 671
+  offset: 109, 35
+  index: -1
+images/bubble-walk 3
+  rotate: true
+  xy: 379, 28
+  size: 337, 559
+  orig: 580, 671
+  offset: 122, 34
+  index: -1
+images/bubble-walk 4
+  rotate: true
+  xy: 940, 18
+  size: 347, 534
+  orig: 580, 671
+  offset: 116, 35
+  index: -1
+images/bubble-walk 5
+  rotate: true
+  xy: 1074, 371
+  size: 361, 507
+  orig: 580, 671
+  offset: 109, 34
+  index: -1
+images/bubble-walk 6
+  rotate: true
+  xy: 482, 731
+  size: 362, 590
+  orig: 580, 671
+  offset: 109, 34
+  index: -1
+images/bubble-walk 7
+  rotate: false
+  xy: 2, 538
+  size: 478, 555
+  orig: 580, 671
+  offset: 51, 34
+  index: -1
+images/bubble-walk 8
+  rotate: false
+  xy: 2, 2
+  size: 375, 534
+  orig: 580, 671
+  offset: 102, 34
+  index: -1

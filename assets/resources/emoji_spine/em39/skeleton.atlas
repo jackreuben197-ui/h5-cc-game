@@ -1,0 +1,125 @@
+
+skeleton.png
+size: 3614,1808
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+images/shinchan b 1
+  rotate: false
+  xy: 2, 604
+  size: 600, 600
+  orig: 600, 600
+  offset: 0, 0
+  index: -1
+images/shinchan b 10
+  rotate: false
+  xy: 1808, 1206
+  size: 600, 600
+  orig: 600, 600
+  offset: 0, 0
+  index: -1
+images/shinchan b 11
+  rotate: false
+  xy: 1808, 604
+  size: 600, 600
+  orig: 600, 600
+  offset: 0, 0
+  index: -1
+images/shinchan b 12
+  rotate: false
+  xy: 1808, 2
+  size: 600, 600
+  orig: 600, 600
+  offset: 0, 0
+  index: -1
+images/shinchan b 13
+  rotate: false
+  xy: 2410, 1206
+  size: 600, 600
+  orig: 600, 600
+  offset: 0, 0
+  index: -1
+images/shinchan b 14
+  rotate: false
+  xy: 2410, 604
+  size: 600, 600
+  orig: 600, 600
+  offset: 0, 0
+  index: -1
+images/shinchan b 15
+  rotate: false
+  xy: 2410, 2
+  size: 600, 600
+  orig: 600, 600
+  offset: 0, 0
+  index: -1
+images/shinchan b 16
+  rotate: false
+  xy: 3012, 1206
+  size: 600, 600
+  orig: 600, 600
+  offset: 0, 0
+  index: -1
+images/shinchan b 17
+  rotate: false
+  xy: 3012, 604
+  size: 600, 600
+  orig: 600, 600
+  offset: 0, 0
+  index: -1
+images/shinchan b 2
+  rotate: false
+  xy: 2, 2
+  size: 600, 600
+  orig: 600, 600
+  offset: 0, 0
+  index: -1
+images/shinchan b 3
+  rotate: false
+  xy: 604, 1206
+  size: 600, 600
+  orig: 600, 600
+  offset: 0, 0
+  index: -1
+images/shinchan b 4
+  rotate: false
+  xy: 604, 604
+  size: 600, 600
+  orig: 600, 600
+  offset: 0, 0
+  index: -1
+images/shinchan b 5
+  rotate: false
+  xy: 604, 2
+  size: 600, 600
+  orig: 600, 600
+  offset: 0, 0
+  index: -1
+images/shinchan b 6
+  rotate: false
+  xy: 1206, 1206
+  size: 600, 600
+  orig: 600, 600
+  offset: 0, 0
+  index: -1
+images/shinchan b 7
+  rotate: false
+  xy: 1206, 604
+  size: 600, 600
+  orig: 600, 600
+  offset: 0, 0
+  index: -1
+images/shinchan b 8
+  rotate: false
+  xy: 1206, 2
+  size: 600, 600
+  orig: 600, 600
+  offset: 0, 0
+  index: -1
+images/shinchan b 9
+  rotate: false
+  xy: 2, 1206
+  size: 600, 600
+  orig: 600, 600
+  offset: 0, 0
+  index: -1

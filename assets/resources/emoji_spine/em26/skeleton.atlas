@@ -1,0 +1,34 @@
+
+skeleton.png
+size: 1075,1415
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+images/mush-blsh 1
+  rotate: false
+  xy: 524, 29
+  size: 549, 691
+  orig: 944, 986
+  offset: 198, 147
+  index: -1
+images/mush-blsh 2
+  rotate: false
+  xy: 2, 701
+  size: 514, 712
+  orig: 944, 986
+  offset: 215, 126
+  index: -1
+images/mush-blsh 3
+  rotate: false
+  xy: 2, 2
+  size: 520, 697
+  orig: 944, 986
+  offset: 212, 140
+  index: -1
+images/mush-blsh 4
+  rotate: false
+  xy: 518, 722
+  size: 555, 691
+  orig: 944, 986
+  offset: 198, 144
+  index: -1

@@ -1,0 +1,48 @@
+
+skeleton.png
+size: 827,1546
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+images/Shinchan 1
+  rotate: false
+  xy: 2, 2
+  size: 405, 514
+  orig: 633, 873
+  offset: 114, 180
+  index: -1
+images/Shinchan 2
+  rotate: false
+  xy: 2, 518
+  size: 410, 512
+  orig: 633, 873
+  offset: 77, 170
+  index: -1
+images/Shinchan 3
+  rotate: false
+  xy: 414, 522
+  size: 411, 506
+  orig: 633, 873
+  offset: 77, 175
+  index: -1
+images/Shinchan 4
+  rotate: false
+  xy: 417, 1030
+  size: 408, 514
+  orig: 633, 873
+  offset: 81, 179
+  index: -1
+images/Shinchan 5
+  rotate: false
+  xy: 2, 1032
+  size: 413, 512
+  orig: 633, 873
+  offset: 114, 175
+  index: -1
+images/Shinchan 6
+  rotate: false
+  xy: 409, 11
+  size: 412, 505
+  orig: 633, 873
+  offset: 114, 183
+  index: -1
