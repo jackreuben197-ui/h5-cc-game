@@ -250,8 +250,8 @@ class UIViewManager {
             ui.internalbindCCViewData();
             ui.node.active = true;
             this._scenesPool.set(key, ui);
-            // 老场景缓存
-            if (this._curretScene) {
+            // 老场景缓存(非重复当前场景)
+            if (this._curretScene && this._curretScene != key) {
                 const s = this._scenesPool.get(this._curretScene);
                 if (s) {
                     s.node.active = false;

@@ -8,7 +8,6 @@ import userStore, { UserPropData, UserStore } from '../../../data/user/UserStore
 import UserStoreUtils from '../../../data/user/UserStoreUtils';
 import { AntiCheatType } from '../../../game/constant/AntiCheatType';
 import { BroadcastCode, PropsID } from '../../../game/constant/BroadcastCode';
-import { ChatType } from '../../../game/constant/ChatType';
 import { GameplayChatPropType } from '../../../game/constant/GameplayChatPropType';
 import { RoomOriginType } from '../../../game/constant/RoomOriginType';
 import { StringHelper } from '../../../helper/StringHelper';

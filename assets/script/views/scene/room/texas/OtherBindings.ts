@@ -4,13 +4,17 @@ import { traceClass } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
+import ccviewData, { CCViewData } from '../../../../data/system/CCViewData';
+import { AntiCheatType } from '../../../../game/constant/AntiCheatType';
 import { ButtonState } from '../../../../game/constant/Constants';
 import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconState';
 import agoraManager from '../../../../net/agora/AgoraManager';
 import { WebUserSetVideoMask, WWW } from '../../../../net/https/WebRequest';
+import viewManager from '../../../UIViewManager';
 import UIViewUtil from '../../../util/UIViewUtil';
 import SpriteSwitcher from '../../../widget/SpriteSwitcher';
 import TexasTableEvent from './events/TexasTableEvent';
+import menuItemCaculator, { MenuItemLayout, MenuItemLayoutType } from './widget/MenuItemCaculator';
 
 const { ccclass, property, menu } = cc._decorator;
 
@@ -18,6 +22,14 @@ const { ccclass, property, menu } = cc._decorator;
 @menu('Scene/Room/Texas/OtherBindings')
 @traceClass()
 export default class OtherBindings extends cc.Component {
+    @property({ type: cc.Button, displayName: '表情按钮' })
+    private btnEmoji: cc.Button = null;
+    @property({ type: cc.Button, displayName: '战绩按钮' })
+    private btnReport: cc.Button = null!;
+    @property({ type: cc.Button, displayName: '牌谱按钮' })
+    private btnReplay: cc.Button = null!;
+    @property({ type: cc.Node, displayName: '认证LOGO' })
+    private certlogo: cc.Node = null!;
     @property({ type: cc.Button, displayName: '窗花按钮' })
     private btnEffect: cc.Button = null;
     @property({ type: SpriteSwitcher, displayName: '窗花按钮图标' })
@@ -60,7 +72,54 @@ export default class OtherBindings extends cc.Component {
         }
     }
 
+    @bindEvent(CCViewData.FRAME_SIZE_UPDATE, { dataSource: 'ccviewData', initPriority: 20 })
+    protected onFrameResize(
+        visibleSizeWidth: number,
+        visibleSizeHeight: number,
+        frameSizeWidth: number,
+        frameSizeHeight: number,
+        suggestScale: number,
+        saveAreaTop: number
+    ) {
+        let layout: MenuItemLayout;
+        if (!this._roomData.basicInfo.antiCheatConfig) {
+            layout = menuItemCaculator.caculate(visibleSizeWidth, suggestScale, MenuItemLayoutType.ThreeButtons);
+            this.btnEffect.node.active = false;
+            this.btnAudio.node.active = false;
+            this.btnCamera.node.active = false;
+            this.btnReport.node.setPosition(layout.buttons[0].position);
+            this.btnReplay.node.setPosition(layout.buttons[1].position);
+            this.btnEmoji.node.setPosition(layout.buttons[2].position);
+        } else if (this._roomData.basicInfo.antiCheatConfig.antiCheatType == AntiCheatType.AUDIO) {
+            layout = menuItemCaculator.caculate(visibleSizeWidth, suggestScale, MenuItemLayoutType.FourButtons);
+            this.btnEffect.node.active = false;
+            this.btnAudio.node.active = true;
+            this.btnCamera.node.active = false;
+            this.btnReport.node.setPosition(layout.buttons[0].position);
+            this.btnReplay.node.setPosition(layout.buttons[1].position);
+            this.btnEmoji.node.setPosition(layout.buttons[2].position);
+            this.btnAudio.node.setPosition(layout.buttons[3].position);
+        } else {
+            layout = menuItemCaculator.caculate(visibleSizeWidth, suggestScale, MenuItemLayoutType.SixButtons);
+            this.btnEffect.node.active = true;
+            this.btnAudio.node.active = true;
+            this.btnCamera.node.active = true;
+            this.btnReport.node.setPosition(layout.buttons[0].position);
+            this.btnReplay.node.setPosition(layout.buttons[1].position);
+            this.btnEmoji.node.setPosition(layout.buttons[2].position);
+            this.btnEffect.node.setPosition(layout.buttons[3].position);
+            this.btnAudio.node.setPosition(layout.buttons[4].position);
+            this.btnCamera.node.setPosition(layout.buttons[5].position);
+        }
+        this.certlogo.setPosition(layout.logo.position);
+    }
+
     public onLoad() {
+        //战绩按钮
+        if (this.btnReport) this.btnReport.node.on('click', this.onClickReport, this);
+        //牌谱按钮
+        if (this.btnReplay) this.btnReplay.node.on('click', this.onClickReplay, this);
+        if (this.btnEmoji) this.btnEmoji.node.on('click', this.onClickBtnEmoji, this);
         // 如果绑定点击写这里
         this.btnEffect.node.on('click', this.onClickMaskBtn, this);
         this.btnAudio.node.on('click', this.onClickLocalMicrophoneBtn, this);
@@ -86,7 +145,8 @@ export default class OtherBindings extends cc.Component {
     private _bindEventsAndRefresh() {
         if (!this._roomData) return;
         autoBindEvents(this, {
-            mine: this._roomData.mine
+            mine: this._roomData.mine,
+            ccviewData: ccviewData
         });
     }
 
@@ -381,6 +441,30 @@ export default class OtherBindings extends cc.Component {
             }
         }
     }
+
+    private onClickBtnEmoji(): void {
+        const mine = this._roomData.mine;
+        if (!mine || !mine.player || mine.player.seatNo == 0) return;
+        viewManager.openDialog('Emoji', {
+            roomID: mine.roomData.roomID,
+            matchID: mine.roomData.matchID
+        });
+    }
+
+    private onClickReport = () => {
+        const mine = this._roomData.mine;
+        viewManager.openDialog('TexasReport', {
+            roomID: mine.roomData.roomID,
+            matchID: mine.roomData.matchID
+        });
+    };
+    private onClickReplay = () => {
+        const mine = this._roomData.mine;
+        viewManager.openDialog('TexasHistory', {
+            roomID: mine.roomData.roomID,
+            matchID: mine.roomData.matchID
+        });
+    };
 
     private onCLickViewPlayerCards() {
         if (!this._roomData || !this._roomData.mine.showViewPlayerCardsButton) return;
