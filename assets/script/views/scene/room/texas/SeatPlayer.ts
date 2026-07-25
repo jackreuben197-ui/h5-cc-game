@@ -193,6 +193,29 @@ export default class SeatPlayer extends cc.Component {
         this.avatar.node.on(cc.Node.EventType.TOUCH_END, this._clickPlayerInfo, this);
         this.insuranceCountdownBubble.node.active = false;
         this.returnToGameButton.node.on('click', this._clickReturnToGame, this);
+        // 鱿鱼触手遮罩(squid_mask)按需求彻底移除：无论预制体/library 缓存状态如何，
+        // onLoad 一定执行，运行时强制隐藏，避免非鱿鱼房未触发事件时触手仍显示。
+        this._hideSquidTentacles();
+    }
+
+    /**
+     * 隐藏座位上所有鱿鱼触手遮罩(SquidMask / Head_Squid_Mask)。
+     * 与 pokerqueen 一致：递归遍历整个座位子树按名字隐藏，避免 getChildByName 只查直接子节点而漏掉；
+     * 无论节点在层级哪一层、@property 是否绑定，都能命中，防止对局结束后触手重新出现。
+     */
+    private _hideSquidTentacles(): void {
+        if (this.squidMaskNode) this.squidMaskNode.active = false;
+        SeatPlayer._deepHideByName(this.node, ['Head_Squid_Mask', 'SquidMask']);
+    }
+
+    private static _deepHideByName(root: cc.Node, names: string[]): void {
+        if (!root) return;
+        const children = root.children;
+        for (let i = 0; i < children.length; i++) {
+            const c = children[i];
+            if (names.indexOf(c.name) >= 0) c.active = false;
+            SeatPlayer._deepHideByName(c, names);
+        }
     }
 
     protected onEnable(): void {
@@ -407,8 +430,10 @@ export default class SeatPlayer extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayer.SQUID_IN, 'player')
     @bindEvent(TexasGameRoomDataBasic.SQUID_ENABLED, 'basic')
     private onRefreshSquidMask(): void {
-        // 头像上的鱿鱼触手遮罩已按需求彻底移除，始终隐藏。
-        this.squidMaskNode.active = false;
+        // 与 pokerqueen 一致：每次鱿鱼数据刷新(含对局结束时 SQUID_COUNT 变化)都重新隐藏触手遮罩。
+        // 之前只隐藏了 squidMaskNode(SquidMask)，但真正贴在头像上的紫色触手是 Head_Squid_Mask，
+        // 必须一并隐藏，否则对局结束后触手会重新出现。
+        this._hideSquidTentacles();
     }
     // =================== 鱿鱼 （END） ====================
 

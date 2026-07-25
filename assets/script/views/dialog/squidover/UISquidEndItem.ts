@@ -46,7 +46,8 @@ export default class UISquidEndItem extends cc.Component {
             this.memberScoreTxt.string = `<color=${scoreColor}>${StringHelper.GetSignedLongString(data.money || 0)}</color>`;
         }
         if (this.squidLose) {
-            this.squidLose.active = (data.money || 0) < 0;
+            // 按需求移除结算面板上输家的鱿鱼触手(squid_lose)动画/图标，始终隐藏。
+            this.squidLose.active = false;
         }
         const showRate = !data.isPunish && (data.rate || 0) > 0;
         if (this.rewardBg) {

@@ -19,6 +19,13 @@ const { ccclass, property, menu } = cc._decorator;
 @traceClass()
 @menu('Scene/Room/Texas/MorePlayTypeInfo')
 export default class MorePlayTypeInfo extends cc.Component {
+    /**
+     * 鱿鱼开场动画(SquidGame)的本地 Y 坐标。
+     * 对齐 pokerqueen：其开场动画落在世界 Y≈1488(牌桌正中略偏上)。
+     * 本项目该节点世界Y = 本地Y + 1344，故本地 y=144 即与 pokerqueen 一致。
+     * 数值越大越靠上，越小越靠下，可按需微调。
+     */
+    private static readonly SQUID_START_TABLE_MIDDLE_Y = 144;
     @property({ type: cc.Node, displayName: '根节点' })
     private rootNode: cc.Button = null!;
     @property({ type: cc.Button, displayName: '加入鱿鱼按钮' })
@@ -51,6 +58,8 @@ export default class MorePlayTypeInfo extends cc.Component {
         };
         this.joinButton.node.on('click', this._onJoinSquidClicked, this);
         this.squidStartAnimation.node.active = false;
+        // 鱿鱼开场动画(SquidGame)放到牌桌正中：预制体本地 y=-350(偏低)，抬升到牌桌中央。
+        this.squidStartAnimation.node.y = MorePlayTypeInfo.SQUID_START_TABLE_MIDDLE_Y;
         this.squidStartAnimation.setCompleteListener(() => {
             this.squidStartAnimation.node.active = false;
         });
