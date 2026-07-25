@@ -96,6 +96,8 @@ export default class SeatPlayer extends cc.Component {
     private static readonly WIN_FIT_OTHER = 0.1936;
     private static readonly WIN_FIT_SELF = 0.3113;
     private static readonly WIN_SIZE_FACTOR = 0.5;
+    /** 获胜动画相对头像的上移偏移，避免遮挡公共牌，使其位于头像上方（正=上移，可调） */
+    private static readonly WIN_ANIM_OFFSET_Y = 150;
     @property({ type: sp.Skeleton, displayName: 'ALLIN动画' })
     private allInAnimation: sp.Skeleton = null!;
     @property({ type: sp.Skeleton, displayName: 'ALLIN(other)动画' })
@@ -747,6 +749,9 @@ export default class SeatPlayer extends cc.Component {
                 this.seatActionDisplay.showAction(i18nMgr.Get('UITexas_Bet'), raiseColor);
                 break;
             case Def.Action.CALL:
+                if (aat == AnimateDisplayTypeAction.Done) {
+                    soundManager.playEffect(SoundEffectKey.Call);
+                }
                 this.seatActionDisplay.node.active = true;
                 this.seatActionDisplay.showAction(i18nMgr.Get('adaptation10044'), callColor);
                 break;
@@ -792,9 +797,9 @@ export default class SeatPlayer extends cc.Component {
                 this.seatActionDisplay.showAction(i18nMgr.Get('adaptation10046'), checkColor);
                 break;
             case Def.Action.RAISE:
-                // if (aat == AnimateDisplayTypeAction.Done) {
-                //     soundManager.playEffect(SoundEffectKey.RaiseBetCallPost);
-                // }
+                if (aat == AnimateDisplayTypeAction.Done) {
+                    soundManager.playEffect(SoundEffectKey.Raise);
+                }
                 this.seatActionDisplay.node.active = true;
                 this.seatActionDisplay.showAction(i18nMgr.Get('adaptation10045'), raiseColor);
                 break;
@@ -906,6 +911,10 @@ export default class SeatPlayer extends cc.Component {
             this._otherWinData = this.winAnimation.skeletonData;
         }
         const isSelfWin = this._seatPlayer.mine && !!this.youWinData;
+        // 自己获胜播放 pokerqueen 的 mywin 音效
+        if (isSelfWin) {
+            soundManager.playEffect(SoundEffectKey.MyWin);
+        }
         const winData = isSelfWin ? this.youWinData : this._otherWinData;
         if (winData && this.winAnimation.skeletonData !== winData) {
             this.winAnimation.skeletonData = winData;
@@ -913,6 +922,8 @@ export default class SeatPlayer extends cc.Component {
         // 新骨骼原始尺寸过大，这里缩回本项目原来的尺寸（不改 prefab 布局）
         const fit = isSelfWin ? SeatPlayer.WIN_FIT_SELF : SeatPlayer.WIN_FIT_OTHER;
         this.winAnimation.node.setScale(fit * SeatPlayer.WIN_SIZE_FACTOR);
+        // 上移到头像上方，避免遮挡公共牌（并确保位于牌层下方，公共牌 Cards 在 seats_content 之后渲染）
+        this.winAnimation.node.setPosition(0, SeatPlayer.WIN_ANIM_OFFSET_Y);
         this.winAnimation.node.active = true;
         this.winAnimation.setAnimation(0, 'animation', false);
         this.winAnimation.setCompleteListener(() => {

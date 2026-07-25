@@ -751,6 +751,9 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         else if (isJackpot) noData = this._report.jackpotFetched && this._report.jackpotRecords.length <= 0;
         else if (isInsurance) noData = this._report.insuranceFetched && this._report.insuranceRecords.length <= 0;
         this.noDataNode.active = (isMode || isJackpot || isInsurance) && noData;
+        // 移除“暂无数据”空态里的图标(蘑菇/logo 水印)，只保留文字提示
+        const noDataIcon = this.noDataNode.getChildByName('icon_no_data');
+        if (noDataIcon) noDataIcon.active = false;
     }
 
     private _formatDuration(seconds: number): string {

@@ -12,6 +12,12 @@ export enum SoundEffectKey {
     Fold = 'sfx_desk_player_fold',
     /** Bet or Raise */
     RaiseBetCallPost = 'sfx_desk_post_raise',
+    /** 跟注(Call)音效——取自 pokerqueen */
+    Call = 'sfx_desk_post_call_p',
+    /** 加注(Raise)音效——取自 pokerqueen */
+    Raise = 'sfx_desk_post_raise_p',
+    /** 自己获胜音效——取自 pokerqueen */
+    MyWin = 'sfx_desk_mywin',
     /** 发新牌 */
     DealCards = 'sfx_desk_new_card',
     /** 筹码移动 */
