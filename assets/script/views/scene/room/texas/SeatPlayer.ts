@@ -208,6 +208,12 @@ export default class SeatPlayer extends cc.Component {
         autoBindEvents(this, { player: this._seatPlayer, basic: this._seatPlayer.roomData.basicInfo, setting: texasGamePersonalSettings });
     }
 
+    private _refreshNicknameVisibility(): void {
+        const visible = !(this._seatPlayer.position === SeatPosition.BottomMiddle && this._seatPlayer.seated && this._seatPlayer.mine);
+        this.nickName.node.active = visible;
+        this.nickNameSplash.active = visible;
+    }
+
     /**
      * 设置麦克风图标状态
      * @param state HIDDEN=不显示, SPEAKING=正在说话, MUTED=麦克风被禁止/未开启
@@ -255,6 +261,7 @@ export default class SeatPlayer extends cc.Component {
         this.userSeat.active = b;
         this.emptySeat.node.active = !b;
         this.emptySeat.interactable = !b;
+        this._refreshNicknameVisibility();
         // 本人相关,设置属性
         if (b && mine) {
             autoBindEvents(this, { mine: mine });
@@ -411,9 +418,6 @@ export default class SeatPlayer extends cc.Component {
                     this.bigCardsContainer.setPosition(0, 235);
                     this.bigCardsContainer.setScale(1, 1);
                     this._bigCards.forEach(v => (v.node.parent.active = false));
-                    //隐藏名字
-                    this.nickName.node.active = false;
-                    this.nickNameSplash.active = false;
                 } else {
                     this.buttonIcon.setPosition(-160, -120);
                     // 筹码位置
@@ -423,9 +427,6 @@ export default class SeatPlayer extends cc.Component {
                     this.bigCardsContainer.setPosition(0, 0);
                     this.bigCardsContainer.setScale(0.65, 0.65);
                     this._bigCards.forEach(v => (v.node.parent.active = false));
-                    // 显示名字
-                    this.nickName.node.active = true;
-                    this.nickNameSplash.active = true;
                 }
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.winPercentNode.node.active = false;
@@ -512,6 +513,7 @@ export default class SeatPlayer extends cc.Component {
                 this.micIconSprite.node.setPosition(90, 0);
                 break;
         }
+        this._refreshNicknameVisibility();
         const realPos = seatPostionCaculator.getPosition(pos);
         if (pat == AnimateDisplayTypePosition.ToTarget) {
             this.node.opacity = 0;

@@ -175,6 +175,7 @@ export default class UITexasMenu extends cc.Component {
 
     //面板移入
     public fadeIn(animation: boolean = true) {
+        cc.Tween.stopAllByTarget(this.$panel);
         const offsetX = 696 * (1 - this.node.scale);
         if (animation) {
             this.node.active = true;
@@ -189,6 +190,7 @@ export default class UITexasMenu extends cc.Component {
 
     //面板移出
     public fadeOut(animation: boolean = true) {
+        cc.Tween.stopAllByTarget(this.$panel);
         if (animation) {
             cc.tween(this.$panel)
                 .to(0.25, { x: -696 * this.node.scale })
