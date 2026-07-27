@@ -142,6 +142,7 @@ export default class SeatPlayer extends cc.Component {
         this._seatPlayer = seatPlayer;
         this._potNode = potNode;
         this._dealNode = dealNode;
+        this._resetCardVisualState();
         // 一些无法通过init初始化的状态在这里初始化
         this.winBoard.node.active = false;
         // 绑定数据
@@ -187,6 +188,7 @@ export default class SeatPlayer extends cc.Component {
     protected onDisable(): void {
         this._insuranceBuying = false;
         this.insuranceCountdownBubble.node.active = false;
+        this._resetCardVisualState();
         this.avatarVideoRender.stopMask();
         this.avatarVideoRender.stopOverlay();
         this.setMicrophoneIconState(MicrophoneIconState.HIDDEN);
@@ -212,6 +214,30 @@ export default class SeatPlayer extends cc.Component {
         const visible = !(this._seatPlayer.position === SeatPosition.BottomMiddle && this._seatPlayer.seated && this._seatPlayer.mine);
         this.nickName.node.active = visible;
         this.nickNameSplash.active = visible;
+    }
+
+    private _resetCardVisualState(): void {
+        cc.Tween.stopAllByTarget(this.bigCardsContainer);
+        cc.Tween.stopAllByTarget(this.smallCardsContainer);
+        if (!this._seatPlayer) return;
+        const isMineBottom = this._seatPlayer.position === SeatPosition.BottomMiddle && this._seatPlayer.seated && !!this._seatPlayer.mine;
+        this.bigCardsContainer.setPosition(0, isMineBottom ? 235 : 0);
+        this.bigCardsContainer.setScale(isMineBottom ? 1 : 0.65);
+        this.bigCardsContainer.opacity = 255;
+        const smallCardsX =
+            this._seatPlayer.position === SeatPosition.BottomLeft ||
+            this._seatPlayer.position === SeatPosition.MiddleLeft ||
+            this._seatPlayer.position === SeatPosition.TopLeft
+                ? 160
+                : -160;
+        this.smallCardsContainer.setPosition(smallCardsX, 5);
+        this.smallCardsContainer.setScale(1, 1);
+        this.smallCardsContainer.opacity = 255;
+        this._bigCards.forEach(card => {
+            cc.Tween.stopAllByTarget(card.node);
+            card.node.setScale(1, 1);
+            card.node.angle = 0;
+        });
     }
 
     /**
@@ -417,7 +443,6 @@ export default class SeatPlayer extends cc.Component {
                     // 大牌的显示位置调整,并隐藏
                     this.bigCardsContainer.setPosition(0, 235);
                     this.bigCardsContainer.setScale(1, 1);
-                    this._bigCards.forEach(v => (v.node.parent.active = false));
                 } else {
                     this.buttonIcon.setPosition(-160, -120);
                     // 筹码位置
@@ -426,7 +451,6 @@ export default class SeatPlayer extends cc.Component {
                     // 大牌的显示位置调整,并隐藏
                     this.bigCardsContainer.setPosition(0, 0);
                     this.bigCardsContainer.setScale(0.65, 0.65);
-                    this._bigCards.forEach(v => (v.node.parent.active = false));
                 }
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.winPercentNode.node.active = false;
@@ -513,6 +537,7 @@ export default class SeatPlayer extends cc.Component {
                 this.micIconSprite.node.setPosition(90, 0);
                 break;
         }
+        this._resetCardVisualState();
         this._refreshNicknameVisibility();
         const realPos = seatPostionCaculator.getPosition(pos);
         if (pat == AnimateDisplayTypePosition.ToTarget) {
@@ -554,6 +579,7 @@ export default class SeatPlayer extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayer.SHOW_CARDS_CHANGE, 'player', AnimateDisplayTypeCards.Static)
     @traceMethod()
     private onUpdateCards(cards: number[], atc: AnimateDisplayTypeCards, order?: number) {
+        this._resetCardVisualState();
         const l = cards.length;
         if (this._seatPlayer.mine) {
             this.tracelog.debug('up', cards, this._seatPlayer.cards, this._seatPlayer.roundActioned);
@@ -742,6 +768,7 @@ export default class SeatPlayer extends cc.Component {
                 if (aat == AnimateDisplayTypeAction.Done) {
                     soundManager.playEffect(SoundEffectKey.Fold);
                     if (this._seatPlayer.mine) {
+                        this._resetCardVisualState();
                         const startPos = this.bigCardsContainer.position;
                         const endPos = UIViewUtil.caculatePostion(this.bigCardsContainer, this._dealNode);
                         cc.tween(this.bigCardsContainer)

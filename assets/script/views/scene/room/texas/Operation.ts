@@ -96,6 +96,7 @@ export default class Operation extends cc.Component {
         this.btnRaiseConfirm.node.on('click', this._onFreeBetConfirmed, this);
         this.freeBetBg.node.on('click', this.onFreeBetBgClicked, this);
         this._onRaiseClicked = () => {
+            this.btnRaise.node.active = false;
             this.freeBetContainer.active = true;
             this.freeBetInfoNode.active = false;
             this.freeBetSilder.progressColor = cc.Color.fromHEX(new cc.Color(), '#ffffff');

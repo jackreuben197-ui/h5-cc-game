@@ -91,6 +91,10 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
     }
     const playerMap: Map<number, Player.AsObject> = new Map();
     data.playersList.map(v => playerMap.set(v.seatId, v));
+    if (data.myInfo) {
+        roomData.mine.clearData();
+        roomData.seatsStateManager.setMySeat(data.myInfo.seatId, AnimateDisplayTypePosition.Static);
+    }
     const seatedPlayers: TexasGameRoomDataPlayer[] = [];
     for (let seat = 1; seat <= seatCount; seat++) {
         let seatData = roomData.seatsStateManager.getSeatPlayer(seat);
@@ -161,8 +165,7 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
     }
     PlayerStoreUtils.syncSeatPlayers(roomData, seatedPlayers);
     if (data.myInfo) {
-        roomData.mine.clearData();
-        const player = roomData.seatsStateManager.setMySeat(data.myInfo.seatId, AnimateDisplayTypePosition.Static);
+        const player = roomData.seatsStateManager.getSeatPlayer(data.myInfo.seatId);
         if (player) {
             player.mine.autoOperationType = AutoOperationTypeTexas.NO;
             //有牌
