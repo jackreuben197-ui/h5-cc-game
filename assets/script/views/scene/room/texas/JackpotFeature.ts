@@ -33,6 +33,7 @@ interface JackpotPanelCacheData {
 @menu('Scene/Room/Texas/JackpotFeature')
 export default class JackpotFeature extends cc.Component {
     private static readonly JACKPOT_AWARD_LIMIT: number = 15;
+    private static readonly ENABLE_START_ANIM: boolean = false;
     private static readonly panelCache: Map<number, JackpotPanelCacheData> = new Map();
     @property({ type: cc.Node, displayName: 'Jackpot按钮 Button_Jackpot' })
     private jackpotButton: cc.Node = null;
@@ -100,7 +101,10 @@ export default class JackpotFeature extends cc.Component {
         this._startAnimRollTarget = JackpotFeature._toDisplayValue(displayPool);
         const animRoot = this.animRoot;
         const anim = animRoot?.getComponent(cc.Animation);
-        if (!animRoot || !anim) {
+        if (!JackpotFeature.ENABLE_START_ANIM || !animRoot || !anim) {
+            if (animRoot) {
+                animRoot.active = false;
+            }
             this._showUI();
             return;
         }
