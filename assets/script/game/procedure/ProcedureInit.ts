@@ -101,6 +101,9 @@ export default class ProcedureInit extends ProcedureBase {
         this.tracelog.debug('set frame rate');
         cc.game.setFrameRate(GameConfig.FRAME_RATE); // FPS 设置
         cc.macro.ENABLE_MULTI_TOUCH = GameConfig.ENABLE_MULTI_TOUCH; // 禁止多点触摸
+        // Web 默认按 CSS 像素创建 Canvas，在 Retina/高 DPR 手机上会被浏览器二次放大，
+        // 圆形头像和细圆环因此更容易出现锯齿。Cocos Web 会自动将 DPR 上限限制为 2。
+        cc.view.enableRetina(true);
         ProcedureInit.guardEngineResizeForKeyboard();
         ProcedureInit.guardEditBoxAutoScroll();
         const isTelegram = !!(window as any).Telegram?.WebApp;

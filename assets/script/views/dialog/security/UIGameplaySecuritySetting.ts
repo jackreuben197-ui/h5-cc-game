@@ -3,10 +3,9 @@ import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
-import { APIOrgTribeRoomPermissions, WebConfigGlobalConfig } from '../../../net/https/WebRequest';
-import { WWW } from '../../../net/https/WebRequestBase';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import viewManager from '../../UIViewManager';
+import gameplayTableSettingDataProvider from '../GameplayTableSettingDataProvider';
 
 export type UIGameplaySecuritySettingParam = {
     isFromBringIn?: boolean;
@@ -78,12 +77,13 @@ export default class UIGameplaySecuritySetting extends UIComponentBaseDialog<UIG
     }
 
     /** 展示入口 */
-    public initialize(param: UIGameplaySecuritySettingParam): void {
+    public async initialize(param: UIGameplaySecuritySettingParam): Promise<void> {
         this._roomData = roomDataManager.getRoomData(param.roomID, param.matchID);
         this.isFromBringIn = !!param?.isFromBringIn;
         this.bringInAct = param?.bringInAct || null;
-        this.roomPermissions = this.ParsePermissions(param?.roomPermissions);
-        this.ResolveRoomPermissionsAndRefresh();
+        const data = await gameplayTableSettingDataProvider.getData(this._roomData, param?.roomPermissions);
+        this.roomPermissions = data.roomPermissions;
+        this.RefreshUI();
     }
 
     protected override onFrameResize(
@@ -99,62 +99,6 @@ export default class UIGameplaySecuritySetting extends UIComponentBaseDialog<UIG
             const scale = visibleSizeHeight / maxHeight;
             this.node.setScale(scale, scale);
         }
-    }
-
-    /** Unity 对齐：俱乐部/联盟桌走 club permission，其它走全局权限 */
-    private async ResolveRoomPermissionsAndRefresh(): Promise<void> {
-        const clubId = this._roomData.basicInfo.clubID;
-        const tribeId = this._roomData.basicInfo.tribeID;
-        if (clubId !== 0 || tribeId > 1) {
-            try {
-                const resp: any = await WWW.Instance.CommonAPI({
-                    web_class: APIOrgTribeRoomPermissions,
-                    body: {
-                        club_id: clubId,
-                        tribe_id: tribeId
-                    },
-                    juhua: false
-                });
-                const roomPermissions = this.ParsePermissions(resp?.data?.room_permissions);
-                if (Object.keys(roomPermissions).length > 0) {
-                    this.roomPermissions = roomPermissions;
-                }
-            } catch (err) {
-                cc.warn('[UIGameplaySecuritySetting] request club room permissions failed', err);
-                this.roomPermissions = this.GetGlobalRoomPermissions();
-            }
-        } else {
-            this.roomPermissions = this.GetGlobalRoomPermissions();
-        }
-        this.RefreshUI();
-    }
-
-    /** Unity GetRoomPermissions(false) 对齐：只取全局 room_permissions */
-    private GetGlobalRoomPermissions(): Record<string, number> {
-        const cfg: any = WebConfigGlobalConfig?.Response?.data || null;
-        if (!cfg) return {};
-        return this.ParsePermissions(cfg.room_permissions);
-    }
-
-    private ParsePermissions(raw: any): Record<string, number> {
-        if (!raw) return {};
-        let obj: any = raw;
-        if (typeof raw === 'string') {
-            try {
-                obj = JSON.parse(raw);
-            } catch (err) {
-                cc.warn('[UIGameplaySecuritySetting] parse room permissions failed', err);
-                return {};
-            }
-        }
-        if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
-            return {};
-        }
-        const ret: Record<string, number> = {};
-        Object.keys(obj).forEach(k => {
-            ret[k] = Number(obj[k] || 0);
-        });
-        return ret;
     }
 
     /** 刷新安全设置内容 */

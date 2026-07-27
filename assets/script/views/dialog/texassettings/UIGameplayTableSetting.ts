@@ -4,9 +4,10 @@ import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { GameType, PokerType } from '../../../game/constant/LogicTypeConf';
 import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
-import { APIOrgTribeRoomPermissions, APIOrgUserNewLabelRead, APIOrgUserNewLabelReadNum, WebConfigGlobalConfig } from '../../../net/https/WebRequest';
+import { APIOrgUserNewLabelRead, APIOrgUserNewLabelReadNum } from '../../../net/https/WebRequest';
 import { WWW } from '../../../net/https/WebRequestBase';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
+import gameplayTableSettingDataProvider from '../GameplayTableSettingDataProvider';
 
 export type UIGameplayTableSettingParam = {
     isFromBringIn?: boolean;
@@ -79,6 +80,9 @@ export default class UIGameplayTableSetting extends UIComponentBaseDialog<UIGame
     private roomPermissionsNumber: Record<string, number> | null = null;
     private lookTimeMarkSet: Set<string> = new Set<string>();
     private tribeId = 0;
+    private _newLabelRoomKey = '';
+    private _newLabelLoading: Promise<void> = null!;
+    private _newLabelLoaded = false;
 
     /** 组件初始化：缓存节点与模板 */
     override onLoad(): void {
@@ -116,14 +120,16 @@ export default class UIGameplayTableSetting extends UIComponentBaseDialog<UIGame
     }
 
     /** 弹窗展示入口 */
-    public initialize(param: UIGameplayTableSettingParam): void {
+    public async initialize(param: UIGameplayTableSettingParam): Promise<void> {
         this._roomData = roomDataManager.getRoomData(param.roomID, param.matchID);
         this.isFromBringIn = !!param?.isFromBringIn;
         this.bringInAct = param?.bringInAct || null;
-        this.roomPermissions = this.ParsePermissions(param?.roomPermissions);
-        this.tribeId = this.ResolveTribeId();
         this.lookTimeMarkSet.clear();
-        this.ResolveRoomPermissionsAndRefresh();
+        const data = await gameplayTableSettingDataProvider.getData(this._roomData, param?.roomPermissions);
+        this.roomPermissions = data.roomPermissions;
+        this.tribeId = data.tribeId > 0 ? data.tribeId : this.ResolveTribeId();
+        this.RefreshUI();
+        this._preloadUserNewLabelNum();
     }
 
     protected override onFrameResize(
@@ -139,74 +145,6 @@ export default class UIGameplayTableSetting extends UIComponentBaseDialog<UIGame
             const scale = visibleSizeHeight / maxHeight;
             this.node.setScale(scale, scale);
         }
-    }
-
-    /** Unity 对齐：俱乐部/联盟桌走 club permission，其它走全局权限 */
-    private async ResolveRoomPermissionsAndRefresh(): Promise<void> {
-        const clubId = this._roomData.basicInfo.clubID;
-        const tribeId = this._roomData.basicInfo.tribeID;
-        this.tribeId = tribeId;
-        if (clubId !== 0 || tribeId > 1) {
-            try {
-                const resp: any = await WWW.Instance.CommonAPI({
-                    web_class: APIOrgTribeRoomPermissions,
-                    body: {
-                        club_id: clubId,
-                        tribe_id: tribeId
-                    },
-                    juhua: false
-                });
-                const roomPermissions = this.ParsePermissions(resp?.data?.room_permissions);
-                if (Object.keys(roomPermissions).length > 0) {
-                    this.roomPermissions = roomPermissions;
-                }
-                const respTribeId = Number(resp?.data?.tribe_id ?? (resp?.data?.room_permissions as any)?.tribe_id ?? 0);
-                if (this.tribeId <= 0 && respTribeId > 0) {
-                    this.tribeId = respTribeId;
-                }
-                if (this.tribeId <= 0) {
-                    this.tribeId = this.ResolveTribeId();
-                }
-                this.RefreshUI();
-                if (this.tribeId > 0) {
-                    await this.RequestUserNewLabelNum();
-                }
-                return;
-            } catch (err) {
-                cc.warn('[UIGameplayTableSetting] request club room permissions failed', err);
-            }
-        }
-        this.roomPermissions = this.GetGlobalRoomPermissions();
-        this.tribeId = this.ResolveTribeId();
-        this.RefreshUI();
-    }
-
-    /** Unity GetRoomPermissions(false) 对齐：只取全局 room_permissions */
-    private GetGlobalRoomPermissions(): Record<string, number> {
-        const cfg: any = WebConfigGlobalConfig?.Response?.data || null;
-        if (!cfg) return {};
-        return this.ParsePermissions(cfg.room_permissions);
-    }
-
-    private ParsePermissions(raw: any): Record<string, number> {
-        if (!raw) return {};
-        let obj: any = raw;
-        if (typeof raw === 'string') {
-            try {
-                obj = JSON.parse(raw);
-            } catch (err) {
-                cc.warn('[UIGameplayTableSetting] parse room permissions failed', err);
-                return {};
-            }
-        }
-        if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
-            return {};
-        }
-        const ret: Record<string, number> = {};
-        Object.keys(obj).forEach(k => {
-            ret[k] = Number(obj[k] || 0);
-        });
-        return ret;
     }
 
     /** 刷新整页玩法配置展示 */
@@ -438,6 +376,25 @@ export default class UIGameplayTableSetting extends UIComponentBaseDialog<UIGame
             this.warningTips.active = !(randomSeatEnabled && !!this._roomData.basicInfo.delaySeeCard && isLimitIP && isLimitGPS && antiCheatOpen && isSafeRoom);
         }
         this.RefreshContentLayout();
+    }
+
+    private _preloadUserNewLabelNum(): void {
+        const roomKey = `${this._roomData.roomID}-${this._roomData.matchID}`;
+        if (this._newLabelRoomKey !== roomKey) {
+            this._newLabelRoomKey = roomKey;
+            this._newLabelLoading = null!;
+            this._newLabelLoaded = false;
+            this.roomPermissionsNumber = null;
+        }
+        if (this._newLabelLoaded || this._newLabelLoading) return;
+        if (this.tribeId <= 0) {
+            this._newLabelLoaded = true;
+            return;
+        }
+        this._newLabelLoading = this.RequestUserNewLabelNum().then(() => {
+            this._newLabelLoading = null!;
+            this._newLabelLoaded = true;
+        });
     }
 
     /** 拉取用户新标签已读次数 */

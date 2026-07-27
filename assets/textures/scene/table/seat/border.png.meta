@@ -7,7 +7,7 @@
   "filterMode": "bilinear",
   "premultiplyAlpha": false,
   "genMipmaps": false,
-  "packable": true,
+  "packable": false,
   "width": 791,
   "height": 791,
   "platformSettings": {},
