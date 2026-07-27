@@ -5,10 +5,10 @@ export type TexasReportMode = 'none' | 'mush' | 'squid';
 
 // 只做页面展示需要的计算，不碰节点，也不发请求。
 export default class TexasReportPresentation {
-    // 蘑菇和鱿鱼有些配置会同时残留，所以按实际开关来认玩法。
+    // 两套配置可能同时残留，牌桌其它流程也是鱿鱼优先，这里保持同一口径。
     public static resolveMode(basicInfo: TexasGameRoomDataBasic): TexasReportMode {
-        if ((basicInfo.mushroomMode || 0) > 0 || basicInfo.mushroomStatusEnabled) return 'mush';
         if (basicInfo.hasSquid || (basicInfo.squidBase || 0) > 0 || basicInfo.squidStatusEnabled) return 'squid';
+        if ((basicInfo.mushroomMode || 0) > 0 || basicInfo.mushroomStatusEnabled) return 'mush';
         return 'none';
     }
 

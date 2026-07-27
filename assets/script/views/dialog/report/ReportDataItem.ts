@@ -34,8 +34,13 @@ export default class ReportDataItem extends cc.Component {
     private jackpotNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '保险记录行 room_scrollview_insurance' })
     private insuranceNode: cc.Node = null;
+    @property({ displayName: '第一条分隔线 X 偏移', tooltip: '正数往右，负数往左' })
+    private firstDividerOffsetX: number = 24;
+    @property({ displayName: '最后一条分隔线 X 偏移', tooltip: '正数往右，负数往左' })
+    private lastDividerOffsetX: number = -24;
     private _player: TexasReportPlayerInfo = null;
     private _onPlayerClick: (player: TexasReportPlayerInfo) => void = null;
+    private _activeRowNode: cc.Node = null;
 
     protected onLoad(): void {
         this.node.on(cc.Node.EventType.TOUCH_END, this.onPlayerClicked, this);
@@ -50,7 +55,6 @@ export default class ReportDataItem extends cc.Component {
         this._onPlayerClick = options.onClick;
         const target = options.mode === 'none' ? this.battleNode : this.modeBattleNode;
         this._showOnly(target);
-        target.opacity = options.atTable && player.isOnline ? 255 : 150;
         this._setLabel(target, 'Text_Name', StringHelper.LengthNick(player.name || ''));
         this._setLabel(target, 'Text_Num', `${player.handNum || 0}`);
         const totalColumn = target.getChildByName('Text_All_Col');
@@ -62,11 +66,12 @@ export default class ReportDataItem extends cc.Component {
         }
         this._setSignedText(target.getChildByName('Text_Count'), TexasReportPresentation.getPlayerScore(player));
         this._setNodeText(target.getChildByName('Text_Pool'), `(${((player.poolRate || 0) / 10).toFixed(1)}%)`);
-        this._setOwn(target, player.userRid === options.currentUserID);
+        this._setOwn(target, this._isOwnUser(player.userRid, options.currentUserID));
         if (options.mode !== 'none') {
             this._setLabel(target, 'Text_Deposit', StringHelper.GetLongString(player.deposit || 0));
             this._showBattleMode(target, player, options.mode);
         }
+        this._setPlayerRowColor(target, options.atTable && player.isOnline);
     }
 
     public showJackpot(record: TexasReportJackpotRecord, currentUserID: number): void {
@@ -76,7 +81,7 @@ export default class ReportDataItem extends cc.Component {
         this._setLabel(this.jackpotNode, 'Text_Num', StringHelper.GetLongString(record.contributeTotal || 0));
         this._setSignedText(this.jackpotNode.getChildByName('Text_All'), record.awardTotal || 0);
         this._setNodeText(this.jackpotNode.getChildByName('Text_Card'), this._getJackpotCardDescription(record));
-        this._setOwn(this.jackpotNode, record.userRid === currentUserID);
+        this._setOwn(this.jackpotNode, this._isOwnUser(record.userRid, currentUserID));
     }
 
     public showInsurance(record: TexasReportInsuranceRecord, currentUserID: number): void {
@@ -86,10 +91,10 @@ export default class ReportDataItem extends cc.Component {
         this._setLabel(this.insuranceNode, 'Text_Num', record.createTime > 0 ? this._formatInsuranceTime(record.createTime) : '--');
         this._setLabel(this.insuranceNode, 'Text_All', StringHelper.GetLongString(record.insurBet || 0));
         this._setSignedText(this.insuranceNode.getChildByName('Text_Card'), -(record.insurWin || 0));
-        this._setOwn(this.insuranceNode, record.userRid === currentUserID);
+        this._setOwn(this.insuranceNode, this._isOwnUser(record.userRid, currentUserID));
     }
 
-    public showModeRecord(record: TexasReportSquidRecord, mode: TexasReportMode, currentUserID: number): void {
+    public showModeRecord(record: TexasReportSquidRecord, mode: TexasReportMode, currentUserID: number, currentUserNames: string[]): void {
         this._clearPlayerClick();
         const target = mode === 'squid' ? this.squidNode : mode === 'mush' ? this.mushroomNode : null;
         this._showOnly(target);
@@ -105,7 +110,24 @@ export default class ReportDataItem extends cc.Component {
             this._setSignedText(target.getChildByName('in_coin'), (record.in_amount || 0) !== 0 ? record.in_amount || 0 : null, '-');
             this._setSignedText(target.getChildByName('out_coin'), record.out_amount || 0);
         }
-        this._setOwn(target, record.user_random_id === currentUserID);
+        this._setOwn(target, this._isOwnUser(record.user_random_id, currentUserID) || this._isOwnName(record.name, currentUserNames));
+    }
+
+    // 分隔线位置跟着当前这套行节点算，后面在 Cocos 里挪列也不用再手改坐标。
+    public getColumnDividerXs(): number[] {
+        if (!this._activeRowNode) return [];
+        const columns = this._activeRowNode.children
+            .filter(node => node.active && node.name !== 'own')
+            .filter(node => !!node.getComponent(cc.Label) || !!node.getComponent(cc.RichText) || !!node.getComponent(cc.Layout))
+            .sort((a, b) => a.x - b.x);
+        const dividers: number[] = [];
+        for (let i = 1; i < columns.length; i++) {
+            dividers.push((columns[i - 1].x + columns[i].x) / 2);
+        }
+        // 两边单独留一点呼吸空间，中间列还是继续跟着内容自适应。
+        if (dividers.length > 0) dividers[0] += this.firstDividerOffsetX;
+        if (dividers.length > 1) dividers[dividers.length - 1] += this.lastDividerOffsetX;
+        return dividers;
     }
 
     private onPlayerClicked(): void {
@@ -114,6 +136,7 @@ export default class ReportDataItem extends cc.Component {
 
     // 每次只亮当前要用的那套行样式。
     private _showOnly(target: cc.Node): void {
+        this._activeRowNode = target;
         [this.battleNode, this.modeBattleNode, this.squidNode, this.mushroomNode, this.jackpotNode, this.insuranceNode].forEach(node => {
             node.active = node === target;
         });
@@ -161,6 +184,34 @@ export default class ReportDataItem extends cc.Component {
         if (own) own.active = isOwn;
     }
 
+    private _isOwnUser(userID: number, currentUserID: number): boolean {
+        const mine = Number(currentUserID || 0);
+        return mine > 0 && Number(userID || 0) === mine;
+    }
+
+    private _isOwnName(name: string, currentUserNames: string[]): boolean {
+        if (!name) return false;
+        return (currentUserNames || []).some(currentName => !!currentName && currentName === name);
+    }
+
+    private _setPlayerRowColor(parent: cc.Node, atTable: boolean): void {
+        const color = new cc.Color().fromHEX(atTable ? '#FFFFFF' : '#F9F9F9');
+        parent.opacity = 255;
+        this._walkNodes(parent, node => {
+            if (!node.getComponent(cc.Label) && !node.getComponent(cc.RichText)) return;
+            node.color = color;
+            // #F9F9F9 和白色太接近，离桌行再降一点透明度才看得出层级。
+            node.opacity = atTable ? 255 : 153;
+        });
+    }
+
+    private _walkNodes(parent: cc.Node, visit: (node: cc.Node) => void): void {
+        parent.children.forEach(node => {
+            visit(node);
+            this._walkNodes(node, visit);
+        });
+    }
+
     private _setSignedText(node: cc.Node, value: number | null, emptyText: string = ''): void {
         if (!node) return;
         if (value == null) {
@@ -178,7 +229,7 @@ export default class ReportDataItem extends cc.Component {
         const label = node.getComponent(cc.Label);
         if (label) {
             label.string = text;
-            label.node.color = cc.Color.BLACK.fromHEX(color);
+            label.node.color = new cc.Color().fromHEX(color);
         }
     }
 

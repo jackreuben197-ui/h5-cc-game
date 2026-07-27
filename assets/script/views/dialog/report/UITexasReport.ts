@@ -8,6 +8,7 @@ import TexasGameRoomDataReport, {
     TexasReportJackpotRecord,
     TexasReportObserver,
     TexasReportPlayerInfo,
+    TexasReportRoundMode,
     TexasReportSquidRecord,
     TexasReportSquidRoundSnapshot,
     TexasReportSummary
@@ -121,6 +122,8 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     private listBar1: cc.Node = null;
     @property({ type: cc.Node, displayName: '[表头] 战况(带 mode) ListBar3' })
     private listBar3: cc.Node = null;
+    @property({ type: cc.Node, displayName: '[表头] 战况玩法列 ListBar3/Text_Mode' })
+    private listBar3ModeTitleNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '[表头] 鱿鱼 listBarSquid' })
     private listBarSquid: cc.Node = null;
     @property({ type: cc.Node, displayName: '[表头] 蘑菇 listBarMushRoom' })
@@ -215,7 +218,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         this._isJackpotLoading = false;
         this._squidPendingRounds = new Set();
         this._requestGeneration += 1;
-        this._subType = this._resolveSubType();
+        this._syncSubType();
         this._refreshTopBar();
         this._refreshBottomToggleState();
         this._refreshContentVisible();
@@ -370,6 +373,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
                 onClick: player => this._openPlayerInfo(player)
             });
         }
+        this._drawColumnDividers(content);
     }
 
     private _createDataItem(content: cc.Node): ReportDataItem {
@@ -406,12 +410,14 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         this.jackpotContent.removeAllChildren();
         const records = this._report.jackpotRecords;
         if (records.length <= 0) {
+            this._drawColumnDividers(this.jackpotContent);
             this._updateNoDataState();
             return;
         }
         for (const r of records) {
             this._createDataItem(this.jackpotContent).showJackpot(r, userStore.userRID);
         }
+        this._drawColumnDividers(this.jackpotContent);
         this._updateNoDataState();
     }
 
@@ -426,6 +432,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         for (const r of this._report.insuranceRecords) {
             this._createDataItem(this.battleContent).showInsurance(r, userStore.userRID);
         }
+        this._drawColumnDividers(this.battleContent);
         this._updateNoDataState();
     }
 
@@ -433,16 +440,18 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         const content = this._subType === 'squid' ? this.squidContent : this.mushContent;
         content.removeAllChildren();
         const records = this._currentSquidRecords();
+        const currentUserNames = [userStore.name, this._roomData.mine.player?.name || ''];
         for (const r of records) {
-            this._createDataItem(content).showModeRecord(r, this._subType, userStore.userRID);
+            this._createDataItem(content).showModeRecord(r, this._subType, userStore.userRID, currentUserNames);
         }
+        this._drawColumnDividers(content);
         this._updateNoDataState();
     }
     // ============================================================
     // Tab & Toggle
     // ============================================================
     private _onClickTab(tab: ReportBottomTab): void {
-        this._subType = this._resolveSubType();
+        this._syncSubType();
         if (tab === 'mode' && this._subType === 'none') return;
         if (tab === 'jackpot' && !this._isJackpotEnabled()) return;
         if (tab === 'insurance' && !this._isInsuranceEnabled()) return;
@@ -474,7 +483,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     }
 
     private _refreshBottomToggleState(): void {
-        this._subType = this._resolveSubType();
+        this._syncSubType();
         this._refreshMushDir();
         this._refreshModeToggleTitle();
         const showMode = this._subType !== 'none';
@@ -521,6 +530,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
             const useBar3 = sub !== 'none';
             this.listBar1.active = !useBar3;
             this.listBar3.active = useBar3;
+            if (useBar3) this._refreshBattleModeHeaderTitle();
         } else if (this._curTab === 'insurance') {
             this.listBar4.active = true;
         } else if (this._curTab === 'mode') {
@@ -529,6 +539,12 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         } else if (this._curTab === 'jackpot') {
             this.listBarJackpot.active = true;
         }
+    }
+
+    /** ListBar3 两种玩法共用，这里跟着房间类型换成“蘑菇”或“鱿鱼”。 */
+    private _refreshBattleModeHeaderTitle(): void {
+        const title = this.listBar3ModeTitleNode.getComponent(i18nLabel);
+        title.i18NString = this._subType === 'mush' ? 'UIMush' : 'UISquid';
     }
 
     private _refreshMushDir(): void {
@@ -616,6 +632,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         if (!this._roomData) return;
         const subType = this._resolveSubType();
         if (subType !== 'squid' && subType !== 'mush') return;
+        if (this._report.prepareSquidRoundMode(subType)) this._squidCurRound = 0;
         if (this._squidPendingRounds.has(round)) return;
         const requestGeneration = this._requestGeneration;
         const report = this._report;
@@ -626,6 +643,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         TexasReportEvent.RequestRound(this._roomData, subType, round).then(result => {
             pendingRounds.delete(round);
             if (!this._isCurrentRequest(requestGeneration, report)) return;
+            if (subType !== this._resolveSubType()) return;
             if (!result) {
                 this._updateNoDataState();
                 return;
@@ -634,7 +652,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
             const wasLookingAtLatest = currentRoundWhenRequested === 0 || currentRoundWhenRequested === latestRoundWhenRequested;
             // 查最新轮时只有用户没翻页才跟到最新；查普通页时也只接住原来那一页。
             if (stillOnRequestedRound && (round > 0 || wasLookingAtLatest)) this._squidCurRound = result.round;
-            report.setSquidRound(result.round, result.snapshot);
+            report.setSquidRound(subType, result.round, result.snapshot);
             this._setupSlider();
             this._refreshPageText();
         });
@@ -711,6 +729,12 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         return TexasReportPresentation.resolveMode(this._roomData.basicInfo);
     }
 
+    private _syncSubType(): void {
+        this._subType = this._resolveSubType();
+        if (this._subType !== 'squid' && this._subType !== 'mush') return;
+        if (this._report.prepareSquidRoundMode(this._subType as TexasReportRoundMode)) this._squidCurRound = 0;
+    }
+
     private _isCurrentRequest(requestGeneration: number, report: TexasGameRoomDataReport): boolean {
         // 房间或打开批次对不上，说明这是过期回包。
         return requestGeneration === this._requestGeneration && report === this._report;
@@ -730,6 +754,26 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         if (this._subType === 'squid') return this.squidContent;
         if (this._subType === 'mush') return this.mushContent;
         return this.battleContent;
+    }
+
+    private _drawColumnDividers(content: cc.Node): void {
+        const graphics = content.getComponent(cc.Graphics) || content.addComponent(cc.Graphics);
+        graphics.clear();
+        const layout = content.getComponent(cc.Layout);
+        if (layout) layout.updateLayout();
+        graphics.lineWidth = 2;
+        graphics.strokeColor = new cc.Color(198, 194, 194, 232);
+        content.children.forEach(node => {
+            const item = node.getComponent(ReportDataItem);
+            if (!item) return;
+            const halfHeight = Math.max(24, node.height * 0.3);
+            item.getColumnDividerXs().forEach(x => {
+                const dividerX = node.x + x * node.scaleX;
+                graphics.moveTo(dividerX, node.y - halfHeight);
+                graphics.lineTo(dividerX, node.y + halfHeight);
+            });
+        });
+        graphics.stroke();
     }
 
     private _currentSquidSnapshot(): TexasReportSquidRoundSnapshot | null {

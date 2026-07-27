@@ -27,6 +27,7 @@ export default class ReportObserverItem extends cc.Component {
         this._observer = observer;
         this._onClick = onClick;
         this.nameLabel.string = StringHelper.LengthNick(observer.name || '');
+        this.nameLabel.node.color = new cc.Color().fromHEX('#FFFFFF');
         if (observer.avatar) {
             // 头像地址有值时才启动远程图片加载。
             const remoteSprite = this.avatarNode.getComponent(RemoteSprite) || this.avatarNode.addComponent(RemoteSprite);
