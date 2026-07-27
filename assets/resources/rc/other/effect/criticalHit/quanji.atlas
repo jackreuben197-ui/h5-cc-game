@@ -1,0 +1,27 @@
+
+quanji.png
+size: 1024,512
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+baoji0
+  rotate: true
+  xy: 2, 28
+  size: 457, 574
+  orig: 459, 576
+  offset: 1, 1
+  index: -1
+baoji1
+  rotate: false
+  xy: 578, 2
+  size: 216, 157
+  orig: 218, 159
+  offset: 1, 1
+  index: -1
+baoji2
+  rotate: true
+  xy: 578, 161
+  size: 324, 257
+  orig: 326, 259
+  offset: 1, 1
+  index: -1

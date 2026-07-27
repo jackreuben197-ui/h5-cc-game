@@ -9,6 +9,8 @@ import { i18nMgr } from '../../../../i18n/i18nMgr';
 import { UISquidEndItemShowData } from '../../../dialog/squidover/UISquidEndItem';
 import viewManager from '../../../UIViewManager';
 import TexasTableEvent from './events/TexasTableEvent';
+import AssetManager, { BUNDLE_RESOURCES } from '../../../loader/AssetManager';
+import { sampleLiveBounds, getAnimDuration } from '../../../util/SpineBoundsUtil';
 
 const { ccclass, property, menu } = cc._decorator;
 
@@ -26,6 +28,14 @@ export default class MorePlayTypeInfo extends cc.Component {
      * 数值越大越靠上，越小越靠下，可按需微调。
      */
     private static readonly SQUID_START_TABLE_MIDDLE_Y = 144;
+    /** 暴击开场 Spine(quanji) 资源路径——取自 pokerqueen 的 CriticalHit/quanji */
+    private static readonly CRITICAL_HIT_SPINE_PATH = 'rc/other/effect/criticalHit/quanji';
+    /** 暴击开场动画归一化目标尺寸(较大边像素)——对齐 pokerqueen */
+    private static readonly CRITICAL_HIT_TARGET_SIZE = 900;
+    /** 暴击开场动画所在的牌桌正中本地 Y(与鱿鱼开场一致) */
+    private static readonly CRITICAL_HIT_CENTER_Y = 144;
+    private _criticalHitSpineData: sp.SkeletonData = null;
+    private _criticalHitSpineNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '根节点' })
     private rootNode: cc.Button = null!;
     @property({ type: cc.Button, displayName: '加入鱿鱼按钮' })
@@ -140,9 +150,81 @@ export default class MorePlayTypeInfo extends cc.Component {
     @bindEvent(TexasGameRoomDataBasic.CRITIAL_HIT_ENABLED, 'basic')
     @traceMethod()
     private onCriticalHitStatusChange(b: boolean, ant: AnimateDisplayTypePlayType = AnimateDisplayTypePlayType.Staic) {
-        if (b && ant == AnimateDisplayTypePlayType.Start) {
-            this.critialHitStartAnimation.node.active = true;
-            this.critialHitStartAnimation.play('critical_hit_start');
+        if (!(b && ant == AnimateDisplayTypePlayType.Start)) {
+            return;
+        }
+        const node = this.critialHitStartAnimation.node;
+        // 改用新的 Spine 动画(quanji)：停掉旧帧动画、隐藏旧静态精灵，节点移到牌桌正中(与鱿鱼开场一致)
+        this.critialHitStartAnimation.stop();
+        const sprite = node.getComponent(cc.Sprite);
+        if (sprite) sprite.enabled = false;
+        node.setPosition(0, MorePlayTypeInfo.CRITICAL_HIT_CENTER_Y);
+        node.opacity = 255;
+        node.scale = 1;
+        node.active = true;
+        this._playCriticalHitSpine(node);
+    }
+
+    /** 在暴击节点上动态加载并播放新的暴击开场 Spine(quanji)，布局/尺寸对齐 pokerqueen */
+    private _playCriticalHitSpine(parent: cc.Node): void {
+        this._stopCriticalHitSpine();
+        const create = (data: sp.SkeletonData) => {
+            if (!cc.isValid(this.node) || !cc.isValid(parent)) {
+                return;
+            }
+            const spineNode = new cc.Node('CriticalHitSpine');
+            const skeleton = spineNode.addComponent(sp.Skeleton);
+            // 首帧透明，跳过 setup pose
+            spineNode.opacity = 0;
+            skeleton.skeletonData = data;
+            parent.addChild(spineNode);
+            skeleton.setAnimation(0, 'animation', false);
+            const dur = getAnimDuration(skeleton, 'animation');
+            // 下一帧：按实际包围盒归一化到目标尺寸并居中(采样会推进到末尾，采样后再从头重播并绑定结束回调)
+            skeleton.scheduleOnce(() => {
+                if (!spineNode.isValid) {
+                    return;
+                }
+                const bnd = sampleLiveBounds(skeleton, dur);
+                if (bnd.max > 0) {
+                    const scale = MorePlayTypeInfo.CRITICAL_HIT_TARGET_SIZE / bnd.max;
+                    spineNode.scale = scale;
+                    spineNode.x = -(bnd.offX + bnd.szX / 2) * scale;
+                    spineNode.y = -(bnd.offY + bnd.szY / 2) * scale;
+                }
+                skeleton.setAnimation(0, 'animation', false);
+                skeleton.setCompleteListener(() => {
+                    this._stopCriticalHitSpine();
+                    if (cc.isValid(parent)) parent.active = false;
+                });
+                spineNode.opacity = 255;
+            }, 0);
+            this._criticalHitSpineNode = spineNode;
+        };
+
+        if (this._criticalHitSpineData) {
+            create(this._criticalHitSpineData);
+            return;
+        }
+        AssetManager.getOrLoad(BUNDLE_RESOURCES, MorePlayTypeInfo.CRITICAL_HIT_SPINE_PATH, sp.SkeletonData)
+            .then((data: sp.SkeletonData) => {
+                if (!data) {
+                    if (cc.isValid(parent)) parent.active = false;
+                    return;
+                }
+                this._criticalHitSpineData = data;
+                create(data);
+            })
+            .catch((e: any) => {
+                cc.warn('[MorePlayTypeInfo] 加载暴击 Spine 失败', e && e.message);
+                if (cc.isValid(parent)) parent.active = false;
+            });
+    }
+
+    private _stopCriticalHitSpine(): void {
+        if (this._criticalHitSpineNode) {
+            if (this._criticalHitSpineNode.isValid) this._criticalHitSpineNode.destroy();
+            this._criticalHitSpineNode = null;
         }
     }
 
