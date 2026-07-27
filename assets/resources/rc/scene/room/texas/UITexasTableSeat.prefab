@@ -2876,7 +2876,7 @@
     "_prefab": {
       "__id__": 72
     },
-    "_opacity": 99,
+    "_opacity": 150,
     "_color": {
       "__type__": "cc.Color",
       "r": 0,
@@ -3077,14 +3077,14 @@
     "_dstBlendFactor": 771,
     "_string": "弃牌",
     "_N$string": "弃牌",
-    "_fontSize": 30,
+    "_fontSize": 36,
     "_lineHeight": 40,
     "_enableWrapText": true,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_batchAsBitmap": false,
-    "_styleFlags": 0,
+    "_styleFlags": 1,
     "_underlineHeight": 0,
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
@@ -10383,12 +10383,12 @@
     "_prefab": {
       "__id__": 288
     },
-    "_opacity": 114.75,
+    "_opacity": 150,
     "_color": {
       "__type__": "cc.Color",
-      "r": 46,
-      "g": 2,
-      "b": 118,
+      "r": 0,
+      "g": 0,
+      "b": 0,
       "a": 255
     },
     "_contentSize": {
@@ -10665,7 +10665,7 @@
     "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_batchAsBitmap": false,
-    "_styleFlags": 0,
+    "_styleFlags": 1,
     "_underlineHeight": 0,
     "_N$horizontalAlign": 0,
     "_N$verticalAlign": 0,
@@ -12291,12 +12291,12 @@
     "_prefab": {
       "__id__": 344
     },
-    "_opacity": 122,
+    "_opacity": 150,
     "_color": {
       "__type__": "cc.Color",
-      "r": 128,
-      "g": 128,
-      "b": 128,
+      "r": 0,
+      "g": 0,
+      "b": 0,
       "a": 255
     },
     "_contentSize": {
@@ -12489,14 +12489,14 @@
     "_dstBlendFactor": 771,
     "_string": "等待中",
     "_N$string": "等待中",
-    "_fontSize": 32,
-    "_lineHeight": 32,
+    "_fontSize": 36,
+    "_lineHeight": 36,
     "_enableWrapText": true,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_batchAsBitmap": false,
-    "_styleFlags": 0,
+    "_styleFlags": 1,
     "_underlineHeight": 0,
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
