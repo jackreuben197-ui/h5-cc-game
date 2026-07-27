@@ -98,6 +98,11 @@ export async function Seated(data: ServerMessageSeated.AsObject, roomID: number,
             }
             if (seatedConfig.enableCamera && seatedConfig.canSwitchPowerSaving) {
                 roomData.mine.maskBtnState = seatedConfig.openPowerSaving ? ButtonState.ON : ButtonState.DISABLE;
+                mine.player.realShowMaskID = seatedConfig.openPowerSaving
+                    ? mine.player.videoMaskId == 0
+                        ? 1
+                        : mine.player.videoMaskId
+                    : 0;
             } else if (seatedConfig.enableCamera && !seatedConfig.canSwitchPowerSaving) {
                 roomData.mine.maskBtnState = ButtonState.DISABLE;
                 if (seatedConfig.openPowerSaving) {

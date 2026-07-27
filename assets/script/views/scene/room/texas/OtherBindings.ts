@@ -408,13 +408,12 @@ export default class OtherBindings extends cc.Component {
         if (!mine) return;
         // videoMaskId 循环 +1，大于4回到1
         const oldMaskId = mine.videoMaskId || 0;
+        const oldRealShowMaskID = mine.realShowMaskID;
         let newMaskId = oldMaskId + 1;
         if (newMaskId > 4) newMaskId = 1;
         // 乐观更新本地数据和窗花显示
         mine.videoMaskId = newMaskId;
-        if (mine.realShowMaskID > 0) {
-            mine.realShowMaskID = newMaskId;
-        }
+        mine.realShowMaskID = newMaskId;
         // 请求服务器广播
         try {
             const response: any = await WWW.Instance.CommonAPI({
@@ -424,21 +423,15 @@ export default class OtherBindings extends cc.Component {
             if (response?.code !== 0) {
                 // 失败回滚
                 mine.videoMaskId = oldMaskId;
-                if (mine.realShowMaskID > 0) {
-                    mine.realShowMaskID = oldMaskId;
-                }
+                mine.realShowMaskID = oldRealShowMaskID;
                 return;
             }
             //确定更换
-            if (mine.realShowMaskID > 0) {
-                mine.realShowMaskID = newMaskId;
-            }
+            mine.realShowMaskID = newMaskId;
         } catch {
             // 异常回滚
             mine.videoMaskId = oldMaskId;
-            if (mine.realShowMaskID > 0) {
-                mine.realShowMaskID = oldMaskId;
-            }
+            mine.realShowMaskID = oldRealShowMaskID;
         }
     }
 

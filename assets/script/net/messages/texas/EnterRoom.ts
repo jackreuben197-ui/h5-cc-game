@@ -289,6 +289,11 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             }
             if (seatedConfig.enableCamera && seatedConfig.canSwitchPowerSaving) {
                 roomData.mine.maskBtnState = seatedConfig.openPowerSaving ? ButtonState.ON : ButtonState.DISABLE;
+                roomData.mine.player.realShowMaskID = seatedConfig.openPowerSaving
+                    ? roomData.mine.player.videoMaskId == 0
+                        ? 1
+                        : roomData.mine.player.videoMaskId
+                    : 0;
             } else if (seatedConfig.enableCamera && !seatedConfig.canSwitchPowerSaving) {
                 roomData.mine.maskBtnState = ButtonState.DISABLE;
                 if (seatedConfig.openPowerSaving) {
