@@ -9,14 +9,20 @@ import { createLogger } from './core/decorator/LogTrace';
 import bridgeStorage from './data/BridgeStorage';
 import diamondModel from './data/trade/DiamondModel';
 import userStore from './data/user/UserStore';
+import { MTT_MATCH_ENTRY_ROOM_ID } from './game/constant/Constants';
 import ProcedureDefine from './game/procedure/ProcedureDefine';
 import ProcedureManager from './game/procedure/ProcedureManager';
 import roomReconnectManager from './game/RoomReconnectManager';
+import GameplayUtil from './game/util/GameplayUtil';
 import h5MessageManager, { EnterMttMatchInfo, EnterTableRoomInfo, SyncUserClubResponse, SyncUserInfo } from './H5MsgMgr';
 import agoraManager from './net/agora/AgoraManager';
 import ProtocolAgency from './net/websocket/ProtocolAgency';
 
 const _ploger = createLogger('[MainUtils]');
+
+const MTT_INFO_INCOMPLETE_MESSAGE = '比赛信息不完整，请返回大厅重试';
+
+const MTT_ENTRY_INVALID_MESSAGE = '比赛入口参数无效，请刷新后重试';
 // ==================== SDK 动态加载 ====================
 /**
  * 动态加载 Web 层第三方 SDK
@@ -365,6 +371,21 @@ export async function registerH5Listeners(): Promise<void> {
             const matchInfo = payload?.matchInfo as EnterMttMatchInfo | undefined;
             if (!matchInfo) {
                 _ploger.error('[H5Bridge] enterMtt 数据异常：缺少 payload.matchInfo');
+                h5MessageManager.sendToH5('showToast', 1, { type: 'danger', message: MTT_INFO_INCOMPLETE_MESSAGE });
+                return;
+            }
+            // H5 顶层参数是进桌依据，matchInfo 仅补充比赛详情并参与一致性校验。
+            const matchID = Number(payload.matchId);
+            const roomType = Number(matchInfo.type);
+            const observer = payload.isLookOn === true;
+            const roomID = observer ? Number(payload.roomId) : MTT_MATCH_ENTRY_ROOM_ID;
+            const matchInfoID = Number(matchInfo.match_id);
+            const invalidMatchID = !Number.isFinite(matchID) || matchID <= 0 || !Number.isFinite(matchInfoID) || matchInfoID != matchID;
+            const invalidRoomType = !Number.isFinite(roomType) || !GameplayUtil.RoomTypeExtract(roomType).isMTT;
+            const invalidObserverRoom = observer && (!Number.isFinite(roomID) || roomID <= 0);
+            if (invalidMatchID || invalidRoomType || invalidObserverRoom) {
+                _ploger.error('[H5Bridge] enterMtt 数据异常', { matchID, roomType, roomID, observer });
+                h5MessageManager.sendToH5('showToast', 1, { type: 'danger', message: MTT_ENTRY_INVALID_MESSAGE });
                 return;
             }
             //const enterPram = { game_enter_type: GameEnterType.MTT, isLookOn: false };
@@ -379,12 +400,12 @@ export async function registerH5Listeners(): Promise<void> {
             // GameCache.Instance.serviceId = String(payload.websocketPort);
             // === 6. 启动进入牌桌流程，同时后台加载资源 ===
             await ProcedureManager.StartProcedure(ProcedureDefine.EnterRoom, {
-                roomID: 0,
-                matchID: matchInfo.match_id,
-                roomType: matchInfo.type,
-                observer: false
+                roomID,
+                matchID,
+                roomType,
+                observer
             });
-            _ploger.info('[H5Bridge] enterMtt 缓存完成, matchId', ',开始进入mtt');
+            _ploger.info('[H5Bridge] enterMtt 参数校验完成，开始进入 MTT', matchID, roomID, observer);
         });
     }
     // ─── 网络消息转发 ─────────────────────────────────

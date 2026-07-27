@@ -1,5 +1,7 @@
-import { traceClass } from '../../core/decorator/LogTrace';
+import { createLogger, traceClass } from '../../core/decorator/LogTrace';
 import RoomData from './RoomData';
+
+const _plog = createLogger('RoomDataManager');
 
 @traceClass()
 class RoomDataManager {
@@ -43,10 +45,45 @@ class RoomDataManager {
         this._roomCache.set(key, data);
     }
 
+    public findRoomDataByMatchID<T extends RoomData>(matchID: number): T | null {
+        // 全局 MTT 推送没有固定 roomID，按比赛 ID 定位当前牌桌。
+        let result: T | null = null;
+        let matchedCount = 0;
+        this._roomCache.forEach(data => {
+            if (data.matchID == matchID) {
+                matchedCount++;
+                result = data as T;
+            }
+        });
+        if (matchedCount > 1) {
+            _plog.error('同一 matchID 存在多个 RoomData', matchID, matchedCount);
+        }
+        return result;
+    }
+
+    public moveRoomData(oldRoomID: number, newRoomID: number, matchID: number): RoomData | null {
+        // 换桌时只迁移缓存键，复用同一份 RoomData 保持 UI 订阅不变。
+        const data = this.getRoomData(oldRoomID, matchID);
+        if (!data) {
+            _plog.error('迁移 RoomData 失败，旧房间不存在', oldRoomID, newRoomID, matchID);
+            return null;
+        }
+        this.deleteRoomData(oldRoomID, matchID);
+        data.roomID = newRoomID;
+        this.setRoomData(newRoomID, matchID, data);
+        return data;
+    }
+
     // 清理房间数据
     public deleteRoomData(roomID: number, matchID: number) {
         const key = roomID + '-' + matchID;
         this._roomCache.delete(key);
+    }
+
+    public clearAllRoomData(): void {
+        // 返回大厅时统一释放房间数据和离桌锁。
+        this._roomCache.clear();
+        this._roomLeaving.clear();
     }
 }
 

@@ -2,6 +2,7 @@ import RoomData from '../RoomData';
 import texasGamePersonalSettings from './TexasGamePersonalSettings';
 import TexasGameRoomDataBasic from './TexasGameRoomDataBasic';
 import TexasGameRoomDataChat from './TexasGameRoomDataChat';
+import TexasGameRoomDataMtt from './TexasGameRoomDataMtt';
 import TexasGameRoomDataPlayerMine from './TexasGameRoomDataPlayerMine';
 import TexasGameRoomDataPotInfo from './TexasGameRoomDataPotInfo';
 import TexasGameRoomDataPublicCards from './TexasGameRoomDataPublicCards';
@@ -29,10 +30,20 @@ export default class TexasGameRoomData extends RoomData {
     public readonly secondPcs = new TexasGameRoomDataSecondPcs();
     // 自己信息
     public readonly mine = new TexasGameRoomDataPlayerMine(this);
+    // MTT 比赛状态集中存放，消息层和 UI 不互相持有。
+    public readonly mtt = new TexasGameRoomDataMtt(this);
     // 牌桌战绩
     public readonly report = new TexasGameRoomDataReport(this);
     // 牌谱回放
     public readonly replay = new TexasGameRoomDataReplay(this);
     // 牌桌聊天
     public readonly chat = new TexasGameRoomDataChat(this);
+
+    public clearHandPresentation(): void {
+        // 只清理当前一手的桌面展示，座位、筹码和 MTT 比赛状态继续保留。
+        this.potInfo.handClear();
+        this.seatsStateManager.handClear();
+        this.publicCards.handClear();
+        this.basicInfo.handClear();
+    }
 }

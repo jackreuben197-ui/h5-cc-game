@@ -35,6 +35,8 @@ import seatPostionCaculator, { SeatPosition } from './widget/SeatPositionCaculat
 
 const { ccclass, property, menu } = cc._decorator;
 
+const MTT_TRUST_NODE_NAME = 'Image_Trust';
+
 const redColor = cc.Color.fromHEX(new cc.Color(), '#FA2B4B');
 
 const greenColor = cc.Color.fromHEX(new cc.Color(), '#78E4E4');
@@ -127,6 +129,7 @@ export default class SeatPlayer extends cc.Component {
     private _potNode: cc.Node = null!;
     // 发牌
     private _dealNode: cc.Node = null!;
+    private _trustNode: cc.Node = null;
     /** 暴露头像节点供视频渲染使用 */
     public get avatarNode(): cc.Node {
         return this.avatar.node;
@@ -178,6 +181,11 @@ export default class SeatPlayer extends cc.Component {
         this.avatar.node.on(cc.Node.EventType.TOUCH_END, this._clickPlayerInfo, this);
         this.insuranceCountdownBubble.node.active = false;
         this.returnToGameButton.node.on('click', this._clickReturnToGame, this);
+        // 旧 prefab 已有托管图标，运行时绑定服务端托管状态。
+        this._trustNode = this._findNode(this.node, MTT_TRUST_NODE_NAME);
+        if (this._trustNode) {
+            this._trustNode.active = false;
+        }
     }
 
     protected onEnable(): void {
@@ -383,6 +391,14 @@ export default class SeatPlayer extends cc.Component {
         this.chips.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(chip);
     }
 
+    @bindEvent(TexasGameRoomDataPlayer.AUTO_OP_CHANGE, 'player')
+    private onAutoOpChanged(enabled: boolean): void {
+        // 托管状态变化只控制当前座位的图标显示。
+        if (this._trustNode) {
+            this._trustNode.active = enabled;
+        }
+    }
+
     @bindEvent(TexasGamePersonalSettings.SHOW_BB, { dataSource: 'setting', initPriority: 99 })
     private onUpdateShowBB(b: number) {
         this.chips.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(this._seatPlayer.chip);
@@ -427,6 +443,16 @@ export default class SeatPlayer extends cc.Component {
     @bindEvent(TexasGameRoomDataBasic.SQUID_ENABLED, 'basic')
     private onRefreshSquidMask(): void {
         this.squidMaskNode.active = this._seatPlayer.squidIn && this._seatPlayer.squidCount == 0;
+    }
+
+    private _findNode(root: cc.Node, name: string): cc.Node | null {
+        if (!root) return null;
+        if (root.name == name) return root;
+        for (const child of root.children) {
+            const result = this._findNode(child, name);
+            if (result) return result;
+        }
+        return null;
     }
     // =================== 鱿鱼 （END） ====================
 

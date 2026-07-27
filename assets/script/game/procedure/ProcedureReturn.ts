@@ -1,4 +1,5 @@
 import soundManager from '../../core/SoundManager';
+import roomDataManager from '../../data/room/RoomDataManager';
 import { default as h5MessageManager, default as H5MsgMgr, H5NavigatePayload } from '../../H5MsgMgr';
 import agoraManager from '../../net/agora/AgoraManager';
 import viewManager from '../../views/UIViewManager';
@@ -19,6 +20,8 @@ export default class ProcedureReturn extends ProcedureBase {
     override lateEnter(param: ProcedureReturnNavigateParam) {
         // 主动离桌 / 被踢 / 服务端关闭都会归到这里，统一清掉重连上下文
         roomReconnectManager.clearAllContext();
+        // 返回大厅后不保留旧 MTT 的动态状态和事件订阅源。
+        roomDataManager.clearAllRoomData();
         soundManager.volumeOnOff(false);
         viewManager.hideCurrentScene();
         viewManager.showPreloadingLayer();

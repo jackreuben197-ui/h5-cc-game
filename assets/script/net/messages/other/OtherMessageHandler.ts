@@ -21,6 +21,7 @@ import { JoinMatching } from './JoinMatching';
 import { LimitHandNumber } from './LimitHandNumber';
 import { MatchingResult } from './MatchingResult';
 import { MttAwardNotify } from './MttAwardNotify';
+import { MttBreak } from './MttBreak';
 import { MttDetail } from './MttDetail';
 import { MttReadyForApply } from './MttReadyForApply';
 import { MttSeriesNotify } from './MttSeriesNotify';
@@ -249,6 +250,10 @@ export default class OtherMessageHandler {
             case Code.MSG_S_MTT_SERIES_NOTIFY:
                 MttSeriesNotify(data, roomID, matchID);
                 break; // MttSeriesNotify 153
+            case Code.MSG_S_MTT_BREAK:
+                // MTT 休息推送写入 RoomData，由牌桌浮层订阅展示。
+                MttBreak(data, roomID, matchID);
+                break; // MttBreak 154
             case Code.MSG_S_UTIL_FACE_RECOGNIZE:
                 FaceRecognize(data, roomID, matchID);
                 break; // FaceRecognize 901

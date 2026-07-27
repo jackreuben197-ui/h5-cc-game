@@ -125,6 +125,8 @@ export function Winner(data: ServerMessageWinner.AsObject, roomID: number, match
     } else {
         roomData.mine.showViewPublicCardsButton = false;
     }
+    // Winner 的牌型、亮牌和高亮处理结束后再通知 MTT，避免休息清理后被本消息重新写回。
+    roomData.mtt.handleHandEnd();
 }
 
 function canShowMineSettlementButtons(roomData: TexasGameRoomData, mineResult: Result.AsObject | undefined): boolean {

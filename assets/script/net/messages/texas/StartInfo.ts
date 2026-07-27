@@ -19,6 +19,8 @@ const _plog = createLogger('ServerMessageStartInfo');
 // StartInfo 1103
 export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number, matchID: number) {
     let roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
+    // 新一手开始时立即隐藏可能等待展示的休息浮层。
+    roomData.mtt.handleHandStart();
     roomData.basicInfo.gameStatus = Def.GameStatus.HAND_PREFLOP;
     // 战绩面板：第一次 StartInfo 时补写开桌时间（对应 Unity TexasSituationController.OnStartInfo）
     roomData.report.applyStartInfo();

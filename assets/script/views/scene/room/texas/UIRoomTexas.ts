@@ -20,6 +20,7 @@ import TexasTableEvent from './events/TexasTableEvent';
 import InsuranceOperation from './InsuranceOperation';
 import JackpotFeature from './JackpotFeature';
 import MorePlayTypeInfo from './MorePlayTypeInfo';
+import MttTableStateView from './MttTableStateView';
 import OtherBindings from './OtherBindings';
 import PotsInfo from './PotsInfo';
 import PublicCardsInfo from './PublicCardsInfo';
@@ -83,6 +84,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     @property({ type: cc.Button, displayName: '带入筹码按钮右上角' })
     private bringInButton: cc.Button = null;
     private _roomData: TexasGameRoomData = null;
+    private _mttTableStateView: MttTableStateView = null;
 
     protected onLoad(): void {
         //菜单项
@@ -101,6 +103,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         // bring in
         this.bringInButton.node.on('click', this.onClickBringIn, this);
         this._setChatAlertVisible(false);
+        // MTT 状态组件复用现有牌桌节点，无需在 prefab 增加脚本引用。
+        this._mttTableStateView = this.node.addComponent(MttTableStateView);
     }
 
     private onClickBringIn() {
@@ -162,6 +166,10 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         TexasReportEvent.PrefetchRoomers(param.roomID, param.matchID);
         this._otherBindings.initData(param.roomID, param.matchID);
         this.jackpotFeature.initData(param.roomID, param.matchID);
+        if (roomData.basicInfo.isMtt) {
+            // 仅 MTT 房间绑定比赛状态和共用倒计时浮层。
+            this._mttTableStateView.initialize(roomData);
+        }
         //展示介绍对话框
         await this._showSquidIntroDialog(roomData);
         await this._showMushroomIntroDialog(roomData);
@@ -203,6 +211,11 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     //(优先于seated执行保证展示正确)
     @bindEvent(TexasGameRoomDataPlayerMine.SEATNO_CHANGED, 'mine')
     private onUpdateSeated(seatNo: number) {
+        if (this._roomData?.basicInfo.isMtt) {
+            // MTT 使用增购按钮，不显示普通桌带入按钮。
+            this.bringInButton.node.active = false;
+            return;
+        }
         if (seatNo == 0) {
             this.bringInButton.node.active = false;
             return;

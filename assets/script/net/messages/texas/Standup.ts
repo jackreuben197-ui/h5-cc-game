@@ -18,4 +18,8 @@ export function Standup(data: ServerMessageStandup.AsObject, roomID: number, mat
         mine.clearData();
     }
     seatData.clearData();
+    if (matchID > 0) {
+        // 站起后重算 MTT 增购和托管按钮状态。
+        roomData.mtt.refresh();
+    }
 }

@@ -51,6 +51,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public static readonly VIDEO_MASK_CHANGE = 'VIDEO_MASK_CHANGE';
     public static readonly REMOTE_VIDEO_VISIBLE_CHANGE = 'REMOTE_VIDEO_VISIBLE_CHANGE';
     public static readonly MICROPHONE_ICON_STATE_CHANGE = 'MICROPHONE_ICON_STATE_CHANGE';
+    public static readonly AUTO_OP_CHANGE = 'AUTO_OP_CHANGE';
     private _parentRoomData: TexasGameRoomData;
     public get roomData() {
         return this._parentRoomData;
@@ -69,6 +70,8 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     }
     public roundActioned: boolean;
     public deposit: number = 0;
+    // MTT 托管状态变化直接通知座位和操作 UI。
+    @observable(TexasGameRoomDataPlayer.AUTO_OP_CHANGE)
     public isAuto: boolean = false;
     public vip: boolean = false;
     public subscriptionID: number = 0; // 订阅/会员ID
@@ -182,6 +185,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
         this.squidEscaped = false;
         this.videoMaskId = 0;
         this.realShowMaskID = 0;
+        this.isAuto = false;
         this.unmuteEvents();
         // this.emit(TexasGameRoomDataPlayer.EMPTY_SEAT);
     }
