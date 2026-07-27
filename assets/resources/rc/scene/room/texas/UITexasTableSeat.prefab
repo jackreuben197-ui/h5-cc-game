@@ -274,14 +274,7 @@
     "_parent": {
       "__id__": 1
     },
-    "_children": [
-      {
-        "__id__": 7
-      },
-      {
-        "__id__": 358
-      }
-    ],
+    "_children": [],
     "_active": false,
     "_components": [
       {

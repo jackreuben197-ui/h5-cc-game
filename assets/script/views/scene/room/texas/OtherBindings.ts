@@ -213,8 +213,8 @@ export default class OtherBindings extends cc.Component {
             this.btnCameratIcon.changeSpriteFrame(0);
             if (this._roomData.basicInfo.antiCheatConfig.getSeatedSetting().canSwitchPowerSaving) {
                 this._roomData.mine.player.realShowMaskID = this._roomData.mine.player.videoMaskId == 0 ? 1 : this._roomData.mine.player.videoMaskId;
+                this._roomData.mine.maskBtnState = ButtonState.ON;
             }
-            this._roomData.mine.maskBtnState = ButtonState.ON;
         } else {
             muted = true;
             this.btnCameratIcon.changeSpriteFrame(1);
