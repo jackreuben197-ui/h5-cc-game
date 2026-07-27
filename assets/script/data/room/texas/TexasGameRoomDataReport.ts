@@ -131,6 +131,7 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
     public squidRoundMode: TexasReportRoundMode | null = null;
     /** 标记 Roomers 是否已经从服务端拉过一次。面板根据它决定是否要等首屏数据。 */
     public roomersFetched: boolean = false;
+    public roomersLoading: boolean = false;
     // 空数组也算拉取成功，记下来后重新打开就不会一直重复请求。
     public jackpotFetched: boolean = false;
     public insuranceFetched: boolean = false;
@@ -145,6 +146,7 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
 
     /** 用 Roomers 推送整表覆盖。匹配 Unity TexasSituationController.HandleRoomersResponse。 */
     public applyRoomers(data: ServerMessageRoomers.AsObject): void {
+        this.roomersLoading = false;
         this.roomersFetched = true;
         const mushroomBase = this._roomData.basicInfo.mushroomBase || 0;
         const next: TexasReportPlayerInfo[] = (data.playersList || []).map(p => this._fromSummary(p, mushroomBase));
@@ -367,6 +369,7 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
         this.insuranceRecords = [];
         this.squidRounds = new Map();
         this.squidRoundMode = null;
+        this.roomersLoading = false;
         this.roomersFetched = false;
         this.jackpotFetched = false;
         this.insuranceFetched = false;
