@@ -5357,6 +5357,9 @@
     "_components": [
       {
         "__id__": 136
+      },
+      {
+        "__id__": 434
       }
     ],
     "_prefab": {
@@ -5433,7 +5436,7 @@
     "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_batchAsBitmap": false,
-    "_styleFlags": 4,
+    "_styleFlags": 0,
     "_underlineHeight": 0,
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
@@ -5465,6 +5468,9 @@
     "_components": [
       {
         "__id__": 139
+      },
+      {
+        "__id__": 435
       }
     ],
     "_prefab": {
@@ -5573,6 +5579,9 @@
     "_components": [
       {
         "__id__": 142
+      },
+      {
+        "__id__": 436
       }
     ],
     "_prefab": {
@@ -15859,6 +15868,9 @@
     "_components": [
       {
         "__id__": 421
+      },
+      {
+        "__id__": 437
       }
     ],
     "_prefab": {
@@ -16263,5 +16275,49 @@
     },
     "fileId": "",
     "sync": false
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 135
+    },
+    "_enabled": true,
+    "i18n_string": "UIData_BtnData",
+    "_id": ""
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 138
+    },
+    "_enabled": true,
+    "i18n_string": "adaptation30074",
+    "_id": ""
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 141
+    },
+    "_enabled": true,
+    "i18n_string": "OpCodeString_USERDIAMONDGIVE",
+    "_id": ""
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 420
+    },
+    "_enabled": true,
+    "i18n_string": "UIMine_ZSYE",
+    "_id": ""
   }
 ]
