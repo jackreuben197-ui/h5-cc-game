@@ -36,14 +36,15 @@ export default class TexasReportEvent {
     private static readonly INSURANCE_HISTORY_LIMIT = 200;
 
     // 进桌先把完整玩家名单拉回来，打开面板时就不用干等。
-    public static PrefetchRoomers(roomID: number, matchID: number): void {
-        if (!roomID) return;
+    public static PrefetchRoomers(roomData: TexasGameRoomData, force: boolean = false): void {
+        if (!roomData?.roomID || roomData.report.roomersLoading || (!force && roomData.report.roomersFetched)) return;
+        roomData.report.roomersLoading = true;
         ProtocolAgency.Send({
             code: Code.MSG_D_ROOMERS,
-            roomID,
-            matchID,
+            roomID: roomData.roomID,
+            matchID: roomData.matchID,
             body: {
-                room: { roomId: roomID, matchId: matchID },
+                room: { roomId: roomData.roomID, matchId: roomData.matchID },
                 history: true,
                 historyOffset: 0,
                 historyLimit: this.ROOMERS_HISTORY_LIMIT
