@@ -54,8 +54,22 @@ export function LeaveNotification(data: ServerMessageLeaveNotification.AsObject,
                     ProcedureManager.StartProcedure(ProcedureDefine.Return, param);
                     break;
                 }
-                ProcedureManager.StartProcedure(ProcedureDefine.Return);
+                // MTT 正常结束交给 H5 结算面板展示最终结果。
+                roomData.mtt.requestSettlement(false);
             }
+            break;
+        case Def.LeaveReason.LR_NOCHIP:
+            // 淘汰后根据存储筹码和重购资格决定重新进桌或展示结算。
+            roomData.mtt.updateLeaveState(data.storeChips, data.rebuyTimes);
+            if (data.storeChips > 0) {
+                roomData.mtt.requestReenter();
+                break;
+            }
+            roomData.mtt.requestSettlement(roomData.mtt.canRebuy(data.accountChips));
+            break;
+        case Def.LeaveReason.LR_EXCHANGE:
+            // 服务端随后通过 101 通知真实目标 roomID。
+            roomData.mtt.setTableTransferWaiting(true);
             break;
         case Def.LeaveReason.LR_AUTO_EXCEED_MAX_TIMES: // 超过最大自动操作次数限制
         case Def.LeaveReason.LR_FORCE: // 强制退出

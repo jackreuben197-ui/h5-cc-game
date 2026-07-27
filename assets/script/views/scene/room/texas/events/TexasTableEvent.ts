@@ -34,8 +34,50 @@ import ProtocolAgency from '../../../../../net/websocket/ProtocolAgency';
 import { BringInCommitFn } from '../../../../dialog/bringin/provider/BringInProvider';
 import viewManager from '../../../../UIViewManager';
 
+const MTT_DEFAULT_ADD_ON_RATIO = 1;
+
+const MTT_NO_PROP_ID = 0;
+
+const MTT_NO_PROP_TYPE = 0;
+
 @traceClass()
 export default class TexasTableEvent {
+    public static MttAddOn(roomData: TexasGameRoomData): void {
+        const mode = roomData.mtt.currentAddOnMode;
+        if (!roomData.mtt.beginAddOn(mode)) {
+            TexasTableEvent.tracelog.warn('当前 MTT 状态不允许增购', roomData.roomID, roomData.matchID, mode);
+            return;
+        }
+        // 增购请求参数取自 RoomData，默认不使用道具或免费次数。
+        ProtocolAgency.Send({
+            code: Code.MSG_D_ADD_ON,
+            roomID: roomData.roomID,
+            matchID: roomData.matchID,
+            body: {
+                room: { roomId: roomData.roomID, matchId: roomData.matchID },
+                useProp: false,
+                ratio: MTT_DEFAULT_ADD_ON_RATIO,
+                mode,
+                usedPropId: MTT_NO_PROP_ID,
+                propType: MTT_NO_PROP_TYPE,
+                useFree: false
+            }
+        });
+    }
+
+    public static MttSetAutoOp(roomData: TexasGameRoomData, enable: boolean): void {
+        // 托管开关由服务端确认，回包再更新 RoomData 和 UI。
+        ProtocolAgency.Send({
+            code: Code.MSG_D_AUTO_OP_ACTIVE,
+            roomID: roomData.roomID,
+            matchID: roomData.matchID,
+            body: {
+                room: { roomId: roomData.roomID, matchId: roomData.matchID },
+                enable
+            }
+        });
+    }
+
     public static OpenPlayerInfo(player: TexasGameRoomDataPlayer): void {
         if (!player?.userID || !player.roomData) return;
         viewManager.openDialog('PlayerInfo', {

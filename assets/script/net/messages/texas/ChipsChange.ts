@@ -45,4 +45,8 @@ export function ChipsChange(data: ServerMessageChipsChange.AsObject, roomID: num
                 break;
         }
     });
+    if (matchID > 0) {
+        // 筹码变化会影响增购按钮条件，通知 MTT UI 重算。
+        roomData.mtt.refresh();
+    }
 }

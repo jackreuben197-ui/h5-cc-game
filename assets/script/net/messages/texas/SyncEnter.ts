@@ -26,12 +26,13 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
         _plog.error('no store room data', roomID, matchID);
         return;
     }
-    const myseat = data.myInfo.seatId;
+    const myseat = data.myInfo?.seatId || 0;
     const seatCount = roomData.seatsStateManager.seatsCount;
     const myOp = myseat > 0 && data.operatorList.filter(v => v.seatId == myseat && !v.isAgreeSecondPc && !v.isInsurance).length > 0;
     const defaultHandCards = new Array(roomData.basicInfo.handCardNum).fill(0);
     roomData.basicInfo.sbante = { sb: data.roomInfo.smallBlind, ante: data.roomInfo.ante };
     if (matchID > 0) {
+        roomData.mtt.applySnapshot(data.mttInfo, data.mttProgress, data.myInfo);
         //已经设置过了
         const sbante = roomData.basicInfo.sbante;
         if (data.mttProgress) {
@@ -53,6 +54,10 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
     }
     roomData.basicInfo.roomUniqueID = data.roomInfo.uniqueId || '';
     roomData.basicInfo.gameStatus = data.gameStatus;
+    if (matchID > 0) {
+        // 重连快照必须同步当前手牌状态，避免休息浮层误判为空闲。
+        roomData.mtt.syncHandState(data.gameStatus);
+    }
     roomData.basicInfo.deposit = data.roomInfo.deposit;
     roomData.basicInfo.squidTotalLimit = data.roomInfo.squidTotalLimit;
     roomData.basicInfo.opDuration = data.roomInfo.opDuration;

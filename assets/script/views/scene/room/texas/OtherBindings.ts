@@ -8,6 +8,7 @@ import ccviewData, { CCViewData } from '../../../../data/system/CCViewData';
 import { AntiCheatType } from '../../../../game/constant/AntiCheatType';
 import { ButtonState } from '../../../../game/constant/Constants';
 import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconState';
+import h5MessageManager from '../../../../H5MsgMgr';
 import agoraManager from '../../../../net/agora/AgoraManager';
 import { WebUserSetVideoMask, WWW } from '../../../../net/https/WebRequest';
 import viewManager from '../../../UIViewManager';
@@ -17,6 +18,8 @@ import TexasTableEvent from './events/TexasTableEvent';
 import menuItemCaculator, { MenuItemLayout, MenuItemLayoutType } from './widget/MenuItemCaculator';
 
 const { ccclass, property, menu } = cc._decorator;
+
+const MTT_RECORD_PANEL = 'mttRecord';
 
 @ccclass
 @menu('Scene/Room/Texas/OtherBindings')
@@ -452,6 +455,17 @@ export default class OtherBindings extends cc.Component {
     }
 
     private onClickReport = () => {
+        if (this._roomData.basicInfo.isMtt) {
+            // MTT 实时战况由 H5 复用大厅的排名、牌桌和奖励面板。
+            h5MessageManager.sendToH5('showPanel', 1, {
+                panelType: MTT_RECORD_PANEL,
+                props: {
+                    matchId: this._roomData.matchID,
+                    tournamentName: this._roomData.mtt.matchName || this._roomData.basicInfo.roomName
+                }
+            });
+            return;
+        }
         const mine = this._roomData.mine;
         viewManager.openDialog('TexasReport', {
             roomID: mine.roomData.roomID,

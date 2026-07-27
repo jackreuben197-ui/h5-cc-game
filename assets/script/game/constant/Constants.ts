@@ -45,6 +45,9 @@ export enum MttPlayerStatus {
     CANNOT_JOIN_OVERTIME
 }
 
+// MTT 以比赛维度进桌时，roomID=0 表示由服务端分配真实牌桌。
+export const MTT_MATCH_ENTRY_ROOM_ID = 0;
+
 export enum GamePlaySubType {
     NONE = 0,
     MUSH = 1,

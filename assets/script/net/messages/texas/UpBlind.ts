@@ -11,6 +11,8 @@ export function UpBlind(data: ServerMessageUpBlind.AsObject, roomID: number, mat
         ante: data.ante
     };
     if (data.mttProgress) {
+        // 升盲进度先写 MTT RoomData，再更新牌桌盲注显示。
+        roomData.mtt.applyProgress(data.mttProgress);
         if (data.mttProgress.blindLevel > 0 && data.mttProgress.upBlindLeftTime == 0) {
             roomData.basicInfo.updateMttUpblind(0, sbante, null);
         }

@@ -24,6 +24,8 @@ export default class OpCodeHelper {
         Code.MSG_S_UP_BLIND,
         Code.MSG_S_NEXT_CHANGE,
         Code.MSG_D_ADD_ON,
+        // MTT 休息时序问题需要保留完整协议日志。
+        Code.MSG_S_MTT_BREAK,
         Code.MSG_S_PUBLIC_CARDS
     ];
 

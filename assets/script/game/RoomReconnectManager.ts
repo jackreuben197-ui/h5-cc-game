@@ -4,6 +4,7 @@ import roomDataManager from '../data/room/RoomDataManager';
 import TexasGameRoomData from '../data/room/texas/TexasGameRoomData';
 import ProtocolAgency from '../net/websocket/ProtocolAgency';
 import viewManager from '../views/UIViewManager';
+import { MTT_MATCH_ENTRY_ROOM_ID } from './constant/Constants';
 import ProcedureDefine from './procedure/ProcedureDefine';
 import { ProcedureEnterRoomParam } from './procedure/ProcedureEnterRoom';
 import ProcedureManager from './procedure/ProcedureManager';
@@ -58,6 +59,13 @@ class RoomReconnectManager {
     /** 主动离开某个房间可能需要，就是离开房间A，直接跳到房间B，目前用不到 */
     public clearContext(roomID: number, matchID: number): void {
         this._removeContext(roomID, matchID);
+        this._updatePromptingForVisible();
+    }
+
+    public replaceContext(oldRoomID: number, newRoomID: number, matchID: number): void {
+        // 换桌后同步替换重连键，避免继续请求旧牌桌。
+        this._removeContext(oldRoomID, matchID);
+        this.addContext({ roomID: newRoomID, matchID });
         this._updatePromptingForVisible();
     }
 
@@ -189,10 +197,21 @@ class RoomReconnectManager {
         if (ctx.failedCount >= RoomReconnectManager.MAX_FAILED_COUNT) {
             this.tracelog.warn('reconnect retries exhausted, drop context', roomID, matchID, ctx.failedCount);
             const wasVisible = this._isVisibleRoom(roomID, matchID);
+            const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
             this._removeContext(roomID, matchID);
             if (wasVisible) {
-                // 当前可见房间已无法恢复, 直接归到 Return 流程
                 viewManager.hidePrompting();
+                if (roomData?.basicInfo.isMtt) {
+                    // MTT 房间失效后按比赛维度重新向服务端申请当前牌桌。
+                    roomDataManager.deleteRoomData(roomID, matchID);
+                    ProcedureManager.RestartEnterRoom({
+                        roomID: MTT_MATCH_ENTRY_ROOM_ID,
+                        matchID,
+                        roomType: roomData.basicInfo.roomType,
+                        observer: roomData.mtt.observer
+                    });
+                    return;
+                }
                 ProcedureManager.StartProcedure(ProcedureDefine.Return);
                 return;
             }
