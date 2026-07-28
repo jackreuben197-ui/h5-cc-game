@@ -309,6 +309,7 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
 
     public clearData() {
         this.seatNo = 0;
+        this.operator = null;
         //this.muteEvents();
         this.storeChips = 0;
         this.totalChips = 0;
