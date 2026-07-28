@@ -176,6 +176,15 @@ class TexasGameRoomDataMtt extends cc.EventTarget {
         }
     }
 
+    public applyWillStart(startTime: number): void {
+        const nowSeconds = this._nowSeconds();
+        // 首位玩家进桌快照可能还没有倒计时，107 推送用绝对开赛时间补齐。
+        this.startCountDown = Math.max(0, startTime - nowSeconds);
+        this._startCountDownDeadline = startTime;
+        this.gameStarted = this.startCountDown <= 0;
+        this._change();
+    }
+
     public get remainRebuyTimes(): number {
         return Math.max(0, this.rebuyTimes - this.usedRebuyTimes);
     }

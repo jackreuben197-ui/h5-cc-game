@@ -22,6 +22,8 @@ export default class OpCodeHelper {
         Code.MSG_D_ADD_TIME,
         Code.MSG_D_SYNC_ENTER,
         Code.MSG_S_UP_BLIND,
+        // 首位玩家依赖 107 补齐开赛倒计时，保留日志便于核对协议时序。
+        Code.MSG_S_NOTIFICATION_MTT_WILL_START,
         Code.MSG_S_NEXT_CHANGE,
         Code.MSG_D_ADD_ON,
         // MTT 休息时序问题需要保留完整协议日志。
