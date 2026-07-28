@@ -16,6 +16,7 @@ import UIViewUtil from '../../../util/UIViewUtil';
 import SpriteSwitcher from '../../../widget/SpriteSwitcher';
 import TexasTableEvent from './events/TexasTableEvent';
 import menuItemCaculator, { MenuItemLayout, MenuItemLayoutType } from './widget/MenuItemCaculator';
+import { i18nMgr } from '../../../../i18n/i18nMgr';
 
 const { ccclass, property, menu } = cc._decorator;
 
@@ -440,7 +441,10 @@ export default class OtherBindings extends cc.Component {
 
     private onClickBtnEmoji(): void {
         const mine = this._roomData.mine;
-        if (!mine || !mine.player || mine.player.seatNo == 0) return;
+        if (!mine || !mine.player || mine.player.seatNo == 0) {
+            viewManager.showToast(i18nMgr.Get('adaptation10016'));
+            return;
+        }
         viewManager.openDialog('Emoji', {
             roomID: mine.roomData.roomID,
             matchID: mine.roomData.matchID
