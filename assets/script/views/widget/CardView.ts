@@ -15,6 +15,9 @@ export default class CardView extends cc.Component {
     private highLightSprite: cc.Node = null;
     @property(cc.Node)
     private grayLayer: cc.Node = null;
+    @property(cc.Material)
+    private cardBackMaterial: cc.Material = null;
+    private _defaultMaterial: cc.Material = null;
     // 将原本的属性改为私有变量，作为存取器的内部数据载体
     private _cardNum: number = 0;
     public get cardNum(): number {
@@ -22,6 +25,8 @@ export default class CardView extends cc.Component {
     }
     public set cardNum(value: number) {
         if (this._cardNum == value) {
+            // Prefab 中是占位牌面；首次收到 0 时也要真正切到牌背资源和专用材质。
+            this.refreshCardView(texasGamePersonalSettings.pokerCardType);
             return;
         }
         this._cardNum = value;
@@ -36,7 +41,9 @@ export default class CardView extends cc.Component {
      * Cocos 生命周期：节点加载时调用
      */
     protected onLoad(): void {
-        // 初始化时根据当前的 cardNum 刷新一次外观
+        if (this.cardSprite) {
+            this._defaultMaterial = this.cardSprite.getMaterial(0) || cc.Material.getBuiltinMaterial('2d-sprite');
+        }
     }
 
     protected onEnable(): void {
@@ -90,6 +97,7 @@ export default class CardView extends cc.Component {
         if (sf) {
             if (this.cardSprite) {
                 this.cardSprite.spriteFrame = sf;
+                this.refreshMaterial();
             }
         } else {
             // 过滤非运行状态，只有在游戏实际运行且节点有效时才抛出资源缺失错误，避免卡死编辑器
@@ -97,6 +105,15 @@ export default class CardView extends cc.Component {
                 console.error(`[CardView] 未能成功获取到 cardNum 为 ${this._cardNum} 的 SpriteFrame 指针`);
             }
         }
+    }
+
+    private refreshMaterial(): void {
+        if (!this.cardSprite) return;
+        const material =
+            this._cardNum == 0 && this.cardBackMaterial
+                ? this.cardBackMaterial
+                : this._defaultMaterial || cc.Material.getBuiltinMaterial('2d-sprite');
+        this.cardSprite.setMaterial(0, material);
     }
 
     /**
