@@ -3,12 +3,14 @@ import { autoBindEvents, bindEvent, unBindEvents, unBindEventsAll } from '../../
 import { traceClass } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
+import TexasGameRoomDataMtt from '../../../../data/room/texas/TexasGameRoomDataMtt';
 import TexasGameRoomDataPlayer from '../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import ccviewData, { CCViewData } from '../../../../data/system/CCViewData';
 import { SquidMode } from '../../../../game/constant/Squid';
 import h5MessageManager from '../../../../H5MsgMgr';
 import { StringHelper } from '../../../../helper/StringHelper';
+import { i18nLabel } from '../../../../i18n/i18nLabel';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
 import viewManager from '../../../UIViewManager';
 import SwitchNode from '../../../widget/SwitchNode';
@@ -66,13 +68,19 @@ export default class UITexasMenu extends cc.Component {
     @property({ type: cc.Node, displayName: '菜单触摸阻挡节点' })
     $block: cc.Node = null;
     private _roomData: TexasGameRoomData = null!;
+    private _halfLeaveI18nLabel: i18nLabel = null!;
+    private _halfLeaveTextLabel: cc.Label = null!;
 
     protected onLoad(): void {
+        this._halfLeaveI18nLabel = this.btnHalfLeave.node.getComponentInChildren(i18nLabel);
+        this._halfLeaveTextLabel = this.btnHalfLeave.node.getComponentInChildren(cc.Label);
         this.regiterTouchEvents();
     }
 
-    initData(roomID: number, matchID: number) {
+    public initData(roomID: number, matchID: number): void {
         this._roomData = roomDataManager.getRoomData(roomID, matchID);
+        // 同一菜单 prefab 同时服务普通桌和 MTT，初始化时先恢复对应玩法的静态菜单项。
+        this._applyRoomTypeMenu();
         this.fadeOut(false);
         this._bindEventsAndRefresh();
     }
@@ -109,13 +117,28 @@ export default class UITexasMenu extends cc.Component {
     private _bindEventsAndRefresh() {
         // 统一激活绑定，注入强类型 tag 推导过滤机制
         if (!this._roomData) return;
-        autoBindEvents(this, { mine: this._roomData.mine, player: this._roomData.mine.player, ccviewData: ccviewData });
+        autoBindEvents(this, {
+            mine: this._roomData.mine,
+            player: this._roomData.mine.player,
+            mtt: this._roomData.mtt,
+            ccviewData: ccviewData
+        });
     }
 
     //(优先于seated执行保证展示正确)
     @bindEvent(TexasGameRoomDataPlayerMine.SEATNO_CHANGED, 'mine')
     private onUpdateSeated(seatNo: number) {
         const isDissolve = false; //gc._isRoomManager && gc._isHasDisbandRoomPrivileges;
+        if (this._roomData.basicInfo.isMtt) {
+            if (seatNo > 0) {
+                autoBindEvents(this, { player: this._roomData.mine.player });
+            } else {
+                unBindEvents(this, 'player');
+            }
+            // MTT 没有站起、补充筹码和留座离桌，只按参赛及托管状态显示托管入口。
+            this._refreshMttMenu();
+            return;
+        }
         this.btnInsure.node.active = this._roomData.basicInfo.hasInsurance;
         this.storeNode.active = seatNo > 0 && this._roomData.basicInfo.retainType !== RoomInfo.RetainType.RT_DISABLE;
         if (seatNo > 0) {
@@ -142,12 +165,30 @@ export default class UITexasMenu extends cc.Component {
         this._refreshBringOutButton();
     }
 
+    @bindEvent(TexasGameRoomDataPlayer.AUTO_OP_CHANGE, 'player')
+    private onMttAutoOpChanged(): void {
+        if (this._roomData.basicInfo.isMtt) {
+            this._refreshMttMenu();
+        }
+    }
+
+    @bindEvent(TexasGameRoomDataMtt.STATE_CHANGED, 'mtt')
+    private onMttStateChanged(): void {
+        if (this._roomData.basicInfo.isMtt) {
+            this._refreshMttMenu();
+        }
+    }
+
     @bindEvent(TexasGameRoomDataPlayerMine.STORECHIPS_CHANGE, 'mine')
     private onStoreChipsChanged(storeChips: number): void {
         this.storeTitleLabel.node.color = cc.Color.WHITE;
         this.storeTitleLabel.string = i18nMgr.Get('UITexas_storage') || '存储';
         this.storeChipsLabel.node.color = cc.Color.WHITE;
         this.storeChipsLabel.string = StringHelper.GetLongString(storeChips || 0);
+        if (this._roomData.basicInfo.isMtt) {
+            // Unity 的 MTT 菜单只在确有暂存筹码时展示存储区域。
+            this.storeNode.active = this._roomData.mine.seatNo > 0 && storeChips > 0;
+        }
     }
 
     private regiterTouchEvents() {
@@ -161,7 +202,7 @@ export default class UITexasMenu extends cc.Component {
         this.btnStand.node.on('click', this.click_stand_up, this);
         this.btnSetting.node.on('click', this.click_setting, this);
         this.btnRules.node.on('click', this.click_rule_tips, this);
-        this.btnHalfLeave.node.on('click', this.click_leave_table, this);
+        this.btnHalfLeave.node.on('click', this.onHalfLeaveClicked, this);
         this.btnBet.node.on('click', this.click_bringin, this);
         this.btnBringOut.node.on('click', this.onBringOutClicked, this);
         this.btnInsure.node.on('click', this.click_insurance, this);
@@ -374,18 +415,18 @@ export default class UITexasMenu extends cc.Component {
         this.btnBringOutLabel.node.color = enabled ? cc.Color.WHITE : cc.Color.GRAY;
     }
 
-    click_trust() {
-        // if (!this.getButtonInteractable(this.MenuButtons_Dic.Button_Trust.node)) {
-        //     return;
-        // }
-        this.click_black();
-        if (0 == this._roomData.mine.seatNo) {
-            viewManager.showToast(i18nMgr.Get('Good_luck'));
-            //Game.EventSystem.Run(EventIdType.GameErrorReconnect);
-            return;
+    private onHalfLeaveClicked(): void {
+        if (this._roomData.basicInfo.isMtt) {
+            this.click_trust();
+        } else {
+            this.click_leave_table();
         }
-        // if (this._roomData.basicInfo.mainPlayer.IsAutoOp) return;
-        // this._roomData.basicInfo.SendTrustAction(true);
+    }
+
+    private click_trust(): void {
+        this.click_black();
+        // 可点击状态已经由参赛、开赛和服务端托管状态共同控制，这里只发送托管请求。
+        TexasTableEvent.MttSetAutoOp(this._roomData, true);
     }
 
     //留座离桌
@@ -428,5 +469,35 @@ export default class UITexasMenu extends cc.Component {
 
     click_bb() {
         this.showBBSwitch.onoff(!this.showBBSwitch.isOn, true);
+    }
+
+    private _applyRoomTypeMenu(): void {
+        const isMtt = this._roomData.basicInfo.isMtt;
+        this.btnSetting.node.active = true;
+        this.btnRules.node.active = !isMtt;
+        this.btnInsure.node.active = !isMtt && this._roomData.basicInfo.hasInsurance;
+        this.btnShowBB.node.active = true;
+        this.btnLeaveGame.node.active = true;
+        if (this.btnDissolve) {
+            this.btnDissolve.node.active = false;
+        }
+        // 复用“留座离桌”的按钮和图标，MTT 下只替换为托管语义。
+        this._halfLeaveI18nLabel.i18NString = isMtt ? 'UITexas_TrustGame' : 'UITexas_LeaveTheTable';
+        this._halfLeaveTextLabel.node.color = cc.Color.WHITE;
+        this.btnHalfLeave.interactable = true;
+        this.showBBSwitch.onoff(this._roomData.setting.showBB);
+    }
+
+    private _refreshMttMenu(): void {
+        const player = this._roomData.mine.player;
+        const seated = !!player?.seated;
+        const canTrust = seated && this._roomData.mtt.gameStarted && !player.isAuto;
+        this.storeNode.active = seated && this._roomData.mine.storeChips > 0;
+        this.btnBet.node.active = false;
+        this.btnBringOut.node.active = false;
+        this.btnStand.node.active = false;
+        this.btnHalfLeave.node.active = seated && !player.isAuto;
+        this.btnHalfLeave.interactable = canTrust;
+        this._halfLeaveTextLabel.node.color = canTrust ? cc.Color.WHITE : cc.Color.GRAY;
     }
 }

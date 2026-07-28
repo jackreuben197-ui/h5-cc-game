@@ -6523,7 +6523,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -250,
+        -200,
         0,
         0,
         0,
@@ -6647,7 +6647,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        20,
+        70,
         0,
         0,
         0,
@@ -6715,7 +6715,7 @@
       "__id__": 187
     },
     "_enabled": true,
-    "i18n_string": "UIInsurance_toubaoe",
+    "i18n_string": "UITexasRecord_toubaoCount",
     "_id": ""
   },
   {
@@ -6771,7 +6771,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        320,
+        360,
         0,
         0,
         0,
