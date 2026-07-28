@@ -1,11 +1,16 @@
-import { ClientMessageEnterRoom, Code, Def, ServerMessageMttDetail } from '@silenthill/agreement-web';
+import { ClientMessageEnterRoom, Code, Def, ServerMessageEnterRoom, ServerMessageMttDetail } from '@silenthill/agreement-web';
 import roomDataManager from '../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../data/room/texas/TexasGameRoomData';
+import { CPErrorCode } from '../../i18n/CPErrorCode';
+import { resolveTemplateTextByKey } from '../../i18n/resolveTemplateTextByKey';
 import ProtocolAgency from '../../net/websocket/ProtocolAgency';
+import viewManager from '../../views/UIViewManager';
 import { AntiCheatType } from '../constant/AntiCheatType';
 import { MttPlayerStatus } from '../constant/Constants';
 import { VideoAntiCheatConfig } from '../constant/VideoModel';
 import AGameplayEntrance, { LoadIndicator } from './AGameplayEntrance';
+
+const REQUEST_FAILED_STATUS = -1;
 
 /**
  * @description 德州MTT玩法入口
@@ -25,6 +30,8 @@ export default class MttTexasGameplayEntrance extends AGameplayEntrance {
      * @remarks 可以部分带入或全额带入. 全额带入传0, 部分带入可按某个比例带入全额的一部分,剩余的部分可供之后带入
      */
     public _partialBringIn: number = 0;
+    // 同一入口只允许一个 EnterRoom 请求在途，调用方共享真实回包。
+    private _enterRequest: Promise<number> = null;
     // ==================== 计算属性 ====================
     /**
      * 重购费用
@@ -105,6 +112,7 @@ export default class MttTexasGameplayEntrance extends AGameplayEntrance {
             // TODO: 处理特殊错误码 UIPushBlack - 显示联盟黑名单弹窗
             // TODO: 处理 Gameplay_AutoSeatReturnToInvalidGame 错误码
             console.error(`${this.constructor.name}: messageLayerEnterAsync: request enter fail: enterStatus=${enterStatus}`);
+            viewManager.showToast(CPErrorCode.ServerErrorDescription(enterStatus));
             this._isHasToast = true;
             return false;
         }
@@ -147,17 +155,17 @@ export default class MttTexasGameplayEntrance extends AGameplayEntrance {
             });
             if (resp.status != 0) {
                 console.error(`${this.constructor.name}: requestRoomInfoAsync: ${resp.status}`);
-                return -1;
+                return REQUEST_FAILED_STATUS;
             }
             if (resp.mtt == null) {
                 console.error(`${this.constructor.name}: requestRoomInfoAsync: room not exist`);
-                return -1;
+                return REQUEST_FAILED_STATUS;
             }
             this._mttDetails = resp;
             return 0;
         } catch (error) {
             console.error(`${this.constructor.name}: requestRoomInfoAsync: wait room info failed, ${error}`);
-            return -1;
+            return REQUEST_FAILED_STATUS;
         }
     }
     // ==================== 进入前准备 ====================
@@ -175,7 +183,7 @@ export default class MttTexasGameplayEntrance extends AGameplayEntrance {
         }
         // 玩家是以参赛选手的身份进入比赛
         // C#: MttPlayerStatus mttPlayerStatus = (MttPlayerStatus)_mttDetails.StateCode;
-        const mttPlayerStatus: MttPlayerStatus = this._mttDetails.stateCode || 0;
+        const mttPlayerStatus: MttPlayerStatus = this._mttDetails.stateCode;
         switch (mttPlayerStatus) {
             case MttPlayerStatus.CAN_JOIN:
                 await this.handlePartialBringInAsync(0, 0);
@@ -227,16 +235,25 @@ export default class MttTexasGameplayEntrance extends AGameplayEntrance {
      * @param isUseCache 是否使用缓存
      */
     public override async requestEnterAsync(isUseCache: boolean): Promise<number> {
-        // C#: _protoEnterRequest = new Protocol_Holdem_EnterRoom { ... }
-        // C#: 携带额外字段: Observer = _isObserver, MttPartialBringIn = (ulong)_partialBringIn
-        // TODO: 发送 Protocol_Holdem_EnterRoom 协议 (MTT版本携带 Observer + MttPartialBringIn 字段)
+        if (this._enterRequest) {
+            // 避免重复发送进桌协议，但不会伪造成功结果。
+            return this._enterRequest;
+        }
+        this._enterRequest = this._requestEnterAsync(isUseCache);
+        try {
+            return await this._enterRequest;
+        } finally {
+            this._enterRequest = null;
+        }
+    }
+
+    private async _requestEnterAsync(isUseCache: boolean): Promise<number> {
+        // MTT 进桌携带观战和部分带入参数，并等待服务端真实回包。
         console.log(`star----->[mtt] requestEnterAsync: isUseCache=${isUseCache}`);
-        // TODO: 从响应中获取 MttRoom.RoomId 并调用 RefreshRoomId
-        // C#: if (response.Status == 0) RefreshRoomId((int)response.MttRoom.RoomId);
-        // 请求进入德州房间
-        // ProcedureManager.StartProcedure(ProcedureDefine.Texas, GameCache.Instance.enter_param);
         const roomData = new TexasGameRoomData(this._roomId, this.matchId);
-        roomData.basicInfo.roomName = this._mttDetails.mtt.name;
+        // Cocos 直接读取 H5 已写入的公共 IndexedDB，赛事名称不再依赖 H5 进桌参数。
+        const displayMatchName = await resolveTemplateTextByKey(this._mttDetails.mtt.name);
+        roomData.basicInfo.roomName = displayMatchName;
         roomData.basicInfo.roomType = this._mttDetails.mtt.type;
         roomData.basicInfo.delaySeeCard = this._mttDetails.mtt.delayViewCardOn > 0;
         roomData.basicInfo.invitationCode = this._mttDetails.mtt.invitationCode;
@@ -245,6 +262,13 @@ export default class MttTexasGameplayEntrance extends AGameplayEntrance {
         roomData.basicInfo.clubID = this._mttDetails.mtt.clubId;
         roomData.basicInfo.tribeID = this._mttDetails.mtt.tribeId;
         roomData.basicInfo.goldType = this._mttDetails.mtt.goldType;
+        // 先保存 H5 赛事上下文，EnterRoom 快照再补齐动态比赛状态。
+        roomData.mtt.initialize(
+            this._isObserver,
+            displayMatchName,
+            this._mttDetails.mtt.startTime,
+            this._mttDetails.mtt.applyFeePool + this._mttDetails.mtt.applyFeeService
+        );
         if (this._mttDetails.mtt.antiCheatType == AntiCheatType.VIDEO || this._mttDetails.mtt.antiCheatType == AntiCheatType.AUDIO) {
             roomData.basicInfo.antiCheatConfig = new VideoAntiCheatConfig(
                 this._mttDetails.mtt.antiCheatType,
@@ -272,13 +296,44 @@ export default class MttTexasGameplayEntrance extends AGameplayEntrance {
             observer: this._isObserver,
             wantSeat: Def.WantSeatType.WST_NO
         };
+        const responsePromise = ProtocolAgency.waitForMessage<ServerMessageEnterRoom.AsObject>(
+            Code.MSG_D_ENTER_ROOM,
+            (_data, _roomID, matchID) => matchID == this.matchId
+        );
         ProtocolAgency.Send({
             code: Code.MSG_D_ENTER_ROOM,
             roomID: this._roomId,
             matchID: this.matchId,
             body: body
         });
-        return 0;
+        try {
+            const response = await responsePromise;
+            const status = response.body.status;
+            if (status != 0) {
+                console.error(`${this.constructor.name}: EnterRoom returned status=${status}`, response);
+                roomDataManager.deleteRoomData(this._roomId, this.matchId);
+                return status;
+            }
+            const roomId = response.roomID;
+            if (roomId <= 0) {
+                console.error(`${this.constructor.name}: EnterRoom missing response roomID`, response);
+                roomDataManager.deleteRoomData(this._roomId, this.matchId);
+                return REQUEST_FAILED_STATUS;
+            }
+            const bodyRoomID = response.body.mttRoom?.roomId;
+            if (bodyRoomID > 0 && bodyRoomID != roomId) {
+                console.error(`${this.constructor.name}: EnterRoom roomID mismatch`, roomId, bodyRoomID);
+                roomDataManager.deleteRoomData(this._roomId, this.matchId);
+                return REQUEST_FAILED_STATUS;
+            }
+            // 服务端分配的真实 roomID 同步到入口和 Procedure，供换桌与重连使用。
+            this.refreshRoomId(roomId);
+            return 0;
+        } catch (error) {
+            roomDataManager.deleteRoomData(this._roomId, this.matchId);
+            console.error(`${this.constructor.name}: requestEnterAsync failed`, error);
+            return REQUEST_FAILED_STATUS;
+        }
     }
 
     /**
@@ -293,8 +348,9 @@ export default class MttTexasGameplayEntrance extends AGameplayEntrance {
         const oldRoomId: number = this._roomId;
         this._roomId = roomId;
         console.log(`${this.constructor.name}: refreshRoomId: oldRoomId=${oldRoomId}, newRoomId=${roomId}`);
-        // C#: Game.EventSystem.Run(EventIdType.MULTI_TABLE_EVENT_REFRESH_MTT_ROOM_ID, (AGameplayEntrance)this, oldRoomId);
-        // TODO: 触发 EventIdType.MULTI_TABLE_EVENT_REFRESH_MTT_ROOM_ID 事件
+        if (this.roomIdChanged) {
+            this.roomIdChanged(oldRoomId, roomId);
+        }
     }
     // ==================== 进入条件检查 ====================
     /**

@@ -194,6 +194,8 @@ class UIViewManager {
     private _displayedDialogs: UIPrefabDialogType[] = [];
     private _curretDialog: UIPrefabDialogType = null!;
     private _dialogsPool: Map<UIPrefabDialogType, UIComponentDialogBase> = new Map();
+    private _dialogLoadingTasks: Map<UIPrefabDialogType, Promise<UIComponentDialogBase>> = new Map();
+    private _dialogPreloadingTasks: Map<UIPrefabDialogType, Promise<void>> = new Map();
     //缓存
     private _caceLayer: cc.Node = null;
     //遮罩
@@ -250,8 +252,8 @@ class UIViewManager {
             ui.internalbindCCViewData();
             ui.node.active = true;
             this._scenesPool.set(key, ui);
-            // 老场景缓存
-            if (this._curretScene) {
+            // 老场景缓存(非重复当前场景)
+            if (this._curretScene && this._curretScene != key) {
                 const s = this._scenesPool.get(this._curretScene);
                 if (s) {
                     s.node.active = false;
@@ -290,47 +292,99 @@ class UIViewManager {
             if (this._curretDialog == key) {
                 this.tracelog.warn('dupicate open dialog', key);
             }
-            let ui = this._dialogsPool.get(key) as UIComponentDialogBase<any>;
-            if (!ui) {
-                this.tracelog.debug('no instance create new one', key);
-                const uiprefab = UIPrefabDialog[key];
-                const asset = await AssetManager.getOrLoad(uiprefab.Bundle, uiprefab.Path, cc.Prefab);
-                const uiNode = cc.instantiate(asset);
-                ui = uiNode.getComponent(UIComponentDialogBase);
-                if (!ui) {
-                    this.tracelog.error('openDialog', uiprefab.Name, '缺少脚本');
-                    return;
-                }
-                //添加
-                const maskLayer = cc.instantiate(this._maskPrefab);
-                uiNode.insertChild(maskLayer, 0);
-                maskLayer.name = uniquemaskID;
-                let maskNode = maskLayer.getComponent(Mask);
-                // UIComponentBaseDialog使用该方法关闭窗口
-                ui.setCloseDialogFunction(() => {
-                    this.closeDialog(key);
-                });
-                if (maskNode) {
-                    // mask层和ui本身的close方法对齐, 可以被dialog子类重写
-                    maskNode.closeCallback = () => {
-                        ui.close();
-                    };
-                }
-            }
-            ui.node.active = directShow;
+            const preloading = this._dialogPreloadingTasks.get(key);
+            if (preloading) await preloading;
+            const ui = (await this._getOrCreateDialog(key)) as UIComponentDialogBase<any>;
+            ui.node.active = false;
             ui.node.parent = this._dialogLayer;
             const maskdoe = ui.getComponentInChildren(uniquemaskID);
             if (maskdoe) {
                 maskdoe.node.active = masked;
             }
-            ui.initialize(param);
+            await ui.initialize(param);
             ui.internalbindCCViewData();
+            ui.node.active = directShow;
             this._displayedDialogs.push(key);
             this._curretDialog = key;
-            this._dialogsPool.set(key, ui);
         } catch (e) {
             this.tracelog.error('openDialog', e);
         }
+    }
+
+    public preloadDialog<K extends UIPrefabDialogType>(
+        key: K,
+        param: InstanceType<(typeof UIPrefabDialog)[K]['UIType']> extends UIComponentDialogBase<infer P> ? P : any
+    ): Promise<void> {
+        const currentTask = this._dialogPreloadingTasks.get(key);
+        if (currentTask) return currentTask;
+        const task = this._preloadDialog(key, param)
+            .catch(e => {
+                this.tracelog.error('preloadDialog', key, e);
+            })
+            .then(() => {
+                if (this._dialogPreloadingTasks.get(key) === task) {
+                    this._dialogPreloadingTasks.delete(key);
+                }
+            });
+        this._dialogPreloadingTasks.set(key, task);
+        return task;
+    }
+
+    private async _preloadDialog<K extends UIPrefabDialogType>(
+        key: K,
+        param: InstanceType<(typeof UIPrefabDialog)[K]['UIType']> extends UIComponentDialogBase<infer P> ? P : any
+    ): Promise<void> {
+        const ui = (await this._getOrCreateDialog(key)) as UIComponentDialogBase<any>;
+        ui.node.active = false;
+        ui.node.parent = this._caceLayer;
+        await ui.initialize(param);
+    }
+
+    private _getOrCreateDialog(key: UIPrefabDialogType): Promise<UIComponentDialogBase> {
+        const cached = this._dialogsPool.get(key);
+        if (cached) return Promise.resolve(cached);
+        const loading = this._dialogLoadingTasks.get(key);
+        if (loading) return loading;
+        const task = this._createDialog(key).then(
+            ui => {
+                this._dialogLoadingTasks.delete(key);
+                this._dialogsPool.set(key, ui);
+                return ui;
+            },
+            error => {
+                this._dialogLoadingTasks.delete(key);
+                throw error;
+            }
+        );
+        this._dialogLoadingTasks.set(key, task);
+        return task;
+    }
+
+    private async _createDialog(key: UIPrefabDialogType): Promise<UIComponentDialogBase> {
+        this.tracelog.debug('no instance create new one', key);
+        const uiprefab = UIPrefabDialog[key];
+        const asset = await AssetManager.getOrLoad(uiprefab.Bundle, uiprefab.Path, cc.Prefab);
+        const uiNode = cc.instantiate(asset);
+        const ui = uiNode.getComponent(UIComponentDialogBase);
+        if (!ui) {
+            throw new Error(`[UIViewManager] ${uiprefab.Name} 缺少脚本`);
+        }
+        const maskLayer = cc.instantiate(this._maskPrefab);
+        uiNode.insertChild(maskLayer, 0);
+        maskLayer.name = uniquemaskID;
+        const maskNode = maskLayer.getComponent(Mask);
+        ui.setCloseDialogFunction(() => {
+            this.closeDialog(key);
+        });
+        if (maskNode) {
+            maskNode.closeCallback = () => {
+                ui.close();
+            };
+        }
+        uiNode.parent = this._dialogLayer;
+        uiNode.active = false;
+        uiNode.parent = this._caceLayer;
+        return ui;
     }
 
     // closeDialog 关闭对话框

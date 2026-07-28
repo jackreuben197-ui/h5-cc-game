@@ -152,6 +152,8 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
     private insuranceCardsSplitContent: cc.Node = null;
     private insuranceCardOverTemplate: cc.Node = null;
     private insuranceCardSplitTemplate: cc.Node = null;
+    // ScrollViewRoot 在 prefab 里设计的高度上限；实际高度按内容自适应收缩，超出时滚动
+    private _scrollMaxHeight = 0;
     private sortNumToggle: cc.Toggle = null;
     private sortGraToggle: cc.Toggle = null;
     private textPot: cc.Label = null;
@@ -268,13 +270,14 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
         this.dialogNode = dialog;
         this.scrollViewRoot = cc.find('Image_Dialog/ScrollViewRoot', root);
         this.scrollView = this.scrollViewRoot?.getComponent(cc.ScrollView) || null;
+        this._scrollMaxHeight = this.scrollViewRoot?.height || 0;
         this.scrollViewport = cc.find('Viewport', this.scrollViewRoot);
         this.insuranceCardsRoot = cc.find('Viewport/InsuranceCards', this.scrollViewRoot);
         this.textPot = cc.find('Header/Text_Pot_title/Text_Pot', dialog)?.getComponent(cc.Label) || null;
         this.multiPoolToggles = cc.find('Header/MultiPoolToggles', dialog);
         this.multiPoolToggleTemplate = this.multiPoolToggles?.getChildByName('MultiPoolToggle') || null;
         this.playerMineNode = cc.find('Header/players_Content/Player_Mine', dialog);
-        this.playersContent = cc.find('Header/players_Content/Players/view/players_Content', dialog);
+        this.playersContent = cc.find('Header/players_Content/Players/view/Players_Content', dialog);
         this.playersNext = cc.find('ScrollViewRoot/Viewport/InsuranceCards/Players_Next', dialog);
         this.playerTemplate = this.playersContent?.children.find(c => c.name === 'Player') || null;
         const publicCards = cc.find('Header/PublicCardContent/PublicCards', dialog);
@@ -460,6 +463,29 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
         this._refreshPoolMoney(pot);
         this._refreshSelectedPool(pot);
         this._refreshCancelButton(pot);
+        this._adjustScrollViewHeight();
+    }
+
+    /**
+     * InsuranceCardsOver / InsuranceCardsSplit / Players_Next 都已是 resize=CONTAINER 的 Layout，
+     * 会随内容自动收缩，但 ScrollViewRoot/Viewport 是滚动容器，尺寸不会跟随内容变化，需要手动同步。
+     * Layout 默认延迟到下一帧生效，这里自底向上手动调用 updateLayout() 立即拿到最终高度，
+     * 再夹在 [0, prefab 原始高度] 之间回填给 ScrollViewRoot/Viewport；内容超出原始高度时保留滚动。
+     * Image_Dialog 自身也是 resize=CONTAINER 的纵向 Layout，ScrollViewRoot 高度变化后它会自动整体收缩重排。
+     */
+    private _adjustScrollViewHeight(): void {
+        this.insuranceCardsOverContent?.getComponent(cc.Layout)?.updateLayout();
+        this.insuranceCardsSplitContent?.getComponent(cc.Layout)?.updateLayout();
+        this.insuranceCardsOver?.getComponent(cc.Layout)?.updateLayout();
+        this.insuranceCardsSplit?.getComponent(cc.Layout)?.updateLayout();
+        this.playersNext?.getComponent(cc.Layout)?.updateLayout();
+        this.insuranceCardsRoot.getComponent(cc.Layout)?.updateLayout();
+        const height = Math.min(this._scrollMaxHeight, Math.max(0, this.insuranceCardsRoot.height));
+        this.scrollViewRoot.height = height;
+        this.scrollViewport.height = height;
+        this.scrollView?.stopAutoScroll();
+        this.scrollView?.scrollToTop();
+        this.dialogNode?.getComponent(cc.Layout)?.updateLayout();
     }
 
     private _renderPlayers(pot: InsurancePotLimit.AsObject): void {

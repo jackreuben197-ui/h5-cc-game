@@ -378,8 +378,9 @@ class H5MsgMgr {
      * - wsSend 传入 Uint8Array / ArrayBuffer → 自动包装为 { dataType:'binary', data: Uint8Array }
      * - ccAck / ccReady 等握手消息不受队列限制，直接发送
      * - 握手完成前的业务消息进队列，握手完成后统一发送
+     * @returns 本次消息的 requestId，供 H5 面板事件精确回传。
      */
-    public sendToH5<T extends keyof CocosToH5PayloadMap>(action: T, msgtype: number = 0, payload?: CocosToH5PayloadMap[T]): void {
+    public sendToH5<T extends keyof CocosToH5PayloadMap>(action: T, msgtype: number = 0, payload?: CocosToH5PayloadMap[T]): string {
         // 二进制 payload 包装为 WsSendBinaryEnvelope，其余直接透传。
         // rawPayload 用 unknown 接收，再通过 instanceof 收窄，避免使用 any。
         const rawPayload: unknown = payload;
@@ -405,19 +406,21 @@ class H5MsgMgr {
         // 握手消息（ccReady / ccAck）立即发送，不走队列
         if (action === 'ccReady' || action === 'ccAck') {
             H5MsgMgr._post(msg);
-            return;
+            return msg.requestId;
         }
         // 握手未完成 → 业务消息进队列
         if (!H5MsgMgr.Instance._handshakeDone) {
             H5MsgMgr.Instance._pendingMessages.push(msg);
             this.tracelog.debug('握手未完成，消息进队列:', action);
-            return;
+            // 排队消息仍返回原始 requestId，面板事件不会因延迟发送而失配。
+            return msg.requestId;
         }
         // 正常发送
         H5MsgMgr._post(msg);
         if (msgtype === 0) {
             this.tracelog.debug('发送 H5 层转发消息:', action);
         }
+        return msg.requestId;
     }
 
     /**

@@ -185,7 +185,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this.squidInfo.initData(this._mine);
         // 入桌即拉一次 Roomers 填战绩缓存：后续 Seated/Standup/ChipsChange/Winner 在消息层做增量。
         // 对应 pokerqueen UITexas.requestRoomersForCache（history=true 包含已离桌玩家）。
-        TexasReportEvent.PrefetchRoomers(param.roomID, param.matchID);
+        TexasReportEvent.PrefetchRoomers(roomData);
         this._otherBindings.initData(param.roomID, param.matchID);
         this._applyMainMenuLayout();
         this.jackpotFeature.initData(param.roomID, param.matchID);

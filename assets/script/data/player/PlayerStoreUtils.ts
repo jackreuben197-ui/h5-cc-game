@@ -86,7 +86,7 @@ export default class PlayerStoreUtils {
             PlayerStoreUtils.tracelog.error('get HttpMiscCombine player data error', res.code);
             return;
         }
-        PlayerStoreUtils._applyUserPublicInfoList(res.data?.user_info_by_rid_resp || []);
+        PlayerStoreUtils._applyUserPublicInfoList(roomData, res.data?.user_info_by_rid_resp || []);
         PlayerStoreUtils._normalizeStatsList(res.data?.user_stats_by_user_rid_resp).forEach(stats => {
             playerStore.updateStats(stats.user_random_id, stats);
         });
@@ -109,9 +109,11 @@ export default class PlayerStoreUtils {
         return body;
     }
 
-    private static _applyUserPublicInfoList(list: HttpMiscCombine.UserPublicInfo[]): void {
+    private static _applyUserPublicInfoList(roomData: TexasGameRoomData, list: HttpMiscCombine.UserPublicInfo[]): void {
         list.forEach(item => {
             if (!item?.random_num) return;
+            const seatPlayer = roomData.seatsStateManager.getSeatPlayerByUserID(item.random_num);
+            if (seatPlayer && !seatPlayer.mine && item.remark_name) seatPlayer.name = item.remark_name;
             const data: PlayerBasicData = {
                 random_num: item.random_num
             };

@@ -163,10 +163,10 @@ export class VideoAntiCheatConfig {
                     enableCamera: true,
                     canOpCamera: this._videoMiddle,
                     canOpMicrophone: this._micMiddle,
-                    canSwitchPowerSaving: this._powerSavingMiddle,
+                    canSwitchPowerSaving: this._powerSaveing && this._powerSavingMiddle,
                     openCamera: this._videoSeat,
                     openMicrophone: this._micSeat,
-                    openPowerSaving: this._powerSavingSeat
+                    openPowerSaving: this._powerSaveing && this._powerSavingSeat
                 };
         }
     }

@@ -1,0 +1,17 @@
+{
+  "__type__": "cc.Material",
+  "_name": "PixelSmoothShadowCard",
+  "_objFlags": 0,
+  "_native": "",
+  "_effectAsset": {
+    "__uuid__": "a49bb224-4006-40b0-bf45-7580431e32c7"
+  },
+  "_techniqueIndex": 0,
+  "_techniqueData": {
+    "0": {
+      "defines": {
+        "SUPERSAMPLE_TEXTURE": true
+      }
+    }
+  }
+}

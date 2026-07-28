@@ -80,6 +80,8 @@ export interface TexasReportSquidRoundSnapshot {
     records: TexasReportSquidRecord[];
 }
 
+export type TexasReportRoundMode = 'mush' | 'squid';
+
 export type TexasReportObserver = Roomer.AsObject;
 
 export interface TexasReportSummary {
@@ -125,8 +127,11 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
     /** 鱿鱼/蘑菇 按 round 缓存的分页数据。 */
     @observable(TexasGameRoomDataReport.SQUID_ROUND_CHANGE, { forceEmit: true })
     public squidRounds: Map<number, TexasReportSquidRoundSnapshot> = new Map();
+    /** 当前分页缓存来自哪个玩法，防止蘑菇和鱿鱼共用 Map 时串数据。 */
+    public squidRoundMode: TexasReportRoundMode | null = null;
     /** 标记 Roomers 是否已经从服务端拉过一次。面板根据它决定是否要等首屏数据。 */
     public roomersFetched: boolean = false;
+    public roomersLoading: boolean = false;
     // 空数组也算拉取成功，记下来后重新打开就不会一直重复请求。
     public jackpotFetched: boolean = false;
     public insuranceFetched: boolean = false;
@@ -141,6 +146,7 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
 
     /** 用 Roomers 推送整表覆盖。匹配 Unity TexasSituationController.HandleRoomersResponse。 */
     public applyRoomers(data: ServerMessageRoomers.AsObject): void {
+        this.roomersLoading = false;
         this.roomersFetched = true;
         const mushroomBase = this._roomData.basicInfo.mushroomBase || 0;
         const next: TexasReportPlayerInfo[] = (data.playersList || []).map(p => this._fromSummary(p, mushroomBase));
@@ -190,9 +196,18 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
         this.insuranceRecords = (records || []).slice();
     }
 
+    public prepareSquidRoundMode(mode: TexasReportRoundMode): boolean {
+        if (this.squidRoundMode === mode) return false;
+        this.squidRoundMode = mode;
+        // 玩法换了就把旧页丢掉，不能拿蘑菇回包冒充鱿鱼。
+        this.squidRounds = new Map();
+        return true;
+    }
+
     /** 用 HTTP 鱿鱼/蘑菇分页结果写入指定 round 缓存。 */
-    public setSquidRound(round: number, snapshot: TexasReportSquidRoundSnapshot): void {
-        const next = new Map(this.squidRounds);
+    public setSquidRound(mode: TexasReportRoundMode, round: number, snapshot: TexasReportSquidRoundSnapshot): void {
+        const next = this.squidRoundMode === mode ? new Map(this.squidRounds) : new Map<number, TexasReportSquidRoundSnapshot>();
+        this.squidRoundMode = mode;
         next.set(round, snapshot);
         this.squidRounds = next;
     }
@@ -212,17 +227,21 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
         let totalHand = response.handNum || this.summary.totalHand;
         const mushroomBase = this._roomData.basicInfo.mushroomBase || 0;
         for (const winner of response.resultsList || []) {
-            let player = players.find(p => p.seatId != null && p.seatId === winner.seatId);
-            if (!player) {
-                // 退化匹配：用座位上的 userID 反查 player
-                const seat = this._roomData.seatsStateManager.getSeatPlayer(winner.seatId);
-                const userID = seat?.userID || 0;
-                if (userID > 0) {
-                    player = players.find(p => Number(p.userRid) === Number(userID));
-                    if (player && !player.seatId) player.seatId = winner.seatId;
-                }
+            const seat = this._roomData.seatsStateManager.getSeatPlayer(winner.seatId);
+            const userID = Number(seat?.userID || 0);
+            // 座位会换人，先按玩家 ID 找，避免把新玩家的输赢算到上一位身上。
+            let player = userID > 0 ? players.find(p => Number(p.userRid) === userID) : null;
+            if (!player && userID <= 0) {
+                player = players.find(p => p.seatId != null && p.seatId === winner.seatId);
+            }
+            if (!player && userID > 0) {
+                // 极端消息时序下名单还没补到，先用座位资料把这一行接住。
+                player = this._emptyPlayer(userID, seat?.name || '', seat?.avatar || '');
+                player.sex = Number(seat?.sex || 0);
+                players.push(player);
             }
             if (!player) continue;
+            player.seatId = winner.seatId;
             player.poolCount = (player.poolCount || 0) + (winner.inPool ? 1 : 0);
             player.handNum = (player.handNum || 0) + 1;
             player.isOnline = true;
@@ -261,12 +280,15 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
     /**
      * 对应 Unity TexasSituationController.SitDown。已存在则更新带入/在线状态。
      */
-    public applySitDown(userRid: number, totalBringIn: number, deposit: number, name: string, avatar: string): void {
+    public applySitDown(userRid: number, totalBringIn: number, deposit: number, name: string, avatar: string, seatId?: number): void {
         const players = this.players.map(player => ({ ...player }));
         const mushroomBase = this._roomData.basicInfo.mushroomBase || 0;
         const existing = players.find(p => Number(p.userRid) === Number(userRid));
         if (existing) {
             existing.isOnline = true;
+            if (name) existing.name = name;
+            if (avatar) existing.avatar = avatar;
+            if (seatId != null && seatId > 0) existing.seatId = seatId;
             existing.bringInTotal = totalBringIn;
             existing.deposit = mushroomBase > 0 ? mushroomBase : deposit;
             const totalBringin = players.reduce((s, p) => s + (p.bringInTotal || 0), 0);
@@ -275,6 +297,7 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
             return;
         }
         const player: TexasReportPlayerInfo = this._emptyPlayer(userRid, name, avatar);
+        if (seatId != null && seatId > 0) player.seatId = seatId;
         player.bringInTotal = totalBringIn;
         player.deposit = mushroomBase > 0 ? mushroomBase : deposit;
         player.isOnline = true;
@@ -291,6 +314,8 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
         if (existing) {
             existing.bringOutTotal = (existing.bringOutTotal || 0) + bringOut;
             existing.isOnline = false;
+            // 人已经离座，这个座位号不能再拿去匹配后面的赢家。
+            existing.seatId = undefined;
             if (mushroomBase > 0) existing.deposit = 0;
             this.players = players;
             return;
@@ -343,6 +368,8 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
         this.jackpotRecords = [];
         this.insuranceRecords = [];
         this.squidRounds = new Map();
+        this.squidRoundMode = null;
+        this.roomersLoading = false;
         this.roomersFetched = false;
         this.jackpotFetched = false;
         this.insuranceFetched = false;

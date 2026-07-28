@@ -28,6 +28,7 @@ import {
     ServerMessageLimitHandNumber,
     ServerMessageMatchingResult,
     ServerMessageMttAwardNotify,
+    ServerMessageMttBreak,
     ServerMessageMttDetail,
     ServerMessageMttReadyForApply,
     ServerMessageMttSeriesNotify,
@@ -173,6 +174,7 @@ export const CodeMessageOtherServerGC = {
     [Code.MSG_S_USER_MTT_CHANGE_NOTIFY]: ServerMessageUserMttChangeNotify,
     [Code.MSG_S_USER_SNG_CHANGE_NOTIFY]: ServerMessageUserSngChangeNotify,
     [Code.MSG_S_MTT_SERIES_NOTIFY]: ServerMessageMttSeriesNotify,
+    [Code.MSG_S_MTT_BREAK]: ServerMessageMttBreak, // MTT 休息通知
     [Code.MSG_S_UTIL_FACE_RECOGNIZE]: ServerMessageUtilFaceRecognize,
     [Code.MSG_S_UTIL_ANTI_CHEAT_ROOM_VIDEO]: ServerMessageUtilAntiCheatRoomVideo
 } as const;

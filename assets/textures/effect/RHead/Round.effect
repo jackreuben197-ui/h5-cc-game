@@ -52,6 +52,10 @@ CCProgram vs %{
 
 
 CCProgram fs %{
+  #if CC_SUPPORT_standard_derivatives
+    #extension GL_OES_standard_derivatives : enable
+  #endif
+
   precision highp float;
 
   #include <alpha-test>
@@ -73,9 +77,18 @@ CCProgram fs %{
 
     vec2 cen = v_uv0 - .5;
 
-    float ratio = smoothstep(.5,.5 - .02, length(cen));
-    
-    o.a = ratio;
+    float radius = length(cen);
+
+    #if CC_SUPPORT_standard_derivatives
+      float edgeSoftness = max(fwidth(radius) * 1.5, 0.00075);
+    #else
+      float edgeSoftness = 0.008;
+    #endif
+
+    float circleAlpha = 1.0 - smoothstep(0.5 - edgeSoftness, 0.5, radius);
+
+    // Preserve source transparency and adapt the circular edge to screen pixels.
+    o.a *= circleAlpha;
 
     o *= v_color;
 

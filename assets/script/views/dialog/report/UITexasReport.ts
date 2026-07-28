@@ -8,6 +8,7 @@ import TexasGameRoomDataReport, {
     TexasReportJackpotRecord,
     TexasReportObserver,
     TexasReportPlayerInfo,
+    TexasReportRoundMode,
     TexasReportSquidRecord,
     TexasReportSquidRoundSnapshot,
     TexasReportSummary
@@ -84,6 +85,10 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     private bgClickNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '[背景] 内容背景 bg' })
     private bgNode: cc.Node = null;
+    @property({ type: cc.ScrollView, displayName: '[自适应列表] 中间区域统一纵向滚动' })
+    private unifiedScrollView: cc.ScrollView = null;
+    @property({ type: cc.Node, displayName: '[自适应列表] 玩家战绩区域 dataList' })
+    private dataListNode: cc.Node = null;
     // ─── 公共统计区（publicArea）──────────────────────
     @property({ type: cc.Label, displayName: '[公共] 总底池 total_money' })
     private totalPotLabel: cc.Label = null;
@@ -121,6 +126,8 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     private listBar1: cc.Node = null;
     @property({ type: cc.Node, displayName: '[表头] 战况(带 mode) ListBar3' })
     private listBar3: cc.Node = null;
+    @property({ type: cc.Node, displayName: '[表头] 战况玩法列 ListBar3/Text_Mode' })
+    private listBar3ModeTitleNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '[表头] 鱿鱼 listBarSquid' })
     private listBarSquid: cc.Node = null;
     @property({ type: cc.Node, displayName: '[表头] 蘑菇 listBarMushRoom' })
@@ -185,6 +192,11 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     private _squidPendingRounds: Set<number> = new Set();
     // 每次重新打开都加一代，旧一代的回包回来后直接丢掉。
     private _requestGeneration: number = 0;
+    private _dataListMinHeight: number = 0;
+    private _dataListContentTop: number = 0;
+    private _dataListContentBottom: number = 0;
+    private _unifiedListBottom: number = 0;
+    private _pendingListLayoutContent: cc.Node = null;
     // ============================================================
     // 生命周期
     // ============================================================
@@ -199,6 +211,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         click(this.showOnlyTableNode, () => this._onToggleOnlyTablePlayers());
         click(this.exitBtn, () => this.close());
         click(this.bgClickNode, () => this.close());
+        this._setupUnifiedList();
     }
 
     public initialize(param: UITexasReportParam): void {
@@ -215,26 +228,22 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         this._isJackpotLoading = false;
         this._squidPendingRounds = new Set();
         this._requestGeneration += 1;
-        this._subType = this._resolveSubType();
+        this._syncSubType();
         this._refreshTopBar();
         this._refreshBottomToggleState();
         this._refreshContentVisible();
         this._refreshTablePlayerToggle();
         this._refreshListBar();
-        this._bindEventsAndRefresh();
-        if (!this._report.roomersFetched) {
-            this._requestRoomers();
-        }
+        this._requestRoomers();
         if (this._subType !== 'none') {
-            if (this._report.squidRounds.size === 0) {
-                this._fetchSquidRound(0);
-            } else {
+            if (this._report.squidRounds.size > 0) {
                 this._squidCurRound = TexasReportPresentation.getLatestRound(this._report.squidRounds);
                 this._setupSlider();
                 this._refreshPageText();
             }
+            // 缓存先拿来展示，但最新轮数还是问一次服务端，免得一直停在旧轮次。
+            this._fetchSquidRound(0);
         }
-        this._startRemainTimeTick();
     }
 
     @bindEvent(CCViewData.FRAME_SIZE_UPDATE, { dataSource: 'ccviewData', initPriority: 20 })
@@ -252,12 +261,16 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     }
 
     protected onEnable(): void {
-        if (this._report) this._bindEventsAndRefresh();
-        if (this._report) this._startRemainTimeTick();
+        if (!this._report) return;
+        this._bindEventsAndRefresh();
+        this.unifiedScrollView?.scrollToTop(0);
+        this._startRemainTimeTick();
     }
 
     protected onDisable(): void {
         unBindEventsAll(this);
+        this.unschedule(this._commitPendingListLayout);
+        this._pendingListLayoutContent = null;
         this._stopRemainTimeTick();
     }
 
@@ -371,6 +384,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
                 onClick: player => this._openPlayerInfo(player)
             });
         }
+        this._drawColumnDividers(content);
     }
 
     private _createDataItem(content: cc.Node): ReportDataItem {
@@ -407,12 +421,14 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         this.jackpotContent.removeAllChildren();
         const records = this._report.jackpotRecords;
         if (records.length <= 0) {
+            this._drawColumnDividers(this.jackpotContent);
             this._updateNoDataState();
             return;
         }
         for (const r of records) {
             this._createDataItem(this.jackpotContent).showJackpot(r, userStore.userRID);
         }
+        this._drawColumnDividers(this.jackpotContent);
         this._updateNoDataState();
     }
 
@@ -427,6 +443,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         for (const r of this._report.insuranceRecords) {
             this._createDataItem(this.battleContent).showInsurance(r, userStore.userRID);
         }
+        this._drawColumnDividers(this.battleContent);
         this._updateNoDataState();
     }
 
@@ -434,16 +451,18 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         const content = this._subType === 'squid' ? this.squidContent : this.mushContent;
         content.removeAllChildren();
         const records = this._currentSquidRecords();
+        const currentUserNames = [userStore.name, this._roomData.mine.player?.name || ''];
         for (const r of records) {
-            this._createDataItem(content).showModeRecord(r, this._subType, userStore.userRID);
+            this._createDataItem(content).showModeRecord(r, this._subType, userStore.userRID, currentUserNames);
         }
+        this._drawColumnDividers(content);
         this._updateNoDataState();
     }
     // ============================================================
     // Tab & Toggle
     // ============================================================
     private _onClickTab(tab: ReportBottomTab): void {
-        this._subType = this._resolveSubType();
+        this._syncSubType();
         if (tab === 'mode' && this._subType === 'none') return;
         if (tab === 'jackpot' && !this._isJackpotEnabled()) return;
         if (tab === 'insurance' && !this._isInsuranceEnabled()) return;
@@ -453,8 +472,10 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         this._refreshContentVisible();
         this._refreshListBar();
         this._refreshCurrentList();
-        if (tab === 'mode' && this._currentSquidRecords().length === 0) {
-            this._fetchSquidRound(this._squidCurRound || 0);
+        this.unifiedScrollView?.scrollToTop(0);
+        if (tab === 'mode') {
+            // 每次切进来都顺手校验最新一轮，鱿鱼和蘑菇走的是同一套逻辑。
+            this._fetchSquidRound(0);
             return;
         }
         if (tab === 'jackpot' && !this._report.jackpotFetched) this._requestJackpotSummary();
@@ -465,7 +486,10 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         this._onlyTablePlayers = !this._onlyTablePlayers;
         this._refreshTablePlayerToggle();
         // battleContent 是战况/保险共用容器；在保险/Jackpot/模式 tab 下不能误覆盖。
-        if (this._curTab === 'battle') this._renderBattleList();
+        if (this._curTab === 'battle') {
+            this._renderBattleList();
+            this.unifiedScrollView?.scrollToTop(0);
+        }
     }
 
     private _refreshTablePlayerToggle(): void {
@@ -474,7 +498,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     }
 
     private _refreshBottomToggleState(): void {
-        this._subType = this._resolveSubType();
+        this._syncSubType();
         this._refreshMushDir();
         this._refreshModeToggleTitle();
         const showMode = this._subType !== 'none';
@@ -510,6 +534,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         const showPage = isMode && totalRound > 0;
         this.pageInfoNode.active = showPage;
         this.squidRoundNode.active = showPage;
+        this._refreshUnifiedListViewport(showPage);
         if (isJackpot) this._refreshJackpotTotal();
         this._updateNoDataState();
     }
@@ -521,6 +546,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
             const useBar3 = sub !== 'none';
             this.listBar1.active = !useBar3;
             this.listBar3.active = useBar3;
+            if (useBar3) this._refreshBattleModeHeaderTitle();
         } else if (this._curTab === 'insurance') {
             this.listBar4.active = true;
         } else if (this._curTab === 'mode') {
@@ -529,6 +555,12 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         } else if (this._curTab === 'jackpot') {
             this.listBarJackpot.active = true;
         }
+    }
+
+    /** ListBar3 两种玩法共用，这里跟着房间类型换成“蘑菇”或“鱿鱼”。 */
+    private _refreshBattleModeHeaderTitle(): void {
+        const title = this.listBar3ModeTitleNode.getComponent(i18nLabel);
+        title.i18NString = this._subType === 'mush' ? 'UIMush' : 'UISquid';
     }
 
     private _refreshMushDir(): void {
@@ -603,7 +635,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     // ============================================================
     private _requestRoomers(): void {
         if (!this._roomData) return;
-        TexasReportEvent.PrefetchRoomers(this._roomData.roomID, this._roomData.matchID);
+        TexasReportEvent.PrefetchRoomers(this._roomData);
     }
 
     private _requestJackpotSummary(): void {
@@ -616,20 +648,27 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         if (!this._roomData) return;
         const subType = this._resolveSubType();
         if (subType !== 'squid' && subType !== 'mush') return;
+        if (this._report.prepareSquidRoundMode(subType)) this._squidCurRound = 0;
         if (this._squidPendingRounds.has(round)) return;
         const requestGeneration = this._requestGeneration;
         const report = this._report;
         const pendingRounds = this._squidPendingRounds;
+        const currentRoundWhenRequested = this._squidCurRound;
+        const latestRoundWhenRequested = TexasReportPresentation.getLatestRound(report.squidRounds);
         pendingRounds.add(round);
         TexasReportEvent.RequestRound(this._roomData, subType, round).then(result => {
             pendingRounds.delete(round);
             if (!this._isCurrentRequest(requestGeneration, report)) return;
+            if (subType !== this._resolveSubType()) return;
             if (!result) {
                 this._updateNoDataState();
                 return;
             }
-            if (this._squidCurRound === 0 || this._squidCurRound === round) this._squidCurRound = result.round;
-            report.setSquidRound(result.round, result.snapshot);
+            const stillOnRequestedRound = this._squidCurRound === currentRoundWhenRequested;
+            const wasLookingAtLatest = currentRoundWhenRequested === 0 || currentRoundWhenRequested === latestRoundWhenRequested;
+            // 查最新轮时只有用户没翻页才跟到最新；查普通页时也只接住原来那一页。
+            if (stillOnRequestedRound && (round > 0 || wasLookingAtLatest)) this._squidCurRound = result.round;
+            report.setSquidRound(subType, result.round, result.snapshot);
             this._setupSlider();
             this._refreshPageText();
         });
@@ -706,6 +745,12 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         return TexasReportPresentation.resolveMode(this._roomData.basicInfo);
     }
 
+    private _syncSubType(): void {
+        this._subType = this._resolveSubType();
+        if (this._subType !== 'squid' && this._subType !== 'mush') return;
+        if (this._report.prepareSquidRoundMode(this._subType as TexasReportRoundMode)) this._squidCurRound = 0;
+    }
+
     private _isCurrentRequest(requestGeneration: number, report: TexasGameRoomDataReport): boolean {
         // 房间或打开批次对不上，说明这是过期回包。
         return requestGeneration === this._requestGeneration && report === this._report;
@@ -725,6 +770,115 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         if (this._subType === 'squid') return this.squidContent;
         if (this._subType === 'mush') return this.mushContent;
         return this.battleContent;
+    }
+
+    private _drawColumnDividers(content: cc.Node): void {
+        this._refreshUnifiedListLayout(content);
+        this._paintColumnDividers(content);
+        this._pendingListLayoutContent = content;
+        this.unschedule(this._commitPendingListLayout);
+        this.scheduleOnce(this._commitPendingListLayout, 0);
+    }
+
+    private _paintColumnDividers(content: cc.Node): void {
+        const graphics = content.getComponent(cc.Graphics) || content.addComponent(cc.Graphics);
+        graphics.clear();
+        graphics.lineWidth = 2;
+        graphics.strokeColor = new cc.Color(198, 194, 194, 232);
+        content.children.forEach(node => {
+            const item = node.getComponent(ReportDataItem);
+            if (!item) return;
+            const halfHeight = Math.max(24, node.height * 0.3);
+            item.getColumnDividerXs().forEach(x => {
+                const dividerX = node.x + x * node.scaleX;
+                graphics.moveTo(dividerX, node.y - halfHeight);
+                graphics.lineTo(dividerX, node.y + halfHeight);
+            });
+        });
+        graphics.stroke();
+    }
+
+    private _commitPendingListLayout(): void {
+        const content = this._pendingListLayoutContent;
+        this._pendingListLayoutContent = null;
+        if (!content || !cc.isValid(content)) return;
+        this._refreshUnifiedListLayout(content);
+        this._paintColumnDividers(content);
+    }
+
+    private _setupUnifiedList(): void {
+        if (!this.unifiedScrollView || !this.dataListNode) return;
+        this._dataListMinHeight = this.dataListNode.height;
+        const dataListWidget = this.dataListNode.getComponent(cc.Widget);
+        if (dataListWidget) {
+            dataListWidget.isAlignTop = false;
+            dataListWidget.isAlignBottom = false;
+            dataListWidget.updateAlignment();
+        }
+        const reportWidget = this.reportScrow.getComponent(cc.Widget);
+        this._dataListContentTop = reportWidget?.top || 0;
+        this._dataListContentBottom = reportWidget?.bottom || 0;
+        const unifiedListWidget = this.unifiedScrollView.node.getComponent(cc.Widget);
+        this._unifiedListBottom = unifiedListWidget?.bottom || 0;
+        [this.reportScrow, this.squidListView, this.mushRoomListView, this.jackpotListView].forEach(node => {
+            const scrollView = node.getComponent(cc.ScrollView);
+            if (!scrollView) return;
+            scrollView.stopAutoScroll();
+            scrollView.enabled = false;
+        });
+        const peopleScrollView = this.peopleContent.parent?.parent?.getComponent(cc.ScrollView);
+        if (peopleScrollView) peopleScrollView.enabled = false;
+        this._refreshUnifiedListViewportSize();
+    }
+
+    private _refreshUnifiedListLayout(content: cc.Node): void {
+        if (!this.unifiedScrollView || !this.dataListNode) return;
+        const layout = content.getComponent(cc.Layout);
+        if (layout) layout.updateLayout();
+        const contentHeight = content.childrenCount > 0 ? content.height : 0;
+        this.dataListNode.height = Math.max(
+            this._dataListMinHeight,
+            this._dataListContentTop + contentHeight + this._dataListContentBottom
+        );
+        this.dataListNode.children.forEach(node => {
+            const widget = node.getComponent(cc.Widget);
+            if (widget) widget.updateAlignment();
+        });
+        this._refreshInnerListViewport(content);
+        const unifiedContent = this.unifiedScrollView.content;
+        const unifiedLayout = unifiedContent?.getComponent(cc.Layout);
+        if (unifiedLayout) unifiedLayout.updateLayout();
+    }
+
+    private _refreshInnerListViewport(content: cc.Node): void {
+        const viewport = content.parent;
+        if (!viewport) return;
+        const viewportWidget = viewport.getComponent(cc.Widget);
+        if (viewportWidget) viewportWidget.updateAlignment();
+        const contentWidget = content.getComponent(cc.Widget);
+        if (contentWidget) contentWidget.updateAlignment();
+    }
+
+    private _refreshUnifiedListViewport(showPage: boolean): void {
+        if (!this.unifiedScrollView) return;
+        const widget = this.unifiedScrollView.node.getComponent(cc.Widget);
+        if (!widget) return;
+        const pageWidget = this.pageInfoNode.getComponent(cc.Widget);
+        const pageBottom = pageWidget?.bottom || 0;
+        const pageAreaBottom = pageBottom + this.pageInfoNode.height;
+        widget.bottom = showPage ? Math.max(this._unifiedListBottom, pageAreaBottom) : this._unifiedListBottom;
+        widget.updateAlignment();
+        this._refreshUnifiedListViewportSize();
+    }
+
+    private _refreshUnifiedListViewportSize(): void {
+        if (!this.unifiedScrollView) return;
+        const viewport = this.unifiedScrollView.node.getChildByName('view');
+        if (!viewport) return;
+        const viewportWidget = viewport.getComponent(cc.Widget);
+        if (viewportWidget) viewportWidget.updateAlignment();
+        const contentWidget = this.unifiedScrollView.content?.getComponent(cc.Widget);
+        if (contentWidget) contentWidget.updateAlignment();
     }
 
     private _currentSquidSnapshot(): TexasReportSquidRoundSnapshot | null {

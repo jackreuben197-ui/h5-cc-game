@@ -13,6 +13,12 @@ export interface IBetBtnData {
 }
 
 export function caculatePotsBet(scs: ShortCut[], roundBet: number, minRaise: number, player: TexasGameRoomDataPlayer): IBetBtnData[] {
+    // const ibtn:IBetBtnData = {
+    //     label: '1/2',
+    //     amount: 100,
+    //     cb: (a,b) => { }
+    // }
+    // return [ibtn , ibtn, ibtn,ibtn];
     if (!player || !player.mine) return [];
     const actionLimitList = player.mine.operator.actionLimitList;
     if (!actionLimitList.some(v => v.action == Def.Action.BET || v.action == Def.Action.RAISE)) return [];
@@ -56,8 +62,8 @@ export default class BetButtonsContainer extends cc.Component {
     private layoutDict: { [key: number]: cc.Vec2[] } = {
         1: [cc.v2(-190, 370)],
         2: [cc.v2(-190, 370), cc.v2(190, 370)],
-        3: [cc.v2(-190, 370), cc.v2(0, 395), cc.v2(190, 370)],
-        4: [cc.v2(-350, 240), cc.v2(-190, 370), cc.v2(190, 370), cc.v2(350, 240)],
+        3: [cc.v2(-250, 300), cc.v2(0, 395), cc.v2(250, 300)],
+        4: [cc.v2(-300, 240), cc.v2(-120, 370), cc.v2(120, 370), cc.v2(300, 240)],
         5: [cc.v2(-350, 240), cc.v2(-190, 370), cc.v2(0, 395), cc.v2(190, 370), cc.v2(350, 240)]
     };
     // 动态缓存池：一开始是空的，后面随着传入数据多退少补

@@ -3,7 +3,7 @@ import ccviewData, { CCViewData } from '../../data/system/CCViewData';
 
 export default abstract class UIComponentBase<T = any> extends cc.Component {
     // initialize 初始化会被Call的函数
-    public abstract initialize(param: T): void;
+    public abstract initialize(param: T): void | Promise<void>;
     // 生命周期
     // instantiate:
     //    onLoad

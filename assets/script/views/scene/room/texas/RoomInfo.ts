@@ -10,6 +10,7 @@ import { AnimateDisplayBackground } from '../../../../game/constant/AnimateDispl
 import { StringHelper } from '../../../../helper/StringHelper';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
+import viewManager from '../../../UIViewManager';
 
 const { ccclass, property, menu } = cc._decorator;
 
@@ -39,7 +40,23 @@ export default class RoomInfo extends cc.Component {
     }
 
     public onLoad() {
-        // 如果绑定点击写这里
+        this.node.on('click', this._onClickRoomInfo, this);
+    }
+
+    protected onDestroy(): void {
+        this.node.targetOff(this);
+    }
+
+    /** 点击牌桌中间的房间信息文本，弹出牌局配置弹窗（对齐旧版 pokerqueen 的交互意图）。 */
+    private _onClickRoomInfo(): void {
+        // 普通现金桌 matchID 为 0，只需保证 initData 已执行过
+        if (this._roomID == null || this._matchID == null) return;
+        viewManager.openDialog('TexasTableSetting', {
+            roomID: this._roomID,
+            matchID: this._matchID,
+            isFromBringIn: false,
+            noAnimation: true
+        });
     }
 
     public onEnable(): void {

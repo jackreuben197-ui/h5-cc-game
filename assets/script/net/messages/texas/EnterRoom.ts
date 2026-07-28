@@ -27,6 +27,7 @@ const _plog = createLogger('ServerMessageEnterRoom');
 
 // EnterRoom 1002
 export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: number, matchID: number): Promise<void> {
+    if (data.status != 0) return;
     let roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     if (!roomData && matchID > 0) {
         // MTT 首次进桌：客户端用 (0, matchID) 发的请求，服务端回来已分配了真实 roomID
@@ -41,7 +42,6 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         _plog.error('no store room data');
         return;
     }
-    if (data.status != 0) return;
     // 声音处理
     soundManager.volumeOnOff(roomData.setting.soundOn);
     soundManager.playBGM();
@@ -49,7 +49,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         roomID: roomID,
         matchID: matchID
     });
-    const myseat = data.myInfo.seatId;
+    const myseat = data.myInfo?.seatId || 0;
     const seatCount = roomData.seatsStateManager.seatsCount;
     const myOp = myseat > 0 && data.operatorList.filter(v => v.seatId == myseat && !v.isAgreeSecondPc && !v.isInsurance).length > 0;
     const defaultHandCards = new Array(roomData.basicInfo.handCardNum).fill(0);
@@ -95,6 +95,10 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         }
         const playerMap: Map<number, Player.AsObject> = new Map();
         data.playersList.map(v => playerMap.set(v.seatId, v));
+        if (data.myInfo) {
+            roomData.mine.clearData();
+            roomData.seatsStateManager.setMySeat(data.myInfo.seatId, AnimateDisplayTypePosition.Static);
+        }
         const seatedPlayers: TexasGameRoomDataPlayer[] = [];
         for (let seat = 1; seat <= seatCount; seat++) {
             let seatData = roomData.seatsStateManager.getSeatPlayer(seat);
@@ -167,8 +171,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         PlayerStoreUtils.syncSeatPlayers(roomData, seatedPlayers);
         UserStoreUtils.preparePropList();
         if (data.myInfo) {
-            roomData.mine.clearData();
-            const player = roomData.seatsStateManager.setMySeat(data.myInfo.seatId, AnimateDisplayTypePosition.Static);
+            const player = roomData.seatsStateManager.getSeatPlayer(data.myInfo.seatId);
             if (player) {
                 player.mine.autoOperationType = AutoOperationTypeTexas.NO;
                 //有牌
@@ -231,6 +234,10 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         });
     }
     if (matchID > 0) {
+        roomData.mtt.setTableTransferWaiting(false);
+        roomData.mtt.applySnapshot(data.mttInfo, data.mttProgress, data.myInfo);
+        // 首次进桌按服务端牌局状态恢复休息等待条件。
+        roomData.mtt.syncHandState(data.gameStatus);
         //已经设置过了
         const sbante = roomData.basicInfo.sbante;
         if (data.mttProgress) {
@@ -289,6 +296,11 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             }
             if (seatedConfig.enableCamera && seatedConfig.canSwitchPowerSaving) {
                 roomData.mine.maskBtnState = seatedConfig.openPowerSaving ? ButtonState.ON : ButtonState.DISABLE;
+                roomData.mine.player.realShowMaskID = seatedConfig.openPowerSaving
+                    ? roomData.mine.player.videoMaskId == 0
+                        ? 1
+                        : roomData.mine.player.videoMaskId
+                    : 0;
             } else if (seatedConfig.enableCamera && !seatedConfig.canSwitchPowerSaving) {
                 roomData.mine.maskBtnState = ButtonState.DISABLE;
                 if (seatedConfig.openPowerSaving) {

@@ -14,8 +14,24 @@ import packetHead from './PacketHead';
 
 const { ccclass, property } = cc._decorator;
 
+const DEFAULT_MESSAGE_TIMEOUT_MS = 10000;
+
 export interface IProtocolRpc {
     rpcId: number;
+}
+
+export interface ProtocolMessageResult<T> {
+    body: T;
+    roomID: number;
+    matchID: number;
+}
+
+interface PendingMessage {
+    code: number;
+    matcher: (body: any, roomID: number, matchID: number) => boolean;
+    resolve: (result: ProtocolMessageResult<any>) => void;
+    reject: (error: Error) => void;
+    timer: ReturnType<typeof setTimeout>;
 }
 
 @ccclass
@@ -41,6 +57,7 @@ export default class ProtocolAgency extends cc.Component {
     public static gTimeStamp: number = 0;
     private static _rpcIdSeed: number = 0;
     private static _pendingRequests = new Map<number, (data: any) => void>();
+    private static _pendingMessages: PendingMessage[] = [];
 
     private static _getAvailableRpcId(): number {
         this._rpcIdSeed = (this._rpcIdSeed + 1) % 0xffffffff; // uint.MaxValue
@@ -86,6 +103,31 @@ export default class ProtocolAgency extends cc.Component {
                     reject(new Error(`请求超时: ${code}`));
                 }
             }, 3000); // 3秒超时
+        });
+    }
+
+    public static waitForMessage<T>(
+        code: number,
+        matcher: (body: T, roomID: number, matchID: number) => boolean,
+        timeout: number = DEFAULT_MESSAGE_TIMEOUT_MS
+    ): Promise<ProtocolMessageResult<T>> {
+        // 非 RPC 协议通过 code 和业务 matcher 等待真实服务端回包。
+        return new Promise((resolve, reject) => {
+            const pending: PendingMessage = {
+                code,
+                matcher,
+                resolve,
+                reject,
+                timer: null
+            };
+            pending.timer = setTimeout(() => {
+                const index = this._pendingMessages.indexOf(pending);
+                if (index >= 0) {
+                    this._pendingMessages.splice(index, 1);
+                }
+                reject(new Error(`请求超时: ${code}`));
+            }, timeout);
+            this._pendingMessages.push(pending);
         });
     }
 
@@ -334,7 +376,8 @@ export default class ProtocolAgency extends cc.Component {
             code != Code.MSG_R_MTT_DETAIL &&
             code != Code.MSG_S_ROOM_USER_SEND_DIAMOND &&
             code != Code.MSG_S_UTIL_ANTI_CHEAT_ROOM_VIDEO &&
-            code != Code.MSG_S_NOTIFICATION_ROOM_READY
+            code != Code.MSG_S_NOTIFICATION_ROOM_READY &&
+            code != Code.MSG_S_MTT_BREAK
         ) {
             // this.tracelog.debug('drop code:', ProtocolAgency.getCodeName(code));
             return;
@@ -377,6 +420,28 @@ export default class ProtocolAgency extends cc.Component {
         }
         // 新的消息处理，只针对新的模式
         MessageHandler.handle(code, body, roomid, matchid);
+        // 消息先落 RoomData，再唤醒等待同一回包的业务请求。
+        for (let index = this._pendingMessages.length - 1; index >= 0; index--) {
+            const pending = this._pendingMessages[index];
+            if (pending.code != code) {
+                continue;
+            }
+            let matched = false;
+            try {
+                matched = pending.matcher(body, roomid, matchid);
+            } catch (error) {
+                // matcher 异常必须结束对应等待，不能静默留到超时。
+                this._pendingMessages.splice(index, 1);
+                clearTimeout(pending.timer);
+                this.tracelog.error('消息 matcher 执行失败', code, roomid, matchid, error);
+                pending.reject(error instanceof Error ? error : new Error(String(error)));
+                continue;
+            }
+            if (!matched) continue;
+            this._pendingMessages.splice(index, 1);
+            clearTimeout(pending.timer);
+            pending.resolve({ body, roomID: roomid, matchID: matchid });
+        }
         body = null;
         body_ua = null;
     }
