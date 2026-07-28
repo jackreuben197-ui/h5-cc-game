@@ -19,7 +19,6 @@ const ROTATING_TIP_INTERVAL_SECONDS = 4;
 const MTT_NODE_NAMES = {
     addOn: 'Button_AddOn',
     cancelTrust: 'Button_CancelTrust',
-    trust: 'Button_Trust',
     countDownOverlay: 'Image_WaitForStartTips',
     redistributionTips: 'Image_RedistributionTips',
     bubbleTips: 'Image_WaitForStartBathTips',
@@ -38,8 +37,6 @@ export default class MttTableStateView extends cc.Component {
     private _addOnButton: cc.Button = null;
     private _cancelTrustNode: cc.Node = null;
     private _cancelTrustButton: cc.Button = null;
-    private _trustNode: cc.Node = null;
-    private _trustButton: cc.Button = null;
     private _startTipsNode: cc.Node = null;
     private _startTipsLabel: cc.Label = null;
     private _redistributionTipsNode: cc.Node = null;
@@ -58,26 +55,22 @@ export default class MttTableStateView extends cc.Component {
         }
         this._addOnButton?.node.targetOff(this);
         this._cancelTrustButton?.node.targetOff(this);
-        this._trustButton?.node.targetOff(this);
         this._roomData = roomData;
         this._tipsIndex = 0;
         this._breakOverlayVisible = false;
         // 复用牌桌现有节点，不再为开赛和休息维护两套倒计时 UI。
         this._addOnNode = this._findNode(this.node, MTT_NODE_NAMES.addOn);
         this._cancelTrustNode = this._findNode(this.node, MTT_NODE_NAMES.cancelTrust);
-        this._trustNode = this._findNode(this.node, MTT_NODE_NAMES.trust);
         this._startTipsNode = this._findNode(this.node, MTT_NODE_NAMES.countDownOverlay);
         this._redistributionTipsNode = this._findNode(this.node, MTT_NODE_NAMES.redistributionTips);
         this._bubbleTipsNode = this._findNode(this.node, MTT_NODE_NAMES.bubbleTips);
         this._addOnButton = this._findButton(this._addOnNode);
         this._cancelTrustButton = this._findButton(this._cancelTrustNode);
-        this._trustButton = this._findButton(this._trustNode);
         this._startTipsLabel = this._findLabel(this._startTipsNode, MTT_NODE_NAMES.tipLabel);
         this._redistributionTipsLabel = this._findLabel(this._redistributionTipsNode, MTT_NODE_NAMES.tipLabel);
         this._bubbleTipsLabel = this._findLabel(this._bubbleTipsNode, MTT_NODE_NAMES.tipLabel);
         this._addOnButton?.node.on('click', this.onAddOnClicked, this);
         this._cancelTrustButton?.node.on('click', this.onCancelTrustClicked, this);
-        this._trustButton?.node.on('click', this.onTrustClicked, this);
         autoBindEvents(this, { mtt: roomData.mtt });
         this._startTimer();
         this._render();
@@ -161,12 +154,6 @@ export default class MttTableStateView extends cc.Component {
         }
     }
 
-    private onTrustClicked(): void {
-        if (this._roomData) {
-            TexasTableEvent.MttSetAutoOp(this._roomData, true);
-        }
-    }
-
     private _render(): void {
         const roomData = this._roomData;
         if (!roomData) return;
@@ -180,10 +167,8 @@ export default class MttTableStateView extends cc.Component {
             this._addOnButton.interactable = addOnMode != 0 && !mtt.addOnPending;
         }
         if (this._cancelTrustNode) {
+            // 开启托管放在 MTT 菜单，牌桌常驻按钮只负责取消托管。
             this._cancelTrustNode.active = !!player?.isAuto;
-        }
-        if (this._trustNode) {
-            this._trustNode.active = !!player?.seated && !player.isAuto;
         }
         const nowSeconds = Math.floor(Date.now() / 1000);
         const startSeconds = mtt.getStartRemainingSeconds(nowSeconds);
