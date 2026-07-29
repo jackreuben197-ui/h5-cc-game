@@ -120,9 +120,20 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
 
     private onClickReport = () => {
         if (!this._mine) return;
+        const roomData = this._mine.roomData;
+        if (roomData.basicInfo?.isMtt || roomData.matchID > 0) {
+            h5MessageManager.sendToH5('showPanel', 1, {
+                panelType: 'mttRecord',
+                props: {
+                    matchId: roomData.matchID,
+                    tournamentName: roomData.basicInfo?.roomName || ''
+                }
+            });
+            return;
+        }
         viewManager.openDialog('TexasReport', {
-            roomID: this._mine.roomData.roomID,
-            matchID: this._mine.roomData.matchID
+            roomID: roomData.roomID,
+            matchID: roomData.matchID
         });
     };
     private onClickReplay = () => {
