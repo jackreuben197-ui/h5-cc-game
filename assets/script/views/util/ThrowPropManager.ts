@@ -1,7 +1,7 @@
 import soundManager from '../../core/SoundManager';
 import { DiamondGiftBroadcastData, EmojiBroadcastData, ThrowPropBroadcastData } from '../../data/room/texas/TexasGameRoomDataSeatsStateManager';
 import userStore from '../../data/user/UserStore';
-import { PropsID, pickerEmojiIndexFromType } from '../../game/constant/BroadcastCode';
+import { PropsID, pickerEmojiIndexFromType, PICKER_EMOJI_MIN_INDEX, PICKER_EMOJI_MAX_INDEX } from '../../game/constant/BroadcastCode';
 import MagicEmojiConfig from '../../game/constant/MagicEmojiConfig';
 import AssetManager, { BUNDLE_RESOURCES } from '../loader/AssetManager';
 import { sampleLiveBounds, getAnimDuration } from './SpineBoundsUtil';
@@ -162,6 +162,11 @@ class ThrowPropManager {
     private _playingPropUsers: Set<number> = new Set();
     private _playingFullscreenProp: boolean = false;
     private _emojiPlayTokens: Map<cc.Node, number> = new Map();
+    /** 图鉴表情骨骼常驻缓存(index→SkeletonData)，已 addRef 保留，避免每次播放重新加载导致延迟 */
+    private _pickerSpineCache: Map<number, sp.SkeletonData> = new Map();
+    /** 正在加载中的表情骨骼(index→Promise)，用于去重：预热与播放同时请求同一个只加载一次 */
+    private _pickerSpineLoading: Map<number, Promise<sp.SkeletonData>> = new Map();
+    private _pickerPreloadStarted = false;
 
     public initialize(root: cc.Node, fullscreenRoot: cc.Node): void {
         if (this._root !== root) {
@@ -174,6 +179,43 @@ class ThrowPropManager {
         this._root = root;
         this._fullscreenRoot = fullscreenRoot;
         this._bringNodeToTop(this._fullscreenRoot);
+        // 后台预加载全部图鉴表情骨骼，消除首次播放/收到时的加载延迟(表情骨骼是全局资源，跨房间复用，只需预热一次)
+        this._preloadPickerEmojis();
+    }
+
+    /** 后台预加载 em16-65 全部图鉴表情骨骼并常驻缓存(fire-and-forget，只执行一次) */
+    private _preloadPickerEmojis(): void {
+        if (this._pickerPreloadStarted) return;
+        this._pickerPreloadStarted = true;
+        for (let i = PICKER_EMOJI_MIN_INDEX; i <= PICKER_EMOJI_MAX_INDEX; i++) {
+            this._loadPickerSpine(i).catch(() => {});
+        }
+    }
+
+    /** 加载并常驻缓存图鉴表情骨骼；命中缓存/在途请求直接复用，避免重复加载与重复 addRef */
+    private _loadPickerSpine(index: number): Promise<sp.SkeletonData> {
+        const cached = this._pickerSpineCache.get(index);
+        if (cached) return Promise.resolve(cached);
+        const inflight = this._pickerSpineLoading.get(index);
+        if (inflight) return inflight;
+        const p = AssetManager.getOrLoad(BUNDLE_RESOURCES, `emoji_spine/em${index}/skeleton`, sp.SkeletonData)
+            .then(data => {
+                // 只在首次缓存时 addRef 一次，保留引用防止被引擎释放后又要重新加载
+                if (data && !this._pickerSpineCache.has(index)) {
+                    try {
+                        data.addRef();
+                    } catch (e) {}
+                    this._pickerSpineCache.set(index, data);
+                }
+                this._pickerSpineLoading.delete(index);
+                return data;
+            })
+            .catch(err => {
+                this._pickerSpineLoading.delete(index);
+                throw err;
+            });
+        this._pickerSpineLoading.set(index, p);
+        return p;
     }
 
     public playProp(data: ThrowPropBroadcastData, senderData: ThrowPropSeatNodes, targetData: ThrowPropSeatNodes): void {
@@ -357,7 +399,7 @@ class ThrowPropManager {
         this._emojiPlayTokens.set(emojiNode, token);
         let skeletonData: sp.SkeletonData = null;
         try {
-            skeletonData = await AssetManager.getOrLoad(BUNDLE_RESOURCES, `emoji_spine/em${index}/skeleton`, sp.SkeletonData);
+            skeletonData = await this._loadPickerSpine(index);
         } catch (error) {
             cc.warn('[ThrowPropManager] load picker emoji spine failed', index, error);
             return;

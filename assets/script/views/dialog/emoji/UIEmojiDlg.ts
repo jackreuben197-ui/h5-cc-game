@@ -57,6 +57,8 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
     private _tabUnderline: cc.Node = null;
     private _curCategory = 0;
     private _loadVersion = 0;
+    /** 记住上次选中的分类标签，重新打开面板时回到该标签(面板关闭会销毁实例，故用静态字段跨实例保留) */
+    private static _lastCategory = 0;
 
     public initialize(param: UIEmojiDlgParam): void {
         this._roomData = roomDataManager.getRoomData<TexasGameRoomData>(param.roomID, param.matchID);
@@ -65,7 +67,9 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
         if (layout) layout.paddingBottom = UIEmojiDlg.GRID_PADDING_BOTTOM;
         this._updatePanelHeight(UIEmojiDlg.CATEGORIES[0].indices.length);
         this._buildCategoryTabs();
-        this._selectCategory(0);
+        // 回到上次选中的分类标签，而不是每次都重置到第一个
+        const startCategory = Math.min(Math.max(UIEmojiDlg._lastCategory, 0), UIEmojiDlg.CATEGORIES.length - 1);
+        this._selectCategory(startCategory);
         this._playShowAnimation();
     }
 
@@ -150,6 +154,7 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
     private _selectCategory(index: number): void {
         if (!this._tabBar || !this.scrollContent) return;
         this._curCategory = index;
+        UIEmojiDlg._lastCategory = index;
         this._tabBar.children.forEach(tab => {
             const idx = parseInt(tab.name.replace('tab', ''));
             if (isNaN(idx)) return;
