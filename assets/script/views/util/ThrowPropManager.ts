@@ -423,13 +423,13 @@ class ThrowPropManager {
         const anchor = this._convertNodePosToNodeParent(emojiNode, avatarNode, cc.v3(0, avatarNode.height / 4, 0));
         emojiNode.setScale(PICKER_EMOJI_TEMP_SCALE);
         emojiNode.setPosition(anchor);
-        // 循环播放，固定时长后淡出（与 pokerqueen 一致：短动画也能稳定可见，不会一闪而过）
+        // 循环播放动画
         skeleton.setAnimation(0, animName, true);
         // 各表情 spine 导出尺寸差异极大：延迟一帧量包围盒，归一化到目标尺寸并按包围盒居中
-        const dur = getAnimDuration(skeleton, animName);
+        const animDuration = getAnimDuration(skeleton, animName);
         skeleton.scheduleOnce(() => {
             if (!cc.isValid(emojiNode) || this._emojiPlayTokens.get(emojiNode) !== token) return;
-            const b = sampleLiveBounds(skeleton, dur);
+            const b = sampleLiveBounds(skeleton, animDuration);
             if (b.max > 0) {
                 const scale = PICKER_EMOJI_TARGET_SIZE / b.max;
                 emojiNode.setScale(scale);
@@ -445,35 +445,44 @@ class ThrowPropManager {
                 emojiNode.setPosition(anchor);
             }
         }, 0);
+
+        // 播放语音并获取音效时长，使动画播放时长与音效精确对齐
+        const audioDuration = await this._playEmojiVoice(index);
+        if (this._emojiPlayTokens.get(emojiNode) !== token) return;
+
+        // 如果存在音效，则以音效时长为准；否则使用动画单帧/单次时长或默认时长
+        const holdDuration = audioDuration > 0 ? audioDuration : (animDuration > 0 ? animDuration : 1.5);
+
         cc.tween(emojiNode)
-            .delay(PICKER_EMOJI_HOLD)
-            .to(0.5, { opacity: 0 }, { easing: 'sineIn' })
+            .delay(holdDuration)
+            .to(0.3, { opacity: 0 }, { easing: 'sineIn' })
             .call(() => {
                 if (this._emojiPlayTokens.get(emojiNode) !== token) return;
                 emojiNode.active = false;
                 emojiNode.opacity = 255;
             })
             .start();
-        this._playEmojiVoice(index);
     }
 
     /** 播放图鉴表情语音(emoji_audio/em{idx})：文件扩展名混合，按路径解析；无文件则静默。
-     *  录音音量偏小：主层满音量 + 叠加一层加强层，整体更响。 */
-    private _playEmojiVoice(index: number): void {
-        if (!soundManager.isOn) return;
-        AssetManager.getOrLoad(BUNDLE_RESOURCES, `emoji_audio/em${index}`, cc.AudioClip)
-            .then(clip => {
-                if (!clip || !soundManager.isOn) return;
-                const id1 = cc.audioEngine.playEffect(clip, false);
-                try {
-                    cc.audioEngine.setVolume(id1, 1.0);
-                } catch (e) {}
-                const id2 = cc.audioEngine.playEffect(clip, false);
-                try {
-                    cc.audioEngine.setVolume(id2, PICKER_EMOJI_SOUND_BOOST);
-                } catch (e) {}
-            })
-            .catch(() => {});
+     *  返回音效时长(秒)，以便动画与音效对齐 */
+    private async _playEmojiVoice(index: number): Promise<number> {
+        if (!soundManager.isOn) return 0;
+        try {
+            const clip = await AssetManager.getOrLoad(BUNDLE_RESOURCES, `emoji_audio/em${index}`, cc.AudioClip);
+            if (!clip || !soundManager.isOn) return 0;
+            const id1 = cc.audioEngine.playEffect(clip, false);
+            try {
+                cc.audioEngine.setVolume(id1, 1.0);
+            } catch (e) {}
+            const id2 = cc.audioEngine.playEffect(clip, false);
+            try {
+                cc.audioEngine.setVolume(id2, PICKER_EMOJI_SOUND_BOOST);
+            } catch (e) {}
+            return clip.duration || 0;
+        } catch (e) {
+            return 0;
+        }
     }
 
     private _playTomato(task: ThrowPropTask): void {
