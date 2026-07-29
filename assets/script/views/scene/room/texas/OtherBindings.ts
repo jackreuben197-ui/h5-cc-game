@@ -8,7 +8,9 @@ import ccviewData, { CCViewData } from '../../../../data/system/CCViewData';
 import { AntiCheatType } from '../../../../game/constant/AntiCheatType';
 import { ButtonState } from '../../../../game/constant/Constants';
 import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconState';
+import { VideoModel } from '../../../../game/constant/VideoModel';
 import h5MessageManager from '../../../../H5MsgMgr';
+import { i18nMgr } from '../../../../i18n/i18nMgr';
 import agoraManager from '../../../../net/agora/AgoraManager';
 import { WebUserSetVideoMask, WWW } from '../../../../net/https/WebRequest';
 import viewManager from '../../../UIViewManager';
@@ -16,7 +18,6 @@ import UIViewUtil from '../../../util/UIViewUtil';
 import SpriteSwitcher from '../../../widget/SpriteSwitcher';
 import TexasTableEvent from './events/TexasTableEvent';
 import menuItemCaculator, { MenuItemLayout, MenuItemLayoutType } from './widget/MenuItemCaculator';
-import { i18nMgr } from '../../../../i18n/i18nMgr';
 
 const { ccclass, property, menu } = cc._decorator;
 
@@ -143,6 +144,8 @@ export default class OtherBindings extends cc.Component {
     }
 
     public onDisable(): void {
+        this.unschedule(this._startRandomVideoVerification);
+        this.unschedule(this._finishRandomVideoVerification);
         unBindEventsAll(this);
     }
 
@@ -211,23 +214,76 @@ export default class OtherBindings extends cc.Component {
         }
         UIViewUtil.setNodeGray(this.btnCamera.node, false);
         this.btnCamera.interactable = true;
+        const antiCheatConfig = this._roomData.basicInfo.antiCheatConfig;
+        const canSwitchPowerSaving = antiCheatConfig.getSeatedSetting().canSwitchPowerSaving;
+        const showVideoMask = antiCheatConfig.shouldShowVideoMask;
         let muted: boolean;
         if (val == ButtonState.ON) {
             muted = false;
             this.btnCameratIcon.changeSpriteFrame(0);
-            if (this._roomData.basicInfo.antiCheatConfig.getSeatedSetting().canSwitchPowerSaving) {
+            if (showVideoMask) {
                 this._roomData.mine.player.realShowMaskID = this._roomData.mine.player.videoMaskId == 0 ? 1 : this._roomData.mine.player.videoMaskId;
+            }
+            if (canSwitchPowerSaving || (antiCheatConfig.mode == VideoModel.RANDOM && showVideoMask)) {
                 this._roomData.mine.maskBtnState = ButtonState.ON;
             }
         } else {
             muted = true;
             this.btnCameratIcon.changeSpriteFrame(1);
-            if (this._roomData.basicInfo.antiCheatConfig.getSeatedSetting().canSwitchPowerSaving) {
+            if (showVideoMask) {
                 this._roomData.mine.player.realShowMaskID = 0;
             }
             this._roomData.mine.maskBtnState = ButtonState.DISABLE;
         }
         this._roomData.mine.localCameraEnabled = !muted;
+    }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.RANDOM_VIDEO_START_TIME_CHANGE, 'mine')
+    private onRandomVideoStartTimeChanged(startTime: number): void {
+        this.unschedule(this._startRandomVideoVerification);
+        this.unschedule(this._finishRandomVideoVerification);
+        if (startTime <= 0) return;
+        const mine = this._roomData.mine;
+        const now = Date.now();
+        if (mine.randomVideoEndTime <= now || mine.seatNo === 0) {
+            this._finishRandomVideoVerification();
+            return;
+        }
+        const countdownSeconds = Math.max(0, Math.ceil((startTime - now) / 1000));
+        if (countdownSeconds > 0) {
+            viewManager.showToast(i18nMgr.Get('UIVideoModelverifyRandomCountDown').replace('{0}', String(countdownSeconds)));
+            this.scheduleOnce(this._startRandomVideoVerification, (startTime - now) / 1000);
+            return;
+        }
+        this._startRandomVideoVerification();
+    }
+
+    private _startRandomVideoVerification(): void {
+        const mine = this._roomData.mine;
+        const remainingMilliseconds = mine.randomVideoEndTime - Date.now();
+        if (mine.randomVideoStartTime <= 0 || remainingMilliseconds <= 0 || mine.seatNo === 0) {
+            this._finishRandomVideoVerification();
+            return;
+        }
+        mine.randomVideoActive = true;
+        mine.localCameraBtnState = ButtonState.ON;
+        mine.localCameraEnabled = true;
+        mine.localMicrophoneBtnState = ButtonState.ON;
+        mine.localMicrophoneEnabled = true;
+        const antiCheatConfig = this._roomData.basicInfo.antiCheatConfig;
+        if (antiCheatConfig.shouldShowVideoMask) {
+            mine.player.realShowMaskID = mine.player.videoMaskId == 0 ? 1 : mine.player.videoMaskId;
+        }
+        const remainingSeconds = Math.max(1, Math.ceil(remainingMilliseconds / 1000));
+        viewManager.showToast(i18nMgr.Get('UIVideoModelverifyRandom01').replace('{0}', String(remainingSeconds)));
+        this.scheduleOnce(this._finishRandomVideoVerification, remainingMilliseconds / 1000);
+    }
+
+    private _finishRandomVideoVerification(): void {
+        const mine = this._roomData.mine;
+        mine.randomVideoActive = false;
+        mine.randomVideoStartTime = 0;
+        mine.randomVideoEndTime = 0;
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.VIDEO_MASK_BTN_STATE_CHAGE, 'mine')
@@ -311,7 +367,7 @@ export default class OtherBindings extends cc.Component {
                     await agoraManager.subscribeOrUnsubscribeRemoteVideo(true, user);
                 }
                 player.remoteVideoVisible = true;
-                if (this._roomData.basicInfo.antiCheatConfig && this._roomData.basicInfo.antiCheatConfig.getSeatedSetting().canSwitchPowerSaving) {
+                if (this._roomData.basicInfo.antiCheatConfig && this._roomData.basicInfo.antiCheatConfig.shouldShowVideoMask) {
                     player.realShowMaskID = player.videoMaskId == 0 ? 1 : player.videoMaskId;
                 } else {
                     player.realShowMaskID = 0;
@@ -388,6 +444,14 @@ export default class OtherBindings extends cc.Component {
 
     /** 摄像头开关 */
     private onClickLocalCameraBtn() {
+        if (this._roomData.mine.randomVideoActive && this._roomData.mine.localCameraBtnState == ButtonState.ON) {
+            const remainingSeconds = Math.max(0, Math.ceil((this._roomData.mine.randomVideoEndTime - Date.now()) / 1000));
+            if (remainingSeconds > 0) {
+                viewManager.showToast(i18nMgr.Get('UIVideoModelverifyRandom01').replace('{0}', String(remainingSeconds)));
+                return;
+            }
+            this._finishRandomVideoVerification();
+        }
         let state = ButtonState.OFF;
         if (this._roomData.mine.localCameraBtnState == ButtonState.OFF) {
             state = ButtonState.ON;
@@ -397,6 +461,14 @@ export default class OtherBindings extends cc.Component {
 
     /** 麦克风开关 */
     private onClickLocalMicrophoneBtn() {
+        if (this._roomData.mine.randomVideoActive && this._roomData.mine.localMicrophoneBtnState == ButtonState.ON) {
+            const remainingSeconds = Math.max(0, Math.ceil((this._roomData.mine.randomVideoEndTime - Date.now()) / 1000));
+            if (remainingSeconds > 0) {
+                viewManager.showToast(i18nMgr.Get('UIVideoModelverifyRandom01').replace('{0}', String(remainingSeconds)));
+                return;
+            }
+            this._finishRandomVideoVerification();
+        }
         let state = ButtonState.OFF;
         let muted = true;
         if (this._roomData.mine.localMicrophoneBtnState == ButtonState.OFF) {
