@@ -2,6 +2,7 @@ import type { ClientMessageBroadcastMsg } from '@silenthill/agreement-web';
 import { Code, Def } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
+import TexasGameRoomDataChat from '../../../data/room/texas/TexasGameRoomDataChat';
 import userStore, { UserPropData, UserStore } from '../../../data/user/UserStore';
 import UserStoreUtils from '../../../data/user/UserStoreUtils';
 import { BroadcastCode } from '../../../game/constant/BroadcastCode';
@@ -265,6 +266,15 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
         this._roomData.seatsStateManager.setPendingEmoji({
             type: config.type,
             userID: userStore.userRID
+        });
+        // 发送者不会收到自己的 1121 推送，先记录待确认表情，1019 成功后再写入聊天室。
+        this._roomData.chat.setPendingMessage({
+            name: userStore.name || '',
+            content: '',
+            headUrl: userStore.avatar || '',
+            sex: userStore.sex || 0,
+            time: TexasGameRoomDataChat.formatNowTime(),
+            emojiType: config.type
         });
         const msgType = Def.BroadcastMsgType.BC_MSG_EMOJI;
         const inner = JSON.stringify({
