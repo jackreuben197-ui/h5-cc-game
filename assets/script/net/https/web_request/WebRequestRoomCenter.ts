@@ -1222,6 +1222,7 @@ export class WebRoomCenterHistoryViewPublicCards extends WebCommon {
     static API: string = '/api/roomcenter/history/view_public_cards';
     static RequestParams: {
         room_id?: number;
+        match_id?: number;
         hand_num?: number;
         round?: number;
     } | null = null;

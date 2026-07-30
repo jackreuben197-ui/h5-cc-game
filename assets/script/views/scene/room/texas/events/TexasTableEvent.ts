@@ -732,6 +732,7 @@ export default class TexasTableEvent {
                 web_class: WebRoomCenterHistoryViewPublicCards,
                 body: WebRoomCenterHistoryViewPublicCards.Request({
                     room_id: cached?.s?.rid || roomData.roomID,
+                    match_id: cached?.s?.mid || roomData.matchID,
                     hand_num: cached?.s?.hand || handNum,
                     round: round
                 })
