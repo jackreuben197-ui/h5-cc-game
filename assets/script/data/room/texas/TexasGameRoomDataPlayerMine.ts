@@ -38,6 +38,7 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public static readonly VIDEO_MASK_BTN_STATE_CHAGE = 'VIDEO_MASK_BTN_STATE_CHAGE';
     public static readonly REMOTE_CAMERA_STATE_CHANGE = 'REMOTE_CAMERA_STATE_CHANGE';
     public static readonly REMOTE_MICROPHONE_ENABLED_CHANGE = 'REMOTE_MICROPHONE_ENABLED_CHANGE';
+    public static readonly RANDOM_VIDEO_START_TIME_CHANGE = 'RANDOM_VIDEO_START_TIME_CHANGE';
     public static readonly RANDOM_VIDEO_ACTIVE_CHANGE = 'RANDOM_VIDEO_ACTIVE_CHANGE';
     public static readonly RANDOM_VIDEO_END_TIME_CHANGE = 'RANDOM_VIDEO_END_TIME_CHANGE';
     public static readonly ROOM_ADMIN_PERMISSIONS_CHANGE = 'ROOM_ADMIN_PERMISSIONS_CHANGE';
@@ -107,6 +108,7 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
 
     public async clearVideoAndAudio() {
         this.randomVideoActive = false;
+        this.randomVideoStartTime = 0;
         this.randomVideoEndTime = 0;
         await agoraManager.disableCamera();
         await agoraManager.disableMicrophone();
@@ -128,11 +130,11 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
         this.unmuteEvents();
         this.emit(TexasGameRoomDataPlayerMine.ROOM_ADMIN_PERMISSIONS_CHANGE);
     }
-    // ==================== 随机视频验证状态 ====================
-    /** 是否正在随机视频验证中 */
+
+    @observable(TexasGameRoomDataPlayerMine.RANDOM_VIDEO_START_TIME_CHANGE)
+    public randomVideoStartTime: number = 0;
     @observable(TexasGameRoomDataPlayerMine.RANDOM_VIDEO_ACTIVE_CHANGE)
     public randomVideoActive: boolean = false;
-    /** 随机视频验证结束时间戳（毫秒），0 表示未在验证 */
     @observable(TexasGameRoomDataPlayerMine.RANDOM_VIDEO_END_TIME_CHANGE)
     public randomVideoEndTime: number = 0;
     // 如果有座位,座位号 > 0
@@ -309,6 +311,7 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
 
     public clearData() {
         this.seatNo = 0;
+        this.operator = null;
         //this.muteEvents();
         this.storeChips = 0;
         this.totalChips = 0;

@@ -266,6 +266,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
     roomData.mine.remoteCameraEnabled = ButtonState.HIDDEN;
     roomData.mine.remoteMicrophoneEnabled = ButtonState.HIDDEN;
     roomData.mine.randomVideoActive = false;
+    roomData.mine.randomVideoStartTime = 0;
     roomData.mine.randomVideoEndTime = 0;
     roomData.seatsStateManager.resetVideoAndAudioStates();
     // 视频房间：入房后加入 Agora 频道

@@ -29,7 +29,8 @@ export default class OpCodeHelper {
         // MTT 休息时序问题需要保留完整协议日志。
         Code.MSG_S_MTT_BREAK,
         Code.MSG_S_PUBLIC_CARDS,
-        Code.MSG_D_ROOMERS
+        Code.MSG_D_ROOMERS,
+        Code.MSG_S_UTIL_ANTI_CHEAT_ROOM_VIDEO
         
     ];
 

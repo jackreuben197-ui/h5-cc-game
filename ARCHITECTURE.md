@@ -798,6 +798,7 @@ H5 → CC：
 - `LeaveNotification`（服务端通知离开）会构造 `H5NavigatePayload`（带 path/query），通过 `ProcedureReturn` → `sendToH5('h5Navigate', 1, ...)` 跳到 H5 的对应页面（例如 `path: '/tableGameEnd'`）。
 - `ProcedureReturn.lateEnter` 处理"回到 H5"：有 routeData 走 `h5Navigate`，否则单纯 `h5Show`。
 - `UITexasMenu.click_rule_tips / click_insurance` 把规则/保险面板交给 H5（`sendToH5('showPanel', 1, ...)`），Cocos 不再实现这些纯展示界面。
+- `syncGlobalConfig` 将 H5 传入的 `payload.raw` 全量写入 `globalConfigStore` 内存单例，牌桌配置消费者从该单例按 key 读取，不依赖 HTTP 请求类的静态响应。
 
 ### 8.5 协议来源：npm 包 @silenthill/h5-cc-bridge
 
@@ -1083,7 +1084,9 @@ EnterRoom.ts / Seated.ts
 | `remoteVideoVisible` | `TexasGameRoomDataPlayer` | `TexasVideoMediaHelper`、`OtherBindings.onRemoteCameraChanged()`、离开/站起清理 | `SeatPlayer.onRemoteVideoVisibleChanged()` | 远端头像视频 overlay 的渲染开关；true 渲染远端 track，false `stopOverlay()` |
 | `micIconState` | `TexasGameRoomDataPlayer` | 本地/远端麦克风开关、远端 publish/unpublish/left | `SeatPlayer.onMicrophoneIconStateChanged()` | 座位麦克风图标显示状态 |
 | `maskBtnState` | `TexasGameRoomDataPlayerMine` | 视频桌初始化、本地摄像头按钮变化 | `OtherBindings.onMaskBtnState()` | 只控制窗花/节能按钮 UI 是否可点和图标，不直接控制窗花显示 |
-| `randomVideoActive` / `randomVideoEndTime` | `TexasGameRoomDataPlayerMine` | `AntiCheatRoomVideo.ts` 随机验证消息、清理流程 | 随机验证 UI/提示 | 随机视频验证状态，与头像视频渲染不是同一个开关 |
+| `randomVideoStartTime` / `randomVideoActive` / `randomVideoEndTime` | `TexasGameRoomDataPlayerMine` | `AntiCheatRoomVideo.ts` 随机验证消息、清理流程 | `OtherBindings` 随机验证倒计时、强制开启摄像头和提示 | 随机视频验证状态，与头像视频渲染不是同一个开关 |
+
+随机验证开始后摄像头和麦克风按钮切换为开启状态；验证结束前点击关闭只提示剩余强制开启时间，结束后恢复手动关闭。房间启用节能模式时，正在显示视频的座位同时显示各自 `videoMaskId` 对应的窗花遮罩；本人视频开启期间可随时切换窗花。
 
 本地摄像头开启/关闭的完整链路：
 

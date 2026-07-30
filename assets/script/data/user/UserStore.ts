@@ -13,6 +13,9 @@ export interface UserPropData {
     subscriptionName: string;
     propAmount: number;
     gamePropID: number;
+    propTypeCategory: number;
+    propTypeCategoryName: string;
+    propTypeCategoryIcon: string;
 }
 
 @bindData()

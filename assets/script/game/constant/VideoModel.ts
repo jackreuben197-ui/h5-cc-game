@@ -115,6 +115,10 @@ export class VideoAntiCheatConfig {
         return this._timelimit;
     }
 
+    public get shouldShowVideoMask(): boolean {
+        return this.getSeatedSetting().canSwitchPowerSaving || (this._mode == VideoModel.RANDOM && this._powerSaveing);
+    }
+
     public getTimelimit(): number {
         return this._timelimit;
     }

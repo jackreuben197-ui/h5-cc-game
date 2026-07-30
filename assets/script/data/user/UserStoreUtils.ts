@@ -47,7 +47,10 @@ export default class UserStoreUtils {
             payPrice: item.start_time <= now && now <= item.end_time ? item.pay_price : item.raw_price,
             subscriptionName: item.subscription_name,
             propAmount: item.prop_amount,
-            gamePropID: item.game_prop_id
+            gamePropID: item.game_prop_id,
+            propTypeCategory: item.prop_type_category,
+            propTypeCategoryName: item.prop_type_category_name,
+            propTypeCategoryIcon: item.prop_type_category_icon
         }));
     }
 

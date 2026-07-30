@@ -7,6 +7,7 @@
 import { GameConfig } from './config/GameConfig';
 import { createLogger } from './core/decorator/LogTrace';
 import bridgeStorage from './data/BridgeStorage';
+import globalConfigStore from './data/system/GlobalConfigStore';
 import diamondModel from './data/trade/DiamondModel';
 import userStore from './data/user/UserStore';
 import { MTT_MATCH_ENTRY_ROOM_ID } from './game/constant/Constants';
@@ -277,7 +278,8 @@ export async function registerH5Listeners(): Promise<void> {
             _ploger.warn('[H5Bridge] syncGlobalConfig 数据异常：缺少 payload.raw');
             return;
         }
-        //GameCache.Instance._globalConfig = config;
+        globalConfigStore.setConfig(config);
+        _ploger.info('[H5Bridge] syncGlobalConfig 缓存完成');
     });
     // 仅预填 Cocos 侧实际用到的 config_type：2(加时) 8(延迟看牌) 30(历史偷看)。
     // payload.raw 已是 H5 转换好的 map：{ [configType]: { [typeExt]: item } }。

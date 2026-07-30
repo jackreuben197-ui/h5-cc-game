@@ -2,6 +2,7 @@ import type { ClientMessageBroadcastMsg } from '@silenthill/agreement-web';
 import { Code, Def } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
+import TexasGameRoomDataChat from '../../../data/room/texas/TexasGameRoomDataChat';
 import userStore from '../../../data/user/UserStore';
 import { BroadcastCode, pickerEmojiTypeFromIndex } from '../../../game/constant/BroadcastCode';
 import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
@@ -32,6 +33,8 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
     private scrollContent: cc.Node = null;
     @property({ type: cc.Node, displayName: '表情滚动视口' })
     private viewport: cc.Node = null;
+    @property({ type: cc.ScrollView, displayName: '表情滚动视图' })
+    private scrollView: cc.ScrollView = null;
     @property({ type: cc.Prefab, displayName: '表情条目预制体' })
     private itemPrefab: cc.Prefab = null;
 
@@ -44,10 +47,9 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
         { name: 'Dog', icon: 'emtab5', indices: [56, 57, 58, 59, 60, 61, 62, 63, 64, 65] }
     ];
     private static readonly EMOJI_COST = 10;
-    private static readonly TAB_Y = -255;
     private static readonly TAB_ICON_SIZE = 96;
-    private static readonly TAB_UNDERLINE_Y = -60;
-    private static readonly GRID_PADDING_BOTTOM = 180;
+    private static readonly TAB_UNDERLINE_Y = -55;
+    private static readonly GRID_PADDING_BOTTOM = 20;
 
     private _roomData: TexasGameRoomData = null;
     private _targetY = 0;
@@ -64,8 +66,10 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
         this._roomData = roomDataManager.getRoomData<TexasGameRoomData>(param.roomID, param.matchID);
         this._applyLayout();
         const layout = this.scrollContent.getComponent(cc.Layout);
-        if (layout) layout.paddingBottom = UIEmojiDlg.GRID_PADDING_BOTTOM;
-        this._updatePanelHeight(UIEmojiDlg.CATEGORIES[0].indices.length);
+        if (layout) {
+            layout.paddingBottom = UIEmojiDlg.GRID_PADDING_BOTTOM;
+            layout.paddingTop = 15;
+        }
         this._buildCategoryTabs();
         // 回到上次选中的分类标签，而不是每次都重置到第一个
         const startCategory = Math.min(Math.max(UIEmojiDlg._lastCategory, 0), UIEmojiDlg.CATEGORIES.length - 1);
@@ -76,10 +80,16 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
     protected onLoad(): void {
         this._targetY = this.contentView.y;
         this._startY = -cc.winSize.height + 100;
-        this._viewportVerticalInset = this.contentView.height - this.viewport.height;
+        this._viewportVerticalInset = this.contentView.height - (this.viewport ? this.viewport.height : 440);
         this._bindTouchEnd(this.panelClick, this.close);
         this.contentView.on(cc.Node.EventType.TOUCH_START, this._stopTouch, this);
         this.contentView.on(cc.Node.EventType.TOUCH_END, this._stopTouch, this);
+
+        // 隐藏 prefab 中残留的旧 categoryContainer/cate1 背景节点
+        const oldContainer = this.contentView.getChildByName('categoryContainer');
+        if (oldContainer) oldContainer.active = false;
+        const oldDivider = this.contentView.getChildByName('categoryDivider');
+        if (oldDivider) oldDivider.active = false;
     }
 
     protected onDestroy(): void {
@@ -109,10 +119,9 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
         const cats = UIEmojiDlg.CATEGORIES;
         const bar = new cc.Node('CategoryTabs');
         bar.setParent(this.contentView);
-        bar.setPosition(0, UIEmojiDlg.TAB_Y);
         this._tabBar = bar;
         const size = UIEmojiDlg.TAB_ICON_SIZE;
-        const totalW = 900;
+        const totalW = 850;
         const step = totalW / cats.length;
         cats.forEach((cat, i) => {
             const tab = new cc.Node('tab' + i);
@@ -159,14 +168,15 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
             const idx = parseInt(tab.name.replace('tab', ''));
             if (isNaN(idx)) return;
             const selected = idx === index;
-            tab.scale = selected ? 1.3 : 1.05;
-            tab.opacity = selected ? 255 : 210;
+            tab.scale = selected ? 1.15 : 0.95;
+            tab.opacity = selected ? 255 : 200;
             if (selected && this._tabUnderline) this._tabUnderline.x = tab.x;
         });
         const version = ++this._loadVersion;
         this.scrollContent.removeAllChildren();
         const cats = UIEmojiDlg.CATEGORIES;
         const indices = cats[index] ? cats[index].indices : [];
+        this._updatePanelHeight(indices.length);
         for (const i of indices) this._loadAndAddEmoji(i, version);
     }
 
@@ -196,16 +206,46 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
     }
 
     private _updatePanelHeight(itemCount: number): void {
+        if (!this.scrollContent || !this.contentView) return;
         const layout = this.scrollContent.getComponent(cc.Layout);
-        const itemNode = this.itemPrefab.data as cc.Node;
-        const availableWidth = this.scrollContent.width - layout.paddingLeft - layout.paddingRight;
-        const columnCount = Math.max(1, Math.floor((availableWidth + layout.spacingX) / (itemNode.width + layout.spacingX)));
+        const itemNode = this.itemPrefab ? (this.itemPrefab.data as cc.Node) : null;
+        const itemWidth = itemNode ? itemNode.width : 142;
+        const itemHeight = itemNode ? itemNode.height : 194;
+
+        const availableWidth = this.scrollContent.width - (layout ? layout.paddingLeft + layout.paddingRight : 0);
+        const spacingX = layout ? layout.spacingX : 20;
+        const spacingY = layout ? layout.spacingY : 10;
+        const paddingTop = layout ? layout.paddingTop : 15;
+        const paddingBottom = UIEmojiDlg.GRID_PADDING_BOTTOM;
+
+        const columnCount = Math.max(1, Math.floor((availableWidth + spacingX) / (itemWidth + spacingX)));
         const rowCount = Math.max(1, Math.ceil(itemCount / columnCount));
-        const contentHeight = layout.paddingTop + layout.paddingBottom + rowCount * itemNode.height + (rowCount - 1) * layout.spacingY;
+        const contentHeight = paddingTop + paddingBottom + rowCount * itemHeight + Math.max(0, rowCount - 1) * spacingY;
+
         this.scrollContent.height = contentHeight;
-        this.contentView.height = contentHeight + this._viewportVerticalInset;
-        this.contentView.getComponent(cc.Widget).updateAlignment();
-        this.viewport.getComponent(cc.Widget).updateAlignment();
+
+        const maxScrollHeight = 440;
+        const scrollHeight = Math.min(contentHeight, maxScrollHeight);
+
+        const scrollNode = this.scrollView ? this.scrollView.node : this.viewport;
+        if (scrollNode) scrollNode.height = scrollHeight;
+        if (this.viewport) this.viewport.height = scrollHeight;
+
+        const tabAreaHeight = 135;
+        const panelHeight = scrollHeight + tabAreaHeight + 25;
+        this.contentView.height = panelHeight;
+
+        // Position scrollView and category tabs dynamically inside contentView
+        if (scrollNode) {
+            scrollNode.y = (tabAreaHeight / 2) + 10;
+        }
+        if (this._tabBar) {
+            this._tabBar.y = -panelHeight / 2 + 65;
+        }
+
+        if (this.contentView.getComponent(cc.Widget)) this.contentView.getComponent(cc.Widget).updateAlignment();
+        if (scrollNode && scrollNode.getComponent(cc.Widget)) scrollNode.getComponent(cc.Widget).updateAlignment();
+        if (this.viewport && this.viewport.getComponent(cc.Widget)) this.viewport.getComponent(cc.Widget).updateAlignment();
         this._targetY = this.contentView.y;
     }
 
@@ -216,6 +256,15 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
 
     private _sendEmojiBroadcast(type: number): void {
         this._roomData.seatsStateManager.setPendingEmoji({ type, userID: userStore.userRID });
+        // 发送者不会收到自己的 1121 推送，先记录待确认表情，1019 成功后再写入聊天室。
+        this._roomData.chat.setPendingMessage({
+            name: userStore.name || '',
+            content: '',
+            headUrl: userStore.avatar || '',
+            sex: userStore.sex || 0,
+            time: TexasGameRoomDataChat.formatNowTime(),
+            emojiType: type
+        });
         const msgType = Def.BroadcastMsgType.BC_MSG_EMOJI;
         const inner = JSON.stringify({
             name: userStore.name,
