@@ -99,7 +99,7 @@ export class i18nMgr {
 
     //从表格获取内容
     public static Get(opt: string): string {
-        return i18n.get(opt);
+        return i18n.get(opt).replace(/\\n/g, '\n');
         //return this.LanguageObject?.[opt] || opt;
     }
     /**
