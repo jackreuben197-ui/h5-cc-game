@@ -223,6 +223,13 @@ class UIViewManager {
         this._maskPrefab = param.maskPrefab;
         this._preload = param.preload;
         this._prompt = param.prompt;
+        // UIPrompt prefab 内含全屏 BlockInputEvents。场景初始激活时即使遮罩几乎透明，
+        // 仍会拦截牌桌全部触摸；统一由 showPrompting/hidePrompting 控制其激活状态。
+        const promptNode = this._prompt.children[0];
+        if (promptNode) {
+            promptNode.active = false;
+        }
+        this._prompt.active = false;
         this._toastManayer = new ToastManager(param.toastLayer, param.toastPrefab);
     }
 
@@ -436,15 +443,32 @@ class UIViewManager {
 
     /** showPrompting 显示网络请求 */
     public showPrompting() {
-        let prompt;
-        prompt = this._prompt.children[0].getComponent(UIPrefabComponent.Prompt.UIType);
+        const promptNode = this._prompt.children[0];
+        if (!promptNode) {
+            this.tracelog.error('showPrompting', 'UIPrompt node not found');
+            return;
+        }
+        // hidePrompting 会同时关闭父层和子节点；再次显示时必须对称恢复两者，
+        // 否则组件 update 不运行，或透明 BlockInputEvents 残留在场景上。
+        promptNode.active = true;
         this._prompt.active = true;
+        const prompt = promptNode.getComponent(UIPrefabComponent.Prompt.UIType);
+        if (!prompt) {
+            this.tracelog.error('showPrompting', 'UIPrompt component not found');
+            promptNode.active = false;
+            this._prompt.active = false;
+            return;
+        }
         prompt.initialize();
     }
 
     /* hidePrompting 隐藏网络请求*/
     public hidePrompting() {
-        this._prompt.children[0].active = false;
+        const promptNode = this._prompt.children[0];
+        if (promptNode) {
+            promptNode.active = false;
+        }
+        this._prompt.active = false;
     }
 
     /**

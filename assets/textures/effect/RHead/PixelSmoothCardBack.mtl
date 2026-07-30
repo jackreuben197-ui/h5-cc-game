@@ -12,13 +12,19 @@
       "defines": {
         "ROUNDED_RECT": true,
         "REPLACE_TEXTURE_ALPHA": true,
-        "SUPERSAMPLE_TEXTURE": true
+        "SUPERSAMPLE_TEXTURE": true,
+        "SAFE_EDGE_COLOR": true
       },
       "props": {
         "shapeParams": {
           "__type__": "cc.Vec2",
           "x": 0.681818,
-          "y": 0.055
+          "y": 0.075
+        },
+        "textureTexel": {
+          "__type__": "cc.Vec2",
+          "x": 0.022222,
+          "y": 0.014925
         }
       }
     }

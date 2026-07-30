@@ -10,7 +10,21 @@
   "_techniqueData": {
     "0": {
       "defines": {
+        "ROUNDED_RECT": true,
+        "REPLACE_TEXTURE_ALPHA": true,
         "SUPERSAMPLE_TEXTURE": true
+      },
+      "props": {
+        "shapeParams": {
+          "__type__": "cc.Vec2",
+          "x": 0.747126,
+          "y": 0.105
+        },
+        "textureTexel": {
+          "__type__": "cc.Vec2",
+          "x": 0.015385,
+          "y": 0.011494
+        }
       }
     }
   }
