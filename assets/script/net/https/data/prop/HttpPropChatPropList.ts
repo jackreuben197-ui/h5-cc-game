@@ -27,5 +27,8 @@ export namespace HttpPropChatPropList {
         public subscription_name: string = '';
         public prop_amount: number = 0;
         public game_prop_id: number = 0;
+        public prop_type_category: number = 0; // 道具类型子分类ID
+        public prop_type_category_name: string = ''; // 道具类型子分类名称
+        public prop_type_category_icon: string = ''; // 道具类型子分类图标
     }
 }

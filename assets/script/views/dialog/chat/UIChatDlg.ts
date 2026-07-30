@@ -138,8 +138,9 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
         this.chatTemplateNode.active = false;
         this._updateChatModeUI();
         this._bindEventsAndRefresh();
-        this._renderAllMessages();
+        // 先确定开场白占用的高度，再按最终视口尺寸定位聊天记录。
         this._refreshWelcome();
+        this._renderAllMessages();
         this._fetchHistoryAndPrologue();
         this._loadQuickMessages();
     }
@@ -160,6 +161,7 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
         if (this.chatTemplateNode) {
             this.chatTemplateNode.active = false;
         }
+        this.unschedule(this._finishMessageListLayout);
     }
 
     private _bindEventsAndRefresh(): void {
@@ -177,19 +179,24 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
 
     @bindEvent(TexasGameRoomDataChat.MESSAGES_RESET, { dataSource: 'chat', initIgnore: true })
     private onMessagesReset(): void {
-        this._renderAllMessages();
+        // HTTP 历史合并后也先刷新视口，避免列表按旧高度滚动后再次跳位。
         this._refreshWelcome();
+        this._renderAllMessages();
     }
     // ============================================================
     // 渲染
     // ============================================================
     private _renderAllMessages(): void {
         const content = this.chatListScroll.content;
+        this.unschedule(this._finishMessageListLayout);
+        // 首帧先隐藏记录，待 Layout 和 ScrollView 都完成定位后再显示。
+        content.opacity = 0;
         content.removeAllChildren();
         for (const msg of this._chat.messages) {
             this._appendItem(msg, false);
         }
         this._scrollToBottom(false);
+        this.scheduleOnce(this._finishMessageListLayout, 0);
     }
 
     private _appendItem(msg: TexasChatMessage, fadeIn: boolean): void {
@@ -210,6 +217,12 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
         if (contentLayout) contentLayout.updateLayout();
         this.chatListScroll.stopAutoScroll();
         this.chatListScroll.scrollToBottom(animated ? 0.1 : 0);
+    }
+
+    private _finishMessageListLayout(): void {
+        // 下一帧按最终节点尺寸再定位一次，显示时直接处于最新消息位置。
+        this._scrollToBottom(false);
+        this.chatListScroll.content.opacity = 255;
     }
 
     /** 根据 chat.prologue 显示/隐藏开场白，并通过 ChatList Widget.top 回收/让出开场白区域 */
@@ -298,7 +311,6 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
                 }
                 console.log('[Chat][History] 解析完成，有效消息', history, '开场白', prologue);
                 this._chat.mergeHistory(history, prologue);
-                this._refreshWelcome();
             },
             onFailure: () => {
                 if (!cc.isValid(this.node)) return;

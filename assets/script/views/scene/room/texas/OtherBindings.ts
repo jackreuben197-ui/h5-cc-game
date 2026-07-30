@@ -6,9 +6,13 @@ import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import { ButtonState } from '../../../../game/constant/Constants';
 import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconState';
+import { VideoModel } from '../../../../game/constant/VideoModel';
+import h5MessageManager from '../../../../H5MsgMgr';
+import { i18nMgr } from '../../../../i18n/i18nMgr';
 import agoraManager from '../../../../net/agora/AgoraManager';
 import { WebUserSetVideoMask, WWW } from '../../../../net/https/WebRequest';
 import UIViewUtil from '../../../util/UIViewUtil';
+import viewManager from '../../../UIViewManager';
 import SpriteSwitcher from '../../../widget/SpriteSwitcher';
 import TexasTableEvent from './events/TexasTableEvent';
 
@@ -457,4 +461,43 @@ export default class OtherBindings extends cc.Component {
         if (this.hideVideoOpenBtn) this.hideVideoOpenBtn.active = true;
         this._roomData.mine.remoteCameraEnabled = ButtonState.ON;
     }
+
+    private onClickBtnEmoji(): void {
+        const mine = this._roomData.mine;
+        if (!mine || !mine.player || mine.player.seatNo == 0) {
+            viewManager.showToast(i18nMgr.Get('adaptation10016'));
+            return;
+        }
+        viewManager.openDialog('Emoji', {
+            roomID: mine.roomData.roomID,
+            matchID: mine.roomData.matchID
+        });
+    }
+
+    private onClickReport = () => {
+        if (this._roomData.basicInfo.isMtt) {
+            // MTT 实时战况由 H5 复用大厅的排名、牌桌和奖励面板。
+            h5MessageManager.sendToH5('showPanel', 1, {
+                panelType: 'mttRecord',
+                props: {
+                    matchId: this._roomData.matchID,
+                    tournamentName: this._roomData.mtt.matchName || this._roomData.basicInfo.roomName
+                }
+            });
+            return;
+        }
+        const mine = this._roomData.mine;
+        viewManager.openDialog('TexasReport', {
+            roomID: mine.roomData.roomID,
+            matchID: mine.roomData.matchID
+        });
+    };
+
+    private onClickReplay = () => {
+        const mine = this._roomData.mine;
+        viewManager.openDialog('TexasHistory', {
+            roomID: mine.roomData.roomID,
+            matchID: mine.roomData.matchID
+        });
+    };
 }

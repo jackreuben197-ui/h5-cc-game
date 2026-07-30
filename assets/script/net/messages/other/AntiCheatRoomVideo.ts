@@ -2,12 +2,19 @@ import { ServerMessageUtilAntiCheatRoomVideo } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
+import globalConfigStore from '../../../data/system/GlobalConfigStore';
 import { VideoModel } from '../../../game/constant/VideoModel';
-import viewManager from '../../../views/UIViewManager';
 
 const _plog = createLogger('AntiCheatRoomVideo');
 
+const DEFAULT_COUNTDOWN_SECONDS = 5;
+
 const DEFAULT_OVERTIME_SECONDS = 30;
+
+interface RandomVideoConfig {
+    random_countdown?: number;
+    time_limit?: number;
+}
 
 // AntiCheatRoomVideo 902 — 随机视频验证
 export function AntiCheatRoomVideo(data: ServerMessageUtilAntiCheatRoomVideo.AsObject, roomID: number, matchID: number) {
@@ -15,14 +22,13 @@ export function AntiCheatRoomVideo(data: ServerMessageUtilAntiCheatRoomVideo.AsO
     _plog.info('status:', data.status, 'roomType:', data.roomType);
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     if (!roomData) return;
-    // 仅随机验证模式处理
-    if (roomData.basicInfo.antiCheatConfig && roomData.basicInfo.antiCheatConfig.mode != VideoModel.RANDOM) {
+    const antiCheatConfig = roomData.basicInfo.antiCheatConfig;
+    if (!antiCheatConfig || antiCheatConfig.mode != VideoModel.RANDOM) {
         _plog.warn('当前不是随机验证模式，忽略');
         return;
     }
     const mine = roomData.mine;
-    // 如果已经在验证中，不重复触发
-    if (mine.randomVideoActive) {
+    if (mine.randomVideoStartTime > 0 || mine.randomVideoActive) {
         _plog.info('已在验证中，忽略重复消息');
         return;
     }
@@ -31,19 +37,26 @@ export function AntiCheatRoomVideo(data: ServerMessageUtilAntiCheatRoomVideo.AsO
         _plog.info('未入座，跳过');
         return;
     }
-    const overtime = roomData.basicInfo.antiCheatConfig.randomTimeLimit > 0 ? roomData.basicInfo.antiCheatConfig.randomTimeLimit : DEFAULT_OVERTIME_SECONDS;
-    // 标记开始验证
-    mine.randomVideoActive = true;
-    mine.randomVideoEndTime = Date.now() + overtime * 1000;
-    _plog.info('开始随机视频验证，持续', overtime, '秒');
-    // Toast 提示
-    viewManager.showToast(`视频验证已开启，请保持摄像头开启 ${overtime} 秒`);
-    // 设置超时自动结束验证
-    setTimeout(() => {
-        if (mine.randomVideoActive) {
-            mine.randomVideoActive = false;
-            mine.randomVideoEndTime = 0;
-            _plog.info('随机视频验证结束');
+    const timing = _getRandomVideoTiming(matchID);
+    const startTime = Date.now() + timing.countdown * 1000;
+    mine.randomVideoEndTime = startTime + timing.overtime * 1000;
+    mine.randomVideoStartTime = startTime;
+    _plog.debug('将在', timing.countdown, '秒后开始随机视频验证，持续', timing.overtime, '秒');
+}
+
+function _getRandomVideoTiming(matchID: number): { countdown: number; overtime: number } {
+    const raw =
+        (matchID > 0 ? globalConfigStore.get('anti_cheat_video_config_mtt') : undefined) || globalConfigStore.get('anti_cheat_video_config');
+    let videoConfig: RandomVideoConfig | null = null;
+    try {
+        const value = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        if (value && typeof value === 'object') {
+            videoConfig = value as RandomVideoConfig;
         }
-    }, overtime * 1000);
+    } catch {
+        _plog.warn('anti_cheat_video_config 解析失败');
+    }
+    const countdown = Number(videoConfig && videoConfig.random_countdown) || DEFAULT_COUNTDOWN_SECONDS;
+    const overtime = Number(videoConfig && videoConfig.time_limit) || DEFAULT_OVERTIME_SECONDS;
+    return { countdown, overtime };
 }

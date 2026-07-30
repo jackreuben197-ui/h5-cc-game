@@ -41,6 +41,7 @@ export default class TexasVideoMediaHelper {
         roomData.mine.remoteCameraEnabled = ButtonState.HIDDEN;
         roomData.mine.remoteMicrophoneEnabled = ButtonState.HIDDEN;
         roomData.mine.randomVideoActive = false;
+        roomData.mine.randomVideoStartTime = 0;
         roomData.mine.randomVideoEndTime = 0;
         roomData.seatsStateManager.resetVideoAndAudioStates();
     }
@@ -60,7 +61,7 @@ export default class TexasVideoMediaHelper {
                 if (roomData.mine.remoteCameraEnabled == ButtonState.ON) {
                     await agoraManager.subscribeOrUnsubscribeRemoteVideo(true, uid);
                     seat.remoteVideoVisible = true;
-                    if (roomData.basicInfo.antiCheatConfig && roomData.basicInfo.antiCheatConfig.getSeatedSetting().canSwitchPowerSaving) {
+                    if (roomData.basicInfo.antiCheatConfig && roomData.basicInfo.antiCheatConfig.shouldShowVideoMask) {
                         seat.realShowMaskID = seat.videoMaskId == 0 ? 1 : seat.videoMaskId;
                     }
                 }
@@ -104,6 +105,7 @@ export default class TexasVideoMediaHelper {
             const seat = roomData.seatsStateManager.getSeatPlayerByUserID(uid);
             if (seat) {
                 seat.remoteVideoVisible = false;
+                seat.realShowMaskID = 0;
                 seat.micIconState = MicrophoneIconState.HIDDEN;
             }
         };
@@ -190,7 +192,7 @@ export default class TexasVideoMediaHelper {
                 await agoraManager.subscribeOrUnsubscribeRemoteVideo(true, user);
             }
             player.remoteVideoVisible = true;
-            if (roomData.basicInfo.antiCheatConfig && roomData.basicInfo.antiCheatConfig.getSeatedSetting().canSwitchPowerSaving) {
+            if (roomData.basicInfo.antiCheatConfig && roomData.basicInfo.antiCheatConfig.shouldShowVideoMask) {
                 player.realShowMaskID = player.videoMaskId == 0 ? 1 : player.videoMaskId;
             } else {
                 player.realShowMaskID = 0;

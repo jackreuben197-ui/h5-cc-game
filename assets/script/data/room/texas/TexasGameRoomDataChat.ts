@@ -113,7 +113,8 @@ export default class TexasGameRoomDataChat extends cc.EventTarget {
             this.prologue = prologue;
         }
         for (const msg of history) {
-            const dup = this._messages.some(m => m.name === msg.name && m.content === msg.content && m.time === msg.time);
+            // 表情内容为空，去重时必须比较表情类型，避免同一分钟的不同表情互相覆盖。
+            const dup = this._messages.some(m => m.name === msg.name && m.content === msg.content && m.time === msg.time && m.emojiType === msg.emojiType);
             if (!dup) {
                 this._messages.push(msg);
             }
