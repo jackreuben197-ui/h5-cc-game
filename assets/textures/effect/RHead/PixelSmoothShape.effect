@@ -126,6 +126,7 @@ CCProgram fs %{
         #else
           color.a *= shapeAlpha;
         #endif
+        color.rgb *= shapeAlpha;
       #endif
     #endif
 
