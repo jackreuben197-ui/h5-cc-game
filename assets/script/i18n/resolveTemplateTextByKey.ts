@@ -1,4 +1,5 @@
 import i18n from '@silenthill/h5-cc-i18n';
+import { i18nMgr } from './i18nMgr';
 
 const PUBLIC_CACHE_DB_NAME = 'public_cache';
 
@@ -44,10 +45,11 @@ export async function resolveTemplateTextByKey(rawName: string): Promise<string>
         return safeName;
     }
     const source = record.multi_language && typeof record.multi_language === 'object' ? record.multi_language : record;
-    const localeField = getLocaleField(i18n.currentLocale);
+    const currentLocale = i18nMgr.getCurrentLocale();
+    const localeField = getLocaleField(currentLocale);
     const localizedName = normalizeText(source[localeField]) || normalizeText(source.us_name);
     if (!localizedName) {
-        console.error('[resolveTemplateTextByKey] 多语言模板没有可用名称', templateKey, i18n.currentLocale);
+        console.error('[resolveTemplateTextByKey] 多语言模板没有可用名称', templateKey, currentLocale);
         return safeName;
     }
     return suffixParts.length > 0 ? `${localizedName}-${suffixParts.join('-')}` : localizedName;

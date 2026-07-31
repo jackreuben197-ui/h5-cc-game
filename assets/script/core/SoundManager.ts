@@ -42,7 +42,9 @@ export enum SoundMusicKey {
 export class SoundManager {
     private _soundOn: boolean = false;
     private _playingMusic: number = -1;
-    private _lastMusicKey: SoundMusicKey = SoundMusicKey.BgmGame;
+    // 只有真正播放过音乐后才记录恢复目标。不能默认成牌桌 BGM，否则用户从未
+    // 进桌时，iOS 页面恢复后的首次点击也会被误判为需要恢复牌桌音乐。
+    private _lastMusicKey: SoundMusicKey | null = null;
     private _lastMusicVolume: number = 0.3;
     public get isOn() {
         return this._soundOn;
@@ -106,6 +108,9 @@ export class SoundManager {
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) return;
             requestAnimationFrame(() => {
+                // 没有正在播放的音乐时只恢复引擎即可，不安装重播手势。
+                // _soundOn 只是用户设置，不能代表用户已经进入过牌桌。
+                if (this._playingMusic === -1 || !this._lastMusicKey) return;
                 const ctx = this._getAudioContext();
                 if (!ctx) return;
                 try {
