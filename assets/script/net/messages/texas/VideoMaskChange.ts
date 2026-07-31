@@ -22,7 +22,11 @@ export function VideoMaskChange(data: ServerMessageVideoMaskChange.AsObject, roo
     }
     // 更新玩家数据
     seatData.videoMaskId = maskId;
-    if (seatData.realShowMaskID > 0) {
-        seatData.realShowMaskID = maskId;
+    const antiCheatConfig = roomData.basicInfo.antiCheatConfig;
+    const videoVisible = seatData.mine ? roomData.mine.localCameraEnabledDelayed : seatData.remoteVideoVisible;
+    if (videoVisible && antiCheatConfig?.shouldShowVideoMask) {
+        seatData.realShowMaskID = antiCheatConfig.getVisibleVideoMaskId(maskId);
+    } else {
+        seatData.realShowMaskID = 0;
     }
 }

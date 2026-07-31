@@ -5,11 +5,24 @@ import userStore from '../../../data/user/UserStore';
 import { ButtonState } from '../../../game/constant/Constants';
 import { MicrophoneIconState } from '../../../game/constant/MicrophoneIconState';
 import agoraManager from '../../agora/AgoraManager';
+import { WebUserSetVideoMask, WWW } from '../../https/WebRequest';
 
 const _plog = createLogger('AgoraManagerCallback');
 
 @traceClass()
 export default class TexasVideoMediaHelper {
+    public static async setVideoMask(maskId: number): Promise<boolean> {
+        try {
+            const response: any = await WWW.Instance.CommonAPI({
+                web_class: WebUserSetVideoMask,
+                body: { video_mask_id: maskId }
+            });
+            return response?.code === 0;
+        } catch {
+            return false;
+        }
+    }
+
     @traceMethod()
     public static async joinAgoraVideoChannelIfNeed(roomID: number, matchID: number): Promise<void> {
         const uid = userStore.userRID;
@@ -61,8 +74,9 @@ export default class TexasVideoMediaHelper {
                 if (roomData.mine.remoteCameraEnabled == ButtonState.ON) {
                     await agoraManager.subscribeOrUnsubscribeRemoteVideo(true, uid);
                     seat.remoteVideoVisible = true;
-                    if (roomData.basicInfo.antiCheatConfig && roomData.basicInfo.antiCheatConfig.shouldShowVideoMask) {
-                        seat.realShowMaskID = seat.videoMaskId == 0 ? 1 : seat.videoMaskId;
+                    const antiCheatConfig = roomData.basicInfo.antiCheatConfig;
+                    if (antiCheatConfig && antiCheatConfig.shouldShowVideoMask) {
+                        seat.realShowMaskID = antiCheatConfig.getVisibleVideoMaskId(seat.videoMaskId);
                     }
                 }
                 return;
@@ -192,8 +206,9 @@ export default class TexasVideoMediaHelper {
                 await agoraManager.subscribeOrUnsubscribeRemoteVideo(true, user);
             }
             player.remoteVideoVisible = true;
-            if (roomData.basicInfo.antiCheatConfig && roomData.basicInfo.antiCheatConfig.shouldShowVideoMask) {
-                player.realShowMaskID = player.videoMaskId == 0 ? 1 : player.videoMaskId;
+            const antiCheatConfig = roomData.basicInfo.antiCheatConfig;
+            if (antiCheatConfig && antiCheatConfig.shouldShowVideoMask) {
+                player.realShowMaskID = antiCheatConfig.getVisibleVideoMaskId(player.videoMaskId);
             } else {
                 player.realShowMaskID = 0;
             }

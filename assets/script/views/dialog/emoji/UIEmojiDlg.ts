@@ -92,6 +92,21 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
         if (oldDivider) oldDivider.active = false;
     }
 
+    protected override onFrameResize(
+        visibleSizeWidth: number,
+        visibleSizeHeight: number,
+        frameSizeWidth: number,
+        frameSizeHeight: number,
+        suggestScale: number,
+        saveAreaTop: number
+    ): void {
+        const maxHeight = 2290;
+        if (visibleSizeHeight < maxHeight) {
+            const scale = visibleSizeHeight / maxHeight;
+            this.node.setScale(scale, scale);
+        }
+    }
+
     protected onDestroy(): void {
         this.node.targetOff(this);
         this.panelClick.targetOff(this);

@@ -41,28 +41,36 @@ export class i18nMgr {
     //     en: "sl_K8cPNvxU",
     // }
     public static isCN() {
-        return i18n.currentLocale == i18n.LANG_ZH_CN;
+        return this.getCurrentLocale() == i18n.LANG_ZH_CN;
+    }
+
+    public static getCurrentLocale(): string {
+        return i18n.currentLocale;
     }
 
     public static initLanguage() {
-        i18n.setLocale(i18n.LANG_ZH_CN);
-        // 强制简体中文，忽略本地缓存
-        // this.language = 'cn';
-        // this.LanguageObject = LanguageAllObject[this.language];
+        // H5 会在握手完成后再同步一次；握手前先沿用页面级 runtime 已设置的语言，
+        // 避免 Cocos 延迟初始化把 H5 当前语言覆盖成默认简中。
+        this.setLanguage(i18n.currentLocale || 'cn');
     }
 
     /**
      * 设置语言
      */
-    public static setLanguage(language: string) {
-        if (this.language === language) {
-            return;
-        }
-        this.language = language;
+    public static setLanguage(language: string): boolean {
+        const resolved = this.resolveLanguage(language);
+        if (!resolved) return false;
+
+        const changed = this.language !== resolved.code || i18n.currentLocale !== resolved.locale;
+        this.language = resolved.code;
+        i18n.setLocale(resolved.locale);
         storageManager.setItem(StorageKey.LANGUAGE, this.language);
-        this.refreshAllLabel();
+        if (changed) {
+            this.refreshAllLabel();
+        }
         // this.reloadSprite();
         //this.resetRemoteSprite();
+        return true;
     }
 
     // 观察所有与多语言有关的图片 重新调用服务器接口
@@ -99,8 +107,36 @@ export class i18nMgr {
 
     //从表格获取内容
     public static Get(opt: string): string {
-        return i18n.get(opt);
+        return i18n.get(opt).replace(/\\n/g, '\n');
         //return this.LanguageObject?.[opt] || opt;
+    }
+
+    private static resolveLanguage(language: string): { code: string; locale: string } | null {
+        const normalized = String(language || '')
+            .trim()
+            .toLowerCase()
+            .replace(/_/g, '-');
+
+        if (normalized === 'cn' || normalized === 'zh-cn' || normalized === 'zh-hans') {
+            return { code: 'cn', locale: i18n.LANG_ZH_CN };
+        }
+        if (
+            normalized === 'zh' ||
+            normalized === 'tw' ||
+            normalized === 'hk' ||
+            normalized === 'zh-tw' ||
+            normalized === 'zh-hk' ||
+            normalized === 'zh-hant'
+        ) {
+            return { code: 'zh', locale: i18n.LANG_ZH_TW };
+        }
+        if (normalized === 'en' || normalized.startsWith('en-')) {
+            return { code: 'en', locale: i18n.LANG_EN };
+        }
+        if (normalized === 'pt' || normalized === 'br' || normalized.startsWith('pt-')) {
+            return { code: 'pt', locale: i18n.LANG_PT };
+        }
+        return null;
     }
     /**
      * 添加或移除 i18nSprite

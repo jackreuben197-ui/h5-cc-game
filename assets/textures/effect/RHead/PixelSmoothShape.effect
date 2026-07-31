@@ -11,6 +11,7 @@ CCEffect %{
       properties:
         texture: { value: white }
         shapeParams: { value: [1, 0.1] }
+        textureTexel: { value: [0, 0] }
 }%
 
 
@@ -57,11 +58,13 @@ CCProgram fs %{
   uniform Properties {
     // x: width / height, y: corner radius measured against height.
     vec2 shapeParams;
+    // Source texture texel size. Used to smooth very small card-back textures.
+    vec2 textureTexel;
   };
 
   vec4 sampleTexture(vec2 uv) {
     #if SUPERSAMPLE_TEXTURE && CC_SUPPORT_standard_derivatives
-      vec2 offset = fwidth(uv) * 0.35;
+      vec2 offset = max(fwidth(uv) * 0.35, textureTexel * 0.3);
       vec4 color =
           texture(texture, uv + vec2(-offset.x, -offset.y)) +
           texture(texture, uv + vec2( offset.x, -offset.y)) +
@@ -73,13 +76,17 @@ CCProgram fs %{
     #endif
   }
 
-  float roundedRectAlpha(vec2 uv) {
+  float roundedRectDistance(vec2 uv) {
     float aspect = shapeParams.x;
     float cornerRadius = shapeParams.y;
     vec2 halfSize = vec2(aspect * 0.5, 0.5);
     vec2 p = vec2((uv.x - 0.5) * aspect, uv.y - 0.5);
     vec2 q = abs(p) - (halfSize - vec2(cornerRadius));
-    float distanceToEdge = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - cornerRadius;
+    return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - cornerRadius;
+  }
+
+  float roundedRectAlpha(vec2 uv) {
+    float distanceToEdge = roundedRectDistance(uv);
 
     #if CC_SUPPORT_standard_derivatives
       float edgeSoftness = max(fwidth(distanceToEdge) * 1.5, 0.00075);
@@ -108,6 +115,16 @@ CCProgram fs %{
       color.a *= circleAlpha(v_uv0);
     #else
       vec4 textureColor = sampleTexture(v_uv0);
+
+      #if ROUNDED_RECT && SAFE_EDGE_COLOR
+        // Pull RGB from inside the card near its outline. The source PNG is tiny
+        // and its transparent pixels contain dark RGB, which otherwise creates
+        // a visible fringe when alpha is replaced by the analytic shape.
+        vec2 safeUv = mix(vec2(0.5), v_uv0, 0.9);
+        vec3 safeRgb = sampleTexture(safeUv).rgb;
+        float safeColorMix = smoothstep(-0.06, -0.005, roundedRectDistance(v_uv0));
+        textureColor.rgb = mix(textureColor.rgb, safeRgb, safeColorMix);
+      #endif
 
       #if CC_USE_ALPHA_ATLAS_texture
         textureColor.a *= texture(texture, v_uv0 + vec2(0, 0.5)).r;

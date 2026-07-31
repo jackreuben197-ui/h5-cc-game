@@ -16,6 +16,7 @@ import ProcedureManager from './game/procedure/ProcedureManager';
 import roomReconnectManager from './game/RoomReconnectManager';
 import GameplayUtil from './game/util/GameplayUtil';
 import h5MessageManager, { EnterMttMatchInfo, EnterTableRoomInfo, SyncUserClubResponse, SyncUserInfo } from './H5MsgMgr';
+import { i18nMgr } from './i18n/i18nMgr';
 import agoraManager from './net/agora/AgoraManager';
 import ProtocolAgency from './net/websocket/ProtocolAgency';
 
@@ -253,7 +254,11 @@ export async function registerH5Listeners(): Promise<void> {
             _ploger.warn('[H5Bridge] syncLanguage 缺少 locale 字段');
             return;
         }
-        _ploger.info('[H5Bridge] syncLanguage:', locale, '忽略，CC 层固定简体中文');
+        if (!i18nMgr.setLanguage(locale)) {
+            _ploger.warn('[H5Bridge] syncLanguage 不支持的语言:', locale);
+            return;
+        }
+        _ploger.info('[H5Bridge] syncLanguage 已同步到 Cocos:', locale);
     });
     h5MessageManager.on('syncUserClub', payload => {
         _ploger.info('[H5Bridge] 同步俱乐部信息:', payload);

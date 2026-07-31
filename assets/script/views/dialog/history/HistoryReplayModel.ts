@@ -198,6 +198,9 @@ export function hasHiddenPublicCards(publicCards: number[]): boolean {
 
 /** 是否还有未亮出的他人手牌(控制偷偷看按钮) */
 export function hasHiddenCards(data: ReplayHandData, model: HistoryHandModel, myRID: number): boolean {
+    if (data.s.mid > 0) {
+        return false; // 比赛局不支持偷偷看,直接返回 false
+    }
     const watchedHands = buildWatchedHandsMap(data);
     for (const result of data.s.result) {
         if (result.card == null || result.card.length === 0 || result.card[0] <= 0) {
