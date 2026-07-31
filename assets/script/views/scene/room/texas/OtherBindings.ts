@@ -12,7 +12,7 @@ import { VideoModel } from '../../../../game/constant/VideoModel';
 import h5MessageManager from '../../../../H5MsgMgr';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
 import agoraManager from '../../../../net/agora/AgoraManager';
-import { WebUserSetVideoMask, WWW } from '../../../../net/https/WebRequest';
+import TexasVideoMediaHelper from '../../../../net/messages/texas/TexasVideoMediaHelper';
 import viewManager from '../../../UIViewManager';
 import UIViewUtil from '../../../util/UIViewUtil';
 import SpriteSwitcher from '../../../widget/SpriteSwitcher';
@@ -222,9 +222,11 @@ export default class OtherBindings extends cc.Component {
             muted = false;
             this.btnCameratIcon.changeSpriteFrame(0);
             if (showVideoMask) {
-                this._roomData.mine.player.realShowMaskID = this._roomData.mine.player.videoMaskId == 0 ? 1 : this._roomData.mine.player.videoMaskId;
+                this._roomData.mine.player.realShowMaskID = antiCheatConfig.getVisibleVideoMaskId(this._roomData.mine.player.videoMaskId);
             }
-            if (canSwitchPowerSaving || (antiCheatConfig.mode == VideoModel.RANDOM && showVideoMask)) {
+            if (canSwitchPowerSaving) {
+                this._roomData.mine.maskBtnState = this._roomData.mine.player.realShowMaskID > 0 ? ButtonState.ON : ButtonState.OFF;
+            } else if (antiCheatConfig.mode == VideoModel.RANDOM && showVideoMask) {
                 this._roomData.mine.maskBtnState = ButtonState.ON;
             }
         } else {
@@ -272,7 +274,7 @@ export default class OtherBindings extends cc.Component {
         mine.localMicrophoneEnabled = true;
         const antiCheatConfig = this._roomData.basicInfo.antiCheatConfig;
         if (antiCheatConfig.shouldShowVideoMask) {
-            mine.player.realShowMaskID = mine.player.videoMaskId == 0 ? 1 : mine.player.videoMaskId;
+            mine.player.realShowMaskID = antiCheatConfig.getVisibleVideoMaskId(mine.player.videoMaskId);
         }
         const remainingSeconds = Math.max(1, Math.ceil(remainingMilliseconds / 1000));
         viewManager.showToast(i18nMgr.Get('UIVideoModelverifyRandom01').replace('{0}', String(remainingSeconds)));
@@ -367,8 +369,9 @@ export default class OtherBindings extends cc.Component {
                     await agoraManager.subscribeOrUnsubscribeRemoteVideo(true, user);
                 }
                 player.remoteVideoVisible = true;
-                if (this._roomData.basicInfo.antiCheatConfig && this._roomData.basicInfo.antiCheatConfig.shouldShowVideoMask) {
-                    player.realShowMaskID = player.videoMaskId == 0 ? 1 : player.videoMaskId;
+                const antiCheatConfig = this._roomData.basicInfo.antiCheatConfig;
+                if (antiCheatConfig && antiCheatConfig.shouldShowVideoMask) {
+                    player.realShowMaskID = antiCheatConfig.getVisibleVideoMaskId(player.videoMaskId);
                 } else {
                     player.realShowMaskID = 0;
                 }
@@ -482,32 +485,20 @@ export default class OtherBindings extends cc.Component {
     private async onClickMaskBtn(): Promise<void> {
         const mine = this._roomData.mine.player;
         if (!mine) return;
-        // videoMaskId 循环 +1，大于4回到1
+        const antiCheatConfig = this._roomData.basicInfo.antiCheatConfig;
         const oldMaskId = mine.videoMaskId || 0;
         const oldRealShowMaskID = mine.realShowMaskID;
-        let newMaskId = oldMaskId + 1;
-        if (newMaskId > 4) newMaskId = 1;
-        // 乐观更新本地数据和窗花显示
+        const oldMaskBtnState = this._roomData.mine.maskBtnState;
+        let newMaskId = oldRealShowMaskID + 1;
+        if (newMaskId > 4) newMaskId = antiCheatConfig.getSeatedSetting().canDisablePowerSaving ? 0 : 1;
         mine.videoMaskId = newMaskId;
         mine.realShowMaskID = newMaskId;
-        // 请求服务器广播
-        try {
-            const response: any = await WWW.Instance.CommonAPI({
-                web_class: WebUserSetVideoMask,
-                body: { video_mask_id: newMaskId }
-            });
-            if (response?.code !== 0) {
-                // 失败回滚
-                mine.videoMaskId = oldMaskId;
-                mine.realShowMaskID = oldRealShowMaskID;
-                return;
-            }
-            //确定更换
-            mine.realShowMaskID = newMaskId;
-        } catch {
-            // 异常回滚
+        this._roomData.mine.maskBtnState = newMaskId > 0 ? ButtonState.ON : ButtonState.OFF;
+        const success = await TexasVideoMediaHelper.setVideoMask(newMaskId);
+        if (!success) {
             mine.videoMaskId = oldMaskId;
             mine.realShowMaskID = oldRealShowMaskID;
+            this._roomData.mine.maskBtnState = oldMaskBtnState;
         }
     }
 

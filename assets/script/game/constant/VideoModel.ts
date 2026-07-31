@@ -30,7 +30,7 @@ export interface IVASeatedSetting {
     canOpCamera: boolean;
     canOpMicrophone: boolean;
     canSwitchPowerSaving: boolean; // 能切mask
-    //canDisablePowerSaving: boolean; // 切换mask中有一个disable
+    canDisablePowerSaving: boolean;
     openCamera: boolean; // 是否打开相机
     openMicrophone: boolean; // 是否打开麦克风
     openPowerSaving: boolean; // 打开mask
@@ -45,8 +45,8 @@ export class VideoAntiCheatConfig {
     private _videoSeat: boolean;
     private _videoMiddle: boolean;
     private _powerSaveing: boolean;
-    private _powerSavingSeat: boolean; // 节能模式
-    private _powerSavingMiddle: boolean; // 节能模式
+    private _powerSavingSeat: boolean; // 节能模式，坐下是否启用
+    private _powerSavingMiddle: boolean; // 节能模式，坐下后是否能关闭
     private _antiCheatType: number; // 防作弊类型 0 未知 1 无 2 实时语音 3 实时视频 4 人脸验证
     private _normalAntiCheatOrderType: number; // 1: 麦序（不可以关麦） 2: 全程语音（可以开关麦）
     private _verifyType: number; // 1: 音视频 2：视频
@@ -114,9 +114,16 @@ export class VideoAntiCheatConfig {
     public get randomTimeLimit(): number {
         return this._timelimit;
     }
-
+    public get isOptionalVideoMaskMode(): boolean {
+        return this._mode == VideoModel.HUMAN || this._mode == VideoModel.EFFECT;
+    }
     public get shouldShowVideoMask(): boolean {
-        return this.getSeatedSetting().canSwitchPowerSaving || (this._mode == VideoModel.RANDOM && this._powerSaveing);
+        return this._powerSaveing || (this.isOptionalVideoMaskMode && this._powerSavingSeat);
+    }
+
+    public getVisibleVideoMaskId(maskId: number): number {
+        if (maskId > 4) return 1;
+        return maskId == 0 && !this.isOptionalVideoMaskMode ? 1 : maskId;
     }
 
     public getTimelimit(): number {
@@ -132,11 +139,14 @@ export class VideoAntiCheatConfig {
                 canOpCamera: false,
                 canOpMicrophone: false,
                 canSwitchPowerSaving: false,
+                canDisablePowerSaving: false,
                 openCamera: false,
                 openMicrophone: true,
                 openPowerSaving: false
             };
         }
+        const canDisablePowerSaving = this._powerSaveing && this._powerSavingMiddle && this.isOptionalVideoMaskMode;
+        const openPowerSaving = this.isOptionalVideoMaskMode ? this._powerSavingSeat : this._powerSaveing;
         switch (this._mode) {
             case VideoModel.FORCE:
             case VideoModel.FULL_TIME:
@@ -145,6 +155,7 @@ export class VideoAntiCheatConfig {
                     canOpCamera: false,
                     canOpMicrophone: false,
                     canSwitchPowerSaving: this._powerSaveing,
+                    canDisablePowerSaving: false,
                     openCamera: true,
                     openMicrophone: true,
                     openPowerSaving: this._powerSaveing
@@ -156,9 +167,10 @@ export class VideoAntiCheatConfig {
                     canOpCamera: false,
                     canOpMicrophone: false,
                     canSwitchPowerSaving: false,
+                    canDisablePowerSaving: false,
                     openCamera: false,
                     openMicrophone: false,
-                    openPowerSaving: false
+                    openPowerSaving: this._powerSaveing
                 };
             case VideoModel.HUMAN:
             case VideoModel.EFFECT:
@@ -167,10 +179,11 @@ export class VideoAntiCheatConfig {
                     enableCamera: true,
                     canOpCamera: this._videoMiddle,
                     canOpMicrophone: this._micMiddle,
-                    canSwitchPowerSaving: this._powerSaveing && this._powerSavingMiddle,
+                    canSwitchPowerSaving: this._powerSaveing,
+                    canDisablePowerSaving: canDisablePowerSaving,
                     openCamera: this._videoSeat,
                     openMicrophone: this._micSeat,
-                    openPowerSaving: this._powerSaveing && this._powerSavingSeat
+                    openPowerSaving: openPowerSaving
                 };
         }
     }

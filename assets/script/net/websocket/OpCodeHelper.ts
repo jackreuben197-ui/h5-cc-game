@@ -30,7 +30,8 @@ export default class OpCodeHelper {
         Code.MSG_S_MTT_BREAK,
         Code.MSG_S_PUBLIC_CARDS,
         Code.MSG_D_ROOMERS,
-        Code.MSG_S_UTIL_ANTI_CHEAT_ROOM_VIDEO
+        Code.MSG_S_UTIL_ANTI_CHEAT_ROOM_VIDEO,
+        Code.MSG_R_ROOMS
         
     ];
 

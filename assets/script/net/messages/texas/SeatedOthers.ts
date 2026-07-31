@@ -35,14 +35,9 @@ export function SeatedOthers(data: ServerMessageSeatedOthers.AsObject, roomID: n
     seatData.subscriptionID = data.userSubscriptionId;
     seatData.squidIn = data.squidIn;
     seatData.videoMaskId = videoMaskId;
-    if (
-        roomData.mine.seatNo > 0 &&
-        roomData.basicInfo.antiCheatConfig &&
-        roomData.basicInfo.antiCheatConfig.getSeatedSetting().canSwitchPowerSaving &&
-        roomData.mine.remoteCameraEnabled == ButtonState.ON
-    ) {
-        // 如果我本人坐着 ，开着节能就显示他的mask
-        seatData.realShowMaskID = videoMaskId;
+    const antiCheatConfig = roomData.basicInfo.antiCheatConfig;
+    if (roomData.mine.seatNo > 0 && antiCheatConfig?.shouldShowVideoMask && roomData.mine.remoteCameraEnabled == ButtonState.ON) {
+        seatData.realShowMaskID = antiCheatConfig.getVisibleVideoMaskId(videoMaskId);
     } else {
         seatData.realShowMaskID = 0;
     }

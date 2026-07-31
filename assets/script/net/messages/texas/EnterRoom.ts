@@ -295,23 +295,32 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
                 roomData.mine.localMicrophoneBtnState = ButtonState.DISABLE;
                 roomData.mine.localMicrophoneEnabled = seatedConfig.openMicrophone;
             }
+            if (seatedConfig.enableCamera && roomData.basicInfo.antiCheatConfig.isOptionalVideoMaskMode) {
+                const initialMaskId = seatedConfig.openPowerSaving ? roomData.mine.player.videoMaskId || 1 : 0;
+                if (initialMaskId != roomData.mine.player.videoMaskId && (await TexasVideoMediaHelper.setVideoMask(initialMaskId))) {
+                    roomData.mine.player.videoMaskId = initialMaskId;
+                }
+            }
             if (seatedConfig.enableCamera && seatedConfig.canSwitchPowerSaving) {
-                roomData.mine.maskBtnState = seatedConfig.openPowerSaving ? ButtonState.ON : ButtonState.DISABLE;
                 roomData.mine.player.realShowMaskID = seatedConfig.openPowerSaving
-                    ? roomData.mine.player.videoMaskId == 0
-                        ? 1
-                        : roomData.mine.player.videoMaskId
+                    ? roomData.basicInfo.antiCheatConfig.getVisibleVideoMaskId(roomData.mine.player.videoMaskId || 1)
                     : 0;
+                roomData.mine.maskBtnState = roomData.mine.player.realShowMaskID > 0 ? ButtonState.ON : ButtonState.OFF;
             } else if (seatedConfig.enableCamera && !seatedConfig.canSwitchPowerSaving) {
                 roomData.mine.maskBtnState = ButtonState.DISABLE;
                 if (seatedConfig.openPowerSaving) {
                     roomData.seatsStateManager.forEachPlayer(p => {
-                        p.realShowMaskID = p.videoMaskId == 0 ? 1 : p.videoMaskId;
+                        p.realShowMaskID = roomData.basicInfo.antiCheatConfig.getVisibleVideoMaskId(p.videoMaskId);
                     });
                 } else {
                     roomData.seatsStateManager.forEachPlayer(p => {
                         p.realShowMaskID = 0;
                     });
+                }
+                if (roomData.basicInfo.antiCheatConfig.isOptionalVideoMaskMode) {
+                    roomData.mine.player.realShowMaskID = seatedConfig.openPowerSaving
+                        ? roomData.basicInfo.antiCheatConfig.getVisibleVideoMaskId(roomData.mine.player.videoMaskId || 1)
+                        : 0;
                 }
             }
             roomData.mine.remoteCameraEnabled = seatedConfig.enableCamera ? ButtonState.ON : ButtonState.HIDDEN;
