@@ -477,7 +477,7 @@ export default class OtherBindings extends cc.Component {
         if (this._roomData.basicInfo.isMtt) {
             // MTT 实时战况由 H5 复用大厅的排名、牌桌和奖励面板。
             h5MessageManager.sendToH5('showPanel', 1, {
-                panelType: MTT_RECORD_PANEL,
+                panelType: 'mttRecord',
                 props: {
                     matchId: this._roomData.matchID,
                     tournamentName: this._roomData.mtt.matchName || this._roomData.basicInfo.roomName
