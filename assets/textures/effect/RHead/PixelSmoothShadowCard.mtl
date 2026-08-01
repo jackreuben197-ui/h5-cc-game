@@ -11,7 +11,8 @@
     "0": {
       "defines": {
         "ROUNDED_RECT": true,
-        "SUPERSAMPLE_TEXTURE": true
+        "SUPERSAMPLE_TEXTURE": true,
+        "SAFE_EDGE_COLOR": true
       },
       "props": {
         "shapeParams": {

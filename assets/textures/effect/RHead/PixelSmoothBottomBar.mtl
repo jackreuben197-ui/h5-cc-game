@@ -10,8 +10,7 @@
   "_techniqueData": {
     "0": {
       "defines": {
-        "ROUNDED_RECT": true,
-        "REPLACE_TEXTURE_ALPHA": true
+        "ROUNDED_RECT": true
       },
       "props": {
         "shapeParams": {

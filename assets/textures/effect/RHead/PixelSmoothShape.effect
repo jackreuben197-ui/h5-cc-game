@@ -116,14 +116,13 @@ CCProgram fs %{
     #else
       vec4 textureColor = sampleTexture(v_uv0);
 
-      #if ROUNDED_RECT && SAFE_EDGE_COLOR
-        // Pull RGB from inside the card near its outline. The source PNG is tiny
-        // and its transparent pixels contain dark RGB, which otherwise creates
-        // a visible fringe when alpha is replaced by the analytic shape.
-        vec2 safeUv = mix(vec2(0.5), v_uv0, 0.9);
+      #if ROUNDED_RECT
+        // Pull RGB from inside the card near its outline to avoid dark fringes
+        // caused by bilinear sampling against transparent dark pixels in the PNG.
+        vec2 safeUv = mix(vec2(0.5), v_uv0, 0.85);
         vec3 safeRgb = sampleTexture(safeUv).rgb;
-        float safeColorMix = smoothstep(-0.06, -0.005, roundedRectDistance(v_uv0));
-        textureColor.rgb = mix(textureColor.rgb, safeRgb, safeColorMix);
+        float safeColorMix = max(smoothstep(-0.06, -0.005, roundedRectDistance(v_uv0)), 1.0 - textureColor.a);
+        textureColor.rgb = mix(textureColor.rgb, safeRgb, clamp(safeColorMix, 0.0, 1.0));
       #endif
 
       #if CC_USE_ALPHA_ATLAS_texture
@@ -138,12 +137,7 @@ CCProgram fs %{
 
       #if ROUNDED_RECT
         float shapeAlpha = roundedRectAlpha(v_uv0);
-        #if REPLACE_TEXTURE_ALPHA
-          color.a = v_color.a * shapeAlpha;
-        #else
-          color.a *= shapeAlpha;
-        #endif
-        color.rgb *= shapeAlpha;
+        color.a *= shapeAlpha;
       #endif
     #endif
 

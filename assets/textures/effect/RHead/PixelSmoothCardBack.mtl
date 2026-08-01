@@ -11,7 +11,6 @@
     "0": {
       "defines": {
         "ROUNDED_RECT": true,
-        "REPLACE_TEXTURE_ALPHA": true,
         "SUPERSAMPLE_TEXTURE": true,
         "SAFE_EDGE_COLOR": true
       },
