@@ -140,10 +140,11 @@ class GameConfig {
     }
 
     /**
-     * 从运行时 config.json 的 baseApi 推导 WebHost 与 WSS。
-     * 成功（拿到合法的绝对地址 baseApi）返回 true，调用方据此跳过旧的 BUILD_TYPE 逻辑。
-     * - WebHost：baseApi 去掉结尾的 /api（接口常量已自带 /api 前缀），避免出现 //api/api。
-     * - WSS：取 baseApi 的 hostname，按协议拼 wss/ws，保留 {0} 占位符交给 WebSocketClient.SetPort。
+     * 从运行时 config.json 解析 WebHost 与 WSS。
+     * - 生产环境（isTest: false）：直接使用 config.json 中的 baseApi (如 https://api.recognitionway.com/api)，
+     *   保证在线正式环境直连生产后端，避免任何误测或退回到测试域名导致的 Token Auth Failure。
+     * - 测试环境（isTest: true）：读取 apiDomains 列表，使用 no-cors 模式进行域名探活，
+     *   按顺序选择首个可达的测试域名；若均不可达，则退回 baseApi / apiDomains[0]。
      */
     private static async setNetworkFromConfigJson(): Promise<boolean> {
         try {
@@ -151,20 +152,82 @@ class GameConfig {
                 return false;
             }
             // config.json 与 index.html 同级部署，按当前文档地址解析为同源绝对路径。
-            const configUrl = new URL('config.json', location.href).href + `?_=${Date.now()}`;
+            const cleanHref = location.href.replace(/#.*$/, '');
+            const configUrl = new URL('config.json', cleanHref).href + `?_=${Date.now()}`;
             const res = await fetch(configUrl, { cache: 'no-store' });
             if (!res.ok) {
                 return false;
             }
             const data = await res.json();
-            const baseApi = (data && typeof data.baseApi === 'string' ? data.baseApi : '').trim();
-            if (!/^https?:\/\//i.test(baseApi)) {
+            if (!data || typeof data !== 'object') {
                 return false;
             }
-            const apiUrl = new URL(baseApi);
-            // 去掉结尾的 /api 或 /api/，得到纯域名前缀作为 WebHost。
-            const webHost = baseApi.replace(/\/+$/, '').replace(/\/api$/i, '');
+
+            const isTest = data.isTest === true;
+            let selectedApi: string = '';
+
+            if (!isTest) {
+                // 生产环境 (isTest: false): 优先使用 baseApi，无探活逻辑，确保与 H5 登录后端一致
+                const baseApi = (typeof data.baseApi === 'string' ? data.baseApi : '').trim();
+                if (baseApi && /^https?:\/\//i.test(baseApi)) {
+                    selectedApi = baseApi;
+                } else if (Array.isArray(data.apiDomains) && data.apiDomains.length > 0) {
+                    const firstDomain = data.apiDomains[0];
+                    if (typeof firstDomain === 'string' && /^https?:\/\//i.test(firstDomain.trim())) {
+                        selectedApi = firstDomain.trim();
+                    }
+                }
+            } else {
+                // 测试环境 (isTest: true): 在 apiDomains 列表中进行探活（支持轮换/容灾域名）
+                const rawCandidates: string[] = [];
+                if (Array.isArray(data.apiDomains)) {
+                    data.apiDomains.forEach((d: unknown) => {
+                        if (typeof d === 'string' && d.trim() && /^https?:\/\//i.test(d.trim())) {
+                            rawCandidates.push(d.trim());
+                        }
+                    });
+                }
+                if (typeof data.baseApi === 'string' && data.baseApi.trim() && /^https?:\/\//i.test(data.baseApi.trim())) {
+                    if (rawCandidates.indexOf(data.baseApi.trim()) === -1) {
+                        rawCandidates.push(data.baseApi.trim());
+                    }
+                }
+
+                if (rawCandidates.length > 0) {
+                    const probeApi = async (candidateUrl: string): Promise<boolean> => {
+                        const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+                        const timer = controller ? setTimeout(() => controller.abort(), 2500) : null;
+                        try {
+                            // mode: 'no-cors' 探活，判断服务器是否有响应（网络/DNS失败会抛异常）
+                            await fetch(candidateUrl, {
+                                method: 'GET',
+                                mode: 'no-cors',
+                                cache: 'no-store',
+                                signal: controller ? controller.signal : undefined
+                            });
+                            return true;
+                        } catch (e) {
+                            return false;
+                        } finally {
+                            if (timer) clearTimeout(timer);
+                        }
+                    };
+
+                    const results = await Promise.all(rawCandidates.map(c => probeApi(c)));
+                    const firstReachable = rawCandidates.find((_, idx) => results[idx]);
+                    selectedApi = firstReachable || rawCandidates[0];
+                }
+            }
+
+            if (!selectedApi || !/^https?:\/\//i.test(selectedApi)) {
+                return false;
+            }
+
+            const apiUrl = new URL(selectedApi);
+            // 去掉结尾的 /api 或 /api/，得到纯域名前缀作为 WebHost
+            const webHost = selectedApi.replace(/\/+$/, '').replace(/\/api$/i, '');
             const wsProtocol = apiUrl.protocol === 'https:' ? 'wss' : 'ws';
+
             GameConfig.Network = {
                 WebHost: webHost,
                 WSS: `${wsProtocol}://${apiUrl.hostname}{0}`
