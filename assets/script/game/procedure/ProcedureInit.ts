@@ -20,6 +20,7 @@ export default class ProcedureInit extends ProcedureBase {
         super.lateEnter(param);
         this.setCCC();
         this.setFit();
+        await GameConfig.setNetworkAsync();
         //解析 语言配置
         i18nMgr.initLanguage();
         await i18nMgr.loadAndRefreshConfig();
