@@ -7,7 +7,7 @@ import {
     SubRoomConfig
 } from '@silenthill/agreement-web';
 import { bindData, IObservableBindings, observable, pureEvent } from '../../../core/decorator/DataBind';
-import { traceMethod } from '../../../core/decorator/LogTrace';
+import { traceClass, traceMethod } from '../../../core/decorator/LogTrace';
 import { AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDisplayType';
 import { ChatType } from '../../../game/constant/ChatType';
 import { DiamondConfigType } from '../../../game/constant/DiamondConfigType';
@@ -38,6 +38,7 @@ type DataBaiscBindings = {
 interface TexasGameRoomDataBasic extends IObservableBindings<TexasGameRoomDataBasic, DataBaiscBindings> {}
 
 @bindData()
+@traceClass()
 class TexasGameRoomDataBasic extends cc.EventTarget {
     public static readonly TABLE_BET_INFO_CHANGE = 'TABLE_BET_INFO_CHANGE';
     public static readonly TABLE_HANDINFO_CHANGE = 'TABLE_HANDINFO_CHANGE';

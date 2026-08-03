@@ -22,7 +22,9 @@ export async function ShowPublicCards(data: ServerMessageShowPublicCards.AsObjec
     }
     roomData.publicCards.addPublicCards(data.publicCardsList, AnimateDisplayTypePublicCards.Static);
     if (data.publicCards2List && data.publicCards2List.length > 0) {
-        roomData.publicCards.addSecondPublicCards(data.publicCards2List, AnimateDisplayTypePublicCards.Static);
+        const needPub = 5 - data.publicCards2List.length;
+        const secPcs: number[] = [...roomData.publicCards.publicCards.slice(0, needPub), ...data.publicCards2List];
+        roomData.publicCards.addSecondPublicCards(secPcs, AnimateDisplayTypePublicCards.Static);
     }
     roomData.mine.caculateHandValueTypeAndHighlight();
     const seatNo = roomData.mine.seatNo;

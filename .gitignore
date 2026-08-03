@@ -106,3 +106,5 @@ assets/Hotfix
 Hotfix
 /*.md
 !/README.md
+.npmrc
+.pnpmfile.cjs

@@ -6,7 +6,7 @@ import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { AnimateDisplayTypeAction, AnimateDisplayTypeCards, AnimateDisplayTypeRoundBet } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
 
-const _plog = createLogger('ServerMessageActionAll');
+const _plog = createLogger('ServerMessageActionAll', 'debug');
 
 // ActionAll 1108
 export function ActionAll(data: ServerMessageActionAll.AsObject, roomID: number, matchID: number) {
