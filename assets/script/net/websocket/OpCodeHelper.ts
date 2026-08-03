@@ -22,6 +22,10 @@ export default class OpCodeHelper {
         Code.MSG_D_ADD_TIME,
         Code.MSG_D_SYNC_ENTER,
         Code.MSG_S_UP_BLIND,
+        Code.MSG_S_ACTION_ALL,
+        Code.MSG_S_STANDUP,
+        Code.MSG_S_SEATED_OTHERS,
+        Code.MSG_S_LEAVE_NOTIFICATION,
         // 首位玩家依赖 107 补齐开赛倒计时，保留日志便于核对协议时序。
         Code.MSG_S_NOTIFICATION_MTT_WILL_START,
         Code.MSG_S_NEXT_CHANGE,

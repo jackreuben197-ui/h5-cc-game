@@ -387,6 +387,7 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.CHIPS_CHANGE, 'player')
+    @traceMethod({level: 'debug'})
     private onUpdateChip(chip: number) {
         this.chips.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(chip);
     }
@@ -603,13 +604,11 @@ export default class SeatPlayer extends cc.Component {
 
     // AnimateDisplayTypeCards.Deal 时候还会有order
     @bindEvent(TexasGameRoomDataPlayer.SHOW_CARDS_CHANGE, 'player', AnimateDisplayTypeCards.Static)
-    @traceMethod()
+    @traceMethod({level: 'debug'})
     private onUpdateCards(cards: number[], atc: AnimateDisplayTypeCards, order?: number) {
+        this.tracelog.debug('cards', cards, this._seatPlayer.seatNo, this._seatPlayer.name);
         this._resetCardVisualState();
         const l = cards.length;
-        if (this._seatPlayer.mine) {
-            this.tracelog.debug('up', cards, this._seatPlayer.cards, this._seatPlayer.roundActioned);
-        }
         // reset
         if (l == 0) {
             this._bigCards.forEach(v => v.reset());
@@ -777,6 +776,9 @@ export default class SeatPlayer extends cc.Component {
             this.otherPersonActionCountdown.stop();
             this.otherPersonActionCountdown.node.active = false;
         }
+        this.allInAnimation.node.active = false;
+        this.allInOtherAnimation.node.active = false;
+        this.seatActionDisplay.node.active = false;
         switch (action) {
             case Def.Action.BET:
                 this.seatActionDisplay.node.active = true;
@@ -958,11 +960,13 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.WINNER, { dataSource: 'player', initIgnore: true })
+    @traceMethod({level: 'debug'})
     private onWin(play: boolean, handValueType: number, chip: number) {
         if (!play) {
             this.winBoard.node.active = false;
             return;
         }
+        this.tracelog.debug('winner', this._seatPlayer.seatNo, this._seatPlayer.name);
         this.winBoard.node.active = true;
         if (handValueType != 0) {
             this.winBoard.getOpNode(0).active = true; //hv

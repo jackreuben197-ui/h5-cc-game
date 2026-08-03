@@ -20,6 +20,8 @@ export function Winner(data: ServerMessageWinner.AsObject, roomID: number, match
         seatData.action = Def.Action.NONE; // 清理下状态
         // 已经站起
         if (seatData.userID == 0 || result.standUp) return;
+        // 非本人
+        if (result.userRid && result.userRid != seatData.userID) return;
         // 更新筹码
         seatData.chip = result.chip;
         seatData.deposit = result.deposit;

@@ -22,8 +22,6 @@ export function SeatedOthers(data: ServerMessageSeatedOthers.AsObject, roomID: n
         return;
     }
     const userRid = data.userRid;
-    // 清理旧数据
-    seatData.clearData();
     // 填充新玩家数据
     seatData.userID = userRid;
     seatData.name = data.name;
@@ -41,6 +39,8 @@ export function SeatedOthers(data: ServerMessageSeatedOthers.AsObject, roomID: n
     } else {
         seatData.realShowMaskID = 0;
     }
+     // 清理旧数据
+    seatData.handClear();
     // MTT
     seatData.mttHunterHeadValue = data.hunterHeadValue;
     seatData.mttHunterKill = data.hunterKill;
