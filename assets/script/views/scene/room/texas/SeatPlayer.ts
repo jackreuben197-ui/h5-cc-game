@@ -125,6 +125,7 @@ export default class SeatPlayer extends cc.Component {
     private _insuranceBuying = false;
     private _cardBacks: cc.Node[] = [];
     private _bigCards: CardView[] = [];
+    private _roundBetTween: cc.Tween<cc.Node> = null;
     // 动画的池的位置（可能是发起，也可能是结尾,计算坐标使用)
     private _potNode: cc.Node = null!;
     // 发牌
@@ -194,6 +195,7 @@ export default class SeatPlayer extends cc.Component {
     }
 
     protected onDisable(): void {
+        this._stopRoundBetAnimation();
         this._insuranceBuying = false;
         this.insuranceCountdownBubble.node.active = false;
         this._resetCardVisualState();
@@ -222,6 +224,14 @@ export default class SeatPlayer extends cc.Component {
         const visible = !(this._seatPlayer.position === SeatPosition.BottomMiddle && this._seatPlayer.seated && this._seatPlayer.mine);
         this.nickName.node.active = visible;
         this.nickNameSplash.active = visible;
+    }
+
+    private _stopRoundBetAnimation(): void {
+        if (this._roundBetTween) {
+            this._roundBetTween.stop();
+            this._roundBetTween = null;
+        }
+        this.animatingChips.active = false;
     }
 
     private _resetCardVisualState(): void {
@@ -580,6 +590,7 @@ export default class SeatPlayer extends cc.Component {
 
     @bindEvent(TexasGameRoomDataPlayer.ROUND_BET_CHANGE, 'player', AnimateDisplayTypeRoundBet.Static)
     private onRoundBetChange(amount: number, aat: AnimateDisplayTypeRoundBet) {
+        this._stopRoundBetAnimation();
         if (amount > 0) {
             this.roundBetNode.active = true;
             if (aat == AnimateDisplayTypeRoundBet.PutNear) {
@@ -587,13 +598,16 @@ export default class SeatPlayer extends cc.Component {
                 this.animatingChips.active = true;
                 this.animatingChips.setPosition(0, 0);
                 const endPos = UIViewUtil.caculatePostion(this.animatingChips, this.roundBetNode);
-                cc.tween(this.animatingChips)
+                const tween = cc
+                    .tween(this.animatingChips)
                     .to(0.5, { x: endPos.x, y: endPos.y }, { easing: 'cubicOut' })
                     .call(() => {
-                        this.roundBetLabel.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(amount);
+                        if (this._roundBetTween !== tween) return;
+                        this.roundBetLabel.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(this._seatPlayer.roundBet);
                         this.animatingChips.active = false;
-                    })
-                    .start();
+                        this._roundBetTween = null;
+                    });
+                this._roundBetTween = tween.start();
                 return;
             }
             this.roundBetLabel.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(amount);
@@ -981,6 +995,7 @@ export default class SeatPlayer extends cc.Component {
             this.winBoard.setText('', this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(chip));
         }
         soundManager.playEffect(SoundEffectKey.MoveChip);
+        this._stopRoundBetAnimation();
         this.animatingChips.active = true;
         const startPos = UIViewUtil.caculatePostion(this.animatingChips, this._potNode);
         const endPos = new cc.Vec3(0, 0, 0);
