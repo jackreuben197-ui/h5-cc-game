@@ -159,12 +159,10 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public originType: number;
     public shareTable: number;
 
-    @traceMethod({ level: 'debug' })
     public async getDiamondPrice(times: number, dct: DiamondConfigType): Promise<number> {
         const confgExt = diamondModel.getDiamondConfigTypeExt(this.originType, this.shareTable, this.isMtt, times);
         await diamondModel.reqDiamondConfig(dct);
         const config = diamondModel.getDiamondConfig(confgExt, dct);
-        this.tracelog.debug('ext', confgExt, dct, config, this.isMtt, this._roomType);
         if (!config || !config.setting || config.setting.length == 0) {
             return 0;
         }
