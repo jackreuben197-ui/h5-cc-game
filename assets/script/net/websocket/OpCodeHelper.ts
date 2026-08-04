@@ -36,7 +36,6 @@ export default class OpCodeHelper {
         Code.MSG_D_ROOMERS,
         Code.MSG_S_UTIL_ANTI_CHEAT_ROOM_VIDEO,
         Code.MSG_R_ROOMS
-        
     ];
 
     static NeedLog(code: (typeof Code)[keyof typeof Code]): boolean {

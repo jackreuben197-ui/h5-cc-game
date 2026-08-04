@@ -7,7 +7,7 @@ import {
     SubRoomConfig
 } from '@silenthill/agreement-web';
 import { bindData, IObservableBindings, observable, pureEvent } from '../../../core/decorator/DataBind';
-import { traceClass, traceMethod } from '../../../core/decorator/LogTrace';
+import { traceClass } from '../../../core/decorator/LogTrace';
 import { AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDisplayType';
 import { ChatType } from '../../../game/constant/ChatType';
 import { DiamondConfigType } from '../../../game/constant/DiamondConfigType';

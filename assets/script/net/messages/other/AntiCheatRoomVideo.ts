@@ -45,8 +45,7 @@ export function AntiCheatRoomVideo(data: ServerMessageUtilAntiCheatRoomVideo.AsO
 }
 
 function _getRandomVideoTiming(matchID: number): { countdown: number; overtime: number } {
-    const raw =
-        (matchID > 0 ? globalConfigStore.get('anti_cheat_video_config_mtt') : undefined) || globalConfigStore.get('anti_cheat_video_config');
+    const raw = (matchID > 0 ? globalConfigStore.get('anti_cheat_video_config_mtt') : undefined) || globalConfigStore.get('anti_cheat_video_config');
     let videoConfig: RandomVideoConfig | null = null;
     try {
         const value = typeof raw === 'string' ? JSON.parse(raw) : raw;

@@ -387,7 +387,7 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.CHIPS_CHANGE, 'player')
-    @traceMethod({level: 'debug'})
+    @traceMethod({ level: 'debug' })
     private onUpdateChip(chip: number) {
         this.chips.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(chip);
     }
@@ -579,6 +579,7 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.ROUND_BET_CHANGE, 'player', AnimateDisplayTypeRoundBet.Static)
+    @traceMethod({ level: 'debug' })
     private onRoundBetChange(amount: number, aat: AnimateDisplayTypeRoundBet) {
         if (amount > 0) {
             this.roundBetNode.active = true;
@@ -604,7 +605,6 @@ export default class SeatPlayer extends cc.Component {
 
     // AnimateDisplayTypeCards.Deal 时候还会有order
     @bindEvent(TexasGameRoomDataPlayer.SHOW_CARDS_CHANGE, 'player', AnimateDisplayTypeCards.Static)
-    @traceMethod({level: 'debug'})
     private onUpdateCards(cards: number[], atc: AnimateDisplayTypeCards, order?: number) {
         this.tracelog.debug('cards', cards, this._seatPlayer.seatNo, this._seatPlayer.name);
         this._resetCardVisualState();
@@ -960,7 +960,6 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.WINNER, { dataSource: 'player', initIgnore: true })
-    @traceMethod({level: 'debug'})
     private onWin(play: boolean, handValueType: number, chip: number) {
         if (!play) {
             this.winBoard.node.active = false;

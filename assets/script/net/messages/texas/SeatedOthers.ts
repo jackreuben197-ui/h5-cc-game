@@ -39,7 +39,7 @@ export function SeatedOthers(data: ServerMessageSeatedOthers.AsObject, roomID: n
     } else {
         seatData.realShowMaskID = 0;
     }
-     // 清理旧数据
+    // 清理旧数据
     seatData.handClear();
     // MTT
     seatData.mttHunterHeadValue = data.hunterHeadValue;

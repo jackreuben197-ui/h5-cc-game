@@ -132,7 +132,12 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
         dividerNode.setPosition(this.categoryDivider.position);
         dividerNode.setContentSize(this.categoryDivider.getContentSize());
         const graphics = dividerNode.addComponent(cc.Graphics);
-        graphics.fillColor = new cc.Color(this.categoryDivider.color.r, this.categoryDivider.color.g, this.categoryDivider.color.b, this.categoryDivider.opacity);
+        graphics.fillColor = new cc.Color(
+            this.categoryDivider.color.r,
+            this.categoryDivider.color.g,
+            this.categoryDivider.color.b,
+            this.categoryDivider.opacity
+        );
         graphics.rect(-this.categoryDivider.width / 2, -1, this.categoryDivider.width, 2);
         graphics.fill();
         this.categoryDivider.active = false;

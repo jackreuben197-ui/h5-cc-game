@@ -110,9 +110,7 @@ export default class CardView extends cc.Component {
     private refreshMaterial(): void {
         if (!this.cardSprite) return;
         const material =
-            this._cardNum == 0 && this.cardBackMaterial
-                ? this.cardBackMaterial
-                : this._defaultMaterial || cc.Material.getBuiltinMaterial('2d-sprite');
+            this._cardNum == 0 && this.cardBackMaterial ? this.cardBackMaterial : this._defaultMaterial || cc.Material.getBuiltinMaterial('2d-sprite');
         this.cardSprite.setMaterial(0, material);
     }
 

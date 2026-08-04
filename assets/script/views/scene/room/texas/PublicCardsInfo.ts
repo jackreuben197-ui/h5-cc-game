@@ -95,7 +95,7 @@ export default class PublicCardsInfo extends cc.Component {
     @traceMethod()
     private onUpdatePublicCards(prev: number[], plus: number[], pat: AnimateDisplayTypePublicCards) {
         const prevCardsLen = prev.length;
-        this._publicCards.slice(prevCardsLen + plus.length).forEach(v => (v.reset()));
+        this._publicCards.slice(prevCardsLen + plus.length).forEach(v => v.reset());
         if (pat == AnimateDisplayTypePublicCards.Static) {
             // 直接显示
             plus.forEach((v, index) => {
@@ -147,7 +147,7 @@ export default class PublicCardsInfo extends cc.Component {
     @bindEvent(TexasGameRoomDataPublicCards.SECOND_PUBLICCARDS_CHANGE, 'publicCards')
     private onUpdateSecPublicCards(prev: number[], plus: number[], pat: AnimateDisplayTypePublicCards) {
         const prevCardsLen = prev.length;
-        this._secPublicCards.slice(prevCardsLen + plus.length).forEach(v => (v.reset()));
+        this._secPublicCards.slice(prevCardsLen + plus.length).forEach(v => v.reset());
         if (pat == AnimateDisplayTypePublicCards.Static) {
             // 直接显示
             plus.forEach((v, index) => {
