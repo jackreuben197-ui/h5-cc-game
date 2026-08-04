@@ -10,14 +10,22 @@ const targetDir = path.join(rootDir, 'build-templates/web-mobile');
 const previewAssetsDir = path.join(rootDir, 'preview-templates/assets');
 const cocosBuildDir = path.join(rootDir, 'build');
 const h5AssetDirs = ['js', 'css', 'images', 'fonts', 'media', 'misc'];
+const packageManager = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8')).packageManager;
+
+if (!/^pnpm@\d+\.\d+\.\d+$/.test(packageManager)) {
+    console.error(`[ERROR] package.json 中缺少有效的 pnpm packageManager: ${packageManager || '(未配置)'}`);
+    process.exit(1);
+}
+
+const pnpmCommand = `corepack ${packageManager}`;
 
 /**
  * 封装执行命令的函数
  */
-function runCommand(command, cwd = process.cwd()) {
+function runCommand(command, cwd = process.cwd(), env = {}) {
     console.log(`\n> 执行: ${command}`);
     try {
-        execSync(command, { cwd, stdio: 'inherit' });
+        execSync(command, { cwd, stdio: 'inherit', env: { ...process.env, ...env } });
     } catch (error) {
         console.error(`\n[ERROR] 命令执行失败: ${command}`);
         process.exit(1);
@@ -48,8 +56,8 @@ runCommand('git reset --hard origin/master', h5GameDir);
 
 // [2/5] Build h5-game
 console.log('\n[2/5] 开始构建 h5-game...');
-runCommand('pnpm install', h5GameDir);
-runCommand('pnpm build', h5GameDir);
+runCommand(`${pnpmCommand} install`, h5GameDir, { CI: 'true' });
+runCommand(`${pnpmCommand} build`, h5GameDir);
 
 // [3/5] 清理旧 H5 资源并复制当前 dist
 console.log('\n[3/5] 清理旧 H5 资源并复制 dist 文件...');
