@@ -13,8 +13,10 @@ npm run commit:prepare
 ## 同步Hybrid代码
 
 ```shell
-# h5 code sync(已经包含了国际化处理)
+# 同步并构建远程 h5-game 子模块（已包含国际化处理）
 npm run sync:h5-game #pnpm run sync:h5-game
+# 构建并同步同级 ../h5-game，包含尚未提交的本地改动，不执行 Git 更新/重置
+npm run sync:h5-game:local
 # protocol sync (pb)
 npm run sync:proto
 # H5↔Cocos 桥接协议 = npm 包 @silenthill/h5-cc-bridge（cc-side 入口）
