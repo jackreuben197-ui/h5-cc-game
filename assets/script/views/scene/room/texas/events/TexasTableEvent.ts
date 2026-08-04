@@ -1,5 +1,6 @@
 import { ClientMessageSeated, Code, Def, PotInsuranceBuy, RoomInfo } from '@silenthill/agreement-web';
 import { traceClass } from '../../../../../core/decorator/LogTrace';
+import roomDataManager from '../../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataChat from '../../../../../data/room/texas/TexasGameRoomDataChat';
 import TexasGameRoomDataPlayer from '../../../../../data/room/texas/TexasGameRoomDataPlayer';
@@ -82,6 +83,19 @@ export default class TexasTableEvent {
         if (!player?.userID || !player.roomData) return;
         player.roomData.mine.playerInfoDialogPlayer = player;
         player.roomData.mine.playerInfoDialogOpen = true;
+    }
+
+    private static async _openBringIn(player: TexasGameRoomDataPlayerMine, commit: BringInCommitFn): Promise<void> {
+        const roomData = player.roomData;
+        if (!roomDataManager.existRoomData(roomData.roomID, roomData.matchID)) return;
+        if (roomDataManager.getRoomData(roomData.roomID, roomData.matchID) !== roomData) return;
+        player.bringInDialogOpen = true;
+        await viewManager.openDialog('BringIn', {
+            GameType: GameType.HOLDEM,
+            RoomPlayer: player,
+            CommitFn: commit
+        });
+        if (!player.bringInDialogOpen) viewManager.closeDialog('BringIn');
     }
     /// <summary>
     /// 坐下
@@ -211,11 +225,10 @@ export default class TexasTableEvent {
                         }
                     }
                     // 其他都需要弹窗口输入
-                    viewManager.openDialog('BringIn', {
-                        GameType: GameType.HOLDEM,
-                        RoomPlayer: seatData,
-                        CommitFn: TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData)
-                    });
+                    void TexasTableEvent._openBringIn(
+                        seatData,
+                        TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData)
+                    );
                     return;
                 }
                 //是否需要显示安全提示
@@ -223,11 +236,10 @@ export default class TexasTableEvent {
                     // if (this.CurlimitOutChip == RoomInfo.RetainType.RT_AUTO) {
                     //     // this.ShowAutoAddChips(data.wallet);
                     // } else {
-                    viewManager.openDialog('BringIn', {
-                        GameType: GameType.HOLDEM,
-                        RoomPlayer: seatData,
-                        CommitFn: TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData)
-                    });
+                    void TexasTableEvent._openBringIn(
+                        seatData,
+                        TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData)
+                    );
                     //}
                     return;
                 }
@@ -235,11 +247,10 @@ export default class TexasTableEvent {
                 viewManager.openDialog('TexasTableSecurity', {
                     isFromBringIn: true,
                     bringInAct: () => {
-                        viewManager.openDialog('BringIn', {
-                            GameType: GameType.HOLDEM,
-                            RoomPlayer: seatData,
-                            CommitFn: TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData)
-                        });
+                        void TexasTableEvent._openBringIn(
+                            seatData,
+                            TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData)
+                        );
                     },
                     noAnimation: true,
                     roomID: seatData.roomData.roomID,
@@ -267,19 +278,14 @@ export default class TexasTableEvent {
                     return;
                 }
                 // 其他都需要弹窗口输入
-                viewManager.openDialog('BringIn', {
-                    GameType: GameType.HOLDEM,
-                    RoomPlayer: seatData,
-                    CommitFn: TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData)
-                });
+                void TexasTableEvent._openBringIn(
+                    seatData,
+                    TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData)
+                );
                 return;
             }
             // 不提示安全提示直接带入
-            viewManager.openDialog('BringIn', {
-                GameType: GameType.HOLDEM,
-                RoomPlayer: seatData,
-                CommitFn: TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData)
-            });
+            void TexasTableEvent._openBringIn(seatData, TexasTableEvent._commitBringInCallback(seatData, seatData.roomData.basicInfo.limitBringIn, seatedData));
         } catch (e) {
             this.tracelog.error('sit down', e);
         }
@@ -408,19 +414,11 @@ export default class TexasTableEvent {
             }
             if (player.roomData.basicInfo.bringInType == BringInMode.CURRENCY) {
                 userStore.fillWalletInfo([response.data]);
-                viewManager.openDialog('BringIn', {
-                    GameType: GameType.HOLDEM,
-                    RoomPlayer: player,
-                    CommitFn: TexasTableEvent._commitBringInCallback(player, player.roomData.basicInfo.limitBringIn)
-                });
+                void TexasTableEvent._openBringIn(player, TexasTableEvent._commitBringInCallback(player, player.roomData.basicInfo.limitBringIn));
                 return;
             }
-            // 记分牌 @TODO
-            viewManager.openDialog('BringIn', {
-                GameType: GameType.HOLDEM,
-                RoomPlayer: player,
-                CommitFn: TexasTableEvent._commitBringInCallback(player, player.roomData.basicInfo.limitBringIn)
-            });
+            // 记分牌
+            void TexasTableEvent._openBringIn(player, TexasTableEvent._commitBringInCallback(player, player.roomData.basicInfo.limitBringIn));
         } catch (e) {
             TexasTableEvent.tracelog.error('BringIn', e);
         }

@@ -82,7 +82,6 @@ class RoomDataManager {
 
     public clearAllRoomData(): void {
         // 返回大厅时统一释放房间数据和离桌锁。
-        this._roomCache.forEach(roomData => roomData.clearData());
         this._roomCache.clear();
         this._roomLeaving.clear();
     }

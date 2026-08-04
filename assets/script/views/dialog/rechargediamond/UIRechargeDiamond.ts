@@ -1,3 +1,4 @@
+import TexasGameRoomDataPlayerMine from '../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
@@ -10,6 +11,7 @@ const { ccclass, property, menu } = cc._decorator;
 const LN = '[UIRechargeDiamond]';
 
 export interface UIRechargeDiamondParam {
+    roomPlayer: TexasGameRoomDataPlayerMine;
     exchangeRate: number; // 兑换比例（1钻石=多少USDT)
     amount: number; // 付款金额
     qrcode: string; // 二维码地址
@@ -22,6 +24,7 @@ export interface UIRechargeDiamondParam {
 @menu('Dialog/UIRechargeDiamond')
 export default class UIRechargeDiamond extends UIComponentBaseDialog {
     private _param: UIRechargeDiamondParam = null;
+    private _roomPlayer: TexasGameRoomDataPlayerMine = null;
     @property(cc.Label)
     private exchangeRateLabel: cc.Label = null;
     @property(cc.Label)
@@ -43,6 +46,7 @@ export default class UIRechargeDiamond extends UIComponentBaseDialog {
     }
 
     public initialize(param?: UIRechargeDiamondParam): void {
+        this._roomPlayer = param.roomPlayer;
         this.exchangeRateLabel.string = StringHelper.FormatString(
             i18nMgr.Get('UIBuyDiamondExchangeRateReverse'),
             StringHelper.GetLongString(1 / param.exchangeRate, 1, 4)
@@ -56,6 +60,26 @@ export default class UIRechargeDiamond extends UIComponentBaseDialog {
                 viewManager.showToast(i18nMgr.Get('roomError148_2'));
             }
         });
+    }
+
+    protected override onFrameResize(
+        visibleSizeWidth: number,
+        visibleSizeHeight: number,
+        frameSizeWidth: number,
+        frameSizeHeight: number,
+        suggestScale: number,
+        saveAreaTop: number
+    ): void {
+        const maxHeight = 2290;
+        if (visibleSizeHeight < maxHeight) {
+            const scale = visibleSizeHeight / maxHeight;
+            this.node.setScale(scale, scale);
+        }
+    }
+
+    public override close(): void {
+        if (this._roomPlayer) this._roomPlayer.rechargeDiamondDialogOpen = false;
+        super.close();
     }
 
     private onCloseClicked() {

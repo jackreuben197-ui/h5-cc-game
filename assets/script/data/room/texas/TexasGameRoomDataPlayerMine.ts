@@ -37,6 +37,8 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public static readonly TABLE_SETTING_DIALOG_OPEN_CHANGE = 'TABLE_SETTING_DIALOG_OPEN_CHANGE';
     public static readonly PERSONAL_SETTINGS_DIALOG_OPEN_CHANGE = 'PERSONAL_SETTINGS_DIALOG_OPEN_CHANGE';
     public static readonly BRING_OUT_DIALOG_OPEN_CHANGE = 'BRING_OUT_DIALOG_OPEN_CHANGE';
+    public static readonly BRING_IN_DIALOG_OPEN_CHANGE = 'BRING_IN_DIALOG_OPEN_CHANGE';
+    public static readonly RECHARGE_DIAMOND_DIALOG_OPEN_CHANGE = 'RECHARGE_DIAMOND_DIALOG_OPEN_CHANGE';
     public static readonly PLAYER_INFO_DIALOG_OPEN_CHANGE = 'PLAYER_INFO_DIALOG_OPEN_CHANGE';
     public static readonly LOCAL_CAMERA_STATE_CHANGE = 'LOCAL_CAMERA_STATE_CHANGE';
     public static readonly LOCAL_CAMERA_BTN_STATE_CHANGE = 'LOCAL_CAMERA_BTN_STATE_CHANGE';
@@ -231,6 +233,10 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public personalSettingsDialogOpen: boolean = false;
     @observable(TexasGameRoomDataPlayerMine.BRING_OUT_DIALOG_OPEN_CHANGE)
     public bringOutDialogOpen: boolean = false;
+    @observable(TexasGameRoomDataPlayerMine.BRING_IN_DIALOG_OPEN_CHANGE)
+    public bringInDialogOpen: boolean = false;
+    @observable(TexasGameRoomDataPlayerMine.RECHARGE_DIAMOND_DIALOG_OPEN_CHANGE)
+    public rechargeDiamondDialogOpen: boolean = false;
     @observable(TexasGameRoomDataPlayerMine.PLAYER_INFO_DIALOG_OPEN_CHANGE)
     public playerInfoDialogOpen: boolean = false;
     public playerInfoDialogPlayer: TexasGameRoomDataPlayer = null;
@@ -360,6 +366,8 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
         this.tableSettingDialogOpen = false;
         this.personalSettingsDialogOpen = false;
         this.bringOutDialogOpen = false;
+        this.bringInDialogOpen = false;
+        this.rechargeDiamondDialogOpen = false;
         this.playerInfoDialogOpen = false;
         this.playerInfoDialogPlayer = null;
     }

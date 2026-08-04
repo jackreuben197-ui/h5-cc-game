@@ -239,6 +239,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     @bindEvent(TexasGameRoomDataPlayerMine.TABLE_SETTING_DIALOG_OPEN_CHANGE, 'mine', 'TexasTableSetting')
     @bindEvent(TexasGameRoomDataPlayerMine.PERSONAL_SETTINGS_DIALOG_OPEN_CHANGE, 'mine', 'PersonalSettings')
     @bindEvent(TexasGameRoomDataPlayerMine.BRING_OUT_DIALOG_OPEN_CHANGE, 'mine', 'BringOut')
+    @bindEvent(TexasGameRoomDataPlayerMine.BRING_IN_DIALOG_OPEN_CHANGE, 'mine', 'BringIn')
+    @bindEvent(TexasGameRoomDataPlayerMine.RECHARGE_DIAMOND_DIALOG_OPEN_CHANGE, 'mine', 'RechargeDiamond')
     private onActiveDialogClosed(open: boolean, dialog: UIPrefabDialogType): void {
         if (!open) viewManager.closeDialog(dialog);
     }

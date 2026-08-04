@@ -6,9 +6,9 @@ import tradeStore, { TradeStore } from '../../../data/trade/TradeStore';
 import TradeStoreUtils from '../../../data/trade/TradeStoreUtils';
 import userStore, { IWallet } from '../../../data/user/UserStore';
 import UserStoreUtils from '../../../data/user/UserStoreUtils';
-import { StringHelper } from '../../../helper/StringHelper';
-import h5MessageManager from '../../../H5MsgMgr';
 import type { DialogResultPayload } from '../../../H5MsgMgr';
+import h5MessageManager from '../../../H5MsgMgr';
+import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import { HttpUSDTApplyProtocol } from '../../../net/https/data/usdt/HttpUSDTApplyProtocol';
 import { HttpUSDTPriceListProtocol } from '../../../net/https/data/usdt/HttpUSDTPriceListProtocol';
@@ -232,6 +232,11 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         this.initDiamond();
     }
 
+    public override close(): void {
+        if (this._roomPlayer instanceof TexasGameRoomDataPlayerMine) this._roomPlayer.bringInDialogOpen = false;
+        super.close();
+    }
+
     protected override onFrameResize(
         visibleSizeWidth: number,
         visibleSizeHeight: number,
@@ -413,6 +418,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
                 return;
             }
             const rechargeDiamondParam: UIRechargeDiamondParam = {
+                roomPlayer: this._roomPlayer as TexasGameRoomDataPlayerMine,
                 exchangeRate: this._exchangeRate,
                 amount: data.pay_price,
                 qrcode: resp.data.usdt_address.qr_code,
@@ -422,7 +428,11 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
             };
             // 正常渠道支付
             if (payType == 1) {
-                viewManager.openDialog('RechargeDiamond', rechargeDiamondParam);
+                const mine = this._roomPlayer as TexasGameRoomDataPlayerMine;
+                if (!mine.bringInDialogOpen) return;
+                mine.rechargeDiamondDialogOpen = true;
+                await viewManager.openDialog('RechargeDiamond', rechargeDiamondParam);
+                if (!mine.rechargeDiamondDialogOpen) viewManager.closeDialog('RechargeDiamond');
                 return;
             }
             if (payType == 2) {

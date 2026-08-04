@@ -46,8 +46,4 @@ export default class TexasGameRoomData extends RoomData {
         this.publicCards.handClear();
         this.basicInfo.handClear();
     }
-
-    public override clearData(): void {
-        this.mine.clearDialogData();
-    }
 }
