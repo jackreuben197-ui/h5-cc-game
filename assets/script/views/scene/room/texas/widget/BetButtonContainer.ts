@@ -12,7 +12,8 @@ export interface IBetBtnData {
     cb: (amount: number, ratio: string) => void; // 点击回调
 }
 
-export function caculatePotsBet(scs: ShortCut[], roundBet: number, minRaise: number, player: TexasGameRoomDataPlayer): IBetBtnData[] {
+// maxRaise > 0 时表示有限不能allin
+export function caculatePotsBet(scs: ShortCut[], roundBet: number, minRaise: number, maxRaise: number, player: TexasGameRoomDataPlayer): IBetBtnData[] {
     // const ibtn:IBetBtnData = {
     //     label: '1/2',
     //     amount: 100,
@@ -29,7 +30,7 @@ export function caculatePotsBet(scs: ShortCut[], roundBet: number, minRaise: num
     scs.forEach((v, i) => {
         const amount = Math.floor(pot * v.percent + myCall);
         //有钱，还得大于最小下注
-        if (amount <= myChip && amount >= minRaise) {
+        if (amount <= myChip && amount >= minRaise && (maxRaise == 0 || amount <= maxRaise)) {
             ret.push({
                 label: v.name,
                 amount: amount,
