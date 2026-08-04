@@ -14,4 +14,6 @@ export default class RoomData {
         this.roomID = roomID;
         this.matchID = matchID;
     }
+
+    public clearData(): void {}
 }

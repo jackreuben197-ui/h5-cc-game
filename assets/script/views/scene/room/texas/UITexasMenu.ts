@@ -125,6 +125,31 @@ export default class UITexasMenu extends cc.Component {
         });
     }
 
+    @bindEvent(TexasGameRoomDataPlayerMine.PERSONAL_SETTINGS_DIALOG_OPEN_CHANGE, 'mine')
+    private async onPersonalSettingsDialogOpenChanged(open: boolean): Promise<void> {
+        if (!open) {
+            viewManager.closeDialog('PersonalSettings');
+            return;
+        }
+        await viewManager.openDialog('PersonalSettings', {
+            roomID: this._roomData.roomID,
+            matchID: this._roomData.matchID
+        });
+        if (!this._roomData.mine.personalSettingsDialogOpen) viewManager.closeDialog('PersonalSettings');
+    }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.BRING_OUT_DIALOG_OPEN_CHANGE, 'mine')
+    private async onBringOutDialogOpenChanged(open: boolean): Promise<void> {
+        if (!open) {
+            viewManager.closeDialog('BringOut');
+            return;
+        }
+        await viewManager.openDialog('BringOut', {
+            RoomPlayer: this._roomData.mine
+        });
+        if (!this._roomData.mine.bringOutDialogOpen) viewManager.closeDialog('BringOut');
+    }
+
     //(优先于seated执行保证展示正确)
     @bindEvent(TexasGameRoomDataPlayerMine.SEATNO_CHANGED, 'mine')
     private onUpdateSeated(seatNo: number) {
@@ -322,10 +347,7 @@ export default class UITexasMenu extends cc.Component {
 
     private click_setting() {
         this.click_black();
-        viewManager.openDialog('PersonalSettings', {
-            roomID: this._roomData.roomID,
-            matchID: this._roomData.matchID
-        });
+        this._roomData.mine.personalSettingsDialogOpen = true;
     }
 
     click_rule_tips() {
@@ -403,9 +425,7 @@ export default class UITexasMenu extends cc.Component {
     private onBringOutClicked(): void {
         if (!this.btnBringOut.interactable) return;
         this.click_black();
-        viewManager.openDialog('BringOut', {
-            RoomPlayer: this._roomData.mine
-        });
+        this._roomData.mine.bringOutDialogOpen = true;
     }
 
     private _refreshBringOutButton(): void {

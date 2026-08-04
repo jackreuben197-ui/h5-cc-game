@@ -195,6 +195,11 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         }
     }
 
+    public override close(): void {
+        if (this._roomData) this._roomData.mine.historyDialogOpen = false;
+        super.close();
+    }
+
     protected onEnable(): void {
         this._bindEventsAndRefresh();
     }

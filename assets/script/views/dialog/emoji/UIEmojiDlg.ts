@@ -80,6 +80,11 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
         this._playShowAnimation();
     }
 
+    public override close(): void {
+        this._roomData.mine.emojiDialogOpen = false;
+        super.close();
+    }
+
     protected onLoad(): void {
         this._targetY = this.contentView.y;
         this._startY = -cc.winSize.height + 100;

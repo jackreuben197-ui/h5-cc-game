@@ -80,11 +80,8 @@ export default class TexasTableEvent {
 
     public static OpenPlayerInfo(player: TexasGameRoomDataPlayer): void {
         if (!player?.userID || !player.roomData) return;
-        viewManager.openDialog('PlayerInfo', {
-            roomID: player.roomData.roomID,
-            matchID: player.roomData.matchID,
-            player
-        });
+        player.roomData.mine.playerInfoDialogPlayer = player;
+        player.roomData.mine.playerInfoDialogOpen = true;
     }
     /// <summary>
     /// 坐下
