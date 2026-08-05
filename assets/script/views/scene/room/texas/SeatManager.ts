@@ -61,8 +61,13 @@ export default class SeatManager extends cc.Component {
         if (suggestScale < 1) {
             offsetY = 20;
         }
+        // console.warn(visibleSizeWidth,visibleSizeHeight, frameSizeWidth,frameSizeHeight,suggestScale)
+        let vw = visibleSizeWidth;
+        if (visibleSizeWidth / visibleSizeHeight > 1) {
+            vw = visibleSizeWidth * 0.8;
+        }
         seatPostionCaculator.initWithContainer(
-            visibleSizeWidth,
+            vw,
             visibleSizeHeight - menuHeight - saveAreaTop - offsetY * suggestScale,
             -saveAreaTop - offsetY * suggestScale
         );

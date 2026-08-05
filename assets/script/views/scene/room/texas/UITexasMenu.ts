@@ -217,7 +217,12 @@ export default class UITexasMenu extends cc.Component {
     //面板移入
     public fadeIn(animation: boolean = true) {
         cc.Tween.stopAllByTarget(this.$panel);
-        const offsetX = 696 * (1 - this.node.scale);
+        let vs = (cc.view.getVisibleSize().width - 1440) / 2;
+        vs = vs > 0 ? vs : 0;
+        let offsetX = 720 * (1 - this.node.scale) + 100;
+        if (this.node.scale == 1) {
+            offsetX += vs;
+        }
         if (animation) {
             this.node.active = true;
             cc.tween(this.$panel).to(0.25, { x: -offsetX }).start();
@@ -232,15 +237,21 @@ export default class UITexasMenu extends cc.Component {
     //面板移出
     public fadeOut(animation: boolean = true) {
         cc.Tween.stopAllByTarget(this.$panel);
+        let offsetX = -720 * this.node.scale;
+        let vs = (cc.view.getVisibleSize().width - 1440) / 2;
+        vs = vs > 0 ? vs : 0;
+        if (this.node.scale == 1) {
+            offsetX -= vs;
+        }
         if (animation) {
             cc.tween(this.$panel)
-                .to(0.25, { x: -696 * this.node.scale })
+                .to(0.25, { x: offsetX })
                 .call(() => {
                     this.node.active = false;
                 })
                 .start();
         } else {
-            this.$panel.x = -696 * this.node.scale;
+            this.$panel.x = offsetX;
             this.node.active = false;
         }
         this.$black.active = false;
