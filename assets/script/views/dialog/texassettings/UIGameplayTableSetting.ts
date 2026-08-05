@@ -132,6 +132,11 @@ export default class UIGameplayTableSetting extends UIComponentBaseDialog<UIGame
         this._preloadUserNewLabelNum();
     }
 
+    public override close(): void {
+        if (this._roomData) this._roomData.mine.tableSettingDialogOpen = false;
+        super.close();
+    }
+
     protected override onFrameResize(
         visibleSizeWidth: number,
         visibleSizeHeight: number,

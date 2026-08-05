@@ -18,7 +18,10 @@ import {
 } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
 import { ButtonState } from '../../../game/constant/Constants';
+import ProcedureDefine from '../../../game/procedure/ProcedureDefine';
+import ProcedureManager from '../../../game/procedure/ProcedureManager';
 import roomReconnectManager from '../../../game/RoomReconnectManager';
+import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import viewManager from '../../../views/UIViewManager';
 import agoraManager from '../../agora/AgoraManager';
 import TexasVideoMediaHelper from './TexasVideoMediaHelper';
@@ -27,7 +30,13 @@ const _plog = createLogger('ServerMessageEnterRoom');
 
 // EnterRoom 1002
 export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: number, matchID: number): Promise<void> {
-    if (data.status != 0) return;
+    if (data.status != 0) {
+        _plog.debug('enter room error, status:', data.status, CPErrorCode.ServerErrorDescription(data.status));
+        viewManager.showToast(CPErrorCode.ServerErrorDescription(data.status), undefined, () => {
+            ProcedureManager.StartProcedure(ProcedureDefine.Return);
+        });
+        return;
+    }
     let roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     if (!roomData && matchID > 0) {
         // MTT 首次进桌：客户端用 (0, matchID) 发的请求，服务端回来已分配了真实 roomID
