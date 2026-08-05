@@ -3,6 +3,8 @@ import AssetLoader, { AssetCollectionType } from './AssetLoader';
 
 export const BUNDLE_RESOURCES: string = 'resources';
 
+export const BUNDLE_ANIMATE: string = 'animate';
+
 export const BUNDLE_TEXAS: string = 'texas';
 
 export type PreloadDefinition = {

@@ -10,7 +10,7 @@ import { GameplayChatPropType } from '../../../game/constant/GameplayChatPropTyp
 import MagicEmojiConfig, { MagicEmojiDefinition } from '../../../game/constant/MagicEmojiConfig';
 import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
-import AssetManager, { BUNDLE_RESOURCES } from '../../loader/AssetManager';
+import AssetManager, { BUNDLE_ANIMATE } from '../../loader/AssetManager';
 import UIEmojiItem from './UIEmojiItem';
 
 const { ccclass, menu, property } = cc._decorator;
@@ -241,7 +241,7 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
         this._updateContentHeight(items.length);
         try {
             const skeletonPaths = items.map(item => item.config.spine).filter((path, index, list) => list.indexOf(path) === index);
-            const loadedSkeletonData = await Promise.all(skeletonPaths.map(path => AssetManager.getOrLoad(BUNDLE_RESOURCES, path, sp.SkeletonData)));
+            const loadedSkeletonData = await Promise.all(skeletonPaths.map(path => AssetManager.getOrLoad(BUNDLE_ANIMATE, path, sp.SkeletonData)));
             if (!cc.isValid(this.node) || !this.node.activeInHierarchy || this._loadVersion !== version) return;
             items.forEach(itemData => {
                 const itemNode = cc.instantiate(this.itemPrefab);
