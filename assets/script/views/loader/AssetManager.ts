@@ -52,6 +52,7 @@ type AssetCtor<T extends cc.Asset> = {
 @traceClass()
 export default class AssetManager {
     private static _map: Map<string, cc.SpriteFrame | cc.AudioClip> = new Map();
+    private static _bundleLoading: Map<string, Promise<cc.AssetManager.Bundle>> = new Map();
 
     public static _debugAllKeys() {
         AssetManager._map.forEach((v, k) => {
@@ -61,25 +62,8 @@ export default class AssetManager {
 
     public static async getOrLoad<T extends cc.Asset>(bundleName: string, assetPath: string, te: AssetCtor<T>): Promise<T> {
         let bundle = bundleName == BUNDLE_RESOURCES || bundleName == null ? cc.resources : cc.assetManager.getBundle(bundleName);
-        // check it is loaded
         if (!bundle) {
-            return new Promise((resovle, reject) => {
-                cc.assetManager.loadBundle(bundleName, (err: Error, loadedBundle: cc.AssetManager.Bundle) => {
-                    if (err) {
-                        AssetManager.tracelog.error('bundle load error:', bundleName);
-                        reject(err);
-                        return;
-                    }
-                    loadedBundle.load(assetPath, te, (err: Error, asset: T) => {
-                        if (err) {
-                            AssetManager.tracelog.error('bundle path load error:', bundleName, assetPath);
-                            reject(err);
-                            return;
-                        }
-                        resovle(asset);
-                    });
-                });
-            });
+            bundle = await AssetManager._getOrLoadBundle(bundleName);
         }
         const asset = bundle.get<T>(assetPath, te);
         if (asset) {
@@ -95,6 +79,29 @@ export default class AssetManager {
                 resovle(asset);
             });
         });
+    }
+
+    private static _getOrLoadBundle(bundleName: string): Promise<cc.AssetManager.Bundle> {
+        const loadedBundle = cc.assetManager.getBundle(bundleName);
+        if (loadedBundle) return Promise.resolve(loadedBundle);
+        const currentLoading = AssetManager._bundleLoading.get(bundleName);
+        if (currentLoading) return currentLoading;
+        const bundleLoading = new Promise<cc.AssetManager.Bundle>((resolve, reject) => {
+            cc.assetManager.loadBundle(bundleName, (error: Error, bundle: cc.AssetManager.Bundle) => {
+                if (error) {
+                    AssetManager.tracelog.error('bundle load error:', bundleName);
+                    reject(error);
+                    return;
+                }
+                resolve(bundle);
+            });
+        });
+        AssetManager._bundleLoading.set(bundleName, bundleLoading);
+        bundleLoading.then(
+            () => AssetManager._bundleLoading.delete(bundleName),
+            () => AssetManager._bundleLoading.delete(bundleName)
+        );
+        return bundleLoading;
     }
 
     public static assetForeach(assets: cc.Asset[], bundleName: string) {

@@ -66,7 +66,6 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
     private _roomData: TexasGameRoomData = null;
     private _targetY = 0;
     private _startY = 0;
-    private _loadVersion = 0;
     private _selectedCategoryID: number = null;
     private _categoryData: EmojiCategoryData[] = [];
     private _categoryViews: EmojiCategoryView[] = [];
@@ -148,7 +147,7 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
         this.categoryDivider.active = false;
     }
 
-    private async _loadEmojiItems(): Promise<void> {
+    private _loadEmojiItems(): void {
         const items = userStore
             .getPropListByType(GameplayChatPropType.CHAT_PROP)
             .map(data => ({ data, config: MagicEmojiConfig.getByPropCode(data.propCode) }))
@@ -158,7 +157,7 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
             this._selectedCategoryID = this._categoryData.length > 0 ? this._categoryData[0].id : null;
         }
         this._renderCategories();
-        await this._loadSelectedCategoryItems();
+        this._loadSelectedCategoryItems();
     }
 
     private _groupEmojiItems(items: EmojiItemData[]): EmojiCategoryData[] {
@@ -233,33 +232,29 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
         });
     }
 
-    private async _loadSelectedCategoryItems(): Promise<void> {
-        const version = ++this._loadVersion;
+    private _loadSelectedCategoryItems(): void {
         const category = this._categoryData.find(data => data.id === this._selectedCategoryID);
         const items = category ? category.items : [];
         this.scrollContent.removeAllChildren();
         this._updateContentHeight(items.length);
-        try {
-            const skeletonPaths = items.map(item => item.config.spine).filter((path, index, list) => list.indexOf(path) === index);
-            const loadedSkeletonData = await Promise.all(skeletonPaths.map(path => AssetManager.getOrLoad(BUNDLE_ANIMATE, path, sp.SkeletonData)));
-            if (!cc.isValid(this.node) || !this.node.activeInHierarchy || this._loadVersion !== version) return;
-            items.forEach(itemData => {
-                const itemNode = cc.instantiate(this.itemPrefab);
-                itemNode.parent = this.scrollContent;
-                const item = itemNode.getComponent(UIEmojiItem);
-                const isFree = userStore.isPropFree(itemData.data);
-                item.initialize({
-                    skeletonData: loadedSkeletonData[skeletonPaths.indexOf(itemData.config.spine)],
-                    animation: itemData.config.animation,
-                    showDiamond: !isFree,
-                    diamond: itemData.data.payPrice,
-                    onClick: () => this.onEmojiClicked(itemData.data, itemData.config)
-                });
+        const skeletonLoading = new Map<string, Promise<sp.SkeletonData>>();
+        items.forEach(itemData => {
+            if (!skeletonLoading.has(itemData.config.spine)) {
+                skeletonLoading.set(itemData.config.spine, AssetManager.getOrLoad(BUNDLE_ANIMATE, itemData.config.spine, sp.SkeletonData));
+            }
+            const itemNode = cc.instantiate(this.itemPrefab);
+            itemNode.parent = this.scrollContent;
+            const item = itemNode.getComponent(UIEmojiItem);
+            const isFree = userStore.isPropFree(itemData.data);
+            item.initialize({
+                skeletonLoading: skeletonLoading.get(itemData.config.spine),
+                animation: itemData.config.animation,
+                showDiamond: !isFree,
+                diamond: itemData.data.payPrice,
+                onClick: () => this.onEmojiClicked(itemData.data, itemData.config)
             });
-            this.scrollView.scrollToTop(0);
-        } catch (error) {
-            cc.warn('[UIEmojiDlg] load emoji failed', error);
-        }
+        });
+        this.scrollView.scrollToTop(0);
     }
 
     private _updateContentHeight(itemCount: number): void {

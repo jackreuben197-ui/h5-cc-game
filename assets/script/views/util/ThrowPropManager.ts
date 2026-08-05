@@ -175,6 +175,10 @@ class ThrowPropManager {
         this._loadSkeletons(this._getAllEffectPaths()).catch(error => cc.warn('[ThrowPropManager] preload effects failed', error));
     }
 
+    public loadPropEffects(type: PropsID): Promise<void> {
+        return this._loadSkeletons(this._getConfigEffectPaths(ThrowPropManager.CONFIGS[type]));
+    }
+
     public playProp(data: ThrowPropBroadcastData, senderData: ThrowPropSeatNodes, targetData: ThrowPropSeatNodes): void {
         const config = ThrowPropManager.CONFIGS[data.type];
         if (!config || !this._root || !cc.isValid(this._root)) return;
