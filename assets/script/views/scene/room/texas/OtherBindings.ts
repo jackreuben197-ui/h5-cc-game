@@ -133,6 +133,45 @@ export default class OtherBindings extends cc.Component {
         this.viewPublicCards.interactable = show;
     }
 
+    @bindEvent(TexasGameRoomDataPlayerMine.EMOJI_DIALOG_OPEN_CHANGE, 'mine')
+    private async onEmojiDialogOpenChanged(open: boolean): Promise<void> {
+        if (!open) {
+            viewManager.closeDialog('Emoji');
+            return;
+        }
+        await viewManager.openDialog('Emoji', {
+            roomID: this._roomData.roomID,
+            matchID: this._roomData.matchID
+        });
+        if (!this._roomData.mine.emojiDialogOpen) viewManager.closeDialog('Emoji');
+    }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.REPORT_DIALOG_OPEN_CHANGE, 'mine')
+    private async onReportDialogOpenChanged(open: boolean): Promise<void> {
+        if (!open) {
+            viewManager.closeDialog('TexasReport');
+            return;
+        }
+        await viewManager.openDialog('TexasReport', {
+            roomID: this._roomData.roomID,
+            matchID: this._roomData.matchID
+        });
+        if (!this._roomData.mine.reportDialogOpen) viewManager.closeDialog('TexasReport');
+    }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.HISTORY_DIALOG_OPEN_CHANGE, 'mine')
+    private async onHistoryDialogOpenChanged(open: boolean): Promise<void> {
+        if (!open) {
+            viewManager.closeDialog('TexasHistory');
+            return;
+        }
+        await viewManager.openDialog('TexasHistory', {
+            roomID: this._roomData.roomID,
+            matchID: this._roomData.matchID
+        });
+        if (!this._roomData.mine.historyDialogOpen) viewManager.closeDialog('TexasHistory');
+    }
+
     @bindEvent(TexasGameRoomDataPlayerMine.VIEW_PUBLIC_CARDS_COST, 'mine')
     private onUpdateViewPublicCardsCost(cost: number): void {
         this.viewPublicCardsCost.string = cost + '';
@@ -467,10 +506,7 @@ export default class OtherBindings extends cc.Component {
             viewManager.showToast(i18nMgr.Get('adaptation10016'));
             return;
         }
-        viewManager.openDialog('Emoji', {
-            roomID: mine.roomData.roomID,
-            matchID: mine.roomData.matchID
-        });
+        mine.emojiDialogOpen = true;
     }
 
     private onClickReport = () => {
@@ -485,18 +521,10 @@ export default class OtherBindings extends cc.Component {
             });
             return;
         }
-        const mine = this._roomData.mine;
-        viewManager.openDialog('TexasReport', {
-            roomID: mine.roomData.roomID,
-            matchID: mine.roomData.matchID
-        });
+        this._roomData.mine.reportDialogOpen = true;
     };
     private onClickReplay = () => {
-        const mine = this._roomData.mine;
-        viewManager.openDialog('TexasHistory', {
-            roomID: mine.roomData.roomID,
-            matchID: mine.roomData.matchID
-        });
+        this._roomData.mine.historyDialogOpen = true;
     };
 
     private onCLickViewPlayerCards() {

@@ -7,7 +7,7 @@ import {
     SubRoomConfig
 } from '@silenthill/agreement-web';
 import { bindData, IObservableBindings, observable, pureEvent } from '../../../core/decorator/DataBind';
-import { traceMethod } from '../../../core/decorator/LogTrace';
+import { traceClass } from '../../../core/decorator/LogTrace';
 import { AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDisplayType';
 import { ChatType } from '../../../game/constant/ChatType';
 import { DiamondConfigType } from '../../../game/constant/DiamondConfigType';
@@ -38,6 +38,7 @@ type DataBaiscBindings = {
 interface TexasGameRoomDataBasic extends IObservableBindings<TexasGameRoomDataBasic, DataBaiscBindings> {}
 
 @bindData()
+@traceClass()
 class TexasGameRoomDataBasic extends cc.EventTarget {
     public static readonly TABLE_BET_INFO_CHANGE = 'TABLE_BET_INFO_CHANGE';
     public static readonly TABLE_HANDINFO_CHANGE = 'TABLE_HANDINFO_CHANGE';
@@ -159,12 +160,10 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public originType: number;
     public shareTable: number;
 
-    @traceMethod({ level: 'debug' })
     public async getDiamondPrice(times: number, dct: DiamondConfigType): Promise<number> {
         const confgExt = diamondModel.getDiamondConfigTypeExt(this.originType, this.shareTable, this.isMtt, times);
         await diamondModel.reqDiamondConfig(dct);
         const config = diamondModel.getDiamondConfig(confgExt, dct);
-        this.tracelog.debug('ext', confgExt, dct, config, this.isMtt, this._roomType);
         if (!config || !config.setting || config.setting.length == 0) {
             return 0;
         }

@@ -178,6 +178,11 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this._playOpenAnimation();
     }
 
+    public override close(): void {
+        if (this._roomData) this._roomData.mine.playerInfoDialogOpen = false;
+        super.close();
+    }
+
     protected onLoad(): void {
         this._bindStaticEvents();
         this._initTabs();

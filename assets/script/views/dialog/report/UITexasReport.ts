@@ -246,6 +246,11 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         }
     }
 
+    public override close(): void {
+        if (this._roomData) this._roomData.mine.reportDialogOpen = false;
+        super.close();
+    }
+
     @bindEvent(CCViewData.FRAME_SIZE_UPDATE, { dataSource: 'ccviewData', initPriority: 20 })
     protected onFrameResize(
         visibleSizeWidth: number,
@@ -836,10 +841,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         const layout = content.getComponent(cc.Layout);
         if (layout) layout.updateLayout();
         const contentHeight = content.childrenCount > 0 ? content.height : 0;
-        this.dataListNode.height = Math.max(
-            this._dataListMinHeight,
-            this._dataListContentTop + contentHeight + this._dataListContentBottom
-        );
+        this.dataListNode.height = Math.max(this._dataListMinHeight, this._dataListContentTop + contentHeight + this._dataListContentBottom);
         this.dataListNode.children.forEach(node => {
             const widget = node.getComponent(cc.Widget);
             if (widget) widget.updateAlignment();

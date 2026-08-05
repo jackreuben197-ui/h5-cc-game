@@ -13,6 +13,7 @@ import { HttpRoomBringInByIDProtocol } from '../../../../net/https/data/room/Htt
 import { WebUserRoomBringin, WWW } from '../../../../net/https/WebRequest';
 import UIComponentBase from '../../../base/UIComponentBase';
 import { UIGuideDialogType } from '../../../dialog/mushroomandcriticalhit/UIGuideDialog';
+import { UIPrefabDialogType } from '../../../UIPrefabDefinition';
 import viewManager from '../../../UIViewManager';
 import danmuManager from './DanmuManager';
 import TexasReportEvent from './events/TexasReportEvent';
@@ -230,6 +231,45 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this._setChatAlertVisible(hasNewMessageAlert);
     }
 
+    @bindEvent(TexasGameRoomDataPlayerMine.CHAT_DIALOG_OPEN_CHANGE, 'mine')
+    private async onChatDialogOpenChanged(open: boolean): Promise<void> {
+        if (!open) {
+            viewManager.closeDialog('TexasChat');
+            return;
+        }
+        await viewManager.openDialog('TexasChat', {
+            roomID: this._roomData.roomID,
+            matchID: this._roomData.matchID
+        });
+        if (!this._mine.chatDialogOpen) viewManager.closeDialog('TexasChat');
+    }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.PLAYER_INFO_DIALOG_OPEN_CHANGE, 'mine')
+    private async onPlayerInfoDialogOpenChanged(open: boolean): Promise<void> {
+        if (!open) {
+            viewManager.closeDialog('PlayerInfo');
+            return;
+        }
+        await viewManager.openDialog('PlayerInfo', {
+            roomID: this._roomData.roomID,
+            matchID: this._roomData.matchID,
+            player: this._mine.playerInfoDialogPlayer
+        });
+        if (!this._mine.playerInfoDialogOpen) viewManager.closeDialog('PlayerInfo');
+    }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.EMOJI_DIALOG_OPEN_CHANGE, 'mine', 'Emoji')
+    @bindEvent(TexasGameRoomDataPlayerMine.REPORT_DIALOG_OPEN_CHANGE, 'mine', 'TexasReport')
+    @bindEvent(TexasGameRoomDataPlayerMine.HISTORY_DIALOG_OPEN_CHANGE, 'mine', 'TexasHistory')
+    @bindEvent(TexasGameRoomDataPlayerMine.TABLE_SETTING_DIALOG_OPEN_CHANGE, 'mine', 'TexasTableSetting')
+    @bindEvent(TexasGameRoomDataPlayerMine.PERSONAL_SETTINGS_DIALOG_OPEN_CHANGE, 'mine', 'PersonalSettings')
+    @bindEvent(TexasGameRoomDataPlayerMine.BRING_OUT_DIALOG_OPEN_CHANGE, 'mine', 'BringOut')
+    @bindEvent(TexasGameRoomDataPlayerMine.BRING_IN_DIALOG_OPEN_CHANGE, 'mine', 'BringIn')
+    @bindEvent(TexasGameRoomDataPlayerMine.RECHARGE_DIAMOND_DIALOG_OPEN_CHANGE, 'mine', 'RechargeDiamond')
+    private onActiveDialogClosed(open: boolean, dialog: UIPrefabDialogType): void {
+        if (!open) viewManager.closeDialog(dialog);
+    }
+
     @bindEvent(TexasGameRoomDataSecondPcs.ACTIVE_CHANGED, 'secondPcs')
     private async onSecondPcsActiveChanged(active: boolean): Promise<void> {
         if (active) {
@@ -277,6 +317,11 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         widget.updateAlignment();
         this.scaleNode.setScale(suggestScale, suggestScale);
         this.publicCardsInfo.node.scale = suggestScale;
+        if (suggestScale == 1) {
+            this.publicCardsInfo.node.y = 176 * suggestScale;
+        } else {
+            this.publicCardsInfo.node.y = 0;
+        }
         const middleLayout = this.middleLayout.getComponent(cc.Widget);
         middleLayout.top = 650 * suggestScale;
         widget.updateAlignment();
@@ -353,9 +398,6 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private onClickChatBtn(): void {
         if (!this._mine) return;
         this._mine.roomData.chat.hideNewMessageAlert();
-        viewManager.openDialog('TexasChat', {
-            roomID: this._mine.roomData.roomID,
-            matchID: this._mine.roomData.matchID
-        });
+        this._mine.chatDialogOpen = true;
     }
 }

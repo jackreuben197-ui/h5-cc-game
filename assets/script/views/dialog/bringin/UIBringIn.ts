@@ -6,6 +6,8 @@ import tradeStore, { TradeStore } from '../../../data/trade/TradeStore';
 import TradeStoreUtils from '../../../data/trade/TradeStoreUtils';
 import userStore, { IWallet } from '../../../data/user/UserStore';
 import UserStoreUtils from '../../../data/user/UserStoreUtils';
+import type { DialogResultPayload } from '../../../H5MsgMgr';
+import h5MessageManager from '../../../H5MsgMgr';
 import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import { HttpUSDTApplyProtocol } from '../../../net/https/data/usdt/HttpUSDTApplyProtocol';
@@ -177,6 +179,25 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     private _bringInAmount: number = 0;
     private _autoOnTable: number = 0;
     private _autoBringin: boolean = false;
+    private _balanceDialogRequestID: string = '';
+    private _balanceDialogClubID: number = 0;
+    private readonly _onBalanceDialogResult = (payload: DialogResultPayload): void => {
+        if (!payload || payload.dialogRequestId !== this._balanceDialogRequestID) return;
+        const clubID = this._balanceDialogClubID;
+        const recharge = payload.action === 'confirm';
+        this._clearBalanceDialogState();
+        if (!recharge || clubID <= 0) return;
+        this.close();
+        h5MessageManager.sendToH5('h5Navigate', 1, {
+            path: '/wallet',
+            query: {
+                clubId: clubID,
+                from: 'cocos-table'
+            },
+            replace: false,
+            ensureVisible: true
+        });
+    };
 
     @traceMethod()
     protected onLoad(): void {
@@ -209,6 +230,11 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         }
         this._provider.process();
         this.initDiamond();
+    }
+
+    public override close(): void {
+        if (this._roomPlayer instanceof TexasGameRoomDataPlayerMine) this._roomPlayer.bringInDialogOpen = false;
+        super.close();
     }
 
     protected override onFrameResize(
@@ -392,6 +418,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
                 return;
             }
             const rechargeDiamondParam: UIRechargeDiamondParam = {
+                roomPlayer: this._roomPlayer as TexasGameRoomDataPlayerMine,
                 exchangeRate: this._exchangeRate,
                 amount: data.pay_price,
                 qrcode: resp.data.usdt_address.qr_code,
@@ -401,7 +428,11 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
             };
             // 正常渠道支付
             if (payType == 1) {
-                viewManager.openDialog('RechargeDiamond', rechargeDiamondParam);
+                const mine = this._roomPlayer as TexasGameRoomDataPlayerMine;
+                if (!mine.bringInDialogOpen) return;
+                mine.rechargeDiamondDialogOpen = true;
+                await viewManager.openDialog('RechargeDiamond', rechargeDiamondParam);
+                if (!mine.rechargeDiamondDialogOpen) viewManager.closeDialog('RechargeDiamond');
                 return;
             }
             if (payType == 2) {
@@ -558,9 +589,34 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     }
 
     private onClickCommit(): void {
-        // DataStatisticsManager.Instance.Record(DataStatisticsConstant.GAME_BRING_COMMIT_BUTTON);
+        const wallet = this._provider.getSelectedWalletBalance();
+        if (wallet && wallet.balance < this._bringInAmount) {
+            this._showBalanceInsufficientDialog(wallet.clubID);
+            return;
+        }
         this._provider.commit(this._bringInAmount, this._autoBringin ? this._autoOnTable : 0);
         this.close();
+    }
+
+    private _showBalanceInsufficientDialog(clubID: number): void {
+        if (this._balanceDialogRequestID) return;
+        this._balanceDialogClubID = clubID;
+        this._balanceDialogRequestID = h5MessageManager.sendToH5('showDialog', 1, {
+            message: i18nMgr.Get('ServerErrorCode_20004'),
+            showCancelButton: true,
+            showConfirmButton: true,
+            cancelButtonText: i18nMgr.Get('Wallet_Cancel'),
+            confirmButtonText: i18nMgr.Get('UIHappyShop_ToRechange'),
+            closeOnClickOverlay: false
+        });
+        h5MessageManager.on('dialogResult', this._onBalanceDialogResult);
+    }
+
+    private _clearBalanceDialogState(): void {
+        if (!this._balanceDialogRequestID) return;
+        this._balanceDialogRequestID = '';
+        this._balanceDialogClubID = 0;
+        h5MessageManager.off('dialogResult');
     }
 
     // 点击选择钱包按钮
@@ -687,7 +743,9 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         this._provider.clubSelected(wallet._clubID);
     }
 
-    onDisable(): void {
+    protected onDisable(): void {
+        super.onDisable();
+        this._clearBalanceDialogState();
         if (this._provider) {
             this._provider.cleanup();
             this._provider = null;

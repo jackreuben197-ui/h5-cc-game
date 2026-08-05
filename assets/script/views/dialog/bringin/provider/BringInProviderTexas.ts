@@ -4,12 +4,14 @@ import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import TexasGameRoomDataBasic, { tableBetInfo } from '../../../../data/room/texas/TexasGameRoomDataBasic';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import userStore, { ClubWallet, UserStore } from '../../../../data/user/UserStore';
+import { BringInMode } from '../../../../game/constant/BringInMode';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
 import viewManager from '../../../UIViewManager';
 import UIBringIn, { BringInTabType } from '../UIBringIn';
-import { BringInCommitFn, BringInProvider } from './BringInProvider';
+import { BringInProvider } from './BringInProvider';
+import type { BringInCommitFn, BringInWalletBalance } from './BringInProvider';
 
 @bindData()
 @traceClass()
@@ -99,6 +101,16 @@ export class BringInProviderTexas extends BringInProvider {
 
     public clubSelected(_clubID: number): void {
         this._data.tmpCurrentWalletClubID = _clubID;
+    }
+
+    public getSelectedWalletBalance(): BringInWalletBalance | null {
+        if (this._data.roomData.basicInfo.bringInType != BringInMode.CURRENCY) return null;
+        const wallet = userStore.getWallet(this._data.tmpCurrentWalletClubID);
+        if (!wallet) return null;
+        return {
+            clubID: wallet._clubID,
+            balance: wallet.gold
+        };
     }
 
     @traceMethod()

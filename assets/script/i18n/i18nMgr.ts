@@ -60,7 +60,6 @@ export class i18nMgr {
     public static setLanguage(language: string): boolean {
         const resolved = this.resolveLanguage(language);
         if (!resolved) return false;
-
         const changed = this.language !== resolved.code || i18n.currentLocale !== resolved.locale;
         this.language = resolved.code;
         i18n.setLocale(resolved.locale);
@@ -116,18 +115,10 @@ export class i18nMgr {
             .trim()
             .toLowerCase()
             .replace(/_/g, '-');
-
         if (normalized === 'cn' || normalized === 'zh-cn' || normalized === 'zh-hans') {
             return { code: 'cn', locale: i18n.LANG_ZH_CN };
         }
-        if (
-            normalized === 'zh' ||
-            normalized === 'tw' ||
-            normalized === 'hk' ||
-            normalized === 'zh-tw' ||
-            normalized === 'zh-hk' ||
-            normalized === 'zh-hant'
-        ) {
+        if (normalized === 'zh' || normalized === 'tw' || normalized === 'hk' || normalized === 'zh-tw' || normalized === 'zh-hk' || normalized === 'zh-hant') {
             return { code: 'zh', locale: i18n.LANG_ZH_TW };
         }
         if (normalized === 'en' || normalized.startsWith('en-')) {

@@ -13,9 +13,13 @@ export function PublicCards(data: ServerMessagePublicCards.AsObject, roomID: num
     roomData.secondPcs.finish();
     roomData.publicCards.addPublicCards(data.publicCardsArrayList, AnimateDisplayTypePublicCards.Deal);
     if (data.publicCardsArray2List.length > 0) {
+        // 必然5张
         roomData.publicCards.addSecondPublicCards(data.publicCardsArray2List, AnimateDisplayTypePublicCards.Deal);
     } else if (data.extPublicCardsArrayList.length > 0) {
-        roomData.publicCards.addSecondPublicCards(data.extPublicCardsArrayList, AnimateDisplayTypePublicCards.Deal);
+        // 不是必然5张 要用公共牌补充的
+        const needPub = 5 - data.extPublicCardsArrayList.length;
+        const secPcs: number[] = [...roomData.publicCards.publicCards.slice(0, needPub), ...data.extPublicCardsArrayList];
+        roomData.publicCards.addSecondPublicCards(secPcs, AnimateDisplayTypePublicCards.Deal);
     }
     switch (data.rnd) {
         case Def.Round.FLOP:

@@ -5,6 +5,7 @@ import roomDataManager from '../../../../data/room/RoomDataManager';
 import texasGamePersonalSettings, { TexasGamePersonalSettings } from '../../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataBasic from '../../../../data/room/texas/TexasGameRoomDataBasic';
+import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import dlTexasRoomBackground from '../../../../data/room/texas/load/DLTexasRoomBacground';
 import { AnimateDisplayBackground } from '../../../../game/constant/AnimateDisplayType';
 import { StringHelper } from '../../../../helper/StringHelper';
@@ -25,6 +26,7 @@ export default class RoomInfo extends cc.Component {
     private _roomID: number;
     private _matchID: number;
     private _roomBaseInfo: TexasGameRoomDataBasic;
+    private _mine: TexasGameRoomDataPlayerMine;
     private _currentDeskType: number = -1;
     private _leftUpblindSeconds: number = 0;
     private _timer: number = 0;
@@ -34,6 +36,7 @@ export default class RoomInfo extends cc.Component {
         this._matchID = matchID;
         const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
         this._roomBaseInfo = roomData.basicInfo;
+        this._mine = roomData.mine;
         if (this.node.activeInHierarchy) {
             this._bindEventsAndRefresh();
         }
@@ -51,12 +54,7 @@ export default class RoomInfo extends cc.Component {
     private _onClickRoomInfo(): void {
         // 普通现金桌 matchID 为 0，只需保证 initData 已执行过
         if (this._roomID == null || this._matchID == null) return;
-        viewManager.openDialog('TexasTableSetting', {
-            roomID: this._roomID,
-            matchID: this._matchID,
-            isFromBringIn: false,
-            noAnimation: true
-        });
+        this._mine.tableSettingDialogOpen = true;
     }
 
     public onEnable(): void {
@@ -74,8 +72,24 @@ export default class RoomInfo extends cc.Component {
         if (!this._roomBaseInfo) return;
         autoBindEvents(this, {
             basic: this._roomBaseInfo,
+            mine: this._mine,
             setting: texasGamePersonalSettings
         });
+    }
+
+    @bindEvent(TexasGameRoomDataPlayerMine.TABLE_SETTING_DIALOG_OPEN_CHANGE, 'mine')
+    private async onTableSettingDialogOpenChanged(open: boolean): Promise<void> {
+        if (!open) {
+            viewManager.closeDialog('TexasTableSetting');
+            return;
+        }
+        await viewManager.openDialog('TexasTableSetting', {
+            roomID: this._roomID,
+            matchID: this._matchID,
+            isFromBringIn: false,
+            noAnimation: true
+        });
+        if (!this._mine.tableSettingDialogOpen) viewManager.closeDialog('TexasTableSetting');
     }
 
     @bindEvent(TexasGameRoomDataBasic.NEXT_UPBLIND_LEFTTIME, 'basic')

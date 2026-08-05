@@ -289,12 +289,12 @@ export class StringHelper {
      * 核心算法：将任意数字格式化为“最多保留一位小数”的严格去尾文本
      * 示例：2.59 -> "2.5";  2.00 -> "2";  0.55 -> "0.5"
      */
-    private static formatToOneDecimalFloor(num: number): string {
+    private static formatToOneDecimalFloor(num: number, fixed: number = 1): string {
         // 核心黑魔法：利用乘以10去尾再除以10，实现严格的“保留一位小数且去尾”
         let floored = Math.floor(num * 10) / 10;
         // 如果去尾后是个整数（比如 2.0），转换为字符串时去掉后面的 .0，直接显示 "2"
         // 如果是小数（比如 2.5），则正常输出 "2.5"
-        return floored % 1 === 0 ? floored.toString() : floored.toFixed(1);
+        return floored % 1 === 0 ? floored.toString() : floored.toFixed(fixed);
     }
 
     /**
@@ -309,7 +309,7 @@ export class StringHelper {
             return this.formatToOneDecimalFloor(k) + 'K';
         }
         // 达不到 K/M 级别的小数，同样用我们自己的去尾算法输出
-        return this.formatToOneDecimalFloor(num);
+        return this.formatToOneDecimalFloor(num, 2);
     }
 }
 

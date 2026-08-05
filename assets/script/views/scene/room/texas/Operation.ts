@@ -165,7 +165,7 @@ export default class Operation extends cc.Component {
         if (this._actionMap.has(Def.Action.BET)) {
             action = Def.Action.BET;
         }
-        if (this.freeBetSilder.progress == 1) {
+        if (this.freeBetSilder.progress == 1 && this._actionMap.has(Def.Action.ALLIN)) {
             action = Def.Action.ALLIN;
         }
         this.freeBetContainer.active = false;
@@ -208,6 +208,7 @@ export default class Operation extends cc.Component {
         this.btnCheck.node.active = false;
         this.freeBetContainer.active = false;
         let minRaise = 0;
+        let maxRaise = 0; // 0表示无限注或者可以allin
         this._actionMap.forEach(actionLimit => {
             switch (actionLimit.action) {
                 case Def.Action.CHECK:
@@ -230,7 +231,12 @@ export default class Operation extends cc.Component {
                 case Def.Action.BET:
                     minRaise = actionLimit.min;
                     this.btnRaise.node.active = true;
-                    const rangeAmount = actionLimit.max - actionLimit.min + 1; // Raise 是 ALLIN -1
+                    let rangeAmount = actionLimit.max - actionLimit.min; // Raise 是 ALLIN -1
+                    maxRaise = actionLimit.max;
+                    if (this._actionMap.has(Def.Action.ALLIN)) {
+                        rangeAmount = actionLimit.max - actionLimit.min + 1;
+                        maxRaise = 0;
+                    }
                     this.tracelog.debug(
                         'rangeAmount',
                         rangeAmount,
@@ -239,7 +245,7 @@ export default class Operation extends cc.Component {
                         'max',
                         actionLimit.max,
                         'allin',
-                        this._actionMap.get(Def.Action.ALLIN).max
+                        this._actionMap.get(Def.Action.ALLIN)?.max
                     );
                     this.freeBetSilder.onValueChanged = progress => {
                         this.freeBetInfoNode.active = true;
@@ -264,10 +270,11 @@ export default class Operation extends cc.Component {
         });
         this._tempData = {
             roundBetEqual,
-            minRaise
+            minRaise,
+            maxRaise
         };
         this.tracelog.debug(texasGamePersonalSettings.shortCuts.length);
-        const btns = caculatePotsBet(texasGamePersonalSettings.shortCuts, roundBetEqual, minRaise, this._seatPlayer.player);
+        const btns = caculatePotsBet(texasGamePersonalSettings.shortCuts, roundBetEqual, minRaise, maxRaise, this._seatPlayer.player);
         this.shortCutContainer.refreshAndLayout(btns, this._seatPlayer.roomData.basicInfo);
     }
 
@@ -276,7 +283,7 @@ export default class Operation extends cc.Component {
     public onShortCutsChange(shortCuts: ShortCut[]) {
         if (!this.rootNode.active) return;
         if (this._tempData == null) return;
-        const btns = caculatePotsBet(shortCuts, this._tempData.roundBetEqual, this._tempData.minRaise, this._seatPlayer.player);
+        const btns = caculatePotsBet(shortCuts, this._tempData.roundBetEqual, this._tempData.minRaise, this._tempData.maxRaise, this._seatPlayer.player);
         this.shortCutContainer.refreshAndLayout(btns, this._seatPlayer.roomData.basicInfo);
     }
 

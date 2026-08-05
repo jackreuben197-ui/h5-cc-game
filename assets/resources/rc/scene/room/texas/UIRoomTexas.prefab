@@ -14730,10 +14730,10 @@
     "node": {
       "__id__": 386
     },
-    "_enabled": true,
+    "_enabled": false,
     "alignMode": 1,
     "_target": null,
-    "_alignFlags": 18,
+    "_alignFlags": 0,
     "_left": 0,
     "_right": 0,
     "_top": 0,

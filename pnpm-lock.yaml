@@ -10,19 +10,19 @@ importers:
     dependencies:
       '@silenthill/agreement-web':
         specifier: github:kingofake/agreement-web#master
-        version: git+https://git@github.com:kingofake/agreement-web.git#96cdc35fd8d6588b66b7a141230abd521b61d403
+        version: git+ssh://git@github.com/kingofake/agreement-web.git#2c7b29b124a65ac73f7f60dc6f81e398c3c60f1d
       '@silenthill/h5-cc-bridge':
         specifier: github:soolary/h5-cc-bridge#main
-        version: git+https://git@github.com:soolary/h5-cc-bridge.git#e3566d5a11f9cf33abf848e60da9351f3df9c512
+        version: git+ssh://git@github.com/soolary/h5-cc-bridge.git#e3566d5a11f9cf33abf848e60da9351f3df9c512
       '@silenthill/h5-cc-i18n':
         specifier: github:guysoup027/h5-cc-i18n#main
-        version: git+https://git@github.com:guysoup027/h5-cc-i18n.git#7ebe8f008d2f5fdcf204d6d04709aa8c474336b7
+        version: git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#59e1c26c75c10950aa9b38fbb830ec8e0c2279af
       '@types/gapi':
         specifier: ^0.0.43
         version: 0.0.43
       http-server:
         specifier: ^14.1.1
-        version: 14.1.1
+        version: 14.1.1(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
       httpserver:
         specifier: ^0.3.0
         version: 0.3.0
@@ -32,19 +32,19 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^18.0.4
-        version: 18.19.130
+        version: 18.0.4
       '@typescript-eslint/typescript-estree':
         specifier: ^8.60.0
-        version: 8.61.0(typescript@6.0.3)
+        version: 8.65.0(supports-color@7.1.0)(typescript@6.0.3)
       agora-rtc-sdk-ng:
         specifier: 4.24.5
-        version: 4.24.5
+        version: 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
       agora-token:
         specifier: ^2.0.5
         version: 2.0.5
       prettier:
         specifier: ^3.8.3
-        version: 3.8.4
+        version: 3.9.6
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -66,58 +66,58 @@ packages:
   '@bufbuild/protobuf@2.10.1':
     resolution: {integrity: sha512-ckS3+vyJb5qGpEYv/s1OebUHDi/xSNtfgw1wqKZo7MR9F2z+qXr0q5XagafAG/9O0QPVIUfST0smluYSTpYFkg==}
 
-  '@silenthill/agreement-web@git+https://git@github.com:kingofake/agreement-web.git#96cdc35fd8d6588b66b7a141230abd521b61d403':
-    resolution: {commit: 96cdc35fd8d6588b66b7a141230abd521b61d403, repo: git@github.com:kingofake/agreement-web.git, type: git}
+  '@silenthill/agreement-web@git+ssh://git@github.com/kingofake/agreement-web.git#2c7b29b124a65ac73f7f60dc6f81e398c3c60f1d':
+    resolution: {commit: 2c7b29b124a65ac73f7f60dc6f81e398c3c60f1d, repo: git@github.com:kingofake/agreement-web.git, type: git}
     version: 1.0.0
 
-  '@silenthill/h5-cc-bridge@git+https://git@github.com:soolary/h5-cc-bridge.git#e3566d5a11f9cf33abf848e60da9351f3df9c512':
+  '@silenthill/h5-cc-bridge@git+ssh://git@github.com/soolary/h5-cc-bridge.git#e3566d5a11f9cf33abf848e60da9351f3df9c512':
     resolution: {commit: e3566d5a11f9cf33abf848e60da9351f3df9c512, repo: git@github.com:soolary/h5-cc-bridge.git, type: git}
     version: 0.1.0
 
-  '@silenthill/h5-cc-i18n@git+https://git@github.com:guysoup027/h5-cc-i18n.git#7ebe8f008d2f5fdcf204d6d04709aa8c474336b7':
-    resolution: {commit: 7ebe8f008d2f5fdcf204d6d04709aa8c474336b7, repo: git@github.com:guysoup027/h5-cc-i18n.git, type: git}
+  '@silenthill/h5-cc-i18n@git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#59e1c26c75c10950aa9b38fbb830ec8e0c2279af':
+    resolution: {commit: 59e1c26c75c10950aa9b38fbb830ec8e0c2279af, repo: git@github.com:guysoup027/h5-cc-i18n.git, type: git}
     version: 1.0.0
 
   '@types/gapi@0.0.43':
     resolution: {integrity: sha512-GbnoTC1psXR1XlBE76LW0eanE/a56iGUzbUOImEI8/xXHuppdbhhIKX9Z71mTut2XoFADh58PgfRg1cyD7TnTw==}
 
-  '@types/node@18.19.130':
-    resolution: {integrity: sha512-GRaXQx6jGfL8sKfaIDD6OupbIHBr9jv7Jnaml9tB7l4v068PAOXqfcujMMo5PhbIs6ggR1XODELqahT2R8v0fg==}
+  '@types/node@18.0.4':
+    resolution: {integrity: sha512-M0+G6V0Y4YV8cqzHssZpaNCqvYwlCiulmm0PwpNLF55r/+cT8Ol42CHRU1SEaYFH2rTwiiE1aYg/2g2rrtGdPA==}
 
   '@types/pako@2.0.4':
     resolution: {integrity: sha512-VWDCbrLeVXJM9fihYodcLiIv0ku+AlOa/TQ1SvYOaBuyrSKgEcro95LJyIsJ4vSo6BXIxOKxiJAat04CmST9Fw==}
 
-  '@typescript-eslint/project-service@8.61.0':
-    resolution: {integrity: sha512-DV42F7MLJO6Rax7SK1yg43tcnEfGUrurSpSxKuVX+a3RCTzBlH3fuxprrOJXKCJGAaw82xXocikJ0uQaqwXgGA==}
+  '@typescript-eslint/project-service@8.65.0':
+    resolution: {integrity: sha512-SxnPhbTsGahizDgbu7oqFH/xVtzIqMd/s+WtnSxNxJZJpLbdT5IPdzg8EZxO3+PoKahXmwJLeNQOpKJb3/bi7Q==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       typescript: '>=4.8.4 <6.1.0'
 
-  '@typescript-eslint/tsconfig-utils@8.61.0':
-    resolution: {integrity: sha512-O5Amvdv9ztMpxpf+vmFULGG78IE6Qwdr3bCGvqwG4nwc9H2qXkOYJJnRbRHyMkQTjv1d03olqwwwzHLMqpFePQ==}
+  '@typescript-eslint/tsconfig-utils@8.65.0':
+    resolution: {integrity: sha512-j6GzGqCiRdA7Qhur2VVmKZAkBLfnHFQfx4TaJGL9RMveZqCo48jSHHO0DTgizEnGhtWnqmbtCUSrqSkdiY/0Hg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       typescript: '>=4.8.4 <6.1.0'
 
-  '@typescript-eslint/types@8.61.0':
-    resolution: {integrity: sha512-9QTQpZ5Iin4CdIodfbDQFSeiSJKidgYJYug1P9CC2xWgUTvlmixViqDZNciMjwLBZyJnG4tGmPl97rVAFb1AJg==}
+  '@typescript-eslint/types@8.65.0':
+    resolution: {integrity: sha512-JSSwWNy+H0E/01jJEM+hrX6N0OFDzFzeIhHFSAS01tlVaevpG8cFyYRPhS5yjGOvBUx3sqQHVMjCL1CAZZMxBg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@typescript-eslint/typescript-estree@8.61.0':
-    resolution: {integrity: sha512-42zatd5qSvvcV1JdDBCLxYRznvP4eIHpPoZXdkPFnAmanA4FuZ5dibSnCBggY8hQnqajPpoGjXFdZ7fIJKQnlA==}
+  '@typescript-eslint/typescript-estree@8.65.0':
+    resolution: {integrity: sha512-JboAE2swaYt4tb1fHhHTABE2K+OLy09XfcTbhnk4Pw96f9dd2e9iYsJ28gBggHlo5z5x1rkyWvcPoTuNTd4oGg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       typescript: '>=4.8.4 <6.1.0'
 
-  '@typescript-eslint/visitor-keys@8.61.0':
-    resolution: {integrity: sha512-QVLZu3ZPQEE+HICQyAMZ2yLQhxf0meY/wx6Hx14YcTNj13JB3qHlX3lJ02L3fLGHgERRH71kvYDwiXIguT3AjQ==}
+  '@typescript-eslint/visitor-keys@8.65.0':
+    resolution: {integrity: sha512-8C71BQkGjiMmXtop7pHVJu1l2NNShFdkCyD6a2ezzs5vU/L3LRtb69EtcteFwz0mYMPzIgOw0n6OV4VBUWZd7A==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   access-log@0.3.9:
     resolution: {integrity: sha512-yeQS+6Qh3mTR8hdwcRiAI+/M/UQlRek6vKZ+TxOuDR8KLL3N9GVQyZAVX2AC01uGN1C6tx46sqAh+UTgv7nGxQ==}
 
-  agent-base@6.0.2:
-    resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}
+  agent-base@6.0.0:
+    resolution: {integrity: sha512-j1Q7cSCqN+AwrmDd+pzgqc0/NpC655x2bUf5ZjRIO77DcNBFmh+OgRNzF6OKdCC9RSCb19fGd99+bhXFdkRNqw==}
     engines: {node: '>= 6.0.0'}
 
   agora-rtc-sdk-ng@4.24.5:
@@ -132,8 +132,8 @@ packages:
   agora-token@2.0.5:
     resolution: {integrity: sha512-0NcbzC3iuutlksv3b4bCMKHrW3pko6gdiGEMRo6APDice24kfXAuWyAlG9hRBrrPBVDShwm9/GUz2Scd3zuZQw==}
 
-  ansi-styles@4.3.0:
-    resolution: {integrity: sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg==}
+  ansi-styles@4.1.0:
+    resolution: {integrity: sha512-Qts4KCLKG+waHc9C4m07weIY8qyeixoS0h6RnbsNVD6Fw+pEZGW3vTyObL3WXpE09Mq4Oi7/lBEyLmOiLtlYWQ==}
     engines: {node: '>=8'}
 
   async@3.2.6:
@@ -142,8 +142,8 @@ packages:
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
 
-  axios@1.18.1:
-    resolution: {integrity: sha512-3nTvFlvpn9Zu/RkHUqtc7/+al4UpRW5az71ap5zccp6e8RAYEzhMTecX8Dz1wWDYrPpUoB1HAQEGEAEvUr7S9g==}
+  axios@1.19.0:
+    resolution: {integrity: sha512-ht/iuYZXEjFxLH/Hkezgd7m6JKlHHXEUSneaDz8uZe1Gj5QZtCnpyDsckvAiEnT89OEbCLmnte4R4sn7P0EKFw==}
 
   balanced-match@4.0.4:
     resolution: {integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==}
@@ -153,9 +153,9 @@ packages:
     resolution: {integrity: sha512-NF+epuEdnUYVlGuhaxbbq+dvJttwLnGY+YixlXlME5KpQ5W3CnXA5cVTneY3SPbPDRkcjMbifrwmFYcClgOZeg==}
     engines: {node: '>= 0.8'}
 
-  brace-expansion@5.0.6:
-    resolution: {integrity: sha512-kLpxurY4Z4r9sgMsyG0Z9uzsBlgiU/EFKhj/h91/8yHu0edo7XuixOIH3VcJ8kkxs6/jPzoI6U9Vj3WqbMQ94g==}
-    engines: {node: 18 || 20 || >=22}
+  brace-expansion@5.0.9:
+    resolution: {integrity: sha512-ScQ4IuvIEF1TMlP7Zt+vjJ//9zlPb2SDcxWxM3bk8s6t6GGdJ7KO1dCcTidOPJKePW30LE/2cT7wCyPho9/Wxg==}
+    engines: {node: 20 || >=22}
 
   call-bind-apply-helpers@1.0.2:
     resolution: {integrity: sha512-Sp1ablJ0ivDkSzjcaJdxEunN5/XvksFJ2sMBFfq6x0ryhQV/2b/KwFe21cMpmHtPOSij8K99/wSfoEuTObmuMQ==}
@@ -241,8 +241,8 @@ packages:
     resolution: {integrity: sha512-tD40eHxA35h0PEIZNeIjkHoDR4YjjJp34biM0mDvplBe//mB+IHCqHDGV7pxF+7MklTvighcCPPZC7ynWyjdTA==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
 
-  eventemitter3@4.0.7:
-    resolution: {integrity: sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==}
+  eventemitter3@4.0.0:
+    resolution: {integrity: sha512-qerSRB0p+UDEssxTtm6EDKcE7W4OaoisfIMl4CngyEhjpYglocpNg6UEqCvemdGhosAsg4sO2dXJOdyBifPGCg==}
 
   fdir@6.5.0:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
@@ -371,8 +371,8 @@ packages:
     engines: {node: '>=4'}
     hasBin: true
 
-  minimatch@10.2.5:
-    resolution: {integrity: sha512-MULkVLfKGYDFYejP07QOurDLLQpcjk7Fw+7jXS2R2czRQzR56yHRveU5NDJEOviH+hETZKSkIk5c+T23GjFUMg==}
+  minimatch@10.2.6:
+    resolution: {integrity: sha512-vpLQEs+VLCr1nU0BXS07maYoFwlDAH0gngQuuttxIwutDFEMHq2blX+8vpgxDdK3J1PwjCJiep77OitTZ4Ll1A==}
     engines: {node: 18 || 20 || >=22}
 
   minimist@1.2.8:
@@ -386,19 +386,19 @@ packages:
     engines: {node: '>=10.5.0'}
     deprecated: Use your platform's native DOMException instead
 
-  npm@2.15.12:
-    resolution: {integrity: sha512-WMoAJ518W0vHjWy1abYnTeyG9YQpSoYGPxAx7d0C0L7U7Jo44bZsrvTjccmDohCJGxpasdKfqsKsl6o/RUPx6A==}
+  npm@2.5.1:
+    resolution: {integrity: sha512-ZQiVMOGClR5+lnMMAAsfJq8g+ud85+/6urh/k1D4hN21mGmjBrZ0t2u7zAHrHcavMVtugDOlanaBWTNeh9NMgA==}
     hasBin: true
     bundledDependencies:
       - abbrev
       - ansi
-      - ansi-regex
       - ansicolors
       - ansistyles
       - archy
       - async-some
       - block-stream
       - char-spinner
+      - child-process-close
       - chmodr
       - chownr
       - cmd-shim
@@ -414,8 +414,6 @@ packages:
       - github-url-from-username-repo
       - glob
       - graceful-fs
-      - hosted-git-info
-      - imurmurhash
       - inflight
       - inherits
       - ini
@@ -450,14 +448,10 @@ packages:
       - sha
       - slide
       - sorted-object
-      - spdx-license-ids
-      - strip-ansi
       - tar
       - text-table
       - uid-number
       - umask
-      - validate-npm-package-license
-      - validate-npm-package-name
       - which
       - wrappy
       - write-file-atomic
@@ -473,8 +467,8 @@ packages:
   pako@2.2.0:
     resolution: {integrity: sha512-zJq6RP/5q+TO2OpFV3FHzlPnFjmkb7Nc99a5SNjJE+uu/PkpChs+NIZSSzbBoD+6kjiISXjfYdwj1ZRQ81dz/w==}
 
-  picomatch@4.0.4:
-    resolution: {integrity: sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==}
+  picomatch@4.0.5:
+    resolution: {integrity: sha512-RvwwcruNjI1ncT5xRakeyS9Lf8lcItv34KD+aif+VH9kduAyfYBipGh12274xtenIPZ119/R9BdTBa8gAwSh0A==}
     engines: {node: '>=12'}
 
   portfinder@1.0.38:
@@ -484,8 +478,8 @@ packages:
   posix-getopt@1.2.1:
     resolution: {integrity: sha512-BbGTiH8MOWAuc6h5yITkSn9k3HP4+QOCV9t6I5F62OrH7zqTHRo08QNsgELRreTBxcvRhbSpMoUnAx77Dz4yUA==}
 
-  prettier@3.8.4:
-    resolution: {integrity: sha512-N2MylSdi48+5N/6S5j+maeHbUSIzzZ5uOcX5Hm4QpV8Dkb1HFjfAKTKX6yNPJQD9AhcT3ifHNB66tWTTJDi11Q==}
+  prettier@3.9.6:
+    resolution: {integrity: sha512-OpN0zzVdiaiAhxpuuj5efpIS4sY9j7bY6uR5mnj5yPzGkdkjNKSJeUThPb60Jw29QuAZgA4o+/iB49kFiaBX6g==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -493,8 +487,8 @@ packages:
     resolution: {integrity: sha512-cJ+oHTW1VAEa8cJslgmUZrc+sjRKgAKl3Zyse6+PV38hZe/V6Z14TbCuXcan9F9ghlz4QrFr2c92TNF82UkYHA==}
     engines: {node: '>=10'}
 
-  qs@6.15.2:
-    resolution: {integrity: sha512-Rzq0KEyX/w/tEybncDgdkZrJgVUsUMk3xjh3t5bv3S1HTAtg+uOYt72+ZfwiQwKdysThkTBdL/rTi6HDmX9Ddw==}
+  qs@6.15.3:
+    resolution: {integrity: sha512-O9gl3zCl5h5blw1KGUzQKhA5oUXSl8rwUIM5o0S3nCXMliSvy5Dzx7/DJcI+SwgICv+IneSZwhBh1oSyEHA71A==}
     engines: {node: '>=0.6'}
 
   requires-port@1.0.0:
@@ -512,8 +506,8 @@ packages:
   secure-compare@3.0.1:
     resolution: {integrity: sha512-AckIIV90rPDcBcglUwXPF3kg0P0qmPsPXAj6BBEENQE1p5yA1xfmDJzfi1Tappj37Pv2mVbKpL3Z1T+Nn7k1Qw==}
 
-  semver@7.8.4:
-    resolution: {integrity: sha512-rUCObTnP32Q08R2uuIrt7r9PlEonuTmtuXYcW6s5kjdlj3xbnwe+21yXptAUYcMAABLkYYTtnmzb3w3EDZfueA==}
+  semver@7.8.5:
+    resolution: {integrity: sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -540,8 +534,8 @@ packages:
     resolution: {integrity: sha512-mEzR2tqZLXra/X1Orxs91XfcW4/gwGKZ1c0FvGVqf81ei3rCNIjHx6ZSHtcJaL3OYUkhJe7P4+mYfadFH6o2QQ==}
     engines: {node: '>=0.2.0'}
 
-  supports-color@7.2.0:
-    resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
+  supports-color@7.1.0:
+    resolution: {integrity: sha512-oRSIpR8pxT1Wr2FquTNnGet79b3BWljqOuoW/h4oBhxJ/HUbX5nX6JSruTkvXDCFMwDPvsaTTbvMLKZWSy0R5g==}
     engines: {node: '>=8'}
 
   tinyglobby@0.2.17:
@@ -563,12 +557,8 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  ua-parser-js@0.7.41:
-    resolution: {integrity: sha512-O3oYyCMPYgNNHuO7Jjk3uacJWZF8loBgwrfd/5LE/HyZ3lUIOdniQ7DNXJcIgZbwioZxk0fLfI4EVnetdiX5jg==}
-    hasBin: true
-
-  undici-types@5.26.5:
-    resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
+  ua-parser-js@0.7.34:
+    resolution: {integrity: sha512-cJMeh/eOILyGu0ejgTKB95yKT3zOenSe9UGE3vj6WfiOwgGYnmATUsnDixMFvdU+rNMvWih83hrUP8VwhF9yXQ==}
 
   union@0.5.0:
     resolution: {integrity: sha512-N6uOhuW6zO95P3Mel2I2zMsbsanvvtgn6jVqJv4vbVcz/JN0OkL9suomjQGmWtxJQXOCqUJvquc1sMeNz/IwlA==}
@@ -577,8 +567,8 @@ packages:
   url-join@4.0.1:
     resolution: {integrity: sha512-jk1+QP6ZJqyOiuEI9AEWQfju/nB2Pw466kbA0LEZljHwKeMgd9WrAEgEGxjPDD2+TNbbb37rTyhEfrCXfuKXnA==}
 
-  web-streams-polyfill@3.3.3:
-    resolution: {integrity: sha512-d2JWLCivmZYTSIoge9MsgFCZrt571BikcWGYkjC1khllbTeDlGqZ2D8vD8E/lJa8WGWbb7Plm8/XJYV7IJHZZw==}
+  web-streams-polyfill@3.0.3:
+    resolution: {integrity: sha512-d2H/t0eqRNM4w2WvmTdoeIvzAUSpK7JmATB8Nr2lb7nQ9BTIJVjbQ/TRFVEh2gUH1HwclPdoPtfMoFfetXaZnA==}
     engines: {node: '>= 8'}
 
   webrtc-adapter@8.2.0:
@@ -588,26 +578,27 @@ packages:
   whatwg-encoding@2.0.0:
     resolution: {integrity: sha512-p41ogyeMUrw3jWclHWTQg1k05DSVXPLcVxRTYsXUk+ZooOCZLcoYgPZ/HL/D/N+uQPOtcp1me1WhBEaX02mhWg==}
     engines: {node: '>=12'}
+    deprecated: Use @exodus/bytes instead for a more spec-conformant and faster implementation
 
 snapshots:
 
-  '@agora-js/media@4.24.5':
+  '@agora-js/media@4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)':
     dependencies:
-      '@agora-js/report': 4.24.5
-      '@agora-js/shared': 4.24.5
+      '@agora-js/report': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
+      '@agora-js/shared': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
       agora-rte-extension: 1.2.4
       agora-rte-extension-ng: 1.0.3
-      axios: 1.18.1
+      axios: 1.19.0(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
       webrtc-adapter: 8.2.0
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@agora-js/protocol@4.24.5':
+  '@agora-js/protocol@4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)':
     dependencies:
-      '@agora-js/media': 4.24.5
-      '@agora-js/report': 4.24.5
-      '@agora-js/shared': 4.24.5
+      '@agora-js/media': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
+      '@agora-js/report': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
+      '@agora-js/shared': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
       '@bufbuild/protobuf': 2.10.1
       '@types/pako': 2.0.4
       pako: 2.2.0
@@ -615,97 +606,95 @@ snapshots:
       - debug
       - supports-color
 
-  '@agora-js/report@4.24.5':
+  '@agora-js/report@4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)':
     dependencies:
-      '@agora-js/shared': 4.24.5
-      axios: 1.18.1
+      '@agora-js/shared': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
+      axios: 1.19.0(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@agora-js/shared@4.24.5':
+  '@agora-js/shared@4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)':
     dependencies:
-      axios: 1.18.1
-      ua-parser-js: 0.7.41
+      axios: 1.19.0(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
+      ua-parser-js: 0.7.34
     transitivePeerDependencies:
       - debug
       - supports-color
 
   '@bufbuild/protobuf@2.10.1': {}
 
-  '@silenthill/agreement-web@git+https://git@github.com:kingofake/agreement-web.git#96cdc35fd8d6588b66b7a141230abd521b61d403':
+  '@silenthill/agreement-web@git+ssh://git@github.com/kingofake/agreement-web.git#2c7b29b124a65ac73f7f60dc6f81e398c3c60f1d':
     dependencies:
       google-protobuf: 3.21.4
 
-  '@silenthill/h5-cc-bridge@git+https://git@github.com:soolary/h5-cc-bridge.git#e3566d5a11f9cf33abf848e60da9351f3df9c512': {}
+  '@silenthill/h5-cc-bridge@git+ssh://git@github.com/soolary/h5-cc-bridge.git#e3566d5a11f9cf33abf848e60da9351f3df9c512': {}
 
-  '@silenthill/h5-cc-i18n@git+https://git@github.com:guysoup027/h5-cc-i18n.git#7ebe8f008d2f5fdcf204d6d04709aa8c474336b7': {}
+  '@silenthill/h5-cc-i18n@git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#59e1c26c75c10950aa9b38fbb830ec8e0c2279af': {}
 
   '@types/gapi@0.0.43': {}
 
-  '@types/node@18.19.130':
-    dependencies:
-      undici-types: 5.26.5
+  '@types/node@18.0.4': {}
 
   '@types/pako@2.0.4': {}
 
-  '@typescript-eslint/project-service@8.61.0(typescript@6.0.3)':
+  '@typescript-eslint/project-service@8.65.0(supports-color@7.1.0)(typescript@6.0.3)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.61.0(typescript@6.0.3)
-      '@typescript-eslint/types': 8.61.0
-      debug: 4.4.3
+      '@typescript-eslint/tsconfig-utils': 8.65.0(typescript@6.0.3)
+      '@typescript-eslint/types': 8.65.0
+      debug: 4.4.3(supports-color@7.1.0)
       typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/tsconfig-utils@8.61.0(typescript@6.0.3)':
+  '@typescript-eslint/tsconfig-utils@8.65.0(typescript@6.0.3)':
     dependencies:
       typescript: 6.0.3
 
-  '@typescript-eslint/types@8.61.0': {}
+  '@typescript-eslint/types@8.65.0': {}
 
-  '@typescript-eslint/typescript-estree@8.61.0(typescript@6.0.3)':
+  '@typescript-eslint/typescript-estree@8.65.0(supports-color@7.1.0)(typescript@6.0.3)':
     dependencies:
-      '@typescript-eslint/project-service': 8.61.0(typescript@6.0.3)
-      '@typescript-eslint/tsconfig-utils': 8.61.0(typescript@6.0.3)
-      '@typescript-eslint/types': 8.61.0
-      '@typescript-eslint/visitor-keys': 8.61.0
-      debug: 4.4.3
-      minimatch: 10.2.5
-      semver: 7.8.4
+      '@typescript-eslint/project-service': 8.65.0(supports-color@7.1.0)(typescript@6.0.3)
+      '@typescript-eslint/tsconfig-utils': 8.65.0(typescript@6.0.3)
+      '@typescript-eslint/types': 8.65.0
+      '@typescript-eslint/visitor-keys': 8.65.0
+      debug: 4.4.3(supports-color@7.1.0)
+      minimatch: 10.2.6
+      semver: 7.8.5
       tinyglobby: 0.2.17
       ts-api-utils: 2.5.0(typescript@6.0.3)
       typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/visitor-keys@8.61.0':
+  '@typescript-eslint/visitor-keys@8.65.0':
     dependencies:
-      '@typescript-eslint/types': 8.61.0
+      '@typescript-eslint/types': 8.65.0
       eslint-visitor-keys: 5.0.1
 
   access-log@0.3.9:
     dependencies:
       strftime: 0.6.2
 
-  agent-base@6.0.2:
+  agent-base@6.0.0(supports-color@7.1.0):
     dependencies:
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@7.1.0)
     transitivePeerDependencies:
       - supports-color
 
-  agora-rtc-sdk-ng@4.24.5:
+  agora-rtc-sdk-ng@4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0):
     dependencies:
-      '@agora-js/media': 4.24.5
-      '@agora-js/protocol': 4.24.5
-      '@agora-js/report': 4.24.5
-      '@agora-js/shared': 4.24.5
+      '@agora-js/media': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
+      '@agora-js/protocol': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
+      '@agora-js/report': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
+      '@agora-js/shared': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
       agora-rte-extension: 1.2.4
       agora-rte-extension-ng: 1.0.3
-      axios: 1.18.1
+      axios: 1.19.0(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
       formdata-polyfill: 4.0.10
       pako: 2.2.0
-      ua-parser-js: 0.7.41
+      ua-parser-js: 0.7.34
       webrtc-adapter: 8.2.0
     transitivePeerDependencies:
       - debug
@@ -721,7 +710,7 @@ snapshots:
       cuint: 0.2.2
       md5: 2.3.0
 
-  ansi-styles@4.3.0:
+  ansi-styles@4.1.0:
     dependencies:
       color-convert: 2.0.1
 
@@ -729,11 +718,11 @@ snapshots:
 
   asynckit@0.4.0: {}
 
-  axios@1.18.1:
+  axios@1.19.0(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0):
     dependencies:
-      follow-redirects: 1.16.0
+      follow-redirects: 1.16.0(debug@4.4.3(supports-color@7.1.0))
       form-data: 4.0.6
-      https-proxy-agent: 5.0.1
+      https-proxy-agent: 5.0.1(supports-color@7.1.0)
       proxy-from-env: 2.1.0
     transitivePeerDependencies:
       - debug
@@ -745,7 +734,7 @@ snapshots:
     dependencies:
       safe-buffer: 5.1.2
 
-  brace-expansion@5.0.6:
+  brace-expansion@5.0.9:
     dependencies:
       balanced-match: 4.0.4
 
@@ -761,8 +750,8 @@ snapshots:
 
   chalk@4.1.2:
     dependencies:
-      ansi-styles: 4.3.0
-      supports-color: 7.2.0
+      ansi-styles: 4.1.0
+      supports-color: 7.1.0
 
   charenc@0.0.2: {}
 
@@ -786,9 +775,11 @@ snapshots:
 
   cuint@0.2.2: {}
 
-  debug@4.4.3:
+  debug@4.4.3(supports-color@7.1.0):
     dependencies:
       ms: 2.1.3
+    optionalDependencies:
+      supports-color: 7.1.0
 
   delayed-stream@1.0.0: {}
 
@@ -819,18 +810,20 @@ snapshots:
 
   eslint-visitor-keys@5.0.1: {}
 
-  eventemitter3@4.0.7: {}
+  eventemitter3@4.0.0: {}
 
-  fdir@6.5.0(picomatch@4.0.4):
+  fdir@6.5.0(picomatch@4.0.5):
     optionalDependencies:
-      picomatch: 4.0.4
+      picomatch: 4.0.5
 
   fetch-blob@3.2.0:
     dependencies:
       node-domexception: 1.0.0
-      web-streams-polyfill: 3.3.3
+      web-streams-polyfill: 3.0.3
 
-  follow-redirects@1.16.0: {}
+  follow-redirects@1.16.0(debug@4.4.3(supports-color@7.1.0)):
+    optionalDependencies:
+      debug: 4.4.3(supports-color@7.1.0)
 
   form-data@4.0.6:
     dependencies:
@@ -888,26 +881,26 @@ snapshots:
     dependencies:
       whatwg-encoding: 2.0.0
 
-  http-proxy@1.18.1:
+  http-proxy@1.18.1(debug@4.4.3(supports-color@7.1.0)):
     dependencies:
-      eventemitter3: 4.0.7
-      follow-redirects: 1.16.0
+      eventemitter3: 4.0.0
+      follow-redirects: 1.16.0(debug@4.4.3(supports-color@7.1.0))
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
 
-  http-server@14.1.1:
+  http-server@14.1.1(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0):
     dependencies:
       basic-auth: 2.0.1
       chalk: 4.1.2
       corser: 2.0.1
       he: 1.2.0
       html-encoding-sniffer: 3.0.0
-      http-proxy: 1.18.1
+      http-proxy: 1.18.1(debug@4.4.3(supports-color@7.1.0))
       mime: 1.6.0
       minimist: 1.2.8
       opener: 1.5.2
-      portfinder: 1.0.38
+      portfinder: 1.0.38(supports-color@7.1.0)
       secure-compare: 3.0.1
       union: 0.5.0
       url-join: 4.0.1
@@ -915,10 +908,10 @@ snapshots:
       - debug
       - supports-color
 
-  https-proxy-agent@5.0.1:
+  https-proxy-agent@5.0.1(supports-color@7.1.0):
     dependencies:
-      agent-base: 6.0.2
-      debug: 4.4.3
+      agent-base: 6.0.0(supports-color@7.1.0)
+      debug: 4.4.3(supports-color@7.1.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -937,7 +930,7 @@ snapshots:
 
   latest@0.2.0:
     dependencies:
-      npm: 2.15.12
+      npm: 2.5.1
 
   math-intrinsics@1.1.0: {}
 
@@ -957,9 +950,9 @@ snapshots:
 
   mime@1.6.0: {}
 
-  minimatch@10.2.5:
+  minimatch@10.2.6:
     dependencies:
-      brace-expansion: 5.0.6
+      brace-expansion: 5.0.9
 
   minimist@1.2.8: {}
 
@@ -967,7 +960,7 @@ snapshots:
 
   node-domexception@1.0.0: {}
 
-  npm@2.15.12: {}
+  npm@2.5.1: {}
 
   object-inspect@1.13.4: {}
 
@@ -975,23 +968,24 @@ snapshots:
 
   pako@2.2.0: {}
 
-  picomatch@4.0.4: {}
+  picomatch@4.0.5: {}
 
-  portfinder@1.0.38:
+  portfinder@1.0.38(supports-color@7.1.0):
     dependencies:
       async: 3.2.6
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@7.1.0)
     transitivePeerDependencies:
       - supports-color
 
   posix-getopt@1.2.1: {}
 
-  prettier@3.8.4: {}
+  prettier@3.9.6: {}
 
   proxy-from-env@2.1.0: {}
 
-  qs@6.15.2:
+  qs@6.15.3:
     dependencies:
+      es-define-property: 1.0.1
       side-channel: 1.1.1
 
   requires-port@1.0.0: {}
@@ -1004,7 +998,7 @@ snapshots:
 
   secure-compare@3.0.1: {}
 
-  semver@7.8.4: {}
+  semver@7.8.5: {}
 
   side-channel-list@1.0.1:
     dependencies:
@@ -1042,14 +1036,14 @@ snapshots:
 
   strftime@0.6.2: {}
 
-  supports-color@7.2.0:
+  supports-color@7.1.0:
     dependencies:
       has-flag: 4.0.0
 
   tinyglobby@0.2.17:
     dependencies:
-      fdir: 6.5.0(picomatch@4.0.4)
-      picomatch: 4.0.4
+      fdir: 6.5.0(picomatch@4.0.5)
+      picomatch: 4.0.5
 
   ts-api-utils@2.5.0(typescript@6.0.3):
     dependencies:
@@ -1059,17 +1053,15 @@ snapshots:
 
   typescript@6.0.3: {}
 
-  ua-parser-js@0.7.41: {}
-
-  undici-types@5.26.5: {}
+  ua-parser-js@0.7.34: {}
 
   union@0.5.0:
     dependencies:
-      qs: 6.15.2
+      qs: 6.15.3
 
   url-join@4.0.1: {}
 
-  web-streams-polyfill@3.3.3: {}
+  web-streams-polyfill@3.0.3: {}
 
   webrtc-adapter@8.2.0:
     dependencies:
