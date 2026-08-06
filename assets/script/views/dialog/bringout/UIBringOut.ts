@@ -62,6 +62,11 @@ export default class UIBringOut extends UIComponentBaseDialog<UIBringOutParam> {
         this.amountSlider.setProgress(0);
     }
 
+    public override close(): void {
+        if (this._roomPlayer) this._roomPlayer.bringOutDialogOpen = false;
+        super.close();
+    }
+
     protected onDisable(): void {
         unBindEventsAll(this);
         super.onDisable();

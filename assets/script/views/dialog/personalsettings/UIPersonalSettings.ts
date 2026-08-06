@@ -1,5 +1,8 @@
 import soundManager from '../../../core/SoundManager';
+import roomDataManager from '../../../data/room/RoomDataManager';
 import texasGamePersonalSettings, { ShortCut, shortCutMode } from '../../../data/room/texas/TexasGamePersonalSettings';
+import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
+import TexasGameRoomDataPlayerMine from '../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import { AssetCollectionType, PokerCardType } from '../../loader/AssetLoader';
 import CustomButton from '../../widget/CustomButton';
@@ -77,6 +80,7 @@ export default class UIPersonalSettings extends UIComponentBaseDialog<UIPersonal
     private progressSlider: StepSlider = null;
     // ==================== 私有状态 ====================
     private _defaultShourts: ShortCut[] = null;
+    private _mine: TexasGameRoomDataPlayerMine = null;
     // ==================== 常量 ====================
     private static readonly DESK_VISIBLE_COUNT = 4;
     private static readonly DESK_COUNT = 14;
@@ -99,11 +103,17 @@ export default class UIPersonalSettings extends UIComponentBaseDialog<UIPersonal
     }
 
     public initialize(param: UIPersonalSettingsParam): void {
+        this._mine = roomDataManager.getRoomData<TexasGameRoomData>(param.roomID, param.matchID).mine;
         this._initCardSelected();
         this._initDeskSelected();
         this._initTab();
         this.toggleVoice.onoff(texasGamePersonalSettings.soundOn);
         this.toggleShowBB.onoff(texasGamePersonalSettings.showBB);
+    }
+
+    public override close(): void {
+        if (this._mine) this._mine.personalSettingsDialogOpen = false;
+        super.close();
     }
 
     protected override onFrameResize(

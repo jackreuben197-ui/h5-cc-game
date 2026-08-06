@@ -30,6 +30,16 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public static readonly VIEW_PLAYER_CARDS_COST = 'VIEW_PLAYER_CARDS_COST';
     public static readonly SHOW_VIEW_PUBLIC_CARDS_BUTTON = 'SHOW_VIEW_PUBLIC_CARDS_BUTTON';
     public static readonly VIEW_PUBLIC_CARDS_COST = 'VIEW_PUBLIC_CARDS_COST';
+    public static readonly EMOJI_DIALOG_OPEN_CHANGE = 'EMOJI_DIALOG_OPEN_CHANGE';
+    public static readonly REPORT_DIALOG_OPEN_CHANGE = 'REPORT_DIALOG_OPEN_CHANGE';
+    public static readonly HISTORY_DIALOG_OPEN_CHANGE = 'HISTORY_DIALOG_OPEN_CHANGE';
+    public static readonly CHAT_DIALOG_OPEN_CHANGE = 'CHAT_DIALOG_OPEN_CHANGE';
+    public static readonly TABLE_SETTING_DIALOG_OPEN_CHANGE = 'TABLE_SETTING_DIALOG_OPEN_CHANGE';
+    public static readonly PERSONAL_SETTINGS_DIALOG_OPEN_CHANGE = 'PERSONAL_SETTINGS_DIALOG_OPEN_CHANGE';
+    public static readonly BRING_OUT_DIALOG_OPEN_CHANGE = 'BRING_OUT_DIALOG_OPEN_CHANGE';
+    public static readonly BRING_IN_DIALOG_OPEN_CHANGE = 'BRING_IN_DIALOG_OPEN_CHANGE';
+    public static readonly RECHARGE_DIAMOND_DIALOG_OPEN_CHANGE = 'RECHARGE_DIAMOND_DIALOG_OPEN_CHANGE';
+    public static readonly PLAYER_INFO_DIALOG_OPEN_CHANGE = 'PLAYER_INFO_DIALOG_OPEN_CHANGE';
     public static readonly LOCAL_CAMERA_STATE_CHANGE = 'LOCAL_CAMERA_STATE_CHANGE';
     public static readonly LOCAL_CAMERA_BTN_STATE_CHANGE = 'LOCAL_CAMERA_BTN_STATE_CHANGE';
     public static readonly LOCAL_CAMERA_STATE_CHANGE_DELAY = 'LOCAL_CAMERA_STATE_CHANGE_DELAY';
@@ -209,6 +219,27 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public showViewPublicCardsButton: boolean = false;
     @observable(TexasGameRoomDataPlayerMine.VIEW_PUBLIC_CARDS_COST)
     public viewPublicCardsCost: number = 0;
+    @observable(TexasGameRoomDataPlayerMine.EMOJI_DIALOG_OPEN_CHANGE)
+    public emojiDialogOpen: boolean = false;
+    @observable(TexasGameRoomDataPlayerMine.REPORT_DIALOG_OPEN_CHANGE)
+    public reportDialogOpen: boolean = false;
+    @observable(TexasGameRoomDataPlayerMine.HISTORY_DIALOG_OPEN_CHANGE)
+    public historyDialogOpen: boolean = false;
+    @observable(TexasGameRoomDataPlayerMine.CHAT_DIALOG_OPEN_CHANGE)
+    public chatDialogOpen: boolean = false;
+    @observable(TexasGameRoomDataPlayerMine.TABLE_SETTING_DIALOG_OPEN_CHANGE)
+    public tableSettingDialogOpen: boolean = false;
+    @observable(TexasGameRoomDataPlayerMine.PERSONAL_SETTINGS_DIALOG_OPEN_CHANGE)
+    public personalSettingsDialogOpen: boolean = false;
+    @observable(TexasGameRoomDataPlayerMine.BRING_OUT_DIALOG_OPEN_CHANGE)
+    public bringOutDialogOpen: boolean = false;
+    @observable(TexasGameRoomDataPlayerMine.BRING_IN_DIALOG_OPEN_CHANGE)
+    public bringInDialogOpen: boolean = false;
+    @observable(TexasGameRoomDataPlayerMine.RECHARGE_DIAMOND_DIALOG_OPEN_CHANGE)
+    public rechargeDiamondDialogOpen: boolean = false;
+    @observable(TexasGameRoomDataPlayerMine.PLAYER_INFO_DIALOG_OPEN_CHANGE)
+    public playerInfoDialogOpen: boolean = false;
+    public playerInfoDialogPlayer: TexasGameRoomDataPlayer = null;
     public isPlaying: boolean = false;
 
     /** 计算当前能带入的上下限 */
@@ -320,10 +351,25 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
         this.handValueType = '';
         this.showViewPlayerCardsButton = false;
         this.showViewPublicCardsButton = false;
+        this.clearDialogData();
         this.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
         this.autoOperationType = AutoOperationTypeTexas.NO;
         this.callTimeCount = 0;
         this.callTimeStay = false;
+    }
+
+    public clearDialogData(): void {
+        this.emojiDialogOpen = false;
+        this.reportDialogOpen = false;
+        this.historyDialogOpen = false;
+        this.chatDialogOpen = false;
+        this.tableSettingDialogOpen = false;
+        this.personalSettingsDialogOpen = false;
+        this.bringOutDialogOpen = false;
+        this.bringInDialogOpen = false;
+        this.rechargeDiamondDialogOpen = false;
+        this.playerInfoDialogOpen = false;
+        this.playerInfoDialogPlayer = null;
     }
 }
 

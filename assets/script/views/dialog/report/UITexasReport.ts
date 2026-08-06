@@ -246,6 +246,11 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         }
     }
 
+    public override close(): void {
+        if (this._roomData) this._roomData.mine.reportDialogOpen = false;
+        super.close();
+    }
+
     @bindEvent(CCViewData.FRAME_SIZE_UPDATE, { dataSource: 'ccviewData', initPriority: 20 })
     protected onFrameResize(
         visibleSizeWidth: number,

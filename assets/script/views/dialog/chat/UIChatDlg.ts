@@ -422,4 +422,9 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
     private onClickClose(): void {
         this.close();
     }
+
+    public override close(): void {
+        if (this._roomData) this._roomData.mine.chatDialogOpen = false;
+        super.close();
+    }
 }
