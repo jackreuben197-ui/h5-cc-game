@@ -10,8 +10,8 @@ import { CPErrorCode } from '../../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
 import viewManager from '../../../UIViewManager';
 import UIBringIn, { BringInTabType } from '../UIBringIn';
-import { BringInProvider } from './BringInProvider';
 import type { BringInCommitFn, BringInWalletBalance } from './BringInProvider';
+import { BringInProvider } from './BringInProvider';
 
 @bindData()
 @traceClass()
