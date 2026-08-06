@@ -116,7 +116,7 @@ CCProgram fs %{
     #else
       vec4 textureColor = sampleTexture(v_uv0);
 
-      #if ROUNDED_RECT
+      #if ROUNDED_RECT && SAFE_EDGE_COLOR
         // Pull RGB from inside the card near its outline to avoid dark fringes
         // caused by bilinear sampling against transparent dark pixels in the PNG.
         vec2 safeUv = mix(vec2(0.5), v_uv0, 0.85);

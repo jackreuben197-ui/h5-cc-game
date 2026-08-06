@@ -12,7 +12,7 @@
       "defines": {
         "ROUNDED_RECT": true,
         "SUPERSAMPLE_TEXTURE": true,
-        "SAFE_EDGE_COLOR": true
+        "SAFE_EDGE_COLOR": false
       },
       "props": {
         "shapeParams": {

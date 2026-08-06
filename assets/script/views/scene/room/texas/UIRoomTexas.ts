@@ -26,6 +26,7 @@ import PotsInfo from './PotsInfo';
 import PublicCardsInfo from './PublicCardsInfo';
 import RoomInfo from './RoomInfo';
 import SeatManager from './SeatManager';
+import MttTableStateView from './MttTableStateView';
 import UITexasMenu from './UITexasMenu';
 
 export interface UIRoomTexasEnterParam {
@@ -90,6 +91,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     @property({ type: cc.Button, displayName: '带入筹码按钮右上角' })
     private bringInButton: cc.Button = null;
     private _roomData: TexasGameRoomData = null;
+    private _mttTableStateView: MttTableStateView = null;
 
     protected onLoad(): void {
         //菜单项
@@ -113,6 +115,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         // bring in
         this.bringInButton.node.on('click', this.onClickBringIn, this);
         this._setChatAlertVisible(false);
+        // MTT 状态组件复用现有牌桌节点，无需在 prefab 增加脚本引用。
+        this._mttTableStateView = this.node.addComponent(MttTableStateView);
     }
 
     private onClickBringIn() {
@@ -201,6 +205,10 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this._otherBindings.initData(param.roomID, param.matchID);
         this._applyMainMenuLayout();
         this.jackpotFeature.initData(param.roomID, param.matchID);
+        if (roomData.basicInfo?.isMtt || roomData.matchID > 0) {
+            // 仅 MTT 房间绑定比赛状态和共用倒计时浮层。
+            this._mttTableStateView.initialize(roomData);
+        }
         //展示介绍对话框
         await this._showSquidIntroDialog(roomData);
         await this._showMushroomIntroDialog(roomData);

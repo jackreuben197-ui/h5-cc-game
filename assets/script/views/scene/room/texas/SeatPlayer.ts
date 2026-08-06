@@ -246,12 +246,13 @@ export default class SeatPlayer extends cc.Component {
     private _bindEventsAndRefresh() {
         // 统一激活绑定，注入强类型 tag 推导过滤机制
         autoBindEvents(this, { player: this._seatPlayer, basic: this._seatPlayer.roomData.basicInfo, setting: texasGamePersonalSettings });
+        this._refreshNicknameVisibility();
     }
 
     private _refreshNicknameVisibility(): void {
-        const visible = !(this._seatPlayer.position === SeatPosition.BottomMiddle && this._seatPlayer.seated && this._seatPlayer.mine);
-        this.nickName.node.active = visible;
-        this.nickNameSplash.active = visible;
+        const visible = !(this._seatPlayer && this._seatPlayer.position === SeatPosition.BottomMiddle && this._seatPlayer.seated && this._seatPlayer.mine);
+        if (this.nickName?.node) this.nickName.node.active = visible;
+        if (this.nickNameSplash) this.nickNameSplash.active = visible;
     }
 
     private _stopRoundBetAnimation(): void {
@@ -332,6 +333,7 @@ export default class SeatPlayer extends cc.Component {
         this.userSeat.active = b;
         this.emptySeat.node.active = !b;
         this.emptySeat.interactable = !b;
+        this._refreshNicknameVisibility();
         // 本人相关,设置属性
         if (b && mine) {
             autoBindEvents(this, { mine: mine });
