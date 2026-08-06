@@ -1,6 +1,6 @@
 import { TexasChatMessage } from '../../../data/room/texas/TexasGameRoomDataChat';
 import MagicEmojiConfig, { MagicEmojiDefinition } from '../../../game/constant/MagicEmojiConfig';
-import AssetManager, { BUNDLE_ANIMATE } from '../../loader/AssetManager';
+import AssetManager, { BUNDLE_RESOURCES } from '../../loader/AssetManager';
 import RemoteSprite from '../../widget/RemoteSprite';
 
 const { ccclass, property, menu } = cc._decorator;
@@ -110,7 +110,7 @@ export default class ChatMsgItem extends cc.Component {
     }
 
     private _playSpine(emojiType: number, def: MagicEmojiDefinition): void {
-        AssetManager.getOrLoad(BUNDLE_ANIMATE, def.spine, sp.SkeletonData)
+        AssetManager.getOrLoad(BUNDLE_RESOURCES, def.spine, sp.SkeletonData)
             .then(skeletonData => {
                 if (this._loadingEmojiType !== emojiType || !cc.isValid(this.chatEmojiNode)) return;
                 this._clearEmojiSpine();

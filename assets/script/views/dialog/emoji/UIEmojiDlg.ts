@@ -10,7 +10,7 @@ import { GameplayChatPropType } from '../../../game/constant/GameplayChatPropTyp
 import MagicEmojiConfig, { MagicEmojiDefinition } from '../../../game/constant/MagicEmojiConfig';
 import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
-import AssetManager, { BUNDLE_ANIMATE } from '../../loader/AssetManager';
+import AssetManager, { BUNDLE_RESOURCES } from '../../loader/AssetManager';
 import UIEmojiItem from './UIEmojiItem';
 
 const { ccclass, menu, property } = cc._decorator;
@@ -240,7 +240,7 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
         const skeletonLoading = new Map<string, Promise<sp.SkeletonData>>();
         items.forEach(itemData => {
             if (!skeletonLoading.has(itemData.config.spine)) {
-                skeletonLoading.set(itemData.config.spine, AssetManager.getOrLoad(BUNDLE_ANIMATE, itemData.config.spine, sp.SkeletonData));
+                skeletonLoading.set(itemData.config.spine, AssetManager.getOrLoad(BUNDLE_RESOURCES, itemData.config.spine, sp.SkeletonData));
             }
             const itemNode = cc.instantiate(this.itemPrefab);
             itemNode.parent = this.scrollContent;
