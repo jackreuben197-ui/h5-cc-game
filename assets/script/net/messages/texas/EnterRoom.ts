@@ -23,6 +23,7 @@ import ProcedureManager from '../../../game/procedure/ProcedureManager';
 import roomReconnectManager from '../../../game/RoomReconnectManager';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import viewManager from '../../../views/UIViewManager';
+import throwPropManager from '../../../views/util/ThrowPropManager';
 import agoraManager from '../../agora/AgoraManager';
 import TexasVideoMediaHelper from './TexasVideoMediaHelper';
 
@@ -51,6 +52,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         _plog.error('no store room data');
         return;
     }
+    throwPropManager.preloadEffects();
     // 声音处理
     soundManager.volumeOnOff(roomData.setting.soundOn);
     soundManager.playBGM();

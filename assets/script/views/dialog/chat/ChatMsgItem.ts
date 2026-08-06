@@ -1,14 +1,9 @@
 import { TexasChatMessage } from '../../../data/room/texas/TexasGameRoomDataChat';
 import MagicEmojiConfig, { MagicEmojiDefinition } from '../../../game/constant/MagicEmojiConfig';
+import AssetManager, { BUNDLE_RESOURCES } from '../../loader/AssetManager';
 import RemoteSprite from '../../widget/RemoteSprite';
 
 const { ccclass, property, menu } = cc._decorator;
-/**
- * 魔法表情映射复用主分支的权威配置 MagicEmojiConfig（座位表情 / 发送面板同源）。
- * spine 路径已是 resources 下的完整路径（rc/other/effect/expressionXxx/xxx），直接 cc.resources.load 即可；
- * 这些骨骼在 rc/ 下会被预加载，聊天记录里命中缓存即时显示。
- * 免费表情段 500-509、魔法弹幕段 700-709 无配置时按“[表情]”文字占位。
- */
 
 /** Spine 相对表情槽中心的额外偏移（骨骼自身原点偏左，正值往右挪）。嫌多/少改这里即可。 */
 const EMOJI_SPINE_OFFSET_X = 60;
@@ -114,27 +109,25 @@ export default class ChatMsgItem extends cc.Component {
         this._renderText('[表情]');
     }
 
-    /** 从 resources 加载并循环播放 Spine 动画；资源缺失/加载失败时回退文字占位 */
     private _playSpine(emojiType: number, def: MagicEmojiDefinition): void {
-        cc.resources.load(def.spine, sp.SkeletonData, (err: Error, skeletonData: sp.SkeletonData) => {
-            if (this._loadingEmojiType !== emojiType || !cc.isValid(this.chatEmojiNode)) return;
-            if (err || !skeletonData) {
+        AssetManager.getOrLoad(BUNDLE_RESOURCES, def.spine, sp.SkeletonData)
+            .then(skeletonData => {
+                if (this._loadingEmojiType !== emojiType || !cc.isValid(this.chatEmojiNode)) return;
+                this._clearEmojiSpine();
+                const node = new cc.Node('EmojiSpine');
+                const skeleton = node.addComponent(sp.Skeleton);
+                skeleton.skeletonData = skeletonData;
+                skeleton.premultipliedAlpha = false;
+                node.parent = this.chatEmojiNode;
+                const parent = this.chatEmojiNode;
+                node.setPosition((0.5 - parent.anchorX) * parent.width + EMOJI_SPINE_OFFSET_X, (0.5 - parent.anchorY) * parent.height + EMOJI_SPINE_OFFSET_Y);
+                this._emojiSpineNode = node;
+                skeleton.setAnimation(0, def.animation, true);
+            })
+            .catch(() => {
+                if (this._loadingEmojiType !== emojiType || !cc.isValid(this.chatEmojiNode)) return;
                 this._fallbackEmoji(emojiType);
-                return;
-            }
-            this._clearEmojiSpine();
-            const node = new cc.Node('EmojiSpine');
-            const skeleton = node.addComponent(sp.Skeleton);
-            skeleton.skeletonData = skeletonData;
-            skeleton.premultipliedAlpha = false;
-            node.parent = this.chatEmojiNode;
-            // 子节点本地(0,0)在父锚点处；chatEmojiNode 锚点非居中(0,0.5)，
-            // 需按父节点尺寸/锚点偏移到几何中心，避免 Spine 贴到左边缘压住头像。
-            const parent = this.chatEmojiNode;
-            node.setPosition((0.5 - parent.anchorX) * parent.width + EMOJI_SPINE_OFFSET_X, (0.5 - parent.anchorY) * parent.height + EMOJI_SPINE_OFFSET_Y);
-            this._emojiSpineNode = node;
-            skeleton.setAnimation(0, def.animation, true);
-        });
+            });
     }
 
     /** 清理当前挂在 chatEmojiNode 下的 Spine 子节点 */

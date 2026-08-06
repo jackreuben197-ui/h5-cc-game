@@ -45,71 +45,71 @@ class ThrowPropManager {
         [PropsID.PROPSTOMATO]: {
             duration: 4.5,
             clips: {
-                hit: { spine: 'rc/other/effect/expressionTomato/skeleton', anim: '1', soundName: 'sound/PropOp/sfx_tomato_mus' }
+                hit: { spine: 'dynamic/prop/anim/expressionTomato/skeleton', anim: '1', soundName: 'sound/PropOp/sfx_tomato_mus' }
             }
         },
         [PropsID.PROPSFLOWER]: {
             duration: 4.5,
             clips: {
-                hit: { spine: 'rc/other/effect/expressionFlower/skeleton', anim: 'animation', soundName: 'sound/PropOp/sfx_rose_mus' }
+                hit: { spine: 'dynamic/prop/anim/expressionFlower/skeleton', anim: 'animation', soundName: 'sound/PropOp/sfx_rose_mus' }
             }
         },
         [PropsID.PROPSKISS]: {
             duration: 4.5,
             clips: {
-                hit: { spine: 'rc/other/effect/expressionKiss/kiss', anim: '1', soundName: 'sound/PropOp/sfx_kiss_mus' }
+                hit: { spine: 'dynamic/prop/anim/expressionKiss/kiss', anim: '1', soundName: 'sound/PropOp/sfx_kiss_mus' }
             }
         },
         [PropsID.PROPSGOOD]: {
             duration: 4.5,
             clips: {
-                hit: { spine: 'rc/other/effect/expressionGood/skeleton', anim: 'animation', soundName: 'sound/PropOp/sfx_like_mus' }
+                hit: { spine: 'dynamic/prop/anim/expressionGood/skeleton', anim: 'animation', soundName: 'sound/PropOp/sfx_like_mus' }
             }
         },
         [PropsID.PROPSCHEERS]: {
             fullscreen: { sender: true, receiver: true, bystander: false },
             duration: 5,
             clips: {
-                screen: { spine: 'rc/other/effect/expressionBeerScreen/cheers_1', anim: '1', soundName: 'sound/PropOp/sfx_beer_screen' },
-                seatScreen: { spine: 'rc/other/effect/expressionBeer/cheers_2', anim: '3' },
-                seat: { spine: 'rc/other/effect/expressionBeer/cheers_2', anim: '2', soundName: 'sound/PropOp/sfx_cheers_mus' }
+                screen: { spine: 'dynamic/prop/anim/expressionBeerScreen/cheers_1', anim: '1', soundName: 'sound/PropOp/sfx_beer_screen' },
+                seatScreen: { spine: 'dynamic/prop/anim/expressionBeer/cheers_2', anim: '3' },
+                seat: { spine: 'dynamic/prop/anim/expressionBeer/cheers_2', anim: '2', soundName: 'sound/PropOp/sfx_cheers_mus' }
             }
         },
         [PropsID.PROPSTOUCH]: {
             duration: 3.5,
             clips: {
-                hit: { spine: 'rc/other/effect/expressionTouch/touch', anim: 'animation', soundName: 'sound/PropOp/sfx_touch_mus', loop: true }
+                hit: { spine: 'dynamic/prop/anim/expressionTouch/touch', anim: 'animation', soundName: 'sound/PropOp/sfx_touch_mus', loop: true }
             }
         },
         [PropsID.PROPSSHARK]: {
             duration: 4,
             clips: {
-                sender: { spine: 'rc/other/effect/expressionShark/shark', anim: 'shark_set', soundName: 'sound/PropOp/sfx_shark_mus' },
-                receiver: { spine: 'rc/other/effect/expressionShark/shark', anim: 'shark_receive' }
+                sender: { spine: 'dynamic/prop/anim/expressionShark/shark', anim: 'shark_set', soundName: 'sound/PropOp/sfx_shark_mus' },
+                receiver: { spine: 'dynamic/prop/anim/expressionShark/shark', anim: 'shark_receive' }
             }
         },
         [PropsID.PROPSCHICKEN]: {
             duration: 4,
             clips: {
-                hand: { spine: 'rc/other/effect/expressionChicken/chicken_spine', anim: 'chicken_set', soundName: 'sound/PropOp/sfx_zhuaji_mus' },
-                receiver: { spine: 'rc/other/effect/expressionChicken/chicken_spine', anim: 'chicken_receive' }
+                hand: { spine: 'dynamic/prop/anim/expressionChicken/chicken_spine', anim: 'chicken_set', soundName: 'sound/PropOp/sfx_zhuaji_mus' },
+                receiver: { spine: 'dynamic/prop/anim/expressionChicken/chicken_spine', anim: 'chicken_receive' }
             }
         },
         [PropsID.PROPSBOXING]: {
             fullscreen: { sender: true, receiver: true, bystander: false },
             duration: { sender: 6, receiver: 6, bystander: 4 },
             clips: {
-                senderScreen: { spine: 'rc/other/effect/expressionBoxScreen/box_full', anim: 'box_full_1', soundName: 'sound/PropOp/sfx_boxing_sender1' },
-                senderHit: { spine: 'rc/other/effect/expressionBox/box_local', anim: 'box_local_1', soundName: 'sound/PropOp/sfx_boxing_sender2' },
-                receiverPunch: { spine: 'rc/other/effect/expressionBox/box_local', anim: 'box_local_2', soundName: 'sound/PropOp/sfx_boxing_beaten1' },
-                receiverScreen: { spine: 'rc/other/effect/expressionBoxScreen/box_full', anim: 'box_full_2', soundName: 'sound/PropOp/sfx_boxing_beaten2' }
+                senderScreen: { spine: 'dynamic/prop/anim/expressionBoxScreen/box_full', anim: 'box_full_1', soundName: 'sound/PropOp/sfx_boxing_sender1' },
+                senderHit: { spine: 'dynamic/prop/anim/expressionBox/box_local', anim: 'box_local_1', soundName: 'sound/PropOp/sfx_boxing_sender2' },
+                receiverPunch: { spine: 'dynamic/prop/anim/expressionBox/box_local', anim: 'box_local_2', soundName: 'sound/PropOp/sfx_boxing_beaten1' },
+                receiverScreen: { spine: 'dynamic/prop/anim/expressionBoxScreen/box_full', anim: 'box_full_2', soundName: 'sound/PropOp/sfx_boxing_beaten2' }
             }
         },
         [PropsID.PROPSMONEY]: {
             duration: 4,
             clips: {
                 receiver: {
-                    spine: 'rc/other/effect/expressionMoney/attachments',
+                    spine: 'dynamic/prop/anim/expressionMoney/attachments',
                     anim: 'attachments_1_receive',
                     soundName: {
                         sender: 'sound/PropOp/sfx_money',
@@ -123,34 +123,35 @@ class ThrowPropManager {
             fullscreen: true,
             duration: 6,
             clips: {
-                senderScreen: { spine: 'rc/other/effect/expressionFishScreenSender/sy2', anim: 'sy2', soundName: 'sound/PropOp/sfx_fish2' },
-                receiverScreen: { spine: 'rc/other/effect/expressionFishScreenReceiver/sy', anim: 'sy', soundName: 'sound/PropOp/sfx_fish' },
-                fishSwim: { spine: 'rc/other/effect/expressionFish/sy3', anim: 'sy3_1', soundName: 'sound/PropOp/sfx_fish', loop: true },
-                fishExit: { spine: 'rc/other/effect/expressionFish/sy3', anim: 'sy3_2' },
-                splash: { spine: 'rc/other/effect/expressionFish/sy3', anim: 'bl' },
-                waveSender: { spine: 'rc/other/effect/expressionFishWave/hl', anim: 'hl1' },
-                waveReceiver: { spine: 'rc/other/effect/expressionFishWave/hl', anim: 'hl2' },
-                waveOther: { spine: 'rc/other/effect/expressionFishWave/hl', anim: 'hl3' }
+                senderScreen: { spine: 'dynamic/prop/anim/expressionFishScreenSender/sy2', anim: 'sy2', soundName: 'sound/PropOp/sfx_fish2' },
+                receiverScreen: { spine: 'dynamic/prop/anim/expressionFishScreenReceiver/sy', anim: 'sy', soundName: 'sound/PropOp/sfx_fish' },
+                fishSwim: { spine: 'dynamic/prop/anim/expressionFish/sy3', anim: 'sy3_1', soundName: 'sound/PropOp/sfx_fish', loop: true },
+                fishExit: { spine: 'dynamic/prop/anim/expressionFish/sy3', anim: 'sy3_2' },
+                splash: { spine: 'dynamic/prop/anim/expressionFish/sy3', anim: 'bl' },
+                waveSender: { spine: 'dynamic/prop/anim/expressionFishWave/hl', anim: 'hl1' },
+                waveReceiver: { spine: 'dynamic/prop/anim/expressionFishWave/hl', anim: 'hl2' },
+                waveOther: { spine: 'dynamic/prop/anim/expressionFishWave/hl', anim: 'hl3' }
             }
         },
         [PropsID.PROPSBASEBALL]: {
             duration: { sender: 8, receiver: 8, bystander: 10 },
             clips: {
-                senderStart: { spine: 'rc/other/effect/expressionBaseballSender/skeleton', anim: '1', soundName: 'sound/PropOp/sfx_baseball' },
-                senderFly: { spine: 'rc/other/effect/expressionBaseballSender/skeleton', anim: '2' },
-                senderHit: { spine: 'rc/other/effect/expressionBaseballSender/skeleton', anim: '3' },
-                receiverStart: { spine: 'rc/other/effect/expressionBaseballReceiver/ballfolder1', anim: '1', soundName: 'sound/PropOp/sfx_baseball' },
-                receiverFly: { spine: 'rc/other/effect/expressionBaseballReceiver/ballfolder1', anim: '2' },
-                receiverHit: { spine: 'rc/other/effect/expressionBaseballReceiver/ballfolder1', anim: '3' },
-                otherStart: { spine: 'rc/other/effect/expressionBaseballOther/skeleton', anim: '1', soundName: 'sound/PropOp/sfx_baseball' },
-                otherFly: { spine: 'rc/other/effect/expressionBaseballOther/skeleton', anim: '2' },
-                otherHit: { spine: 'rc/other/effect/expressionBaseballOther/skeleton', anim: '3' },
-                otherExit: { spine: 'rc/other/effect/expressionBaseballOther/skeleton', anim: '4' }
+                senderStart: { spine: 'dynamic/prop/anim/expressionBaseballSender/skeleton', anim: '1', soundName: 'sound/PropOp/sfx_baseball' },
+                senderFly: { spine: 'dynamic/prop/anim/expressionBaseballSender/skeleton', anim: '2' },
+                senderHit: { spine: 'dynamic/prop/anim/expressionBaseballSender/skeleton', anim: '3' },
+                receiverStart: { spine: 'dynamic/prop/anim/expressionBaseballReceiver/ballfolder1', anim: '1', soundName: 'sound/PropOp/sfx_baseball' },
+                receiverFly: { spine: 'dynamic/prop/anim/expressionBaseballReceiver/ballfolder1', anim: '2' },
+                receiverHit: { spine: 'dynamic/prop/anim/expressionBaseballReceiver/ballfolder1', anim: '3' },
+                otherStart: { spine: 'dynamic/prop/anim/expressionBaseballOther/skeleton', anim: '1', soundName: 'sound/PropOp/sfx_baseball' },
+                otherFly: { spine: 'dynamic/prop/anim/expressionBaseballOther/skeleton', anim: '2' },
+                otherHit: { spine: 'dynamic/prop/anim/expressionBaseballOther/skeleton', anim: '3' },
+                otherExit: { spine: 'dynamic/prop/anim/expressionBaseballOther/skeleton', anim: '4' }
             }
         }
     };
     private _root: cc.Node = null;
     private _fullscreenRoot: cc.Node = null;
+    private _skeletonData: Map<string, sp.SkeletonData> = new Map();
     private _seatPropSkeletonData: Map<cc.Node, sp.SkeletonData> = new Map();
     private _propQueue: ThrowPropTask[] = [];
     private _playingPropUsers: Set<number> = new Set();
@@ -170,23 +171,36 @@ class ThrowPropManager {
         this._bringNodeToTop(this._fullscreenRoot);
     }
 
+    public preloadEffects(): void {
+        this._loadSkeletons(this._getAllEffectPaths()).catch(error => cc.warn('[ThrowPropManager] preload effects failed', error));
+    }
+
+    public loadPropEffects(type: PropsID): Promise<void> {
+        return this._loadSkeletons(this._getConfigEffectPaths(ThrowPropManager.CONFIGS[type]));
+    }
+
     public playProp(data: ThrowPropBroadcastData, senderData: ThrowPropSeatNodes, targetData: ThrowPropSeatNodes): void {
         const config = ThrowPropManager.CONFIGS[data.type];
         if (!config || !this._root || !cc.isValid(this._root)) return;
         if (!senderData || !targetData) return;
-        const role = this._getRole(data.userID, data.targetUserID);
-        const task: ThrowPropTask = {
-            data,
-            senderData,
-            targetData,
-            type: data.type,
-            config,
-            role,
-            fullscreen: this._getRoleValue(config.fullscreen, role, false),
-            duration: this._getRoleValue(config.duration, role, 4)
-        };
-        this._propQueue.push(task);
-        this._tryPlayQueuedProps();
+        this._loadSkeletons(this._getConfigEffectPaths(config))
+            .then(() => {
+                if (!this._isRootValid() || !cc.isValid(senderData.avatarNode) || !cc.isValid(targetData.avatarNode)) return;
+                const role = this._getRole(data.userID, data.targetUserID);
+                const task: ThrowPropTask = {
+                    data,
+                    senderData,
+                    targetData,
+                    type: data.type,
+                    config,
+                    role,
+                    fullscreen: this._getRoleValue(config.fullscreen, role, false),
+                    duration: this._getRoleValue(config.duration, role, 4)
+                };
+                this._propQueue.push(task);
+                this._tryPlayQueuedProps();
+            })
+            .catch(error => cc.warn('[ThrowPropManager] load prop effect failed', data.type, error));
     }
 
     private _playPropNow(task: ThrowPropTask): void {
@@ -622,7 +636,27 @@ class ThrowPropManager {
     }
 
     private _getSkeleton(path: string): sp.SkeletonData {
-        return AssetManager.mustGetLoaded(BUNDLE_RESOURCES, path, sp.SkeletonData);
+        return this._skeletonData.get(path);
+    }
+
+    private _getConfigEffectPaths(config: PropAnimConfig): string[] {
+        return Object.keys(config.clips)
+            .map(name => config.clips[name].spine)
+            .filter((path, index, paths) => paths.indexOf(path) === index);
+    }
+
+    private _getAllEffectPaths(): string[] {
+        const paths = MagicEmojiConfig.DEFINITIONS.map(config => config.spine);
+        Object.keys(ThrowPropManager.CONFIGS).forEach(type => {
+            paths.push(...this._getConfigEffectPaths(ThrowPropManager.CONFIGS[type as unknown as PropsID]));
+        });
+        return paths.filter((path, index) => paths.indexOf(path) === index);
+    }
+
+    private async _loadSkeletons(paths: string[]): Promise<void> {
+        const unloadedPaths = paths.filter(path => !this._skeletonData.has(path));
+        const skeletonData = await Promise.all(unloadedPaths.map(path => AssetManager.getOrLoad(BUNDLE_RESOURCES, path, sp.SkeletonData)));
+        unloadedPaths.forEach((path, index) => this._skeletonData.set(path, skeletonData[index]));
     }
 
     private _getDiamondPrefabs(): Promise<cc.Prefab[]> {
