@@ -54,7 +54,7 @@ export default class UISquidEnd extends UIComponentBaseDialog<UISquidEndShowData
         }
         this.content?.getComponent(cc.Layout)?.updateLayout();
         for (let i = 0; i < this.activeItems.length; i++) {
-            if (token !== this.showToken || !this.node?.isValid || !this.node.activeInHierarchy) {
+            if (token !== this.showToken || !this.node?.isValid) {
                 return;
             }
             this.activeItems[i].active = true;
