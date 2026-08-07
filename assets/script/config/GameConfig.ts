@@ -36,7 +36,7 @@ class GameConfig {
         return !!GameConfig.AGOROKEY?.trim();
     }
     //设计分辨率
-    static readonly DESIGN_RESOLUTION = cc.size(1242, 2688);
+    static readonly DESIGN_RESOLUTION = cc.size(1440, 2688);
     //fps
     static readonly FRAME_RATE = 60;
     //多点触摸
