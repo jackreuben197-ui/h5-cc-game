@@ -3,7 +3,7 @@ import UIComponentBase from '../../base/UIComponentBase';
 const { ccclass, menu, property } = cc._decorator;
 
 export interface UIEmojiItemParam {
-    skeletonData: sp.SkeletonData;
+    skeletonLoading: Promise<sp.SkeletonData>;
     animation: string;
     showDiamond: boolean;
     diamond?: number;
@@ -23,21 +23,55 @@ export default class UIEmojiItem extends UIComponentBase<UIEmojiItemParam> {
     private numDiamondNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '选中标记' })
     private selectSignNode: cc.Node = null;
+    @property({ type: cc.Node, displayName: '动画加载状态节点' })
+    private loadingNode: cc.Node = null;
     private _animation = '';
     private _onClick: () => void = null;
+    private _loaded = false;
+    private _button: cc.Button = null;
 
     public initialize(param: UIEmojiItemParam): void {
+        this._prepareComponents();
         this._animation = param.animation;
         this._onClick = param.onClick;
-        const previewCenterY = this.emojiSkeleton.node.y;
-        this.emojiSkeleton.skeletonData = param.skeletonData;
-        this._fitEmojiAnimation(param.skeletonData, this._animation, previewCenterY);
-        this.emojiSkeleton.setAnimation(0, this._animation, true);
+        this._loaded = false;
+        this.emojiSkeleton.node.active = false;
+        this.loadingNode.active = true;
+        this.loadingNode.angle = 0;
+        this.loadingNode.opacity = 255;
+        cc.Tween.stopAllByTarget(this.loadingNode);
+        cc.tween(this.loadingNode).by(0.8, { angle: -360 }).repeatForever().start();
+        this._button.interactable = false;
         this.diamondNode.active = param.showDiamond;
         this.numDiamondNode.active = param.showDiamond;
         this.selectSignNode.active = false;
         const diamondLabel = this.numDiamondNode.getComponent(cc.Label);
         if (diamondLabel && param.diamond != null) diamondLabel.string = `${param.diamond}`;
+        param.skeletonLoading
+            .then(skeletonData => this._showAnimation(skeletonData))
+            .catch(() => {
+                if (!cc.isValid(this.node)) return;
+                cc.Tween.stopAllByTarget(this.loadingNode);
+                this.loadingNode.opacity = 120;
+                this.emojiSkeleton.node.active = false;
+            });
+    }
+
+    private _showAnimation(skeletonData: sp.SkeletonData): void {
+        if (!cc.isValid(this.node)) return;
+        const previewCenterY = this.emojiSkeleton.node.y;
+        this.emojiSkeleton.skeletonData = skeletonData;
+        this.emojiSkeleton.node.active = true;
+        this.emojiSkeleton.setAnimation(0, this._animation, true);
+        cc.Tween.stopAllByTarget(this.loadingNode);
+        this.loadingNode.active = false;
+        this._loaded = true;
+        this._button.interactable = true;
+        try {
+            this._fitEmojiAnimation(skeletonData, this._animation, previewCenterY);
+        } catch (error) {
+            cc.warn('[UIEmojiItem] fit animation failed', this._animation, error);
+        }
     }
 
     private _fitEmojiAnimation(skeletonData: sp.SkeletonData, animationName: string, previewCenterY: number): void {
@@ -67,18 +101,29 @@ export default class UIEmojiItem extends UIComponentBase<UIEmojiItemParam> {
     }
 
     protected onLoad(): void {
-        if (!this.node.getComponent(cc.Button)) {
-            const button = this.node.addComponent(cc.Button);
-            button.transition = cc.Button.Transition.NONE;
-        }
+        this._prepareComponents();
         this.node.on('click', this.onItemClicked, this);
     }
 
+    private _prepareComponents(): void {
+        this._button = this.node.getComponent(cc.Button) || this.node.addComponent(cc.Button);
+        this._button.transition = cc.Button.Transition.NONE;
+        const graphics = this.loadingNode.getComponent(cc.Graphics) || this.loadingNode.addComponent(cc.Graphics);
+        graphics.clear();
+        graphics.lineWidth = 6;
+        graphics.lineCap = cc.Graphics.LineCap.ROUND;
+        graphics.strokeColor = cc.color(160, 160, 160, 255);
+        graphics.arc(0, 0, 24, 0, Math.PI * 1.5, false);
+        graphics.stroke();
+    }
+
     protected onDestroy(): void {
+        cc.Tween.stopAllByTarget(this.loadingNode);
         this.node.targetOff(this);
     }
 
     private onItemClicked(): void {
+        if (!this._loaded) return;
         this.selectSignNode.active = true;
         if (this._onClick) this._onClick();
     }
