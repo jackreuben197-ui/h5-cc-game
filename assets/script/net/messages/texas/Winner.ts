@@ -21,7 +21,7 @@ export function Winner(data: ServerMessageWinner.AsObject, roomID: number, match
         // 已经站起
         if (seatData.userID == 0 || result.standUp) return;
         // 非本人
-        if (result.userRid && result.userRid != seatData.userID) return;
+        if ((result as any).userRid && (result as any).userRid != seatData.userID) return;
         // 更新筹码
         seatData.chip = result.chip;
         seatData.deposit = result.deposit;

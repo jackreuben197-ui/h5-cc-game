@@ -44,6 +44,15 @@ export default class TelegramUtils {
                 // 通知 Telegram WebApp 已准备好
                 this._webApp.ready();
                 console.log('已调用 ready()');
+
+                // 监听 Telegram 视口变化事件，及时刷新 Cocos 尺寸
+                if (typeof this._webApp.onEvent === 'function') {
+                    this._webApp.onEvent('viewportChanged', (eventData: any) => {
+                        console.log('Telegram 视口改变:', eventData);
+                        window.dispatchEvent(new Event('resize'));
+                    });
+                }
+
                 // 使用延迟调用来确保 SDK 完全准备好
                 // 对于旧版本的 Telegram，需要给一些时间让 SDK 初始化完成
                 setTimeout(() => {
@@ -88,20 +97,25 @@ export default class TelegramUtils {
                 console.log('准备展开到全屏...');
                 console.log('当前展开状态:', this._webApp.isExpanded);
                 console.log('当前视口高度:', this._webApp.viewportHeight);
-                // 检查 expand 方法是否存在
-                if (typeof this._webApp.expand === 'function') {
+
+                // 优先调用 Telegram Bot API 8.0+ 原生 requestFullscreen
+                if (typeof this._webApp.requestFullscreen === 'function') {
+                    this._webApp.requestFullscreen();
+                    console.log('已调用 requestFullscreen() 方法');
+                } else if (typeof this._webApp.expand === 'function') {
                     this._webApp.expand();
                     console.log('已调用 expand() 方法');
-                    // 延迟检查展开结果
-                    setTimeout(() => {
-                        console.log('展开后状态:', this._webApp.isExpanded);
-                        console.log('展开后视口高度:', this._webApp.viewportHeight);
-                    }, 300);
                 } else {
-                    console.warn('当前 Telegram 版本不支持 expand() 方法');
-                    // 尝试使用其他方法
+                    console.warn('当前 Telegram 版本不支持 expand/requestFullscreen 方法');
                     this.tryAlternativeFullscreen();
                 }
+
+                // 延迟检查展开结果并触发 resize
+                setTimeout(() => {
+                    console.log('展开后状态:', this._webApp.isExpanded);
+                    console.log('展开后视口高度:', this._webApp.viewportHeight);
+                    window.dispatchEvent(new Event('resize'));
+                }, 300);
             } catch (error) {
                 console.error('展开到全屏失败:', error);
                 this.tryAlternativeFullscreen();

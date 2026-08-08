@@ -6,6 +6,7 @@ import ccviewData from '../../data/system/CCViewData';
 import h5MessageManager from '../../H5MsgMgr';
 import { i18nMgr } from '../../i18n/i18nMgr';
 import * as MainUtils from '../../MainUtils';
+import TelegramUtils from '../../tools/TelegramUtils';
 import { DynamicLoadDefinition, PreloadDefinitionGame, PreloadDefinitionSound } from '../../views/loader/AssetManager';
 import viewManager from '../../views/UIViewManager';
 import ProcedureBase from './ProcedureBase';
@@ -20,6 +21,8 @@ export default class ProcedureInit extends ProcedureBase {
         super.lateEnter(param);
         this.setCCC();
         this.setFit();
+        // 初始化 Telegram WebApp SDK 并请求全屏
+        TelegramUtils.Instance.expandToFullScreen();
         await GameConfig.setNetworkAsync();
         //解析 语言配置
         i18nMgr.initLanguage();

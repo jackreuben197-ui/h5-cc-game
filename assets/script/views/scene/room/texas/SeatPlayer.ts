@@ -912,27 +912,51 @@ export default class SeatPlayer extends cc.Component {
         }
     }
 
+    private _insuranceBuying: boolean = false;
+
+    /** 显示【全下】气泡；保险购买中不显示（只显示【购买中XXs】气泡） */
+    private _showAllinAction(): void {
+        if (this._insuranceBuying) return;
+        this.seatActionDisplay.node.active = true;
+        this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), allinColor);
+    }
+
+    /** 退出保险购买态：隐藏保险气泡，若玩家仍处于全下则恢复【全下】气泡 */
+    private _exitInsuranceBuying(): void {
+        if (!this._insuranceBuying) return;
+        this._insuranceBuying = false;
+        this.insuranceCountdownBubble.stop();
+        this.insuranceCountdownBubble.node.active = false;
+        if (this._seatPlayer?.action === Def.Action.ALLIN) {
+            this._showAllinAction();
+        }
+    }
+
     @bindEvent(TexasGameRoomDataPlayer.PREPARE_OPERATION, 'player')
     private onPrepareAction(oper: Operator) {
         // this.tracelog.debug(oper, this._seatPlayer.seatNo);
         if (!oper) {
             this.otherPersonActionCountdown.stop();
             this.otherPersonActionCountdown.node.active = false;
+            this._exitInsuranceBuying();
             this.insuranceCountdownBubble.stop();
             this.insuranceCountdownBubble.node.active = false;
             return;
         }
         if (oper.opType === OpertionType.INSURANCE) {
+            // 购买保险状态：隐藏全下等 action 气泡，只显示【购买中XXs】
+            this._insuranceBuying = true;
+            this.seatActionDisplay.node.active = false;
             this.insuranceCountdownBubble.node.active = true;
             this.insuranceCountdownBubble.startCountDown({
                 durationSeconds: oper.leftOpDuration,
-                format: CountDownFormat.PURE_SEC,
-                prefix: CPErrorCode.LanguageDescription(20062),
+                formatter: s => CPErrorCode.LanguageDescription(20062, [String(s)]),
                 onComplete: () => {
-                    this.insuranceCountdownBubble.stop();
-                    this.insuranceCountdownBubble.node.active = false;
+                    this._exitInsuranceBuying();
                 }
             });
+        } else {
+            this._exitInsuranceBuying();
         }
         this.otherPersonActionCountdown.node.active = true;
         this.otherPersonActionCountdown.startTimer({
