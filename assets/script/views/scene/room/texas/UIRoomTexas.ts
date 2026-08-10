@@ -325,11 +325,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         widget.updateAlignment();
         this.scaleNode.setScale(suggestScale, suggestScale);
         this.publicCardsInfo.node.scale = suggestScale;
-        if (suggestScale == 1) {
-            this.publicCardsInfo.node.y = 176 * suggestScale;
-        } else {
-            this.publicCardsInfo.node.y = 0;
-        }
+        this.publicCardsInfo.node.y = 0;
         const middleLayout = this.middleLayout.getComponent(cc.Widget);
         middleLayout.top = 650 * suggestScale;
         widget.updateAlignment();

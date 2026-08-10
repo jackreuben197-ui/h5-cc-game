@@ -63,8 +63,8 @@ export default class SeatManager extends cc.Component {
         }
         seatPostionCaculator.initWithContainer(
             visibleSizeWidth,
-            visibleSizeHeight - menuHeight - saveAreaTop - offsetY * suggestScale,
-            -saveAreaTop - offsetY * suggestScale
+            visibleSizeHeight - menuHeight - offsetY * suggestScale,
+            -offsetY * suggestScale
         );
     }
 
