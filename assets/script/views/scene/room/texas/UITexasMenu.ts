@@ -101,6 +101,28 @@ export default class UITexasMenu extends cc.Component {
         } else {
             this.node.scale = suggestScale;
         }
+        this._updateMaskScale();
+    }
+
+    private _updateMaskScale(): void {
+        const scale = Math.max(0.001, this.node.scaleX || 1);
+        const winWidth = cc.winSize.width || 1242;
+        const winHeight = cc.winSize.height || 2688;
+        const targetWidth = Math.max(1440, winWidth) / scale;
+        const targetHeight = Math.max(2688, winHeight) / scale;
+
+        if (this.$black) {
+            const widget = this.$black.getComponent(cc.Widget);
+            if (widget) widget.enabled = false;
+            this.$black.setContentSize(targetWidth, targetHeight);
+            this.$black.setPosition(0, 0);
+        }
+        if (this.$block) {
+            const widget = this.$block.getComponent(cc.Widget);
+            if (widget) widget.enabled = false;
+            this.$block.setContentSize(targetWidth, targetHeight);
+            this.$block.setPosition(0, 0);
+        }
     }
 
     protected onEnable(): void {

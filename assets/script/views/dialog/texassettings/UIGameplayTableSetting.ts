@@ -149,6 +149,15 @@ export default class UIGameplayTableSetting extends UIComponentBaseDialog<UIGame
         if (visibleSizeHeight < maxHeight) {
             const scale = visibleSizeHeight / maxHeight;
             this.node.setScale(scale, scale);
+            const panelClick = this.node.getChildByName('panelClick') || this.node.children[0];
+            if (panelClick) {
+                const widget = panelClick.getComponent(cc.Widget);
+                if (widget) widget.enabled = false;
+                const winWidth = cc.winSize.width || 1242;
+                const winHeight = cc.winSize.height || 2688;
+                panelClick.setContentSize(Math.max(1440, winWidth) / scale, Math.max(2688, winHeight) / scale);
+                panelClick.setPosition(0, 0);
+            }
         }
     }
 
