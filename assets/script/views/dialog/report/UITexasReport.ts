@@ -83,6 +83,8 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     private exitBtn: cc.Node = null;
     @property({ type: cc.Node, displayName: '[蒙层] 外部点击关闭区 bg_click' })
     private bgClickNode: cc.Node = null;
+    @property({ type: cc.Node, displayName: '[遮挡] 全屏触摸拦截 top_block（运行时禁用）' })
+    private topBlockNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '[背景] 内容背景 bg' })
     private bgNode: cc.Node = null;
     @property({ type: cc.ScrollView, displayName: '[自适应列表] 中间区域统一纵向滚动' })
@@ -201,6 +203,9 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     // 生命周期
     // ============================================================
     protected onLoad(): void {
+        // 与 UITexasHistory 一致：该旧版全屏遮挡会吞掉 bg_click 和滚动触摸，运行时禁用。
+        const blockComp = this.topBlockNode?.getComponent(cc.BlockInputEvents);
+        if (blockComp) blockComp.enabled = false;
         const click = (n: cc.Node, fn: () => void) => n.on(cc.Node.EventType.TOUCH_END, fn, this);
         click(this.battleToggleBtn, () => this._onClickTab('battle'));
         click(this.squidToggleBtn, () => this._onClickTab('mode'));
@@ -210,7 +215,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         click(this.rightBtn, () => this._onClickPage(true));
         click(this.showOnlyTableNode, () => this._onToggleOnlyTablePlayers());
         click(this.exitBtn, () => this.close());
-        click(this.bgClickNode, () => this.close());
+        this.bgClickNode.on('click', () => this.close(), this);
         this._setupUnifiedList();
     }
 

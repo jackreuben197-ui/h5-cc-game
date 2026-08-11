@@ -46,7 +46,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 1242,
+      "width": 1440,
       "height": 2688
     },
     "_anchorPoint": {
@@ -58,7 +58,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        621,
+        720,
         1344,
         0,
         0,
@@ -120,7 +120,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 1242,
+      "width": 1440,
       "height": 2688
     },
     "_anchorPoint": {
@@ -190,7 +190,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 1242,
+      "width": 1440,
       "height": 2688
     },
     "_anchorPoint": {
@@ -398,7 +398,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 1242,
+      "width": 1440,
       "height": 2688
     },
     "_anchorPoint": {
@@ -410,8 +410,8 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -80,
-        1164,
+        0,
+        0,
         0,
         0,
         0,
@@ -456,10 +456,10 @@
     "alignMode": 1,
     "_target": null,
     "_alignFlags": 45,
-    "_left": -80,
-    "_right": 80,
-    "_top": -1164,
-    "_bottom": 1164,
+    "_left": 0,
+    "_right": 0,
+    "_top": 0,
+    "_bottom": 0,
     "_verticalCenter": 0,
     "_horizontalCenter": 0,
     "_isAbsLeft": true,
@@ -568,7 +568,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -80,
+        -179,
         1344,
         0,
         0,
@@ -14640,9 +14640,9 @@
     "_enabled": true,
     "alignMode": 2,
     "_target": null,
-    "_alignFlags": 5,
-    "_left": 0,
-    "_right": 0,
+    "_alignFlags": 13,
+    "_left": -80,
+    "_right": 179,
     "_top": 0,
     "_bottom": 0,
     "_verticalCenter": 0,
@@ -14653,7 +14653,7 @@
     "_isAbsBottom": true,
     "_isAbsHorizontalCenter": true,
     "_isAbsVerticalCenter": true,
-    "_originalWidth": 0,
+    "_originalWidth": 1242,
     "_originalHeight": 2688,
     "_id": ""
   },
@@ -14789,6 +14789,9 @@
     },
     "bgClickNode": {
       "__id__": 3
+    },
+    "topBlockNode": {
+      "__id__": 8
     },
     "bgNode": {
       "__id__": 13

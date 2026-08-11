@@ -64,66 +64,72 @@ class ThrowPropManager {
         [PropsID.PROPSTOMATO]: {
             duration: 4.5,
             clips: {
-                hit: { spine: 'rc/other/effect/expressionTomato/skeleton', anim: 'dirt_splash', flyAnim: 'dirt_flying', soundName: 'sound/PropOp/sfx_tomato_mus' }
+                hit: { spine: 'dynamic/prop/anim/expressionTomato/skeleton', anim: 'dirt_splash', flyAnim: 'dirt_flying', soundName: 'sound/PropOp/sfx_tomato_mus' }
             }
         },
         [PropsID.PROPSFLOWER]: {
             duration: 4.5,
             clips: {
-                hit: { spine: 'rc/other/effect/expressionFlower/skeleton', anim: 'hand_wave', soundName: 'sound/PropOp/sfx_rose_mus' }
+                hit: { spine: 'dynamic/prop/anim/expressionFlower/skeleton', anim: 'hand_wave', soundName: 'sound/PropOp/sfx_rose_mus' }
             }
         },
         [PropsID.PROPSKISS]: {
             duration: 4.5,
             clips: {
-                hit: { spine: 'rc/other/effect/expressionKiss/kiss', anim: 'lip_kissing', soundName: 'sound/PropOp/sfx_kiss_mus' }
+                hit: { spine: 'dynamic/prop/anim/expressionKiss/kiss', anim: 'lip_kissing', soundName: 'sound/PropOp/sfx_kiss_mus' }
             }
         },
         [PropsID.PROPSGOOD]: {
             duration: 4.5,
             clips: {
-                hit: { spine: 'rc/other/effect/expressionGood/skeleton', anim: 'thumbs_up', flyAnim: 'fist_flying', soundName: 'sound/PropOp/sfx_like_mus' }
+                hit: { spine: 'dynamic/prop/anim/expressionGood/skeleton', anim: 'thumbs_up', flyAnim: 'fist_flying', soundName: 'sound/PropOp/sfx_like_mus' }
             }
         },
         // 干杯(604)→pokerqueen新beer：单骨骼 beer_cheers，在双方座位头顶各播一次(不再有全屏)
         [PropsID.PROPSCHEERS]: {
             duration: 4.5,
             clips: {
-                hit: { spine: 'rc/other/effect/expressionBeer/cheers_2', anim: 'beer_cheers', soundName: 'sound/PropOp/sfx_cheers_mus' }
+                hit: { spine: 'dynamic/prop/anim/expressionBeer/cheers_2', anim: 'beer_cheers', soundName: 'sound/PropOp/sfx_cheers_mus' }
             }
         },
         [PropsID.PROPSTOUCH]: {
             duration: 3.5,
             clips: {
-                hit: { spine: 'rc/other/effect/expressionTouch/touch', anim: 'hand_patting', atTarget: true, soundName: 'sound/PropOp/sfx_touch_mus' }
+                hit: { spine: 'dynamic/prop/anim/expressionTouch/touch', anim: 'hand_patting', atTarget: true, soundName: 'sound/PropOp/sfx_touch_mus' }
             }
         },
         [PropsID.PROPSSHARK]: {
             duration: 4,
             clips: {
-                hit: { spine: 'rc/other/effect/expressionShark/shark', anim: 'babyshark' },
-                eaten: { spine: 'rc/other/effect/expressionShark/shark', anim: 'shark_eaten' }
+                hit: { spine: 'dynamic/prop/anim/expressionShark/shark', anim: 'babyshark' },
+                eaten: { spine: 'dynamic/prop/anim/expressionShark/shark', anim: 'shark_eaten' }
             }
         },
         [PropsID.PROPSCHICKEN]: {
             duration: 4,
             clips: {
-                hand: { spine: 'rc/other/effect/expressionChicken/chicken_spine', anim: 'hand_flying', soundName: 'sound/PropOp/sfx_zhuaji_mus' },
-                receiver: { spine: 'rc/other/effect/expressionChicken/chicken_spine', anim: 'hen_struggling' }
+                hand: { spine: 'dynamic/prop/anim/expressionChicken/chicken_spine', anim: 'hand_flying', soundName: 'sound/PropOp/sfx_zhuaji_mus' },
+                receiver: { spine: 'dynamic/prop/anim/expressionChicken/chicken_spine', anim: 'hen_struggling' }
             }
         },
         // 拳击(608)→pokerqueen新gun：子弹/火球从发送者朝目标飞去(bullets-fireballs)
         [PropsID.PROPSBOXING]: {
             duration: 4,
             clips: {
-                hit: { spine: 'rc/other/effect/expressionBox/box_local', anim: 'bullets-fireballs', soundName: 'sound/PropOp/sfx_boxing_sender1' }
+                hit: { spine: 'dynamic/prop/anim/expressionBox/box_local', anim: 'bullets-fireballs', soundName: 'sound/PropOp/sfx_boxing_sender1' }
+            }
+        },
+        [PropsID.PROPSBASEBALL]: {
+            duration: 4,
+            clips: {
+                hit: { spine: 'dynamic/prop/anim/expressionBaseballSender/skeleton', anim: 'blast', flyAnim: 'bomb_flying', soundName: 'sound/PropOp/sfx_baseball' }
             }
         },
         [PropsID.PROPSMONEY]: {
             duration: 4,
             clips: {
                 receiver: {
-                    spine: 'rc/other/effect/expressionMoney/attachments',
+                    spine: 'dynamic/prop/anim/expressionMoney/attachments',
                     anim: 'attachments_1_receive',
                     soundName: {
                         sender: 'sound/PropOp/sfx_money',
@@ -137,21 +143,14 @@ class ThrowPropManager {
             fullscreen: true,
             duration: 6,
             clips: {
-                senderScreen: { spine: 'rc/other/effect/expressionFishScreenSender/sy2', anim: 'sy2', soundName: 'sound/PropOp/sfx_fish2' },
-                receiverScreen: { spine: 'rc/other/effect/expressionFishScreenReceiver/sy', anim: 'sy', soundName: 'sound/PropOp/sfx_fish' },
-                fishSwim: { spine: 'rc/other/effect/expressionFish/sy3', anim: 'sy3_1', soundName: 'sound/PropOp/sfx_fish', loop: true },
-                fishExit: { spine: 'rc/other/effect/expressionFish/sy3', anim: 'sy3_2' },
-                splash: { spine: 'rc/other/effect/expressionFish/sy3', anim: 'bl' },
-                waveSender: { spine: 'rc/other/effect/expressionFishWave/hl', anim: 'hl1' },
-                waveReceiver: { spine: 'rc/other/effect/expressionFishWave/hl', anim: 'hl2' },
-                waveOther: { spine: 'rc/other/effect/expressionFishWave/hl', anim: 'hl3' }
-            }
-        },
-        // 棒球(611)→pokerqueen新bomb blast：炸弹从发送者飞向目标(飞行由补间完成)，在目标处 blast 爆炸
-        [PropsID.PROPSBASEBALL]: {
-            duration: 4,
-            clips: {
-                hit: { spine: 'rc/other/effect/expressionBaseballSender/skeleton', anim: 'blast', flyAnim: 'bomb_flying', soundName: 'sound/PropOp/sfx_baseball' }
+                senderScreen: { spine: 'dynamic/prop/anim/expressionFishScreenSender/sy2', anim: 'sy2', soundName: 'sound/PropOp/sfx_fish2' },
+                receiverScreen: { spine: 'dynamic/prop/anim/expressionFishScreenReceiver/sy', anim: 'sy', soundName: 'sound/PropOp/sfx_fish' },
+                fishSwim: { spine: 'dynamic/prop/anim/expressionFish/sy3', anim: 'sy3_1', soundName: 'sound/PropOp/sfx_fish', loop: true },
+                fishExit: { spine: 'dynamic/prop/anim/expressionFish/sy3', anim: 'sy3_2' },
+                splash: { spine: 'dynamic/prop/anim/expressionFish/sy3', anim: 'bl' },
+                waveSender: { spine: 'dynamic/prop/anim/expressionFishWave/hl', anim: 'hl1' },
+                waveReceiver: { spine: 'dynamic/prop/anim/expressionFishWave/hl', anim: 'hl2' },
+                waveOther: { spine: 'dynamic/prop/anim/expressionFishWave/hl', anim: 'hl3' }
             }
         }
     };
@@ -737,8 +736,51 @@ class ThrowPropManager {
         skeleton.setAnimation(0, clip.anim, !!clip.loop);
     }
 
+    public async loadPropEffects(type: PropsID): Promise<void> {
+        const config = ThrowPropManager.CONFIGS[type];
+        if (!config || !config.clips) return;
+        const paths = Object.keys(config.clips)
+            .map(key => config.clips[key].spine)
+            .filter((p, i, arr) => arr.indexOf(p) === i && !!p);
+        await Promise.all(
+            paths.map(p =>
+                AssetManager.getOrLoad(BUNDLE_RESOURCES, p, sp.SkeletonData).catch(err =>
+                    cc.warn('[ThrowPropManager] failed to load spine effect', p, err)
+                )
+            )
+        );
+    }
+
+    public async preloadEffects(): Promise<void> {
+        const paths = this._getAllEffectPaths();
+        await Promise.all(
+            paths.map(p =>
+                AssetManager.getOrLoad(BUNDLE_RESOURCES, p, sp.SkeletonData).catch(err =>
+                    cc.warn('[ThrowPropManager] failed to preload effect', p, err)
+                )
+            )
+        );
+    }
+
+    private _getAllEffectPaths(): string[] {
+        const paths: string[] = [];
+        Object.keys(ThrowPropManager.CONFIGS).forEach(type => {
+            const config = ThrowPropManager.CONFIGS[type as unknown as PropsID];
+            if (config && config.clips) {
+                Object.keys(config.clips).forEach(key => {
+                    const spine = config.clips[key].spine;
+                    if (spine && paths.indexOf(spine) < 0) paths.push(spine);
+                });
+            }
+        });
+        return paths;
+    }
+
     private _getSkeleton(path: string): sp.SkeletonData {
-        return AssetManager.mustGetLoaded(BUNDLE_RESOURCES, path, sp.SkeletonData);
+        const data = AssetManager.mustGetLoaded(BUNDLE_RESOURCES, path, sp.SkeletonData);
+        if (data) return data;
+        AssetManager.getOrLoad(BUNDLE_RESOURCES, path, sp.SkeletonData).catch(() => {});
+        return null;
     }
 
     private _getDiamondPrefabs(): Promise<cc.Prefab[]> {

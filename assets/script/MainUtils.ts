@@ -59,10 +59,10 @@ export function loadWebSDK(): void {
 // ==================== UI 辅助 ====================
 /** 刷新左右遮挡层宽度，使其覆盖屏幕外区域 */
 export function refreshDiss(dissNode: cc.Node): void {
-    let l_mask = dissNode.getChildByName('l_mask');
-    let r_mask = dissNode.getChildByName('r_mask');
-    l_mask.width = cc.view.getVisibleSize().width;
-    r_mask.width = cc.view.getVisibleSize().width;
+    // let l_mask = dissNode.getChildByName('l_mask');
+    // let r_mask = dissNode.getChildByName('r_mask');
+    // l_mask.width = cc.view.getVisibleSize().width;
+    // r_mask.width = cc.view.getVisibleSize().width;
 }
 // ==================== H5 桥接：enterTable ====================
 /** enterTable 必需字段定义 */

@@ -61,10 +61,15 @@ export default class SeatManager extends cc.Component {
         if (suggestScale < 1) {
             offsetY = 20;
         }
+        // console.warn(visibleSizeWidth,visibleSizeHeight, frameSizeWidth,frameSizeHeight,suggestScale)
+        let vw = visibleSizeWidth;
+        if (visibleSizeWidth / visibleSizeHeight > 1) {
+            vw = visibleSizeWidth * 0.8;
+        }
         seatPostionCaculator.initWithContainer(
-            visibleSizeWidth,
-            visibleSizeHeight - menuHeight - offsetY * suggestScale,
-            -offsetY * suggestScale
+            vw,
+            visibleSizeHeight - menuHeight - saveAreaTop - offsetY * suggestScale,
+            -saveAreaTop - offsetY * suggestScale
         );
     }
 
@@ -227,7 +232,7 @@ export default class SeatManager extends cc.Component {
         this._seatNodesMap.forEach((seatPlayer, seatNo) => {
             if (result) return;
             const seatData = this._seatManager.getSeatPlayer(seatNo);
-            if (seatData?.userID === userID) {
+            if (seatData && seatData.userID === userID) {
                 result = {
                     avatarNode: seatPlayer.avatarNode,
                     propNode: seatPlayer.throwPropNode,

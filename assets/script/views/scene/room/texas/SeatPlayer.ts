@@ -424,7 +424,6 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.CHIPS_CHANGE, 'player')
-    @traceMethod({ level: 'debug' })
     private onUpdateChip(chip: number) {
         this.chips.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(chip);
     }
@@ -607,7 +606,6 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayer.ROUND_BET_CHANGE, 'player', AnimateDisplayTypeRoundBet.Static)
-    @traceMethod({ level: 'debug' })
     private onRoundBetChange(amount: number, aat: AnimateDisplayTypeRoundBet) {
         this._stopRoundBetAnimation();
         if (amount > 0) {

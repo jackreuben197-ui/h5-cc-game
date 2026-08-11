@@ -20,6 +20,7 @@ import TexasVideoMediaHelper from '../../../net/messages/texas/TexasVideoMediaHe
 import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import viewManager from '../../UIViewManager';
+import throwPropManager from '../../util/ThrowPropManager';
 import { UIComfirmDialogType } from '../confirm/UIConfirmDialog';
 
 const { ccclass, menu, property } = cc._decorator;
@@ -149,6 +150,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private _isAudioClosed = false;
     private _isVideoClosed = false;
     private _propListData: Map<PropsID, UserPropData> = new Map();
+    private _propLoadingNodes: Map<cc.Node, cc.Node> = new Map();
 
     public initialize(param: UIPlayerInfoParam): void {
         this._param = param;
@@ -209,6 +211,8 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     protected onDestroy(): void {
+        this._propLoadingNodes.forEach(node => cc.Tween.stopAllByTarget(node));
+        this._propLoadingNodes.clear();
         this.node.targetOff(this);
         this.dialogNode.targetOff(this);
         this._tabNodes.forEach(node => node.targetOff(this));
@@ -669,17 +673,78 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             const data = propList.find(item => item.propCode === definition.propCode) || null;
             const propNode = this.propOpNode.getChildByName('$propOp_' + (index + 1));
             if (!propNode) return;
-            // pokerqueen 逻辑：固定展示所有道具(不按是否拥有隐藏)；撒钱(2)/鱼头(6)始终隐藏
+            const propIconNode = propNode.getChildByName('propIcon');
             const hidden = UIPlayerInfo.PROP_HIDDEN_INDEXES.indexOf(index + 1) >= 0;
             propNode.active = !hidden;
+            if (hidden) {
+                this._hidePropIcon(propNode, propIconNode);
+                return;
+            }
             if (data) this._propListData.set(definition.type, data);
             const diamondCost = propNode.getChildByName('diamondCost');
             if (diamondCost) {
                 diamondCost.active = data ? !userStore.isPropFree(data) : true;
                 const costLabel = diamondCost.getChildByName('costNum')?.getComponent(cc.Label);
-                if (costLabel && data && data.payPrice > 0) costLabel.string = `${data.payPrice}`;
+                if (costLabel) costLabel.string = `${data ? data.payPrice : 10}`;
             }
+            this._loadPropIcon(propNode, propIconNode, definition.type);
         });
+    }
+
+    private _loadPropIcon(propNode: cc.Node, propIconNode: cc.Node, type: PropsID): void {
+        (propIconNode as any)._playerInfoPropType = type;
+        propIconNode.getComponent(cc.Sprite).enabled = false;
+        propNode.getComponent(cc.Button).interactable = false;
+        const loadingNode = this._getPropLoadingNode(propIconNode);
+        loadingNode.active = true;
+        loadingNode.angle = 0;
+        loadingNode.opacity = 255;
+        cc.Tween.stopAllByTarget(loadingNode);
+        cc.tween(loadingNode).by(0.8, { angle: -360 }).repeatForever().start();
+        throwPropManager
+            .loadPropEffects(type)
+            .then(() => this._showPropIcon(propNode, propIconNode, type))
+            .catch(error => {
+                if (!cc.isValid(propIconNode) || (propIconNode as any)._playerInfoPropType !== type) return;
+                cc.Tween.stopAllByTarget(loadingNode);
+                loadingNode.opacity = 120;
+                cc.warn('[UIPlayerInfo] load prop effects failed', type, error);
+            });
+    }
+
+    private _showPropIcon(propNode: cc.Node, propIconNode: cc.Node, type: PropsID): void {
+        if (!cc.isValid(propNode) || !cc.isValid(propIconNode) || (propIconNode as any)._playerInfoPropType !== type) return;
+        const loadingNode = this._getPropLoadingNode(propIconNode);
+        cc.Tween.stopAllByTarget(loadingNode);
+        loadingNode.active = false;
+        propIconNode.getComponent(cc.Sprite).enabled = true;
+        propNode.getComponent(cc.Button).interactable = true;
+    }
+
+    private _hidePropIcon(propNode: cc.Node, propIconNode: cc.Node): void {
+        (propIconNode as any)._playerInfoPropType = null;
+        propIconNode.getComponent(cc.Sprite).enabled = false;
+        propNode.getComponent(cc.Button).interactable = false;
+        const loadingNode = this._propLoadingNodes.get(propIconNode);
+        if (!loadingNode) return;
+        cc.Tween.stopAllByTarget(loadingNode);
+        loadingNode.active = false;
+    }
+
+    private _getPropLoadingNode(propIconNode: cc.Node): cc.Node {
+        let loadingNode = this._propLoadingNodes.get(propIconNode);
+        if (loadingNode) return loadingNode;
+        loadingNode = new cc.Node('loading');
+        loadingNode.parent = propIconNode;
+        loadingNode.setPosition(0, 0);
+        const graphics = loadingNode.addComponent(cc.Graphics);
+        graphics.lineWidth = 6;
+        graphics.lineCap = cc.Graphics.LineCap.ROUND;
+        graphics.strokeColor = cc.color(160, 160, 160, 255);
+        graphics.arc(0, 0, 24, 0, Math.PI * 1.5, false);
+        graphics.stroke();
+        this._propLoadingNodes.set(propIconNode, loadingNode);
+        return loadingNode;
     }
 
     private _clickEditNote(): void {
@@ -836,11 +901,12 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
                 ? Def.ConsumeType.CT_NONE
                 : propData.priceID
             : Def.ConsumeType.CT_EMOJI_2) as ClientMessageBroadcastMsg.AsObject['consume'];
-        this._roomData.seatsStateManager.setPendingThrowProp({
+        const throwData = {
             type: definition.type,
             userID: userStore.userRID,
             targetUserID: this._requestRID
-        });
+        };
+        this._roomData.seatsStateManager.setPendingThrowProp(throwData);
         const inner = JSON.stringify({
             name: userStore.name,
             target_user_id: this._requestRID,
@@ -864,9 +930,6 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             matchID: this._roomData.matchID,
             body: body
         });
-        if (propData && propData.propAmount > 0) {
-            UserStoreUtils.consumeUserProp(propData.gamePropID).catch(error => cc.warn('[UIPlayerInfo] consume user prop failed', error));
-        }
     }
 
     private _getThrowPropMsgType(): Def.BroadcastMsgTypeMap[keyof Def.BroadcastMsgTypeMap] {
