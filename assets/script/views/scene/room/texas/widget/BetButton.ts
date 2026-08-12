@@ -28,6 +28,7 @@ export default class BetButton extends cc.Component {
         this._basicInfo = basicInfo;
         this.onClickCallback = callback;
         if (this.showLabel) this.showLabel.string = ratioStr;
+        if (this.amountLabel) this.amountLabel.string = this._basicInfo.showNumberWithShowBB(this._amountNum);
         this._bindAndRefresh();
     }
 
