@@ -16,7 +16,7 @@ importers:
         version: git+ssh://git@github.com/soolary/h5-cc-bridge.git#e3566d5a11f9cf33abf848e60da9351f3df9c512
       '@silenthill/h5-cc-i18n':
         specifier: github:guysoup027/h5-cc-i18n#main
-        version: git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#59e1c26c75c10950aa9b38fbb830ec8e0c2279af
+        version: git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#ae14b4dc92fb8b759059b1bc277eeffc5107a1d1
       '@types/gapi':
         specifier: ^0.0.43
         version: 0.0.43
@@ -74,8 +74,8 @@ packages:
     resolution: {commit: e3566d5a11f9cf33abf848e60da9351f3df9c512, repo: git@github.com:soolary/h5-cc-bridge.git, type: git}
     version: 0.1.0
 
-  '@silenthill/h5-cc-i18n@git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#59e1c26c75c10950aa9b38fbb830ec8e0c2279af':
-    resolution: {commit: 59e1c26c75c10950aa9b38fbb830ec8e0c2279af, repo: git@github.com:guysoup027/h5-cc-i18n.git, type: git}
+  '@silenthill/h5-cc-i18n@git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#ae14b4dc92fb8b759059b1bc277eeffc5107a1d1':
+    resolution: {commit: ae14b4dc92fb8b759059b1bc277eeffc5107a1d1, repo: git@github.com:guysoup027/h5-cc-i18n.git, type: git}
     version: 1.0.0
 
   '@types/gapi@0.0.43':
@@ -630,7 +630,7 @@ snapshots:
 
   '@silenthill/h5-cc-bridge@git+ssh://git@github.com/soolary/h5-cc-bridge.git#e3566d5a11f9cf33abf848e60da9351f3df9c512': {}
 
-  '@silenthill/h5-cc-i18n@git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#59e1c26c75c10950aa9b38fbb830ec8e0c2279af': {}
+  '@silenthill/h5-cc-i18n@git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#ae14b4dc92fb8b759059b1bc277eeffc5107a1d1': {}
 
   '@types/gapi@0.0.43': {}
 
