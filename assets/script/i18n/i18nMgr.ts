@@ -30,6 +30,20 @@ var excelAdd = {
     // }
 };
 
+// 除 cn/zh/en/pt 之外新增的语言：对外 code 与包内 locale 相同。
+var EXTRA_LANGUAGES: Record<string, string> = {
+    de: i18n.LANG_DE,
+    es: i18n.LANG_ES,
+    fr: i18n.LANG_FR,
+    hi: i18n.LANG_HI,
+    it: i18n.LANG_IT,
+    ja: i18n.LANG_JA,
+    ko: i18n.LANG_KO,
+    ru: i18n.LANG_RU,
+    th: i18n.LANG_TH,
+    vi: i18n.LANG_VI
+};
+
 export class i18nMgr {
     public static language = ''; // 当前语言
     private static labelArr: i18nLabel.i18nLabel[] = []; // i18nLabel 列表
@@ -126,6 +140,12 @@ export class i18nMgr {
         }
         if (normalized === 'pt' || normalized === 'br' || normalized.startsWith('pt-')) {
             return { code: 'pt', locale: i18n.LANG_PT };
+        }
+        // 新增语言：H5 侧传来的 code 与包内 locale 一致，取主语言子标签匹配（ru / ru-RU 都认）。
+        const primary = normalized.split('-')[0];
+        const extra = EXTRA_LANGUAGES[primary];
+        if (extra) {
+            return { code: primary, locale: extra };
         }
         return null;
     }
