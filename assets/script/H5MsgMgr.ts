@@ -78,6 +78,7 @@ export type {
     SetHeartbeatModePayload,
     SyncDiamondConfigPayload,
     SyncGlobalConfigPayload,
+    SyncCurrentClubPayload,
     SyncLanguagePayload,
     SyncRoomsListPayload,
     SyncUserClubPayload,

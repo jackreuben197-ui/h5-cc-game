@@ -24,6 +24,7 @@ export class UserStore extends cc.EventTarget {
     public static readonly NICKNAME_CHANGE = 'NICKNAME_CHANGE';
     public static readonly AVATAR_CHANGE = 'AVATAR_CHANGE';
     public static readonly CLUBS_INFO_CHANGE = 'CLUBS_INFO_CHANGE';
+    public static readonly CURRENT_CLUB_CHANGE = 'CURRENT_CLUB_CHANGE';
     public static readonly CLUBS_WALLET_CHANGE = 'CLUBS_WALLET_CHANGE';
     public static readonly CLUBS_CREDIT_CHANGE = 'CLUBS_CREDIT_CHANGE';
     public static readonly FORBID_CHANGE = 'FORBID_CHANGE';
@@ -43,6 +44,8 @@ export class UserStore extends cc.EventTarget {
     public avatar: string;
     @observable(UserStore.CLUBS_INFO_CHANGE)
     public clubsData: ClubData[] = [];
+    @observable(UserStore.CURRENT_CLUB_CHANGE)
+    public currentClubID: number = 0;
     @observable(UserStore.CLUBS_WALLET_CHANGE)
     public wallets: ClubWallet[] = [];
     @observable(UserStore.CLUBS_CREDIT_CHANGE)
@@ -61,11 +64,10 @@ export class UserStore extends cc.EventTarget {
     }
 
     public fillWalletInfo(wallet: HttpRoomBringOutProtocol.Wallet[]) {
-        let clubsData: ClubData[] = [];
+        let clubsData: ClubData[] = [...this.clubsData];
         let walletsData: ClubWallet[] = [];
         // 简单处理多个钱包就当全量,单个钱包当更新
         if (wallet.length == 1) {
-            clubsData = [...this.clubsData];
             walletsData = [...this.wallets];
         }
         let clubDataMap = new Map(clubsData.map(item => [item._clubID, item]));
@@ -84,7 +86,8 @@ export class UserStore extends cc.EventTarget {
                     clubID: v.club_random_id,
                     name: v.club_name,
                     logo: v.club_logo,
-                    tribeID: v.tribe_random_id
+                    tribeID: v.tribe_random_id,
+                    roomLogo: ''
                 });
             }
             if (walletMap.has(v.club_id)) {
@@ -176,6 +179,7 @@ export class ClubData {
     public name: string;
     public logo: string;
     public tribeID: number;
+    public roomLogo: string;
 }
 
 export class ClubWallet {
