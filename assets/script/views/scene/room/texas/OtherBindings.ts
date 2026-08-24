@@ -5,6 +5,7 @@ import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import ccviewData, { CCViewData } from '../../../../data/system/CCViewData';
+import userStore, { ClubData, UserStore } from '../../../../data/user/UserStore';
 import { AntiCheatType } from '../../../../game/constant/AntiCheatType';
 import { ButtonState } from '../../../../game/constant/Constants';
 import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconState';
@@ -15,6 +16,7 @@ import agoraManager from '../../../../net/agora/AgoraManager';
 import TexasVideoMediaHelper from '../../../../net/messages/texas/TexasVideoMediaHelper';
 import viewManager from '../../../UIViewManager';
 import UIViewUtil from '../../../util/UIViewUtil';
+import RemoteSprite from '../../../widget/RemoteSprite';
 import SpriteSwitcher from '../../../widget/SpriteSwitcher';
 import TexasTableEvent from './events/TexasTableEvent';
 import menuItemCaculator, { MenuItemLayout, MenuItemLayoutType } from './widget/MenuItemCaculator';
@@ -33,8 +35,8 @@ export default class OtherBindings extends cc.Component {
     private btnReport: cc.Button = null!;
     @property({ type: cc.Button, displayName: '牌谱按钮' })
     private btnReplay: cc.Button = null!;
-    @property({ type: cc.Node, displayName: '认证LOGO' })
-    private certlogo: cc.Node = null!;
+    @property({ type: RemoteSprite, displayName: '牌桌图标' })
+    private certlogo: RemoteSprite = null!;
     @property({ type: cc.Button, displayName: '窗花按钮' })
     private btnEffect: cc.Button = null;
     @property({ type: SpriteSwitcher, displayName: '窗花按钮图标' })
@@ -69,6 +71,7 @@ export default class OtherBindings extends cc.Component {
     @property({ type: cc.Label, displayName: '发发看花费' })
     private viewPublicCardsCost: cc.Label = null;
     private _roomData: TexasGameRoomData;
+    private _certLogoDefaultSpriteFrame: cc.SpriteFrame = null;
 
     public initData(roomID: number, matchID: number) {
         this._roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
@@ -116,10 +119,20 @@ export default class OtherBindings extends cc.Component {
             this.btnAudio.node.setPosition(layout.buttons[4].position);
             this.btnCamera.node.setPosition(layout.buttons[5].position);
         }
-        this.certlogo.setPosition(layout.logo.position);
+        this.certlogo.node.setPosition(layout.logo.position);
+    }
+
+    @bindEvent(UserStore.CLUBS_INFO_CHANGE, { dataSource: 'userStore', initPriority: 19 })
+    private onClubsInfoChanged(clubsData: ClubData[]): void {
+        const clubID = Number(this._roomData.basicInfo.clubID || 0);
+        const roomLogo = String((clubsData || []).find(club => club._clubID === clubID)?.roomLogo || '').trim();
+
+        this.certlogo.url = roomLogo;
+        if (!roomLogo) this.certlogo.getComponent(cc.Sprite).spriteFrame = this._certLogoDefaultSpriteFrame;
     }
 
     public onLoad() {
+        this._certLogoDefaultSpriteFrame = this.certlogo.getComponent(cc.Sprite).spriteFrame;
         //战绩按钮
         if (this.btnReport) this.btnReport.node.on('click', this.onClickReport, this);
         //牌谱按钮
@@ -153,7 +166,8 @@ export default class OtherBindings extends cc.Component {
         if (!this._roomData) return;
         autoBindEvents(this, {
             mine: this._roomData.mine,
-            ccviewData: ccviewData
+            ccviewData: ccviewData,
+            userStore: userStore
         });
     }
 

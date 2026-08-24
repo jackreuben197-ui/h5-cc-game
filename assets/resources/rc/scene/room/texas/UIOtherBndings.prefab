@@ -1420,6 +1420,9 @@
     "_components": [
       {
         "__id__": 37
+      },
+      {
+        "__id__": 212
       }
     ],
     "_prefab": {
@@ -7775,7 +7778,7 @@
       "__id__": 23
     },
     "certlogo": {
-      "__id__": 36
+      "__id__": 212
     },
     "btnEffect": {
       "__id__": 49
@@ -7825,6 +7828,17 @@
     "viewPublicCardsCost": {
       "__id__": 196
     },
+    "_id": ""
+  },
+  {
+    "__type__": "8c2cfQgigZEFYKF7wlj+Hg4",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 36
+    },
+    "_enabled": true,
+    "customMaterial": null,
     "_id": ""
   },
   {

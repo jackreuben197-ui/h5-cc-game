@@ -9,6 +9,7 @@ export interface ProcedureEnterRoomParam {
     roomID: number;
     matchID: number;
     observer?: boolean;
+    clubID?: number;
 }
 
 export default class ProcedureEnterRoom extends ProcedureBase {
@@ -37,6 +38,7 @@ export default class ProcedureEnterRoom extends ProcedureBase {
             ProcedureManager.StartProcedure(ProcedureDefine.Return);
             return;
         }
+        entrance.entryClubID = Number(param.clubID || 0);
         const sequence = ++this._enterSequence;
         entrance.roomIdChanged = (_oldRoomId, newRoomId) => {
             // 旧的异步进桌任务完成后不得覆盖新流程的 roomID。

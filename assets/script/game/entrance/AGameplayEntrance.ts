@@ -53,6 +53,8 @@ export default abstract class AGameplayEntrance {
      * 房间id - mtt比赛玩法过程中roomId可能会变动，允许派生类型修改
      */
     public _roomId: number = 0;
+    /** H5 进桌入口携带的俱乐部上下文（内部 club_id）。 */
+    public entryClubID: number = 0;
     // MTT 服务端分配真实牌桌后，用回调同步流程层的 roomID。
     public roomIdChanged: ((oldRoomId: number, newRoomId: number) => void) | null = null;
     private _matchId: number = 0;

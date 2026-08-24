@@ -46,8 +46,9 @@ export default class RemoteSprite extends cc.Component {
             this._sprite = this.getComponent(cc.Sprite);
         }
         let loadingUrl = this._url;
-        cc.assetManager.loadRemote(this._url, { ext: '.png' }, (err, texture: cc.Texture2D) => {
-            texture.packable = false;
+        const cleanUrl = loadingUrl.split(/[?#]/)[0].toLowerCase();
+        const ext = cleanUrl.endsWith('.jpg') || cleanUrl.endsWith('.jpeg') ? '.jpg' : '.png';
+        cc.assetManager.loadRemote(loadingUrl, { ext }, (err, texture: cc.Texture2D) => {
             // 【第一道防线】：检查当前组件实例或节点是否已经被引擎销毁
             // cc.isValid(this) 会检查当前脚本组件是否还活着
             // cc.isValid(this.node) 会检查节点是否还挂在场景里
@@ -59,6 +60,7 @@ export default class RemoteSprite extends cc.Component {
                 cc.error(`[RemoteSprite] 加载失败: ${this._url}`, err);
                 return;
             }
+            texture.packable = false;
             // 【第二道防线】：防列表滑动错位（如果是动态生成的 chips/钻石列表）
             if (this._url !== loadingUrl) {
                 cc.warn('[RemoteSprite] 下载完时，URL 已经被换掉了。');
