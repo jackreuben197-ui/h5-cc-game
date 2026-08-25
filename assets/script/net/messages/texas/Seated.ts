@@ -13,6 +13,7 @@ import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import viewManager from '../../../views/UIViewManager';
 import agoraManager from '../../agora/AgoraManager';
 import TexasVideoMediaHelper from './TexasVideoMediaHelper';
+import { i18nMgr } from '../../../i18n/i18nMgr';
 
 const _plog = createLogger('ServerMessageSeated');
 
@@ -129,7 +130,7 @@ export async function Seated(data: ServerMessageSeated.AsObject, roomID: number,
             roomData.basicInfo.antiCheatConfig.start();
         } catch (e) {
             _plog.error('加入视频桌失败', e);
-            viewManager.showToast('无法开启摄像头，请检查浏览器权限后重新入座');
+            viewManager.showToast(i18nMgr.Get('UIVideoTable_CameraFail'));
         }
     }
 }

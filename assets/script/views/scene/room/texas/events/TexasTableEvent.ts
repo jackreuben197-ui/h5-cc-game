@@ -123,7 +123,7 @@ export default class TexasTableEvent {
             const seatedConfig = seatData.roomData.basicInfo.antiCheatConfig.getSeatedSetting();
             const ok = await agoraManager.getMediaDevicesSupported(seatedConfig.enableCamera, true);
             if (!ok) {
-                viewManager.showToast('必须同意浏览器的音视频权限才能成功坐在视频桌');
+                viewManager.showToast(i18nMgr.Get('UIVideoTable_MediaPermissionRequired'));
                 setTimeout(() => {
                     ProcedureManager.StartProcedure(ProcedureDefine.Return);
                 }, 3000);

@@ -637,7 +637,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
 
     private _updateAudioVideoVisuals(): void {
         this._updateMediaButton('audioCloseToggle', this._hasAudioTrack, this._isAudioClosed, '打开音频', '关闭音频');
-        this._updateMediaButton('videoCloseToggle', this._hasVideoTrack, this._isVideoClosed, '打开视频', '关闭视频');
+        this._updateMediaButton('videoCloseToggle', this._hasVideoTrack, this._isVideoClosed, i18nMgr.Get('UITexasPlayerInfoOpenVideo'), i18nMgr.Get('UITexasPlayerInfoCloseVideo'));
     }
 
     private _updateMediaButton(name: string, hasTrack: boolean, closed: boolean, openText: string, closeText: string): void {
@@ -785,11 +785,11 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _clickStandUp(): void {
-        this._confirmAndRun(i18nMgr.Get('UITexasRoomManagerOpTips7') || '确认让该玩家站起？', () => PlayerStoreUtils.standUp(this._roomData, this._requestRID));
+        this._confirmAndRun(StringHelper.FormatString(i18nMgr.Get('UITexasRoomManagerOpTips7'), this.nickNameLabel.string), () => PlayerStoreUtils.standUp(this._roomData, this._requestRID));
     }
 
     private _clickLeave(): void {
-        this._confirmAndRun(i18nMgr.Get('UITexasRoomManagerOpTips8') || '确认踢出该玩家？', () => PlayerStoreUtils.leaveRoom(this._roomData, this._requestRID));
+        this._confirmAndRun(StringHelper.FormatString(i18nMgr.Get('UITexasRoomManagerOpTips8'), this.nickNameLabel.string), () => PlayerStoreUtils.leaveRoom(this._roomData, this._requestRID));
     }
 
     private _clickCredit(): void {
@@ -807,7 +807,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
                     this.close();
                     return;
                 }
-                viewManager.showToast(res.message || CPErrorCode.ServerErrorDescription(res.code) || '操作失败');
+                viewManager.showToast(res.message || CPErrorCode.ServerErrorDescription(res.code) || i18nMgr.Get('Uiclubrechargeconfirmorderfailed'));
             }
         });
     }
@@ -827,7 +827,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         } catch (error) {
             this._isChatMuted = !next;
             this._refreshToggleVisual('chatCloseToggle', this._isChatMuted);
-            viewManager.showToast((error as Error).message || '禁言失败');
+            viewManager.showToast((error as Error).message || i18nMgr.Get('UITexasStopSpeak_Fail'));
         }
     }
 
@@ -951,7 +951,9 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         const node = this.opButtonNode.getChildByName(name);
         if (name === 'chatCloseToggle' || name === 'shieldToggle') {
             const isMute = name === 'chatCloseToggle';
-            this._setNodeLabelString(node, isOn ? (isMute ? '取消禁言' : '取消屏蔽') : isMute ? '禁言' : '屏蔽名字');
+            this._setNodeLabelString(node, isOn
+                ? i18nMgr.Get(isMute ? 'UITexasStopSpeak_Cancel' : 'UITexasBlockName_Cancel')
+                : i18nMgr.Get(isMute ? 'UITexasStopSpeak' : 'UITexasBlockName'));
             this._setToggleBg(node, isOn);
             return;
         }
