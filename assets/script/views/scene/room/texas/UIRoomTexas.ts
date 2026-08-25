@@ -40,6 +40,14 @@ const ADAPTIVE_LIMIT_HEIGHT = 2400;
 
 const ADAPTIVE_MAIN_HEIGHT = 2688;
 
+const IM_BUTTON_PADDING_LEFT = 14;
+
+const IM_BUTTON_PADDING_RIGHT = 17.5;
+
+const IM_BUTTON_LABEL_GAP = 23.5;
+
+const IM_BUTTON_RIGHT_MARGIN = 20;
+
 @ccclass
 @menu('Scene/Room/Texas/UIRoomTexas')
 @traceClass()
@@ -107,6 +115,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this.btnSafetyGuard.node.active = false;
         this.btnSafetyGuard.node.on('click', this.onSafetyGuardClicked, this);
         this.btnIm.node.on('click', this.onImClicked, this);
+        this._initImButtonAutoFit();
         //其他状态
         this._otherBindings = this.otherBindings.getComponent(OtherBindings);
         // main_menu 按钮事件注册
@@ -213,6 +222,37 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         await this._showSquidIntroDialog(roomData);
         await this._showMushroomIntroDialog(roomData);
         await this._showCriticalHitIntroDialog(roomData);
+    }
+
+    private _initImButtonAutoFit(): void {
+        const labelNode = this.btnIm?.node.getChildByName('label');
+        if (!labelNode) return;
+        labelNode.on(cc.Node.EventType.SIZE_CHANGED, this._applyImButtonLayout, this);
+        const label = labelNode.getComponent(cc.Label) as cc.Label & { _forceUpdateRenderData?: () => void };
+        label?._forceUpdateRenderData?.();
+        this._applyImButtonLayout();
+    }
+
+    private _applyImButtonLayout(): void {
+        const button = this.btnIm?.node;
+        if (!button) return;
+        const bg = button.getChildByName('table_bg_im');
+        const icon = button.getChildByName('table_icon_im');
+        const labelNode = button.getChildByName('label');
+        if (!bg || !icon || !labelNode) return;
+        const width = IM_BUTTON_PADDING_LEFT + labelNode.width + IM_BUTTON_LABEL_GAP + icon.width + IM_BUTTON_PADDING_RIGHT;
+        button.width = width;
+        bg.width = width;
+        const iconRight = width / 2 - IM_BUTTON_PADDING_RIGHT;
+        icon.x = iconRight - (1 - icon.anchorX) * icon.width;
+        const labelRight = iconRight - icon.width - IM_BUTTON_LABEL_GAP;
+        labelNode.x = labelRight - (1 - labelNode.anchorX) * labelNode.width;
+        const widget = button.getComponent(cc.Widget);
+        if (!widget) return;
+        widget.isAlignHorizontalCenter = false;
+        widget.isAlignRight = true;
+        widget.right = IM_BUTTON_RIGHT_MARGIN;
+        widget.updateAlignment();
     }
 
     private _applyMainMenuLayout(): void {

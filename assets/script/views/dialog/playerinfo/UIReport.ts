@@ -139,9 +139,9 @@ export default class UIReport extends UIComponentBaseDialog<UIReportParam> {
                 this.close();
                 return;
             }
-            viewManager.showToast(res?.message || '举报失败');
+            viewManager.showToast(res?.message || i18nMgr.Get('UIReport_Fail') || '举报失败');
         } catch (error) {
-            if (cc.isValid(this.node)) viewManager.showToast('举报失败');
+            if (cc.isValid(this.node)) viewManager.showToast(i18nMgr.Get('UIReport_Fail') || '举报失败');
         }
     }
 

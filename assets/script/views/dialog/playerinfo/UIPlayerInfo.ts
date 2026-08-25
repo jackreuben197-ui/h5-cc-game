@@ -774,12 +774,12 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
                 this._currentRemark = text;
                 playerStore.updateRemark(rid, text);
                 this.playerNoteLabel.string = text || i18nMgr.Get('UIUserRemarks_7S612w03');
-                viewManager.showToast('备注修改成功');
+                viewManager.showToast(i18nMgr.Get('UIPlayerInfo_RemarkSaveOk') || '备注修改成功');
                 return;
             }
-            viewManager.showToast(res.message || '备注修改失败');
+            viewManager.showToast(res.message || i18nMgr.Get('UIPlayerInfo_RemarkSaveFail') || '备注修改失败');
         } catch (error) {
-            if (this._isCurrentRequest(rid)) viewManager.showToast('备注修改失败');
+            if (this._isCurrentRequest(rid)) viewManager.showToast(i18nMgr.Get('UIPlayerInfo_RemarkSaveFail') || '备注修改失败');
         }
         this.playerNoteLabel.string = this._currentRemark || i18nMgr.Get('UIUserRemarks_7S612w03');
     }
@@ -793,7 +793,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _clickCredit(): void {
-        viewManager.showToast('当前版本暂未接入发放额度面板');
+        viewManager.showToast(i18nMgr.Get('UIPlayerInfo_CreditPanelNA') || '当前版本暂未接入发放额度面板');
     }
 
     private async _confirmAndRun(content: string, action: () => Promise<WebResponseDataBase>): Promise<void> {
@@ -815,7 +815,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private async _clickChatClose(): Promise<void> {
         if (!this._roomData.mine.isRoomManager) return;
         if (!this._roomData.basicInfo.clubID && !this._roomData.basicInfo.tribeID) {
-            viewManager.showToast('当前房间不支持禁言操作');
+            viewManager.showToast(i18nMgr.Get('UIPlayerInfo_MuteNotSupported') || '当前房间不支持禁言操作');
             return;
         }
         const next = !this._isChatMuted;

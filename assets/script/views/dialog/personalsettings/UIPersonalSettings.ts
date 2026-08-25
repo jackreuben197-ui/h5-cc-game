@@ -1,4 +1,5 @@
 import soundManager from '../../../core/SoundManager';
+import { i18nMgr } from '../../../i18n/i18nMgr';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import texasGamePersonalSettings, { ShortCut, shortCutMode } from '../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
@@ -83,25 +84,25 @@ export default class UIPersonalSettings extends UIComponentBaseDialog<UIPersonal
     private _mine: TexasGameRoomDataPlayerMine = null;
     // ==================== 常量 ====================
     private static readonly DESK_VISIBLE_COUNT = 4;
-    private static readonly DESK_NAMES = [
-        '绿纹',
-        '玻璃绿',
-        '墨绿秘境',
-        '翠竹流光',
-        '蓝纹',
-        '星海湛蓝',
-        '深海蓝域',
-        '漫步欧洲',
-        '午夜黑',
-        '墨夜静谧',
-        '暗夜石墨',
-        '夜宴流光',
-        '嫩绿晨雾',
-        '浅雾冰蓝',
-        '晴空浅蓝',
-        '雾紫柔台'
+    private static readonly DESK_NAME_KEYS = [
+        'UIDeskStyle_GreenPattern',
+        'UIDeskStyle_GlassGreen',
+        'UIDeskStyle_DarkGreen',
+        'UIDeskStyle_Bamboo',
+        'UIDeskStyle_BluePattern',
+        'UIDeskStyle_StarryBlue',
+        'UIDeskStyle_DeepBlue',
+        'UIDeskStyle_Europe',
+        'UIDeskStyle_Black',
+        'UIDeskStyle_Night',
+        'UIDeskStyle_Graphite',
+        'UIDeskStyle_NightGlow',
+        'UIDeskStyle_LightGreen',
+        'UIDeskStyle_IceBlue',
+        'UIDeskStyle_SkyBlue',
+        'UIDeskStyle_Purple'
     ];
-    private static readonly DESK_COUNT = UIPersonalSettings.DESK_NAMES.length;
+    private static readonly DESK_COUNT = UIPersonalSettings.DESK_NAME_KEYS.length;
     private static readonly COLOR_SELECTED = cc.Color.BLACK;
     private static readonly COLOR_NORMAL = cc.Color.WHITE;
     private static readonly SLIDER_BASE_WIDTH = 800;
@@ -190,7 +191,7 @@ export default class UIPersonalSettings extends UIComponentBaseDialog<UIPersonal
         for (let i = 1; i <= UIPersonalSettings.DESK_COUNT; i++) {
             const tbg = cc.instantiate(this.deskPrefab);
             const tm = tbg.getComponent(DeskTypeItem);
-            tm.setDisplayName(UIPersonalSettings.DESK_NAMES[i - 1]);
+            tm.setDisplayName(i18nMgr.Get(UIPersonalSettings.DESK_NAME_KEYS[i - 1]));
             tbg.parent = this.deskGroup;
             tm.onCheckedCallback = (v, deskType) => {
                 texasGamePersonalSettings.setDeskTypeToStorage(deskType);

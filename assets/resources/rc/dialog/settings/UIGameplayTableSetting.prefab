@@ -774,7 +774,7 @@
     "_N$string": "请注意，本牌桌重要防作弊功能未全部开启",
     "_fontSize": 40,
     "_lineHeight": 40,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -784,7 +784,7 @@
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 3,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -1183,7 +1183,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 308,
+      "width": 440,
       "height": 70
     },
     "_anchorPoint": {
@@ -1250,7 +1250,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 196,
+      "width": 320,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -1306,7 +1306,7 @@
     "_N$string": "随机入座",
     "_fontSize": 49,
     "_lineHeight": 40,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -1316,7 +1316,7 @@
     "_N$horizontalAlign": 0,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -1405,7 +1405,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        257,
+        390.0,
         0,
         0,
         0,
@@ -1895,7 +1895,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 363,
+      "width": 440,
       "height": 70
     },
     "_anchorPoint": {
@@ -1962,7 +1962,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 196,
+      "width": 320,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -2018,7 +2018,7 @@
     "_N$string": "随机入座",
     "_fontSize": 49,
     "_lineHeight": 40,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -2028,7 +2028,7 @@
     "_N$horizontalAlign": 0,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -2117,7 +2117,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        257,
+        390.0,
         0,
         0,
         0,
@@ -2788,7 +2788,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 363,
+      "width": 440,
       "height": 100
     },
     "_anchorPoint": {
@@ -2855,7 +2855,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 196,
+      "width": 320,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -2911,7 +2911,7 @@
     "_N$string": "随机入座",
     "_fontSize": 49,
     "_lineHeight": 40,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -2921,7 +2921,7 @@
     "_N$horizontalAlign": 0,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -3010,7 +3010,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        257,
+        390.0,
         0,
         0,
         0,
@@ -3857,7 +3857,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 280.87,
+      "width": 440,
       "height": 70
     },
     "_anchorPoint": {
@@ -3921,7 +3921,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 168.87,
+      "width": 320,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -3977,7 +3977,7 @@
     "_N$string": "Jackpot",
     "_fontSize": 49,
     "_lineHeight": 40,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -3987,7 +3987,7 @@
     "_N$horizontalAlign": 0,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -4041,7 +4041,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        229.87,
+        390.0,
         0,
         0,
         0,
@@ -4465,7 +4465,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 251,
+      "width": 440,
       "height": 70
     },
     "_anchorPoint": {
@@ -4529,7 +4529,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 196,
+      "width": 320,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -4585,7 +4585,7 @@
     "_N$string": "随机入座",
     "_fontSize": 49,
     "_lineHeight": 40,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -4595,7 +4595,7 @@
     "_N$horizontalAlign": 0,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -5050,7 +5050,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 251,
+      "width": 440,
       "height": 70
     },
     "_anchorPoint": {
@@ -5117,7 +5117,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 196,
+      "width": 320,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -5173,7 +5173,7 @@
     "_N$string": "随机入座",
     "_fontSize": 49,
     "_lineHeight": 40,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -5183,7 +5183,7 @@
     "_N$horizontalAlign": 0,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -5670,7 +5670,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 251,
+      "width": 440,
       "height": 70
     },
     "_anchorPoint": {
@@ -5737,7 +5737,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 196,
+      "width": 320,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -5793,7 +5793,7 @@
     "_N$string": "奖励全桌",
     "_fontSize": 49,
     "_lineHeight": 40,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -5803,7 +5803,7 @@
     "_N$horizontalAlign": 0,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -6266,7 +6266,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 196,
+      "width": 440,
       "height": 70
     },
     "_anchorPoint": {
@@ -6330,7 +6330,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 196,
+      "width": 320,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -6386,7 +6386,7 @@
     "_N$string": "奖励全桌",
     "_fontSize": 49,
     "_lineHeight": 40,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -6396,7 +6396,7 @@
     "_N$horizontalAlign": 0,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -6670,7 +6670,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 196,
+      "width": 440,
       "height": 70
     },
     "_anchorPoint": {
@@ -6734,7 +6734,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 196,
+      "width": 320,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -6790,7 +6790,7 @@
     "_N$string": "奖励全桌",
     "_fontSize": 49,
     "_lineHeight": 40,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -6800,7 +6800,7 @@
     "_N$horizontalAlign": 0,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -7074,7 +7074,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 196,
+      "width": 440,
       "height": 70
     },
     "_anchorPoint": {
@@ -7138,7 +7138,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 196,
+      "width": 320,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -7194,7 +7194,7 @@
     "_N$string": "奖励全桌",
     "_fontSize": 49,
     "_lineHeight": 40,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -7204,7 +7204,7 @@
     "_N$horizontalAlign": 0,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -7481,7 +7481,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 136.75,
+      "width": 440,
       "height": 70
     },
     "_anchorPoint": {
@@ -7545,7 +7545,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 81.75,
+      "width": 320,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -7601,7 +7601,7 @@
     "_N$string": "123",
     "_fontSize": 49,
     "_lineHeight": 40,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -7611,7 +7611,7 @@
     "_N$horizontalAlign": 0,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -9009,7 +9009,7 @@
     "_N$string": "确定",
     "_fontSize": 49,
     "_lineHeight": 48,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -9019,7 +9019,7 @@
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
