@@ -257,6 +257,14 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
             }
         }
         // ---- End font adjustment ----
+
+        // ---- Start left align public area text ----
+        [this.totalPotLabel, this.totalBringLabel, this.curHandLabel, this.verBottomLabel, this.curTimeLabel, this.insurancePoolLabel].forEach(label => {
+            if (label) {
+                label.horizontalAlign = cc.Label.HorizontalAlign.LEFT;
+            }
+        });
+        // -------------------------------------------
     }
 
     public initialize(param: UITexasReportParam): void {
