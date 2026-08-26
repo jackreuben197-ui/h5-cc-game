@@ -103,6 +103,74 @@ export default class UIGameplayTableSetting extends UIComponentBaseDialog<UIGame
             this.itemAndTipsAndDetailTemplate?.parent ||
             this.jackpotTemplate?.parent ||
             null;
+
+        // ---- Start font adjustment for multi-language support ----
+        const templates = [
+            this.itemNormalTemplate,
+            this.itemAndTipsTemplate,
+            this.itemAndTipsAndDetailTemplate,
+            this.jackpotTemplate
+        ];
+        for (const tpl of templates) {
+            if (tpl) {
+                const titleNodes = [
+                    cc.find('titleContent/title', tpl),
+                    cc.find('itemNormal/titleContent/title', tpl),
+                    cc.find('Min/titleContent/title', tpl),
+                    cc.find('Put/titleContent/title', tpl),
+                    cc.find('AllTable/titleContent/title', tpl),
+                    cc.find('ProfitTr/titleContent/title', tpl),
+                    cc.find('TrProfit/titleContent/title', tpl),
+                    cc.find('PotGold/titleContent/title', tpl),
+                    cc.find('AwardRoundType/titleContent/title', tpl)
+                ];
+                for (const titleNode of titleNodes) {
+                    if (titleNode) {
+                        const label = titleNode.getComponent(cc.Label);
+                        if (label) {
+                            label.fontSize = 55;
+                            label.lineHeight = 60;
+                            label.enableWrapText = true;
+                            label.overflow = cc.Label.Overflow.SHRINK;
+                        }
+                        titleNode.height = 140; // Ensure enough height for two lines
+                        const widget = titleNode.getComponent(cc.Widget);
+                        if (widget) {
+                            widget.updateAlignment();
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (this.warningTips) {
+            const tipLabelNode = cc.find('Tip_Label', this.warningTips) || this.warningTips.getChildByName('Tip_Label');
+            const tipLabel = tipLabelNode ? tipLabelNode.getComponent(cc.Label) : this.warningTips.getComponentInChildren(cc.Label);
+            if (tipLabel) {
+                tipLabel.fontSize = 45;
+                tipLabel.lineHeight = 50;
+                tipLabel.enableWrapText = true;
+                tipLabel.overflow = cc.Label.Overflow.SHRINK;
+                if (tipLabel.node) tipLabel.node.height = 140;
+            }
+        }
+        
+        if (this.Button_Commit) {
+            const commitLabelNode = cc.find('Text_Commit', this.Button_Commit) || this.Button_Commit.getChildByName('Text_Commit');
+            const commitLabel = commitLabelNode ? commitLabelNode.getComponent(cc.Label) : this.Button_Commit.getComponentInChildren(cc.Label);
+            if (commitLabel) {
+                commitLabel.fontSize = 70;
+                commitLabel.lineHeight = 75;
+                commitLabel.enableWrapText = false;
+                commitLabel.overflow = cc.Label.Overflow.SHRINK;
+                if (commitLabel.node) {
+                    commitLabel.node.width = 800;
+                    commitLabel.node.height = 100;
+                }
+            }
+        }
+        // ---- End font adjustment ----
+
         if (this.itemNormalTemplate) this.itemNormalTemplate.active = false;
         if (this.itemAndTipsTemplate) this.itemAndTipsTemplate.active = false;
         if (this.itemAndTipsAndDetailTemplate) this.itemAndTipsAndDetailTemplate.active = false;

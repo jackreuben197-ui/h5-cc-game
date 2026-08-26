@@ -217,6 +217,46 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         click(this.exitBtn, () => this.close());
         this.bgClickNode.on('click', () => this.close(), this);
         this._setupUnifiedList();
+
+        // ---- Start font adjustment for multi-language support ----
+        const findAndAdjustTitle = (parent: cc.Node): void => {
+            if (!parent) return;
+            if (parent.name === 'title') {
+                const label = parent.getComponent(cc.Label);
+                if (label) {
+                    label.fontSize = 75;
+                    label.lineHeight = 80;
+                    label.enableWrapText = false;
+                    label.overflow = cc.Label.Overflow.SHRINK;
+                    parent.width = 600;
+                    parent.height = 100;
+                }
+            }
+            parent.children.forEach(child => findAndAdjustTitle(child));
+        };
+        findAndAdjustTitle(this.node);
+
+        const listBars = [this.listBar1, this.listBar3, this.listBarSquid, this.listBarMushRoom, this.listBarJackpot, this.listBar4];
+        for (const listBar of listBars) {
+            if (listBar) {
+                listBar.children.forEach(child => {
+                    const label = child.getComponent(cc.Label) || child.getComponentInChildren(cc.Label);
+                    if (label) {
+                        label.fontSize = 45;
+                        label.lineHeight = 50;
+                        label.enableWrapText = false;
+                        label.overflow = cc.Label.Overflow.SHRINK;
+                        if (label.node) {
+                            label.node.width = 250;
+                            label.node.height = 80;
+                            const widget = label.node.getComponent(cc.Widget);
+                            if (widget) widget.updateAlignment();
+                        }
+                    }
+                });
+            }
+        }
+        // ---- End font adjustment ----
     }
 
     public initialize(param: UITexasReportParam): void {
