@@ -877,7 +877,7 @@
     "_contentSize": {
       "__type__": "cc.Size",
       "width": 805,
-      "height": 50.4
+      "height": 88
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -931,8 +931,8 @@
     "_string": "请注意，本牌桌重要防作弊功能未全部开启",
     "_N$string": "请注意，本牌桌重要防作弊功能未全部开启",
     "_fontSize": 42,
-    "_lineHeight": 40,
-    "_enableWrapText": false,
+    "_lineHeight": 44,
+    "_enableWrapText": true,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,

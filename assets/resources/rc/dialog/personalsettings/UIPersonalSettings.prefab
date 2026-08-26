@@ -3656,6 +3656,9 @@
     "_components": [
       {
         "__id__": 91
+      },
+      {
+        "__id__": 238
       }
     ],
     "_prefab": {
@@ -3671,7 +3674,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 100,
+      "width": 200,
       "height": 40
     },
     "_anchorPoint": {
@@ -3737,7 +3740,7 @@
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 1,
+    "_N$overflow": 2,
     "_N$cacheMode": 1,
     "_id": ""
   },
@@ -4298,6 +4301,9 @@
     "_components": [
       {
         "__id__": 107
+      },
+      {
+        "__id__": 239
       }
     ],
     "_prefab": {
@@ -4313,7 +4319,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 100,
+      "width": 200,
       "height": 40
     },
     "_anchorPoint": {
@@ -4379,7 +4385,7 @@
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 1,
+    "_N$overflow": 2,
     "_N$cacheMode": 1,
     "_id": ""
   },
@@ -6782,6 +6788,9 @@
     "_components": [
       {
         "__id__": 175
+      },
+      {
+        "__id__": 236
       }
     ],
     "_prefab": {
@@ -6797,7 +6806,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 96,
+      "width": 140,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -7686,6 +7695,9 @@
     "_components": [
       {
         "__id__": 199
+      },
+      {
+        "__id__": 237
       }
     ],
     "_prefab": {
@@ -7701,7 +7713,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 96,
+      "width": 140,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -8670,6 +8682,50 @@
     },
     "_enabled": true,
     "i18n_string": "UITexas_ShowBB",
+    "_id": ""
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 174
+    },
+    "_enabled": true,
+    "i18n_string": "UITexasSetting_Enabled",
+    "_id": ""
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 198
+    },
+    "_enabled": true,
+    "i18n_string": "UITexasSetting_Enabled",
+    "_id": ""
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 90
+    },
+    "_enabled": true,
+    "i18n_string": "UITexasSetting_ThreeButtons",
+    "_id": ""
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 106
+    },
+    "_enabled": true,
+    "i18n_string": "UITexasSetting_FiveButtons",
     "_id": ""
   }
 ]

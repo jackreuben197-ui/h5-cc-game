@@ -636,7 +636,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _updateAudioVideoVisuals(): void {
-        this._updateMediaButton('audioCloseToggle', this._hasAudioTrack, this._isAudioClosed, '打开音频', '关闭音频');
+        this._updateMediaButton('audioCloseToggle', this._hasAudioTrack, this._isAudioClosed, i18nMgr.Get('UITexasPlayerInfoOpenAudio'), i18nMgr.Get('UITexasPlayerInfoCloseAudio'));
         this._updateMediaButton('videoCloseToggle', this._hasVideoTrack, this._isVideoClosed, i18nMgr.Get('UITexasPlayerInfoOpenVideo'), i18nMgr.Get('UITexasPlayerInfoCloseVideo'));
     }
 

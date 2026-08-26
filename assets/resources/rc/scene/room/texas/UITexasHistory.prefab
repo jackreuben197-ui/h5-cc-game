@@ -2285,6 +2285,9 @@
       },
       {
         "__id__": 59
+      },
+      {
+        "__id__": 547
       }
     ],
     "_prefab": {
@@ -2300,7 +2303,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 160,
+      "width": 180,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -2366,7 +2369,7 @@
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 1,
     "_id": ""
   },
@@ -19107,6 +19110,9 @@
     "_components": [
       {
         "__id__": 524
+      },
+      {
+        "__id__": 548
       }
     ],
     "_prefab": {
@@ -19122,7 +19128,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 100,
+      "width": 210,
       "height": 40
     },
     "_anchorPoint": {
@@ -19134,7 +19140,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        30,
+        95,
         0,
         0,
         0,
@@ -19185,10 +19191,10 @@
     "_batchAsBitmap": false,
     "_styleFlags": 0,
     "_underlineHeight": 0,
-    "_N$horizontalAlign": 1,
+    "_N$horizontalAlign": 0,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 1,
+    "_N$overflow": 2,
     "_N$cacheMode": 1,
     "_id": ""
   },
@@ -19822,5 +19828,27 @@
     },
     "fileId": "",
     "sync": false
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 57
+    },
+    "_enabled": true,
+    "i18n_string": "UIMine_MsgSystem_viewMore",
+    "_id": ""
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 523
+    },
+    "_enabled": true,
+    "i18n_string": "UITexasHistory_collect",
+    "_id": ""
   }
 ]
