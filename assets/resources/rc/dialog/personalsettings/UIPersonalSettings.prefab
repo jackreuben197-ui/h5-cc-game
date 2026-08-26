@@ -205,7 +205,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 500,
+      "width": 800,
       "height": 131.5
     },
     "_anchorPoint": {
@@ -261,7 +261,7 @@
     "_N$string": "个性设置",
     "_fontSize": 70,
     "_lineHeight": 70,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": {
       "__uuid__": "4ddaf238-f782-4af9-8e3e-7eaa94d96ede"
     },
@@ -273,7 +273,7 @@
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 1,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -419,6 +419,9 @@
       },
       {
         "__id__": 14
+      },
+      {
+        "__id__": 227
       }
     ],
     "_prefab": {
@@ -434,7 +437,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 220,
+      "width": 275,
       "height": 69.3
     },
     "_anchorPoint": {
@@ -597,7 +600,7 @@
     "_N$string": "牌桌设置",
     "_fontSize": 55,
     "_lineHeight": 55,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -607,7 +610,7 @@
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -715,6 +718,9 @@
       },
       {
         "__id__": 21
+      },
+      {
+        "__id__": 228
       }
     ],
     "_prefab": {
@@ -730,7 +736,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 220,
+      "width": 275,
       "height": 69.3
     },
     "_anchorPoint": {
@@ -893,7 +899,7 @@
     "_N$string": "快捷加注",
     "_fontSize": 55,
     "_lineHeight": 55,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -903,7 +909,7 @@
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -1011,6 +1017,9 @@
       },
       {
         "__id__": 28
+      },
+      {
+        "__id__": 229
       }
     ],
     "_prefab": {
@@ -1026,7 +1035,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 220,
+      "width": 275,
       "height": 69.3
     },
     "_anchorPoint": {
@@ -1189,7 +1198,7 @@
     "_N$string": "系统设置",
     "_fontSize": 55,
     "_lineHeight": 55,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -1199,7 +1208,7 @@
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -1486,7 +1495,7 @@
     "_N$horizontalAlign": 0,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 1,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -1919,6 +1928,9 @@
     "_components": [
       {
         "__id__": 48
+      },
+      {
+        "__id__": 230
       }
     ],
     "_prefab": {
@@ -2000,7 +2012,7 @@
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 1,
+    "_N$overflow": 2,
     "_N$cacheMode": 1,
     "_id": ""
   },
@@ -2349,6 +2361,9 @@
     "_components": [
       {
         "__id__": 59
+      },
+      {
+        "__id__": 231
       }
     ],
     "_prefab": {
@@ -2430,7 +2445,7 @@
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 1,
+    "_N$overflow": 2,
     "_N$cacheMode": 1,
     "_id": ""
   },
@@ -2939,6 +2954,9 @@
       },
       {
         "__id__": 76
+      },
+      {
+        "__id__": 232
       }
     ],
     "_prefab": {
@@ -2954,7 +2972,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 240,
+      "width": 450,
       "height": 63
     },
     "_anchorPoint": {
@@ -3010,7 +3028,7 @@
     "_N$string": "牌局按钮设置",
     "_fontSize": 40,
     "_lineHeight": 50,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -3020,7 +3038,7 @@
     "_N$horizontalAlign": 0,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -4959,6 +4977,9 @@
     "_components": [
       {
         "__id__": 127
+      },
+      {
+        "__id__": 233
       }
     ],
     "_prefab": {
@@ -4974,7 +4995,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 280,
+      "width": 600,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -5030,7 +5051,7 @@
     "_N$string": "自定义底池比例",
     "_fontSize": 40,
     "_lineHeight": 40,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -5040,7 +5061,7 @@
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -6543,6 +6564,9 @@
     "_components": [
       {
         "__id__": 169
+      },
+      {
+        "__id__": 234
       }
     ],
     "_prefab": {
@@ -6558,7 +6582,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 160,
+      "width": 200,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -6614,7 +6638,7 @@
     "_N$string": "音效设置",
     "_fontSize": 40,
     "_lineHeight": 40,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -6624,7 +6648,7 @@
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -7444,6 +7468,9 @@
     "_components": [
       {
         "__id__": 193
+      },
+      {
+        "__id__": 235
       }
     ],
     "_prefab": {
@@ -7459,7 +7486,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 133.36,
+      "width": 200,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -7515,7 +7542,7 @@
     "_N$string": "显示BB",
     "_fontSize": 40,
     "_lineHeight": 40,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
@@ -7525,7 +7552,7 @@
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -8545,5 +8572,104 @@
     },
     "fileId": "",
     "sync": false
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 9
+    },
+    "_enabled": true,
+    "i18n_string": "UIGameplaySetting_CardTableSetting",
+    "_id": ""
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 16
+    },
+    "_enabled": true,
+    "i18n_string": "UIGameplaySetting_QuickFillingSetting",
+    "_id": ""
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 23
+    },
+    "_enabled": true,
+    "i18n_string": "UIGameplaySetting_SystemSetting",
+    "_id": ""
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 47
+    },
+    "_enabled": true,
+    "i18n_string": "UIGameplaySetting_DesktopSettingTip",
+    "_id": ""
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 58
+    },
+    "_enabled": true,
+    "i18n_string": "UIGameplaySetting_DesktopSettingTip",
+    "_id": ""
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 74
+    },
+    "_enabled": true,
+    "i18n_string": "UIGameplaySetting_QuickFillingSetting_GameButton",
+    "_id": ""
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 126
+    },
+    "_enabled": true,
+    "i18n_string": "UIGameplaySetting_CustomPotTip",
+    "_id": ""
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 168
+    },
+    "_enabled": true,
+    "i18n_string": "UITexasSetting_LrI45uIK",
+    "_id": ""
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 192
+    },
+    "_enabled": true,
+    "i18n_string": "UITexas_ShowBB",
+    "_id": ""
   }
 ]

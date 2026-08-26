@@ -1,5 +1,6 @@
 import { Def, Player, ServerMessageEnterRoom } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
+import { i18nMgr } from '../../../i18n/i18nMgr';
 import soundManager from '../../../core/SoundManager';
 import PlayerStoreUtils from '../../../data/player/PlayerStoreUtils';
 import roomDataManager from '../../../data/room/RoomDataManager';
@@ -338,7 +339,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             roomData.mine.remoteMicrophoneEnabled = ButtonState.ON;
         } catch (e) {
             _plog.error('加入视频桌失败', e);
-            viewManager.showToast('无法开启摄像头，请检查浏览器权限后重新入座');
+            viewManager.showToast(i18nMgr.Get('UIVideoTable_CameraFail'));
         }
     }
     await viewManager.switchScene('TexasRoom', {
