@@ -7,6 +7,7 @@ import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataBasic from '../../../../data/room/texas/TexasGameRoomDataBasic';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import dlTexasRoomBackground from '../../../../data/room/texas/load/DLTexasRoomBacground';
+import ccviewData, { CCViewData } from '../../../../data/system/CCViewData';
 import { AnimateDisplayBackground } from '../../../../game/constant/AnimateDisplayType';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
@@ -28,6 +29,7 @@ export default class RoomInfo extends cc.Component {
     private _roomBaseInfo: TexasGameRoomDataBasic;
     private _mine: TexasGameRoomDataPlayerMine;
     private _currentDeskType: number = -1;
+    private _currentWideLayout: boolean = false;
     private _leftUpblindSeconds: number = 0;
     private _timer: number = 0;
 
@@ -73,7 +75,8 @@ export default class RoomInfo extends cc.Component {
         autoBindEvents(this, {
             basic: this._roomBaseInfo,
             mine: this._mine,
-            setting: texasGamePersonalSettings
+            setting: texasGamePersonalSettings,
+            ccviewData: ccviewData
         });
     }
 
@@ -218,14 +221,27 @@ export default class RoomInfo extends cc.Component {
     @bindEvent(TexasGamePersonalSettings.DESK_TYPE_CHANGE, 'setting')
     @traceMethod({ level: 'debug' })
     private async onUpdateBg(deskType: number, bat: AnimateDisplayBackground = AnimateDisplayBackground.Static) {
+        const wide = ccviewData.isWideLayout;
         this._currentDeskType = deskType;
-        const bgData = await dlTexasRoomBackground.getBackground(deskType);
-        if (this._currentDeskType !== deskType) return; // 防异步冲突
+        this._currentWideLayout = wide;
+        const bgData = await dlTexasRoomBackground.getBackground(deskType, wide);
+        if (this._currentDeskType !== deskType || this._currentWideLayout !== wide) return; // 防异步冲突
         this._fitDeskCover(bgData.SpriteFrame);
     }
 
+    @bindEvent(CCViewData.FRAME_SIZE_UPDATE, { dataSource: 'ccviewData', initPriority: 20 })
+    private onFrameSizeUpdate(): void {
+        if (this._currentDeskType < 0) return;
+        if (ccviewData.isWideLayout !== this._currentWideLayout) {
+            this.onUpdateBg(this._currentDeskType);
+            return;
+        }
+        const sp = this.bgSprite ? this.bgSprite.spriteFrame : null;
+        if (sp) this._fitDeskCover(sp);
+    }
+
     /**
-     * 桌布 Cover 适配：保持贴图原始比例铺满 1242×2688，居中裁切多余部分
+     * 桌布 Cover 适配：保持贴图原始比例铺满当前可见区域，居中裁切多余部分
      *
      * 原理：
      * 1. 关闭 Widget（避免它强制拉伸节点尺寸导致 Sprite 拉伸变形）
@@ -241,9 +257,10 @@ export default class RoomInfo extends cc.Component {
         // 贴图原始尺寸
         const texW = sf.getOriginalSize().width;
         const texH = sf.getOriginalSize().height;
-        // 目标尺寸（设计分辨率）
-        const targetW = 1242;
-        const targetH = 2688;
+        // 目标尺寸（当前可见区域）
+        const vs = cc.view.getVisibleSize();
+        const targetW = vs.width || 1242;
+        const targetH = vs.height || 2688;
         // 宽高比一致则无需 cover 处理
         if (Math.abs(texW / texH - targetW / targetH) < 0.01) {
             const widget = node.getComponent(cc.Widget);

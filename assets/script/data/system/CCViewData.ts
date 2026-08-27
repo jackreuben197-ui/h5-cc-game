@@ -8,6 +8,7 @@ export class CCViewData extends cc.EventTarget {
     public static GLOBAL_RESIZE = 'canvas-resize';
     public static FRAME_SIZE_UPDATE = 'FRAME_SIZE_UPDATE';
     private static readonly MIN_SCALE = 0.85;
+    public static readonly WIDE_LAYOUT_RATIO = 0.75;
 
     public startListen() {
         cc.view.on(CCViewData.GLOBAL_RESIZE, this.onResizeCallback);
@@ -22,6 +23,14 @@ export class CCViewData extends cc.EventTarget {
 
     public initData() {
         this.onResizeCallback();
+    }
+
+    public get isWideLayout(): boolean {
+        if (this._fw > 0 && this._fh > 0) {
+            return this._fw / this._fh > CCViewData.WIDE_LAYOUT_RATIO;
+        }
+        const fs = cc.view.getFrameSize();
+        return fs.height > 0 && fs.width / fs.height > CCViewData.WIDE_LAYOUT_RATIO;
     }
 
     private onResizeCallback() {

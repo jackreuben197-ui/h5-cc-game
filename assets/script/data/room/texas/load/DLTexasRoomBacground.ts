@@ -1,4 +1,6 @@
+import { traceClass } from '../../../../core/decorator/LogTrace';
 import AssetManager, { BUNDLE_RESOURCES } from '../../../../views/loader/AssetManager';
+import ccviewData from '../../../system/CCViewData';
 
 const { ccclass, property } = cc._decorator;
 
@@ -13,6 +15,11 @@ export interface BackgroundData {
 
 const defaultDynamicLoadingPrefx = 'dynamic/';
 
+const mobileTableFolder = 'table/';
+
+const wideTableFolder = 'table_pc/';
+
+@traceClass()
 export class DLTexasRoomBackground {
     public static readonly BACKGROUNDS: Record<number, DLItem> = {
         1: {
@@ -81,15 +88,28 @@ export class DLTexasRoomBackground {
         }
     };
 
-    public async getBackground(deskType: number): Promise<BackgroundData> {
+    public async getBackground(deskType: number, wide: boolean = ccviewData.isWideLayout): Promise<BackgroundData> {
         const data = DLTexasRoomBackground.BACKGROUNDS[deskType];
         if (data == null) {
             console.error('null', deskType);
         }
-        const ap = await AssetManager.getOrLoad(data.bundle, defaultDynamicLoadingPrefx + data.path, cc.SpriteFrame);
+        const ap = await this._loadSpriteFrame(data, wide);
         return {
-            SpriteFrame: ap as cc.SpriteFrame
+            SpriteFrame: ap
         };
+    }
+
+    private async _loadSpriteFrame(data: DLItem, wide: boolean): Promise<cc.SpriteFrame> {
+        if (wide) {
+            const widePath = defaultDynamicLoadingPrefx + data.path.replace(mobileTableFolder, wideTableFolder);
+            try {
+                return (await AssetManager.getOrLoad(data.bundle, widePath, cc.SpriteFrame)) as cc.SpriteFrame;
+            } catch (e) {
+                this.tracelog.warn('wide desk texture missing, fallback:', widePath);
+            }
+        }
+        const ap = await AssetManager.getOrLoad(data.bundle, defaultDynamicLoadingPrefx + data.path, cc.SpriteFrame);
+        return ap as cc.SpriteFrame;
     }
 }
 

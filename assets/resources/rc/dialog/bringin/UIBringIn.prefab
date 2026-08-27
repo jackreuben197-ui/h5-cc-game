@@ -344,7 +344,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 179.59,
+      "width": 220,
       "height": 126
     },
     "_anchorPoint": {
@@ -356,7 +356,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        177.642,
+        157,
         0,
         0,
         0,
@@ -1703,6 +1703,9 @@
     "_components": [
       {
         "__id__": 41
+      },
+      {
+        "__id__": 396
       }
     ],
     "_prefab": {
@@ -2177,6 +2180,9 @@
     "_components": [
       {
         "__id__": 54
+      },
+      {
+        "__id__": 398
       }
     ],
     "_prefab": {
@@ -2651,6 +2657,9 @@
     "_components": [
       {
         "__id__": 67
+      },
+      {
+        "__id__": 397
       }
     ],
     "_prefab": {
@@ -14242,5 +14251,38 @@
     },
     "fileId": "",
     "sync": false
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 40
+    },
+    "_enabled": true,
+    "i18n_string": "UIClub_CreateRoom31",
+    "_id": ""
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 66
+    },
+    "_enabled": true,
+    "i18n_string": "UIClub_CreateRoom31",
+    "_id": ""
+  },
+  {
+    "__type__": "9bfc327oKRNEYZBVCrkUjhI",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 53
+    },
+    "_enabled": true,
+    "i18n_string": "UIClubCreditLimit2",
+    "_id": ""
   }
 ]
