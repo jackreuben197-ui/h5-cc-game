@@ -220,6 +220,9 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         this.textTotalCreditTitle.string = i18nMgr.Get('UIClubCreditLimit2');
         this.tipsMask.active = false;
         this.bringTips.active = false;
+        if (this.autoBringinArea) {
+            this.autoBringinArea.active = false;
+        }
         this.regiterTouchEvents();
     }
 
@@ -333,7 +336,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
             }
         }
         this.tracelog.debug('bring in slider', 'min', minAmount, 'max', maxAmount, 'step', stepAmount, 'mystep', step, rangeAmount);
-        this.autoBringinArea.active = needAutoBringIn;
+        this.autoBringinArea.active = false; // needAutoBringIn;
         this.bringInSlider.step = Math.round(step * 10000) / 10000;
         this.bringInSlider.onValueChanged = (progress: number) => {
             // 注意精度
@@ -343,7 +346,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
             if (needAutoBringIn) {
                 const autoMax = rangeAmount + minAmount - amount;
                 if (autoMax >= autoMin) {
-                    this.autoBringinArea.active = true;
+                    this.autoBringinArea.active = false; // true;
                     this._setUpAutoOnTableSlider(autoMin, autoMax, stepAmount);
                 } else {
                     this.autoBringinArea.active = false;
