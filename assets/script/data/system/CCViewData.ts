@@ -36,6 +36,7 @@ export class CCViewData extends cc.EventTarget {
     private onResizeCallback() {
         const vs = cc.view.getVisibleSize();
         const fs = cc.view.getFrameSize();
+        if (!(vs.width > 0) || !(vs.height > 0) || !(fs.width > 0) || !(fs.height > 0)) return;
         const scale = vs.height / fs.height;
         const saveTop = this._saveTop * scale;
         const minScale = Math.min(1, Math.max(vs.height / GameConfig.DESIGN_RESOLUTION.height, CCViewData.MIN_SCALE));

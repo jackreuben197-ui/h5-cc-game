@@ -65,17 +65,15 @@ export default class ProcedureInit extends ProcedureBase {
      */
     private setFit(): void {
         ProcedureInit.updateFitMode();
+        ProcedureInit.bindFitModeToBrowserResize();
     }
 
     @traceMethod({ level: 'debug' })
     static updateFitMode(): void {
         if ((window as any).__H5_KEYBOARD_OPEN__ || (window as any).__H5_KEYBOARD_CLOSING__) return;
-        const canvasElement = document.getElementById('GameCanvas');
-        const rect = canvasElement?.getBoundingClientRect();
-        // 以宿主锁定后的 Canvas CSS 尺寸为准。移动端键盘只改变 visual viewport，
+        // 以宿主锁定后的 GameDiv CSS 尺寸为准。移动端键盘只改变 visual viewport，
         // 不能再用键盘态 innerHeight 切换适配策略。
-        const w = Math.round(rect?.width || canvasElement?.clientWidth || window.innerWidth);
-        const h = Math.round(rect?.height || canvasElement?.clientHeight || window.innerHeight);
+        const { w, h } = ProcedureInit.measureHostFrame();
         if (!w || !h) return;
         const w_h_r = w / h;
         this.tracelog.debug('窗口实际分辨率', w, h);
@@ -96,6 +94,42 @@ export default class ProcedureInit extends ProcedureBase {
         }
         cc.view.emit('canvas-resize');
         ccviewData.initData();
+    }
+
+    private static measureHostFrame(): { w: number; h: number } {
+        const frame = (cc.game as any)?.frame as HTMLElement;
+        if (frame && frame !== document.documentElement && frame !== document.body) {
+            if (frame.style.width) frame.style.width = '';
+            if (frame.style.height) frame.style.height = '';
+            const frameRect = frame.getBoundingClientRect();
+            const frameW = Math.round(frameRect.width || frame.clientWidth);
+            const frameH = Math.round(frameRect.height || frame.clientHeight);
+            if (frameW > 0 && frameH > 0) return { w: frameW, h: frameH };
+        }
+        const canvasElement = document.getElementById('GameCanvas');
+        const rect = canvasElement?.getBoundingClientRect();
+        return {
+            w: Math.round(rect?.width || canvasElement?.clientWidth || window.innerWidth),
+            h: Math.round(rect?.height || canvasElement?.clientHeight || window.innerHeight)
+        };
+    }
+
+    private static _fitModeResizeBound = false;
+    private static _fitModeResizeTimer = 0;
+
+    static bindFitModeToBrowserResize(): void {
+        if (ProcedureInit._fitModeResizeBound) return;
+        if ((window as any).Telegram?.WebApp) return;
+        ProcedureInit._fitModeResizeBound = true;
+        const onResize = () => {
+            if ((window as any).__H5_KEYBOARD_OPEN__ || (window as any).__H5_KEYBOARD_CLOSING__) return;
+            const el = document.activeElement;
+            if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) return;
+            window.clearTimeout(ProcedureInit._fitModeResizeTimer);
+            ProcedureInit._fitModeResizeTimer = window.setTimeout(() => ProcedureInit.updateFitMode(), 100);
+        };
+        window.addEventListener('resize', onResize, { passive: true });
+        window.addEventListener('orientationchange', onResize, { passive: true });
     }
 
     /**

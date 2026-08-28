@@ -4002,7 +4002,9 @@
     },
     "_enabled": true,
     "alignMode": 1,
-    "_target": null,
+    "_target": {
+      "__id__": 8
+    },
     "_alignFlags": 8,
     "_left": 60,
     "_right": 0,
@@ -5354,7 +5356,7 @@
     "_enabled": true,
     "alignMode": 1,
     "_target": null,
-    "_alignFlags": 40,
+    "_alignFlags": 0,
     "_left": 0,
     "_right": 0,
     "_top": 0,
@@ -5488,7 +5490,7 @@
     "_enabled": true,
     "alignMode": 1,
     "_target": null,
-    "_alignFlags": 44,
+    "_alignFlags": 4,
     "_left": 0,
     "_right": 0,
     "_top": 0,
