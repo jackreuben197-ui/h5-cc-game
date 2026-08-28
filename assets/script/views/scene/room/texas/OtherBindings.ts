@@ -15,6 +15,8 @@ import viewManager from '../../../UIViewManager';
 import UIViewUtil from '../../../util/UIViewUtil';
 import SpriteSwitcher from '../../../widget/SpriteSwitcher';
 import TexasTableEvent from './events/TexasTableEvent';
+import userStore, { ClubData, UserStore } from '../../../../data/user/UserStore';
+import RemoteSprite from '../../../widget/RemoteSprite';
 
 const { ccclass, property, menu } = cc._decorator;
 
@@ -58,6 +60,8 @@ export default class OtherBindings extends cc.Component {
     @property({ type: cc.Label, displayName: '发发看花费' })
     private viewPublicCardsCost: cc.Label = null;
     private _roomData: TexasGameRoomData;
+    private _remoteSprite: RemoteSprite = null;
+    private _certLogoDefaultSpriteFrame: cc.SpriteFrame = null;
 
     public initData(roomID: number, matchID: number) {
         this._roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
@@ -85,6 +89,9 @@ export default class OtherBindings extends cc.Component {
     }
 
     public onLoad() {
+        if (this.certBanner) {
+            this._certLogoDefaultSpriteFrame = this.certBanner.getComponent(cc.Sprite).spriteFrame;
+        }
         // 如果绑定点击写这里
         this.btnEffect.node.on('click', this.onClickMaskBtn, this);
         this.btnAudio.node.on('click', this.onClickLocalMicrophoneBtn, this);
@@ -112,8 +119,25 @@ export default class OtherBindings extends cc.Component {
     private _bindEventsAndRefresh() {
         if (!this._roomData) return;
         autoBindEvents(this, {
-            mine: this._roomData.mine
+            mine: this._roomData.mine,
+            userStore: userStore
         });
+    }
+
+    @bindEvent(UserStore.CLUBS_INFO_CHANGE, { dataSource: 'userStore', initPriority: 19 })
+    private onClubsInfoChanged(clubsData: ClubData[]): void {
+        const clubID = Number(this._roomData.basicInfo.clubID || 0);
+        const roomLogo = String((clubsData || []).find(club => club._clubID === clubID)?.roomLogo || '').trim();
+
+        if (this.certBanner) {
+            if (!this._remoteSprite) {
+                this._remoteSprite = this.certBanner.addComponent(RemoteSprite);
+            }
+            this._remoteSprite.url = roomLogo;
+            if (!roomLogo) {
+                this.certBanner.getComponent(cc.Sprite).spriteFrame = this._certLogoDefaultSpriteFrame;
+            }
+        }
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.SHOW_VIEW_PLAYER_CARDS_BUTTON, 'mine')

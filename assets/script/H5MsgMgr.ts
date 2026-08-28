@@ -40,7 +40,7 @@ const HANDSHAKE_TIMEOUT = 10000;
 import type {
     H5NavigatePayload,
     H5ReadyPayload,
-    H5ToCocosPayloadMap,
+    H5ToCocosPayloadMap as SharedH5ToCocosPayloadMap,
     SafeArea,
     CocosToH5PayloadMap as SharedCocosToH5PayloadMap
 } from '@silenthill/h5-cc-bridge/cc-side';
@@ -51,7 +51,13 @@ export interface CocosToH5PayloadMap extends Omit<SharedCocosToH5PayloadMap, 'ws
     wsSend: Uint8Array | ArrayBuffer;
 }
 
-export type { H5ToCocosPayloadMap };
+export interface SyncCurrentClubPayload {
+    clubId?: number;
+}
+
+export interface H5ToCocosPayloadMap extends SharedH5ToCocosPayloadMap {
+    syncCurrentClub: SyncCurrentClubPayload;
+}
 
 // 把协议层 payload 类型透传出去，老调用点 `import { H5NavigatePayload } from './H5MsgMgr'` 不需要改。
 export type {

@@ -52,7 +52,7 @@ class GameConfig {
     //是否是发布版本
     static readonly IS_PUBLISHED: boolean = false;
     //日志等级
-    public static LOG_LEVEL: LogLevel = 'warn';
+    public static LOG_LEVEL: LogLevel = 'debug';
 
     private constructor() {}
 

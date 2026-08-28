@@ -9,20 +9,20 @@ importers:
   .:
     dependencies:
       '@silenthill/agreement-web':
-        specifier: github:kingofake/agreement-web#master
-        version: git+ssh://git@github.com/kingofake/agreement-web.git#2c7b29b124a65ac73f7f60dc6f81e398c3c60f1d
+        specifier: github:jackreuben197-ui/agreement-web#dev_merge_0702
+        version: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/5e0a9435e3884b66ed8153179c643caa765181f2
       '@silenthill/h5-cc-bridge':
-        specifier: github:soolary/h5-cc-bridge#main
-        version: git+ssh://git@github.com/soolary/h5-cc-bridge.git#e3566d5a11f9cf33abf848e60da9351f3df9c512
+        specifier: github:jackreuben197-ui/h5-cc-bridge#dev_refactor_0721
+        version: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/e3566d5a11f9cf33abf848e60da9351f3df9c512
       '@silenthill/h5-cc-i18n':
-        specifier: github:guysoup027/h5-cc-i18n#main
-        version: git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#59e1c26c75c10950aa9b38fbb830ec8e0c2279af
+        specifier: github:jackreuben197-ui/h5-cc-i18n#dev_i18n
+        version: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/6aab3ea6601c2e12fec9376fefb86b8688d941a6
       '@types/gapi':
         specifier: ^0.0.43
         version: 0.0.43
       http-server:
         specifier: ^14.1.1
-        version: 14.1.1(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
+        version: 14.1.1
       httpserver:
         specifier: ^0.3.0
         version: 0.3.0
@@ -35,10 +35,10 @@ importers:
         version: 18.0.4
       '@typescript-eslint/typescript-estree':
         specifier: ^8.60.0
-        version: 8.65.0(supports-color@7.1.0)(typescript@6.0.3)
+        version: 8.65.0(typescript@6.0.3)
       agora-rtc-sdk-ng:
         specifier: 4.24.5
-        version: 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
+        version: 4.24.5
       agora-token:
         specifier: ^2.0.5
         version: 2.0.5
@@ -66,16 +66,16 @@ packages:
   '@bufbuild/protobuf@2.10.1':
     resolution: {integrity: sha512-ckS3+vyJb5qGpEYv/s1OebUHDi/xSNtfgw1wqKZo7MR9F2z+qXr0q5XagafAG/9O0QPVIUfST0smluYSTpYFkg==}
 
-  '@silenthill/agreement-web@git+ssh://git@github.com/kingofake/agreement-web.git#2c7b29b124a65ac73f7f60dc6f81e398c3c60f1d':
-    resolution: {commit: 2c7b29b124a65ac73f7f60dc6f81e398c3c60f1d, repo: git@github.com:kingofake/agreement-web.git, type: git}
+  '@silenthill/agreement-web@https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/5e0a9435e3884b66ed8153179c643caa765181f2':
+    resolution: {tarball: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/5e0a9435e3884b66ed8153179c643caa765181f2}
     version: 1.0.0
 
-  '@silenthill/h5-cc-bridge@git+ssh://git@github.com/soolary/h5-cc-bridge.git#e3566d5a11f9cf33abf848e60da9351f3df9c512':
-    resolution: {commit: e3566d5a11f9cf33abf848e60da9351f3df9c512, repo: git@github.com:soolary/h5-cc-bridge.git, type: git}
+  '@silenthill/h5-cc-bridge@https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/e3566d5a11f9cf33abf848e60da9351f3df9c512':
+    resolution: {tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/e3566d5a11f9cf33abf848e60da9351f3df9c512}
     version: 0.1.0
 
-  '@silenthill/h5-cc-i18n@git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#59e1c26c75c10950aa9b38fbb830ec8e0c2279af':
-    resolution: {commit: 59e1c26c75c10950aa9b38fbb830ec8e0c2279af, repo: git@github.com:guysoup027/h5-cc-i18n.git, type: git}
+  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/6aab3ea6601c2e12fec9376fefb86b8688d941a6':
+    resolution: {tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/6aab3ea6601c2e12fec9376fefb86b8688d941a6}
     version: 1.0.0
 
   '@types/gapi@0.0.43':
@@ -582,23 +582,23 @@ packages:
 
 snapshots:
 
-  '@agora-js/media@4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)':
+  '@agora-js/media@4.24.5':
     dependencies:
-      '@agora-js/report': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
-      '@agora-js/shared': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
+      '@agora-js/report': 4.24.5
+      '@agora-js/shared': 4.24.5
       agora-rte-extension: 1.2.4
       agora-rte-extension-ng: 1.0.3
-      axios: 1.19.0(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
+      axios: 1.19.0
       webrtc-adapter: 8.2.0
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@agora-js/protocol@4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)':
+  '@agora-js/protocol@4.24.5':
     dependencies:
-      '@agora-js/media': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
-      '@agora-js/report': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
-      '@agora-js/shared': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
+      '@agora-js/media': 4.24.5
+      '@agora-js/report': 4.24.5
+      '@agora-js/shared': 4.24.5
       '@bufbuild/protobuf': 2.10.1
       '@types/pako': 2.0.4
       pako: 2.2.0
@@ -606,17 +606,17 @@ snapshots:
       - debug
       - supports-color
 
-  '@agora-js/report@4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)':
+  '@agora-js/report@4.24.5':
     dependencies:
-      '@agora-js/shared': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
-      axios: 1.19.0(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
+      '@agora-js/shared': 4.24.5
+      axios: 1.19.0
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@agora-js/shared@4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)':
+  '@agora-js/shared@4.24.5':
     dependencies:
-      axios: 1.19.0(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
+      axios: 1.19.0
       ua-parser-js: 0.7.34
     transitivePeerDependencies:
       - debug
@@ -624,13 +624,13 @@ snapshots:
 
   '@bufbuild/protobuf@2.10.1': {}
 
-  '@silenthill/agreement-web@git+ssh://git@github.com/kingofake/agreement-web.git#2c7b29b124a65ac73f7f60dc6f81e398c3c60f1d':
+  '@silenthill/agreement-web@https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/5e0a9435e3884b66ed8153179c643caa765181f2':
     dependencies:
       google-protobuf: 3.21.4
 
-  '@silenthill/h5-cc-bridge@git+ssh://git@github.com/soolary/h5-cc-bridge.git#e3566d5a11f9cf33abf848e60da9351f3df9c512': {}
+  '@silenthill/h5-cc-bridge@https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/e3566d5a11f9cf33abf848e60da9351f3df9c512': {}
 
-  '@silenthill/h5-cc-i18n@git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#59e1c26c75c10950aa9b38fbb830ec8e0c2279af': {}
+  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/6aab3ea6601c2e12fec9376fefb86b8688d941a6': {}
 
   '@types/gapi@0.0.43': {}
 
@@ -638,11 +638,11 @@ snapshots:
 
   '@types/pako@2.0.4': {}
 
-  '@typescript-eslint/project-service@8.65.0(supports-color@7.1.0)(typescript@6.0.3)':
+  '@typescript-eslint/project-service@8.65.0(typescript@6.0.3)':
     dependencies:
       '@typescript-eslint/tsconfig-utils': 8.65.0(typescript@6.0.3)
       '@typescript-eslint/types': 8.65.0
-      debug: 4.4.3(supports-color@7.1.0)
+      debug: 4.4.3
       typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
@@ -653,13 +653,13 @@ snapshots:
 
   '@typescript-eslint/types@8.65.0': {}
 
-  '@typescript-eslint/typescript-estree@8.65.0(supports-color@7.1.0)(typescript@6.0.3)':
+  '@typescript-eslint/typescript-estree@8.65.0(typescript@6.0.3)':
     dependencies:
-      '@typescript-eslint/project-service': 8.65.0(supports-color@7.1.0)(typescript@6.0.3)
+      '@typescript-eslint/project-service': 8.65.0(typescript@6.0.3)
       '@typescript-eslint/tsconfig-utils': 8.65.0(typescript@6.0.3)
       '@typescript-eslint/types': 8.65.0
       '@typescript-eslint/visitor-keys': 8.65.0
-      debug: 4.4.3(supports-color@7.1.0)
+      debug: 4.4.3
       minimatch: 10.2.6
       semver: 7.8.5
       tinyglobby: 0.2.17
@@ -677,21 +677,21 @@ snapshots:
     dependencies:
       strftime: 0.6.2
 
-  agent-base@6.0.0(supports-color@7.1.0):
+  agent-base@6.0.0:
     dependencies:
-      debug: 4.4.3(supports-color@7.1.0)
+      debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
 
-  agora-rtc-sdk-ng@4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0):
+  agora-rtc-sdk-ng@4.24.5:
     dependencies:
-      '@agora-js/media': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
-      '@agora-js/protocol': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
-      '@agora-js/report': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
-      '@agora-js/shared': 4.24.5(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
+      '@agora-js/media': 4.24.5
+      '@agora-js/protocol': 4.24.5
+      '@agora-js/report': 4.24.5
+      '@agora-js/shared': 4.24.5
       agora-rte-extension: 1.2.4
       agora-rte-extension-ng: 1.0.3
-      axios: 1.19.0(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0)
+      axios: 1.19.0
       formdata-polyfill: 4.0.10
       pako: 2.2.0
       ua-parser-js: 0.7.34
@@ -718,11 +718,11 @@ snapshots:
 
   asynckit@0.4.0: {}
 
-  axios@1.19.0(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0):
+  axios@1.19.0:
     dependencies:
-      follow-redirects: 1.16.0(debug@4.4.3(supports-color@7.1.0))
+      follow-redirects: 1.16.0
       form-data: 4.0.6
-      https-proxy-agent: 5.0.1(supports-color@7.1.0)
+      https-proxy-agent: 5.0.1
       proxy-from-env: 2.1.0
     transitivePeerDependencies:
       - debug
@@ -775,11 +775,9 @@ snapshots:
 
   cuint@0.2.2: {}
 
-  debug@4.4.3(supports-color@7.1.0):
+  debug@4.4.3:
     dependencies:
       ms: 2.1.3
-    optionalDependencies:
-      supports-color: 7.1.0
 
   delayed-stream@1.0.0: {}
 
@@ -821,9 +819,7 @@ snapshots:
       node-domexception: 1.0.0
       web-streams-polyfill: 3.0.3
 
-  follow-redirects@1.16.0(debug@4.4.3(supports-color@7.1.0)):
-    optionalDependencies:
-      debug: 4.4.3(supports-color@7.1.0)
+  follow-redirects@1.16.0: {}
 
   form-data@4.0.6:
     dependencies:
@@ -881,26 +877,26 @@ snapshots:
     dependencies:
       whatwg-encoding: 2.0.0
 
-  http-proxy@1.18.1(debug@4.4.3(supports-color@7.1.0)):
+  http-proxy@1.18.1:
     dependencies:
       eventemitter3: 4.0.0
-      follow-redirects: 1.16.0(debug@4.4.3(supports-color@7.1.0))
+      follow-redirects: 1.16.0
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
 
-  http-server@14.1.1(debug@4.4.3(supports-color@7.1.0))(supports-color@7.1.0):
+  http-server@14.1.1:
     dependencies:
       basic-auth: 2.0.1
       chalk: 4.1.2
       corser: 2.0.1
       he: 1.2.0
       html-encoding-sniffer: 3.0.0
-      http-proxy: 1.18.1(debug@4.4.3(supports-color@7.1.0))
+      http-proxy: 1.18.1
       mime: 1.6.0
       minimist: 1.2.8
       opener: 1.5.2
-      portfinder: 1.0.38(supports-color@7.1.0)
+      portfinder: 1.0.38
       secure-compare: 3.0.1
       union: 0.5.0
       url-join: 4.0.1
@@ -908,10 +904,10 @@ snapshots:
       - debug
       - supports-color
 
-  https-proxy-agent@5.0.1(supports-color@7.1.0):
+  https-proxy-agent@5.0.1:
     dependencies:
-      agent-base: 6.0.0(supports-color@7.1.0)
-      debug: 4.4.3(supports-color@7.1.0)
+      agent-base: 6.0.0
+      debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
 
@@ -970,10 +966,10 @@ snapshots:
 
   picomatch@4.0.5: {}
 
-  portfinder@1.0.38(supports-color@7.1.0):
+  portfinder@1.0.38:
     dependencies:
       async: 3.2.6
-      debug: 4.4.3(supports-color@7.1.0)
+      debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
 

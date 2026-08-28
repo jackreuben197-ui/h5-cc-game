@@ -259,7 +259,7 @@ export default class MttTexasGameplayEntrance extends AGameplayEntrance {
         roomData.basicInfo.invitationCode = this._mttDetails.mtt.invitationCode;
         // 没法取到的数据(enterRoom后获取把)
         // roomData.basicInfo.sbante = { sb: this._mttDetails.mtt.sb, ante: this._mttDetails.mtt.ante };
-        roomData.basicInfo.clubID = this._mttDetails.mtt.clubId;
+        roomData.basicInfo.clubID = this.entryClubID || this._mttDetails.mtt.clubId;
         roomData.basicInfo.tribeID = this._mttDetails.mtt.tribeId;
         roomData.basicInfo.goldType = this._mttDetails.mtt.goldType;
         // 先保存 H5 赛事上下文，EnterRoom 快照再补齐动态比赛状态。

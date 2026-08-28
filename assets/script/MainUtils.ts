@@ -9,7 +9,7 @@ import { createLogger } from './core/decorator/LogTrace';
 import bridgeStorage from './data/BridgeStorage';
 import globalConfigStore from './data/system/GlobalConfigStore';
 import diamondModel from './data/trade/DiamondModel';
-import userStore from './data/user/UserStore';
+import userStore, { ClubData } from './data/user/UserStore';
 import { MTT_MATCH_ENTRY_ROOM_ID } from './game/constant/Constants';
 import ProcedureDefine from './game/procedure/ProcedureDefine';
 import ProcedureManager from './game/procedure/ProcedureManager';
@@ -25,6 +25,16 @@ const _ploger = createLogger('[MainUtils]');
 const MTT_INFO_INCOMPLETE_MESSAGE = '比赛信息不完整，请返回大厅重试';
 
 const MTT_ENTRY_INVALID_MESSAGE = '比赛入口参数无效，请刷新后重试';
+
+interface SyncedClubInfo {
+    club_id?: number;
+    random_id?: number;
+    club_name?: string;
+    logo?: string;
+    club_logo?: string;
+    tribe_random_id?: number;
+    room_logo?: string;
+}
 // ==================== SDK 动态加载 ====================
 /**
  * 动态加载 Web 层第三方 SDK
@@ -214,7 +224,8 @@ export async function registerH5Listeners(): Promise<void> {
         await ProcedureManager.StartProcedure(ProcedureDefine.EnterRoom, {
             roomID: roomData.rid,
             matchID: 0,
-            roomType: roomData.room_type
+            roomType: roomData.room_type,
+            clubID: userStore.currentClubID
         });
         _ploger.info('[H5Bridge] enterTable 已启动进桌流程, room_id:', roomData.rid, 'room:', roomData.name);
     });
@@ -264,18 +275,28 @@ export async function registerH5Listeners(): Promise<void> {
         _ploger.info('[H5Bridge] 同步俱乐部信息:', payload);
         // bridge 协议 response 为 unknown，断言为 SyncUserClubResponse 后再读 data。
         const response = payload?.response as SyncUserClubResponse | undefined;
-        const clubList = response?.data;
-        if (!clubList) {
+        const rawClubData = response?.data as unknown;
+        const wrappedClub = (rawClubData as { club?: SyncedClubInfo } | undefined)?.club;
+        const clubList = Array.isArray(rawClubData) ? (rawClubData as SyncedClubInfo[]) : wrappedClub ? [wrappedClub] : [];
+        if (!clubList.length) {
             _ploger.error('[H5Bridge] syncUserClub 数据异常：缺少 payload.response.data');
             return;
         }
-        // // 仅写入本地缓存，不触发 UI 事件和网络请求
-        // ClubCache._allCubData = clubList;
-        // // 设置当前俱乐部（第一个），仅写 _msg 和 isHadClub，无事件广播
-        // if (clubList.length > 0) {
-        //     ClubCache.setClubData(clubList[0]);
-        // }
+        userStore.clubsData = clubList
+            .map((club): ClubData => ({
+                _clubID: Number(club.club_id || 0),
+                clubID: Number(club.random_id || 0),
+                name: String(club.club_name || ''),
+                logo: String(club.logo || club.club_logo || ''),
+                tribeID: Number(club.tribe_random_id || 0),
+                roomLogo: String(club.room_logo || '').trim()
+            }))
+            .filter(club => club._clubID > 0);
         _ploger.info('[H5Bridge] syncUserClub 缓存完成, 共', clubList.length, '个俱乐部');
+    });
+    h5MessageManager.on('syncCurrentClub', payload => {
+        const clubID = Number(payload?.clubId || 0);
+        userStore.currentClubID = Number.isFinite(clubID) && clubID > 0 ? clubID : 0;
     });
     h5MessageManager.on('syncGlobalConfig', payload => {
         const config = payload?.raw;
@@ -410,7 +431,8 @@ export async function registerH5Listeners(): Promise<void> {
                 roomID,
                 matchID,
                 roomType,
-                observer
+                observer,
+                clubID: userStore.currentClubID
             });
             _ploger.info('[H5Bridge] enterMtt 参数校验完成，开始进入 MTT', matchID, roomID, observer);
         });

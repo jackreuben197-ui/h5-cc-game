@@ -411,7 +411,7 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         roomData.basicInfo.straddle = this._roomInfo.straddleOn > 0;
         roomData.basicInfo.straddleMax = this._roomInfo.straddleMax;
         //baseInfo
-        roomData.basicInfo.clubID = this._roomInfo.clubId;
+        roomData.basicInfo.clubID = this.entryClubID || this._roomInfo.clubId;
         roomData.basicInfo.tribeID = this._roomInfo.tribeId;
         roomData.basicInfo.originType = this._roomInfo.originType;
         roomData.basicInfo.shareTable = this._roomInfo.shareTable;
