@@ -1,4 +1,6 @@
+import { autoBindEvents, bindEvent, unBindEventsAll } from '../../core/decorator/DataBind';
 import { traceClass } from '../../core/decorator/LogTrace';
+import ccviewData, { CCViewData } from '../../data/system/CCViewData';
 import AssetManager, { BUNDLE_RESOURCES, DynamicLoadDefinition, PreloadDefinition, PreloadParams } from '../loader/AssetManager';
 
 const { ccclass, property, menu } = cc._decorator;
@@ -20,9 +22,53 @@ export default class UIPreloadingComponent extends cc.Component {
     progress_label: cc.Label = null;
     @property(cc.Label)
     progress_desc: cc.Label = null;
+    @property({ type: cc.Sprite, displayName: '背景 Sprite' })
+    bg_sprite: cc.Sprite = null;
+    @property({ type: cc.SpriteFrame, displayName: '竖屏背景' })
+    bg_portrait: cc.SpriteFrame = null;
+    @property({ type: cc.SpriteFrame, displayName: '宽屏(PC)背景' })
+    bg_wide: cc.SpriteFrame = null;
     //上一次进度
     private prevPercent: number = 0;
     private asset_count: number = 0;
+
+    protected onEnable(): void {
+        autoBindEvents(this, { ccviewData: ccviewData });
+    }
+
+    protected onDisable(): void {
+        unBindEventsAll(this);
+    }
+
+    @bindEvent(CCViewData.FRAME_SIZE_UPDATE, { dataSource: 'ccviewData', initPriority: 20 })
+    private onFrameSizeUpdate(): void {
+        this.fitBackground();
+    }
+
+    private fitBackground(): void {
+        const sprite = this.bg_sprite;
+        if (!sprite) return;
+        const sf = ccviewData.isWideLayout ? this.bg_wide : this.bg_portrait;
+        if (!sf) return;
+        sprite.spriteFrame = sf;
+        const node = sprite.node;
+        const texW = sf.getOriginalSize().width;
+        const texH = sf.getOriginalSize().height;
+        const vs = cc.view.getVisibleSize();
+        const targetW = vs.width || 1242;
+        const targetH = vs.height || 2688;
+        if (!texW || !texH || !targetW || !targetH) return;
+        const widget = node.getComponent(cc.Widget);
+        if (Math.abs(texW / texH - targetW / targetH) < 0.01) {
+            if (widget) widget.enabled = true;
+            node.setScale(1, 1);
+            return;
+        }
+        if (widget) widget.enabled = false;
+        node.setContentSize(texW, texH);
+        const scale = Math.max(targetW / texW, targetH / texH);
+        node.setScale(scale, scale);
+    }
 
     setProgress(progress: number) {
         this.progress_bar.progress = progress;

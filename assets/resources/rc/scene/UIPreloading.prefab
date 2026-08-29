@@ -947,6 +947,15 @@
     "progress_desc": {
       "__id__": 22
     },
+    "bg_sprite": {
+      "__id__": 3
+    },
+    "bg_portrait": {
+      "__uuid__": "1aeb7ea6-634a-4766-a298-40801cc5b878"
+    },
+    "bg_wide": {
+      "__uuid__": "59b0e211-ab64-4889-b9c5-739d37b3bfe6"
+    },
     "_id": ""
   },
   {
