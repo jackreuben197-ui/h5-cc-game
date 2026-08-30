@@ -1,3 +1,5 @@
+import i18n from '@silenthill/h5-cc-i18n';
+
 // =========================================================================
 // 1. 游戏基础枚举与错误定义
 // =========================================================================
@@ -62,7 +64,11 @@ export const HandValueTypeStringMap: Record<HandValueType, string> = {
 };
 
 export function handValueTypeToString(type: HandValueType): string {
-    return HandValueTypeStringMap[type];
+    const fallback = HandValueTypeStringMap[type];
+    if (type < HandValueType.HVHighPokerCard || type > HandValueType.HVRoyalFlush) return fallback;
+    const key = `adaptation${10063 - type}`;
+    const localized = i18n.get(key);
+    return !localized || localized === key ? fallback : localized;
 }
 
 // 位移预乘常量 (2^n)
