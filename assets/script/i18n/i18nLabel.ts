@@ -45,6 +45,13 @@ export class i18nLabel extends cc.Component {
         let label: any = this.getComponent(cc.Label);
         if (cc.isValid(label)) {
             label.string = i18nMgr._getLabel(this.i18n_string);
+            if (typeof label._forceUpdateRenderData === 'function') {
+                label._forceUpdateRenderData(true);
+            }
+            const parentLayout = this.node.parent?.getComponent(cc.Layout);
+            if (parentLayout) {
+                parentLayout.updateLayout();
+            }
         }
         label = this.getComponent(cc.RichText);
         if (cc.isValid(label)) {

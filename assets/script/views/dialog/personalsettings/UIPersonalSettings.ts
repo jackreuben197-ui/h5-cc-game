@@ -119,15 +119,18 @@ export default class UIPersonalSettings extends UIComponentBaseDialog<UIPersonal
         this._initTabTitle();
         this._initShortCut();
         this._initSoundAndShowBB();
+        this._updateTableExpandLayout();
     }
 
     public initialize(param: UIPersonalSettingsParam): void {
         this._mine = roomDataManager.getRoomData<TexasGameRoomData>(param.roomID, param.matchID).mine;
+        this._refreshDeskNames();
         this._initCardSelected();
         this._initDeskSelected();
         this._initTab();
         this.toggleVoice.onoff(texasGamePersonalSettings.soundOn);
         this.toggleShowBB.onoff(texasGamePersonalSettings.showBB);
+        this._updateTableExpandLayout();
     }
 
     public override close(): void {
@@ -157,6 +160,7 @@ export default class UIPersonalSettings extends UIComponentBaseDialog<UIPersonal
         this.deskNode.active = true;
         this.shortCutNode.active = false;
         this.systemNode.active = false;
+        this._updateTableExpandLayout();
     };
     private onShortCutClicked = (v: cc.Toggle) => {
         if (!v.isChecked) return;
@@ -182,10 +186,57 @@ export default class UIPersonalSettings extends UIComponentBaseDialog<UIPersonal
         this.deskNode.active = true;
         this.shortCutNode.active = false;
         this.systemNode.active = false;
+        this._updateTableExpandLayout();
     }
     // ====================================================
     // 桌面背景
     // ====================================================
+
+    private _refreshDeskNames(): void {
+        for (let i = 0; i < this._deskTypes.length; i++) {
+            const tm = this._deskTypes[i];
+            if (tm && UIPersonalSettings.DESK_NAME_KEYS[i]) {
+                tm.setDisplayName(i18nMgr.Get(UIPersonalSettings.DESK_NAME_KEYS[i]));
+            }
+        }
+    }
+
+    private _updateTableExpandLayout(): void {
+        if (!this.tableExpand || !cc.isValid(this.tableExpand.node)) return;
+
+        const updateNodeLayout = (bgNode: cc.Node, arrowName: string) => {
+            if (!bgNode || !cc.isValid(bgNode)) return;
+            const labelNode = bgNode.getChildByName('Label');
+            const arrowNode = bgNode.getChildByName(arrowName);
+            if (!labelNode || !arrowNode) return;
+
+            const labelComp = labelNode.getComponent(cc.Label);
+            if (labelComp && typeof (labelComp as any)._forceUpdateRenderData === 'function') {
+                (labelComp as any)._forceUpdateRenderData(true);
+            }
+
+            const layout = bgNode.getComponent(cc.Layout);
+            if (layout) {
+                layout.updateLayout();
+            } else {
+                const spacing = 12;
+                const textWidth = labelNode.width;
+                const arrowWidth = arrowNode.width;
+                const totalWidth = textWidth + spacing + arrowWidth;
+
+                labelNode.x = -totalWidth / 2 + textWidth / 2;
+                arrowNode.x = labelNode.x + textWidth / 2 + spacing + arrowWidth / 2;
+            }
+        };
+
+        this.tableExpand.node.children.forEach(child => {
+            if (child.getChildByName('ArrowDown')) {
+                updateNodeLayout(child, 'ArrowDown');
+            } else if (child.getChildByName('ArrowUp')) {
+                updateNodeLayout(child, 'ArrowUp');
+            }
+        });
+    }
 
     private _initDeskGroup(): void {
         for (let i = 1; i <= UIPersonalSettings.DESK_COUNT; i++) {
@@ -232,6 +283,7 @@ export default class UIPersonalSettings extends UIComponentBaseDialog<UIPersonal
                     }
                 });
             }
+            this._updateTableExpandLayout();
         };
     }
 

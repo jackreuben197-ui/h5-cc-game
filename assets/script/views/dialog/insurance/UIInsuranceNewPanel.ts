@@ -91,7 +91,12 @@ class PlayerItem {
         }
         if (this.textNickname) this.textNickname.string = nickname;
         if (this.textOuts) {
-            this.textOuts.string = outs >= 0 ? `${outs}${i18nMgr.Get('UIInsurance_ge')}outs` : i18nMgr.Get('UIInsurance_InsureIn');
+            if (outs >= 0) {
+                const outsUnit = i18nMgr.isCN() ? `${i18nMgr.Get('UIInsurance_ge')}outs` : ` ${outs === 1 ? 'out' : 'outs'}`;
+                this.textOuts.string = `${outs}${outsUnit}`;
+            } else {
+                this.textOuts.string = i18nMgr.Get('UIInsurance_InsureIn');
+            }
         }
     }
 }

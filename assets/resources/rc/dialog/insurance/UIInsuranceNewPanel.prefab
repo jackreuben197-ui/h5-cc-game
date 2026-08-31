@@ -344,7 +344,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 120,
+      "width": 220,
       "height": 75.6
     },
     "_anchorPoint": {
@@ -450,9 +450,6 @@
     "_components": [
       {
         "__id__": 10
-      },
-      {
-        "__id__": 11
       }
     ],
     "_prefab": {
@@ -520,8 +517,8 @@
     ],
     "_srcBlendFactor": 770,
     "_dstBlendFactor": 771,
-    "_string": "123.45",
-    "_N$string": "123.45",
+    "_string": "0",
+    "_N$string": "0",
     "_fontSize": 60,
     "_lineHeight": 60,
     "_enableWrapText": false,
@@ -536,7 +533,7 @@
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 2,
+    "_N$overflow": 0,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -988,7 +985,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 102.25,
+      "width": 190,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -1042,8 +1039,8 @@
     "_dstBlendFactor": 771,
     "_string": "保险1",
     "_N$string": "保险1",
-    "_fontSize": 40,
-    "_lineHeight": 40,
+    "_fontSize": 32,
+    "_lineHeight": 34,
     "_enableWrapText": true,
     "_N$file": null,
     "_isSystemFontUsed": true,
@@ -1054,7 +1051,7 @@
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 0,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -2205,8 +2202,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 180,
-      "height": 45.36
+      "width": 190,
+      "height": 45
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -2259,9 +2256,9 @@
     "_dstBlendFactor": 771,
     "_string": "购买中",
     "_N$string": "购买中",
-    "_fontSize": 36,
-    "_lineHeight": 36,
-    "_enableWrapText": true,
+    "_fontSize": 32,
+    "_lineHeight": 34,
+    "_enableWrapText": false,
     "_N$file": {
       "__uuid__": "4ddaf238-f782-4af9-8e3e-7eaa94d96ede"
     },
@@ -2273,7 +2270,7 @@
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 3,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -3451,8 +3448,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 180,
-      "height": 45.36
+      "width": 190,
+      "height": 45
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -3505,9 +3502,9 @@
     "_dstBlendFactor": 771,
     "_string": "4个outs",
     "_N$string": "4个outs",
-    "_fontSize": 36,
-    "_lineHeight": 36,
-    "_enableWrapText": true,
+    "_fontSize": 32,
+    "_lineHeight": 34,
+    "_enableWrapText": false,
     "_N$file": {
       "__uuid__": "4ddaf238-f782-4af9-8e3e-7eaa94d96ede"
     },
@@ -3519,7 +3516,7 @@
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 3,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": ""
   },
@@ -3841,7 +3838,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 130,
+      "width": 280,
       "height": 46.62
     },
     "_anchorPoint": {
@@ -3895,8 +3892,8 @@
     "_dstBlendFactor": 771,
     "_string": "公共牌",
     "_N$string": "公共牌",
-    "_fontSize": 37,
-    "_lineHeight": 37,
+    "_fontSize": 36,
+    "_lineHeight": 36,
     "_enableWrapText": false,
     "_N$file": {
       "__uuid__": "4ddaf238-f782-4af9-8e3e-7eaa94d96ede"
@@ -3906,7 +3903,7 @@
     "_batchAsBitmap": false,
     "_styleFlags": 0,
     "_underlineHeight": 0,
-    "_N$horizontalAlign": 0,
+    "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
     "_N$overflow": 2,
@@ -5313,7 +5310,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 82,
+      "width": 220,
       "height": 51.66
     },
     "_anchorPoint": {
@@ -5325,7 +5322,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -350,
+        -280,
         0,
         0,
         0,
@@ -5367,8 +5364,8 @@
     "_dstBlendFactor": 771,
     "_string": "反超",
     "_N$string": "反超",
-    "_fontSize": 41,
-    "_lineHeight": 41,
+    "_fontSize": 38,
+    "_lineHeight": 40,
     "_enableWrapText": false,
     "_N$file": {
       "__uuid__": "4ddaf238-f782-4af9-8e3e-7eaa94d96ede"
@@ -5378,7 +5375,7 @@
     "_batchAsBitmap": false,
     "_styleFlags": 0,
     "_underlineHeight": 0,
-    "_N$horizontalAlign": 1,
+    "_N$horizontalAlign": 0,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
     "_N$overflow": 2,
@@ -5957,7 +5954,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 82,
+      "width": 220,
       "height": 51.66
     },
     "_anchorPoint": {
@@ -5969,7 +5966,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -350,
+        -280,
         0,
         0,
         0,
@@ -6011,8 +6008,8 @@
     "_dstBlendFactor": 771,
     "_string": "平分",
     "_N$string": "平分",
-    "_fontSize": 41,
-    "_lineHeight": 41,
+    "_fontSize": 38,
+    "_lineHeight": 40,
     "_enableWrapText": false,
     "_N$file": {
       "__uuid__": "4ddaf238-f782-4af9-8e3e-7eaa94d96ede"
@@ -6022,7 +6019,7 @@
     "_batchAsBitmap": false,
     "_styleFlags": 0,
     "_underlineHeight": 0,
-    "_N$horizontalAlign": 1,
+    "_N$horizontalAlign": 0,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
     "_N$overflow": 2,
@@ -6819,7 +6816,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 175,
+      "width": 180,
       "height": 44.1
     },
     "_anchorPoint": {
@@ -6873,8 +6870,8 @@
     "_dstBlendFactor": 771,
     "_string": "按数字排序",
     "_N$string": "按数字排序",
-    "_fontSize": 35,
-    "_lineHeight": 35,
+    "_fontSize": 32,
+    "_lineHeight": 34,
     "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
@@ -7316,7 +7313,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 175,
+      "width": 180,
       "height": 44.1
     },
     "_anchorPoint": {
@@ -7370,8 +7367,8 @@
     "_dstBlendFactor": 771,
     "_string": "按数字排序",
     "_N$string": "按数字排序",
-    "_fontSize": 35,
-    "_lineHeight": 35,
+    "_fontSize": 32,
+    "_lineHeight": 34,
     "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
@@ -7742,7 +7739,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 300,
+      "width": 750,
       "height": 63
     },
     "_anchorPoint": {
@@ -7796,8 +7793,8 @@
     "_dstBlendFactor": 771,
     "_string": "选择投保方案",
     "_N$string": "选择投保方案",
-    "_fontSize": 50,
-    "_lineHeight": 50,
+    "_fontSize": 38,
+    "_lineHeight": 40,
     "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
@@ -7864,19 +7861,19 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 123,
+      "width": 180,
       "height": 51.66
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
-      "x": 1,
+      "x": 0,
       "y": 0.5
     },
     "_trs": {
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -370,
+        -450,
         -115,
         0,
         0,
@@ -7918,7 +7915,7 @@
     "_dstBlendFactor": 771,
     "_string": "已投入",
     "_N$string": "已投入",
-    "_fontSize": 41,
+    "_fontSize": 34,
     "_lineHeight": 41,
     "_enableWrapText": false,
     "_N$file": null,
@@ -7995,7 +7992,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -360,
+        -260,
         -115,
         0,
         0,
@@ -8096,19 +8093,19 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 123,
+      "width": 200,
       "height": 51.66
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
-      "x": 1,
+      "x": 0,
       "y": 0.5
     },
     "_trs": {
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -20,
+        -140,
         -115,
         0,
         0,
@@ -8150,7 +8147,7 @@
     "_dstBlendFactor": 771,
     "_string": "赔付额",
     "_N$string": "赔付额",
-    "_fontSize": 41,
+    "_fontSize": 34,
     "_lineHeight": 41,
     "_enableWrapText": false,
     "_N$file": null,
@@ -8227,7 +8224,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -10,
+        70,
         -115,
         0,
         0,
@@ -8328,19 +8325,19 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 123,
+      "width": 180,
       "height": 51.66
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
-      "x": 1,
+      "x": 0,
       "y": 0.5
     },
     "_trs": {
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        350,
+        190,
         -115,
         0,
         0,
@@ -8382,7 +8379,7 @@
     "_dstBlendFactor": 771,
     "_string": "已投入",
     "_N$string": "已投入",
-    "_fontSize": 41,
+    "_fontSize": 34,
     "_lineHeight": 41,
     "_enableWrapText": false,
     "_N$file": null,
@@ -8459,7 +8456,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        360,
+        380,
         -115,
         0,
         0,
@@ -10550,7 +10547,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 110,
+      "width": 240,
       "height": 69.3
     },
     "_anchorPoint": {
@@ -10604,8 +10601,8 @@
     "_dstBlendFactor": 771,
     "_string": "满池",
     "_N$string": "满池",
-    "_fontSize": 55,
-    "_lineHeight": 55,
+    "_fontSize": 44,
+    "_lineHeight": 44,
     "_enableWrapText": false,
     "_N$file": {
       "__uuid__": "4ddaf238-f782-4af9-8e3e-7eaa94d96ede"
@@ -12979,7 +12976,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 80.16,
+      "width": 240,
       "height": 69.3
     },
     "_anchorPoint": {
@@ -13033,8 +13030,8 @@
     "_dstBlendFactor": 771,
     "_string": "1/3",
     "_N$string": "1/3",
-    "_fontSize": 55,
-    "_lineHeight": 55,
+    "_fontSize": 44,
+    "_lineHeight": 44,
     "_enableWrapText": false,
     "_N$file": {
       "__uuid__": "4ddaf238-f782-4af9-8e3e-7eaa94d96ede"
@@ -14209,7 +14206,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 114,
+      "width": 260,
       "height": 63
     },
     "_anchorPoint": {
@@ -14263,8 +14260,8 @@
     "_dstBlendFactor": 771,
     "_string": "取消",
     "_N$string": "取消",
-    "_fontSize": 57,
-    "_lineHeight": 50,
+    "_fontSize": 48,
+    "_lineHeight": 48,
     "_enableWrapText": false,
     "_N$file": {
       "__uuid__": "4ddaf238-f782-4af9-8e3e-7eaa94d96ede"
@@ -14657,8 +14654,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 92,
-      "height": 57.96
+      "width": 260,
+      "height": 60
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -14711,8 +14708,8 @@
     "_dstBlendFactor": 771,
     "_string": "购买",
     "_N$string": "购买",
-    "_fontSize": 46,
-    "_lineHeight": 46,
+    "_fontSize": 48,
+    "_lineHeight": 48,
     "_enableWrapText": false,
     "_N$file": {
       "__uuid__": "4ddaf238-f782-4af9-8e3e-7eaa94d96ede"

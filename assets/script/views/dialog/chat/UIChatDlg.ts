@@ -5,6 +5,7 @@ import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataChat, { TexasChatMessage } from '../../../data/room/texas/TexasGameRoomDataChat';
 import HttpRequest from '../../../net/https/HttpRequest';
 import { WebChatRoomMessageSync, WebConfigGlobalConfig } from '../../../net/https/WebRequest';
+import { i18nMgr } from '../../../i18n/i18nMgr';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import TexasTableEvent from '../../scene/room/texas/events/TexasTableEvent';
 import ChatMsgItem from './ChatMsgItem';
@@ -116,6 +117,7 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
         this.chatItemTemplate.removeFromParent(false);
         this.chatItemTemplate.active = false;
         this.chatTemplateNode.active = false;
+        this._refreshPlaceholder();
     }
 
     public initialize(param: UIChatDlgParam): void {
@@ -133,6 +135,7 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
         this._chat.setChatDialogOpen(true);
         this.dlgTitleLabel.string = `${this._roomData.basicInfo.roomName || ''}\n#${this._roomData.roomID}`;
         this.chatEditBox.string = '';
+        this._refreshPlaceholder();
         this._chatTemplatePanelActive = false;
         this._chatMode = 'chatOnly';
         this.chatTemplateNode.active = false;
@@ -149,7 +152,14 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
         if (this._chat) {
             this._chat.setChatDialogOpen(true);
         }
+        this._refreshPlaceholder();
         this._bindEventsAndRefresh();
+    }
+
+    private _refreshPlaceholder(): void {
+        if (this.chatEditBox) {
+            this.chatEditBox.placeholder = i18nMgr.Get('UIChatInputContent');
+        }
     }
 
     protected onDisable(): void {
