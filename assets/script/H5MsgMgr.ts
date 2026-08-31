@@ -145,6 +145,24 @@ declare global {
         CocosBridge?: {
             postMessage: (data: IncomingEnvelope | string) => void;
         };
+        H5Bridge?: {
+            onMessgeRecv?: (
+                type: string,
+                payload?: unknown,
+                msgtype?: number,
+                requestId?: string,
+                timestamp?: number,
+                source?: string
+            ) => void;
+            onMessageRecv?: (
+                type: string,
+                payload?: unknown,
+                msgtype?: number,
+                requestId?: string,
+                timestamp?: number,
+                source?: string
+            ) => void;
+        };
         /** CC 就绪标志，H5 读取后决定是否发送 h5Ready。*/
         __CC_READY__?: boolean;
     }
@@ -434,6 +452,20 @@ class H5MsgMgr {
      */
     private static _post(msg: BridgeRawMessage): void {
         setTimeout(() => {
+            const h5Bridge = window.H5Bridge;
+            const directReceiver = h5Bridge?.onMessgeRecv || h5Bridge?.onMessageRecv;
+            if (typeof directReceiver === 'function') {
+                directReceiver.call(
+                    h5Bridge,
+                    msg.action,
+                    msg.payload,
+                    msg.msgtype,
+                    msg.requestId,
+                    msg.timestamp,
+                    msg.source
+                );
+                return;
+            }
             if (isBinaryEnvelope(msg.payload)) {
                 window.postMessage(msg, '*');
             } else {
