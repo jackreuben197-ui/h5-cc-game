@@ -345,4 +345,5 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         roomID: roomData.roomID,
         matchID: roomData.matchID
     });
+    ProcedureManager.NotifyRoomReady(roomData);
 }

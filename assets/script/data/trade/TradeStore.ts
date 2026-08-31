@@ -10,6 +10,10 @@ export class TradeStore extends cc.EventTarget {
     private _tradeItems: HttpUSDTPriceListProtocol.GoldInfo[] = [];
     private _payTypes: HttpUSDTPriceListProtocol.PayType[] = [];
 
+    public clearSessionData(): void {
+        this.updateTradeItemsAndPayTimes([], []);
+    }
+
     public updateTradeItemsAndPayTimes(trs: HttpUSDTPriceListProtocol.GoldInfo[], pts: HttpUSDTPriceListProtocol.PayType[]) {
         if (GameplayUtil.isArraySame(this._tradeItems, trs) && GameplayUtil.isArraySame(this._payTypes, pts)) {
             return false;

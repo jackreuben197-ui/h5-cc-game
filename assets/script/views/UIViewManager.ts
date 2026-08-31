@@ -414,6 +414,13 @@ class UIViewManager {
         }
     }
 
+    public closeAllDialogs(): void {
+        const displayed = this._displayedDialogs.slice();
+        for (let i = displayed.length - 1; i >= 0; i--) {
+            this.closeDialog(displayed[i]);
+        }
+    }
+
     // showToast 显示提示
     public showToast(content: string, customConfig?: IToastConfig, cb?: () => void) {
         this._toastManayer.showToast(content, customConfig, cb);

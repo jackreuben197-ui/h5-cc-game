@@ -9,6 +9,7 @@ import userStore from '../../../../../data/user/UserStore';
 import UserStoreUtils from '../../../../../data/user/UserStoreUtils';
 import { BringInMode } from '../../../../../game/constant/BringInMode';
 import { GameType } from '../../../../../game/constant/LogicTypeConf';
+import guestSitdownFlow from '../../../../../game/GuestSitdownFlow';
 import ProcedureDefine from '../../../../../game/procedure/ProcedureDefine';
 import ProcedureManager from '../../../../../game/procedure/ProcedureManager';
 import h5MessageManager from '../../../../../H5MsgMgr';
@@ -105,6 +106,19 @@ export default class TexasTableEvent {
         // 已经坐下,点击不处理
         if (seatData.roomData.mine.seatNo > 0) {
             this.tracelog.debug('Sitdown 不应该能点');
+            return;
+        }
+        if (userStore.isGuestAccount) {
+            this.tracelog.info('Sitdown 体验账号拦截，打开 H5 注册/登录弹窗', seatNo);
+            guestSitdownFlow.begin(seatData.roomData, seatNo, (realMine, targetSeatNo) =>
+                TexasTableEvent.Sitdown(realMine, targetSeatNo)
+            );
+            h5MessageManager.sendToH5('h5Navigate', 1, {
+                name: 'login',
+                ensureVisible: true,
+                openLoginModal: true,
+                loginContext: 'table-sitdown'
+            });
             return;
         }
         this.tracelog.debug('Sitdown', seatNo);

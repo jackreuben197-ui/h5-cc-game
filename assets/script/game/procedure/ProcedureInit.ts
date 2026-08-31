@@ -1,23 +1,38 @@
 import { GameConfig } from '../../config/GameConfig';
 import { traceClass, traceMethod } from '../../core/decorator/LogTrace';
+import soundManager from '../../core/SoundManager';
+import playerStore from '../../data/player/PlayerStore';
+import roomDataManager from '../../data/room/RoomDataManager';
 import dlTexasRoomBackground from '../../data/room/texas/load/DLTexasRoomBacground';
 import texasGamePersonalSettings from '../../data/room/texas/TexasGamePersonalSettings';
 import ccviewData from '../../data/system/CCViewData';
+import tradeStore from '../../data/trade/TradeStore';
+import userStore from '../../data/user/UserStore';
 import h5MessageManager from '../../H5MsgMgr';
 import { i18nMgr } from '../../i18n/i18nMgr';
 import * as MainUtils from '../../MainUtils';
+import agoraManager from '../../net/agora/AgoraManager';
 import { DynamicLoadDefinition, PreloadDefinitionGame, PreloadDefinitionSound } from '../../views/loader/AssetManager';
 import viewManager from '../../views/UIViewManager';
+import roomReconnectManager from '../RoomReconnectManager';
 import ProcedureBase from './ProcedureBase';
+
+export interface ProcedureInitParam {
+    resetSession?: boolean;
+}
 
 @traceClass()
 export default class ProcedureInit extends ProcedureBase {
     Name: string = 'ProcedureInit';
     private _resolveDone: (v: any) => void;
-    private _waitLoadingCompletePromise = new Promise(resolve => (this._resolveDone = resolve));
+    private _waitLoadingCompletePromise: Promise<unknown> = Promise.resolve();
 
-    async lateEnter(param?: any) {
+    public override async lateEnter(param: ProcedureInitParam = {}) {
         super.lateEnter(param);
+        if (param.resetSession) {
+            this._resetSession();
+        }
+        this._waitLoadingCompletePromise = new Promise(resolve => (this._resolveDone = resolve));
         this.setCCC();
         this.setFit();
         //解析 语言配置
@@ -46,14 +61,29 @@ export default class ProcedureInit extends ProcedureBase {
             },
             error: () => {
                 this.tracelog.error('ProcedureInit show preloading error');
+                this._resolveDone(false);
             }
         });
     }
 
-    async Leave() {
+    public override async Leave() {
         h5MessageManager.sendToH5('h5Hide', 1);
         await this._waitLoadingCompletePromise;
         super.Leave();
+    }
+
+    private _resetSession(): void {
+        roomReconnectManager.clearAllContext();
+        roomDataManager.clearAllRoomData();
+        userStore.clearSessionIdentity();
+        playerStore.clearSessionData();
+        tradeStore.clearSessionData();
+        soundManager.volumeOnOff(false);
+        viewManager.closeAllDialogs();
+        viewManager.hidePrompting();
+        viewManager.hideCurrentScene();
+        viewManager.showPreloadingLayer();
+        void agoraManager.clear();
     }
 
     /**
