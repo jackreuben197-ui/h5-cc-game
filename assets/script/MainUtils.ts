@@ -16,7 +16,7 @@ import ProcedureDefine from './game/procedure/ProcedureDefine';
 import ProcedureManager from './game/procedure/ProcedureManager';
 import roomReconnectManager from './game/RoomReconnectManager';
 import GameplayUtil from './game/util/GameplayUtil';
-import h5MessageManager, { EnterMttMatchInfo, EnterTableRoomInfo, SyncUserClubResponse, SyncUserInfo } from './H5MsgMgr';
+import h5MessageManager, { EnterMttMatchInfo, EnterTableRoomInfo, SyncUserClubResponse } from './H5MsgMgr';
 import { i18nMgr } from './i18n/i18nMgr';
 import agoraManager from './net/agora/AgoraManager';
 import ProtocolAgency from './net/websocket/ProtocolAgency';
@@ -250,40 +250,19 @@ export async function registerH5Listeners(): Promise<void> {
     });
     h5MessageManager.on('syncUser', payload => {
         _ploger.info('[H5Bridge] 同步用户信息:', payload);
-        // bridge 协议里 raw 是 unknown（兼容 H5 端 ApiResponse 等宽松实参），
-        // 这里断言为 { user?: SyncUserInfo } 后再访问。
-        const raw = payload?.raw as { user?: SyncUserInfo } | undefined;
-        const userInfo = raw?.user;
-        if (!userInfo) {
-            _ploger.error('[H5Bridge] syncUser 数据异常：缺少 payload.raw.user');
+        const userID = Number(payload.uid || 0);
+        const userRID = Number(payload.randomId || 0);
+        if (!Number.isFinite(userID) || userID <= 0 || !Number.isFinite(userRID) || userRID <= 0) {
+            _ploger.error('[H5Bridge] syncUser 数据异常：用户标识无效');
             return;
         }
         userStore.isGuestAccount = payload.isExperience === true;
-        userStore.userID = Number(userInfo.p_u_id || 0);
-        userStore.userRID = Number(userInfo.un_id || 0);
-        userStore.sex = Number(userInfo.sex || 0);
-        userStore.name = String(userInfo.nickname || '');
-        userStore.avatar = String(userInfo.avatar || '');
-        // 仅写入本地缓存，不触发 UI 事件和网络请求
-        // const gc = GameCache.Instance;
-        // gc.nUserId = Number(userInfo.un_id);
-        // gc.userId = Number(userInfo.p_u_id ?? 0);
-        // gc.strPhone = userInfo.phone;
-        // gc.sex = userInfo.sex;
-        // gc.nick = userInfo.nickname;
-        // gc.headPic = userInfo.avatar;
-        // gc.userType = userInfo.ut;
-        // gc.isHadClub = userInfo.club_id > 0;
-        // 直接写入 UserInfoModel 内部数据，绕过 setter（不触发 myGoldChange 事件）
-        _ploger.info(
-            '[H5Bridge] syncUser 缓存完成, user_id:',
-            userInfo.un_id,
-            'nickname:',
-            userInfo.nickname,
-            'isGuestAccount:',
-            userStore.isGuestAccount
-        );
-        // 预加载声音和游戏资源（提前加载，避免 enterTable 时再加载影响进桌速度）
+        userStore.userID = userID;
+        userStore.userRID = userRID;
+        userStore.sex = Number(payload.sex || 0);
+        userStore.name = String(payload.nickname || '');
+        userStore.avatar = String(payload.avatar || '');
+        _ploger.info('[H5Bridge] syncUser 缓存完成, user_id:', payload.randomId, 'nickname:', payload.nickname, 'isGuestAccount:', userStore.isGuestAccount);
     });
     h5MessageManager.on('syncLanguage', payload => {
         const locale = payload?.locale;

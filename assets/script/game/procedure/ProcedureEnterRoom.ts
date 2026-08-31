@@ -15,14 +15,14 @@ export interface ProcedureEnterRoomParam {
 }
 
 export default class ProcedureEnterRoom extends ProcedureBase {
-    Name: string = 'ProcedureEnterRoom';
+    public override Name: string = 'ProcedureEnterRoom';
     /**
      * 德州玩法入口实例
      */
     private _entrance: AGameplayEntrance = null;
     private _enterSequence: number = 0;
 
-    override lateEnter(param: ProcedureEnterRoomParam) {
+    protected override lateEnter(param: ProcedureEnterRoomParam): void {
         super.lateEnter(param);
         this._beginEnter(param);
     }

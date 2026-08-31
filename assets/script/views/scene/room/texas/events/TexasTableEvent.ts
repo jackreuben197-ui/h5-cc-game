@@ -110,9 +110,7 @@ export default class TexasTableEvent {
         }
         if (userStore.isGuestAccount) {
             this.tracelog.info('Sitdown 体验账号拦截，打开 H5 注册/登录弹窗', seatNo);
-            guestSitdownFlow.begin(seatData.roomData, seatNo, (realMine, targetSeatNo) =>
-                TexasTableEvent.Sitdown(realMine, targetSeatNo)
-            );
+            guestSitdownFlow.begin(seatData.roomData, seatNo, (realMine, targetSeatNo) => TexasTableEvent.Sitdown(realMine, targetSeatNo));
             h5MessageManager.sendToH5('h5Navigate', 1, {
                 name: 'login',
                 ensureVisible: true,

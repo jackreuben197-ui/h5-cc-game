@@ -23,18 +23,18 @@ export interface ProcedureInitParam {
 
 @traceClass()
 export default class ProcedureInit extends ProcedureBase {
-    Name: string = 'ProcedureInit';
-    private _resolveDone: (v: any) => void;
+    public override Name: string = 'ProcedureInit';
+    private _resolveDone: (value: unknown) => void = () => undefined;
     private _waitLoadingCompletePromise: Promise<unknown> = Promise.resolve();
 
-    public override async lateEnter(param: ProcedureInitParam = {}) {
+    protected override async lateEnter(param: ProcedureInitParam = {}): Promise<void> {
         super.lateEnter(param);
         if (param.resetSession) {
             this._resetSession();
         }
         this._waitLoadingCompletePromise = new Promise(resolve => (this._resolveDone = resolve));
-        this.setCCC();
-        this.setFit();
+        this._setCCC();
+        this._setFit();
         //解析 语言配置
         i18nMgr.initLanguage();
         await i18nMgr.loadAndRefreshConfig();
@@ -66,7 +66,7 @@ export default class ProcedureInit extends ProcedureBase {
         });
     }
 
-    public override async Leave() {
+    public override async Leave(): Promise<void> {
         h5MessageManager.sendToH5('h5Hide', 1);
         await this._waitLoadingCompletePromise;
         super.Leave();
@@ -89,12 +89,12 @@ export default class ProcedureInit extends ProcedureBase {
     /**
      * 设置适配
      */
-    private setFit(): void {
+    private _setFit(): void {
         ProcedureInit.updateFitMode();
     }
 
     @traceMethod({ level: 'debug' })
-    static updateFitMode(): void {
+    public static updateFitMode(): void {
         if ((window as any).__H5_KEYBOARD_OPEN__ || (window as any).__H5_KEYBOARD_CLOSING__) return;
         const canvasElement = document.getElementById('GameCanvas');
         const rect = canvasElement?.getBoundingClientRect();
@@ -127,7 +127,7 @@ export default class ProcedureInit extends ProcedureBase {
     /**
      * 引擎设置
      */
-    private setCCC() {
+    private _setCCC(): void {
         this.tracelog.debug('set frame rate');
         cc.game.setFrameRate(GameConfig.FRAME_RATE); // FPS 设置
         cc.macro.ENABLE_MULTI_TOUCH = GameConfig.ENABLE_MULTI_TOUCH; // 禁止多点触摸

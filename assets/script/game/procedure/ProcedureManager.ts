@@ -43,9 +43,7 @@ export default class ProcedureManager {
     //开始某个流程
     static async StartProcedure<T extends ProcedureDefine>(
         procedureIndex: T,
-        ...args: void extends ProcedureParamLimit[T]
-            ? [param?: Exclude<ProcedureParamLimit[T], void>]
-            : [param: ProcedureParamLimit[T]]
+        ...args: void extends ProcedureParamLimit[T] ? [param?: Exclude<ProcedureParamLimit[T], void>] : [param: ProcedureParamLimit[T]]
     ): Promise<void> {
         let procedure = this.procedureDic.get(procedureIndex);
         if (!procedure) {

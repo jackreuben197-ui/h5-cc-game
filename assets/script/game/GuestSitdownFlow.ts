@@ -10,6 +10,7 @@ import ProcedureManager from './procedure/ProcedureManager';
 const _plog = createLogger('[GuestSitdownFlow]');
 
 type PendingPhase = 'waiting-login' | 'switching-account' | 'reentering';
+
 type ResumeSitdown = (mine: TexasGameRoomDataPlayerMine, seatNo: number) => void | Promise<void>;
 
 interface PendingGuestSitdown {
@@ -44,29 +45,29 @@ class GuestSitdownFlow {
     }
 
     public matches(roomID: number, matchID: number): boolean {
-        const pending = this._getValidPending();
+        const pending = this._pending;
         return !!pending && pending.roomID === roomID && pending.matchID === matchID;
     }
 
     public prepareForAccountSwitch(): void {
-        const pending = this._getValidPending();
+        const pending = this._pending;
         if (!pending || pending.phase !== 'waiting-login') return;
         pending.phase = 'switching-account';
         this._resetProcedurePromise = ProcedureManager.StartProcedure(ProcedureDefine.Init, { resetSession: true });
         _plog.info('开始重建牌桌运行态', pending.roomID, pending.seatNo);
     }
 
-    public async waitForResetProcedure(): Promise<void> {
-        await this._resetProcedurePromise;
+    public waitForResetProcedure(): Promise<void> {
+        return this._resetProcedurePromise;
     }
 
     public markReentering(): void {
-        const pending = this._getValidPending();
+        const pending = this._pending;
         if (pending) pending.phase = 'reentering';
     }
 
     public resumeAfterRoomEntered(roomData: TexasGameRoomData): void {
-        const pending = this._getValidPending();
+        const pending = this._pending;
         if (!pending || pending.phase !== 'reentering') return;
         if (pending.roomID !== roomData.roomID || pending.matchID !== roomData.matchID) return;
         if (userStore.isGuestAccount || !userStore.token || userStore.userID <= 0) {
@@ -75,13 +76,11 @@ class GuestSitdownFlow {
             viewManager.showToast(i18nMgr.Get('UIClub_Done'));
             return;
         }
-
         if (roomData.mine.seatNo > 0) {
             _plog.info('真实用户已经在座，无需重复 Sitdown', roomData.mine.seatNo);
             this._pending = null;
             return;
         }
-
         const targetSeat = roomData.seatsStateManager.getSeatPlayer(pending.seatNo);
         if (!targetSeat || targetSeat.seated || targetSeat.userID > 0) {
             _plog.warn('原座位已不可用', pending.seatNo, targetSeat?.userID, targetSeat?.seated);
@@ -89,7 +88,6 @@ class GuestSitdownFlow {
             viewManager.showToast(i18nMgr.Get('adaptation10031'));
             return;
         }
-
         const resume = pending.resume;
         const seatNo = pending.seatNo;
         this._pending = null;
@@ -98,10 +96,6 @@ class GuestSitdownFlow {
             _plog.error('续接 Sitdown 失败', error);
             viewManager.showToast(i18nMgr.Get('error999'));
         });
-    }
-
-    private _getValidPending(): PendingGuestSitdown | null {
-        return this._pending;
     }
 }
 
