@@ -53,6 +53,9 @@ type ReportBottomTab = 'battle' | 'insurance' | 'jackpot' | 'mode';
 @menu('Dialog/Report/UITexasReport')
 @traceClass()
 export default class UITexasReport extends UIComponentBaseDialog<UITexasReportParam> {
+    private static readonly HEADER_FONT_SIZE = 45;
+    private static readonly HEADER_GUTTER = 12;
+    private static readonly PUBLIC_AREA_GUTTER = 20;
     // ============================================================
     // @property —— prefab 模板（从 Assets 拖入）
     // ============================================================
@@ -238,33 +241,123 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
 
         const listBars = [this.listBar1, this.listBar3, this.listBarSquid, this.listBarMushRoom, this.listBarJackpot, this.listBar4];
         for (const listBar of listBars) {
-            if (listBar) {
-                listBar.children.forEach(child => {
-                    const label = child.getComponent(cc.Label) || child.getComponentInChildren(cc.Label);
-                    if (label) {
-                        label.fontSize = 45;
-                        label.lineHeight = 50;
-                        label.enableWrapText = false;
-                        label.overflow = cc.Label.Overflow.SHRINK;
-                        if (label.node) {
-                            label.node.width = 250;
-                            label.node.height = 80;
-                            const widget = label.node.getComponent(cc.Widget);
-                            if (widget) widget.updateAlignment();
-                        }
-                    }
-                });
-            }
+            if (listBar) this._fitHeaderColumns(listBar);
+        }
+        const noDataLabelNode = this.noDataNode ? this.noDataNode.getChildByName('label') : null;
+        if (noDataLabelNode) {
+            this._setLabelWidth(noDataLabelNode, this.noDataNode.width - UITexasReport.HEADER_GUTTER * 2);
         }
         // ---- End font adjustment ----
 
         // ---- Start left align public area text ----
-        [this.totalPotLabel, this.totalBringLabel, this.curHandLabel, this.verBottomLabel, this.curTimeLabel, this.insurancePoolLabel].forEach(label => {
-            if (label) {
-                label.horizontalAlign = cc.Label.HorizontalAlign.LEFT;
-            }
+        const publicAreaLabels = [
+            this.totalPotLabel,
+            this.totalBringLabel,
+            this.curHandLabel,
+            this.verBottomLabel,
+            this.curTimeLabel,
+            this.insurancePoolLabel
+        ].filter(label => !!label);
+        publicAreaLabels.forEach(label => (label.horizontalAlign = cc.Label.HorizontalAlign.LEFT));
+        const leftColumnX = Math.min(...publicAreaLabels.map(label => label.node.x));
+        publicAreaLabels.forEach(label => {
+            if (label.node.x > leftColumnX) label.node.x += UITexasReport.PUBLIC_AREA_GUTTER;
         });
         // -------------------------------------------
+    }
+
+    /**
+     * 表头列宽：一律设成同一个宽度会让不同锚点的列互相重叠，只能按相邻列的空隙分配；
+     * 而且只能朝文字对齐的反方向长，否则居中的表头会从数据列上挪开。
+     */
+    private _fitHeaderColumns(listBar: cc.Node): void {
+        const columns: { node: cc.Node; align: number; left: number; right: number }[] = [];
+        for (const child of listBar.children) {
+            const ownLabel = child.getComponent(cc.Label);
+            const label = ownLabel || child.getComponentInChildren(cc.Label);
+            if (!label) continue;
+            label.fontSize = UITexasReport.HEADER_FONT_SIZE;
+            label.lineHeight = UITexasReport.HEADER_FONT_SIZE;
+            label.enableWrapText = false;
+            label.overflow = cc.Label.Overflow.SHRINK;
+            if (!ownLabel) continue;
+            const left = child.x - child.width * child.anchorX;
+            columns.push({ node: child, align: ownLabel.horizontalAlign, left, right: left + child.width });
+        }
+        if (!columns.length) return;
+        columns.sort((a, b) => a.left - b.left);
+        const gutter = UITexasReport.HEADER_GUTTER;
+        const parent = listBar.parent;
+        const boundLeft = parent ? -parent.width * parent.anchorX - listBar.x : columns[0].left;
+        const boundRight = parent ? parent.width * (1 - parent.anchorX) - listBar.x : columns[columns.length - 1].right;
+        const last = columns.length - 1;
+        for (let i = 0; i < columns.length; i++) {
+            const column = columns[i];
+            const roomLeft =
+                i > 0
+                    ? Math.max(0, (column.left - columns[i - 1].right - gutter) / 2)
+                    : Math.max(0, column.left - boundLeft - gutter);
+            const roomRight =
+                i < last
+                    ? Math.max(0, (columns[i + 1].left - column.right - gutter) / 2)
+                    : Math.max(0, boundRight - column.right - gutter);
+            let growLeft = 0;
+            let growRight = 0;
+            if (column.align === cc.Label.HorizontalAlign.LEFT) {
+                growRight = roomRight;
+            } else if (column.align === cc.Label.HorizontalAlign.RIGHT) {
+                growLeft = roomLeft;
+            } else {
+                growLeft = growRight = Math.min(roomLeft, roomRight);
+            }
+            if (growLeft <= 0 && growRight <= 0) continue;
+            this._setLabelWidth(column.node, column.node.width + growLeft + growRight);
+        }
+    }
+
+    /** 改列宽但不挪动文字：按 horizontalAlign 固定住左边、右边或中线。 */
+    private _setLabelWidth(node: cc.Node, width: number): void {
+        const label = node.getComponent(cc.Label);
+        if (!label || width <= 0 || Math.abs(width - node.width) < 0.5) return;
+        const left = node.x - node.width * node.anchorX;
+        const right = left + node.width;
+        let nextLeft = left;
+        if (label.horizontalAlign === cc.Label.HorizontalAlign.RIGHT) nextLeft = right - width;
+        else if (label.horizontalAlign === cc.Label.HorizontalAlign.CENTER) nextLeft = (left + right - width) / 2;
+        node.width = width;
+        node.x = nextLeft + width * node.anchorX;
+    }
+
+    private _forceLabelMeasure(label: cc.Label): void {
+        const measurable = label as unknown as { _forceUpdateRenderData?: (force: boolean) => void };
+        if (typeof measurable._forceUpdateRenderData === 'function') measurable._forceUpdateRenderData(true);
+    }
+
+    /** 顶栏两处的文本框是按中文宽度画的，长语言会缩到看不清，而旁边就是空位。 */
+    private _relaxTopBarLabels(): void {
+        const gutter = UITexasReport.HEADER_GUTTER;
+        const remainNode = this.remainTimeLabel ? this.remainTimeLabel.node : null;
+        const timeTextNode = remainNode ? remainNode.parent.getChildByName('time_text') : null;
+        if (remainNode && timeTextNode) {
+            this._forceLabelMeasure(this.remainTimeLabel);
+            const limit = remainNode.x - remainNode.width * remainNode.anchorX - gutter;
+            this._setLabelWidth(timeTextNode, limit - (timeTextNode.x - timeTextNode.width * timeTextNode.anchorX));
+        }
+        const toggleLabelNode = this.showOnlyTableNode ? this.showOnlyTableNode.getChildByName('label') : null;
+        const roomIdNode = this.roomIdLabel ? this.roomIdLabel.node : null;
+        if (toggleLabelNode && roomIdNode) {
+            this._forceLabelMeasure(this.roomIdLabel);
+            const container = this.showOnlyTableNode;
+            const containerRight = container.x + container.width * (1 - container.anchorX);
+            const roomIdRight = roomIdNode.x + roomIdNode.width * (1 - roomIdNode.anchorX);
+            const layout = container.getComponent(cc.Layout);
+            const spacing = layout ? layout.spacingX : 0;
+            let decoration = 0;
+            for (const child of container.children) {
+                if (child !== toggleLabelNode && child.active) decoration += child.width + spacing;
+            }
+            this._setLabelWidth(toggleLabelNode, containerRight - roomIdRight - gutter - decoration);
+        }
     }
 
     public initialize(param: UITexasReportParam): void {
@@ -388,6 +481,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     private _refreshTopBar(): void {
         this.roomIdLabel.string = `${this._roomData.roomID}-${this._roomData.basicInfo.handNum || 0}`;
         this._refreshRemainTime();
+        this._relaxTopBarLabels();
     }
 
     private _refreshRemainTime(): void {
