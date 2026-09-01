@@ -857,16 +857,19 @@ export default class TexasTableEvent {
     public static SendChatMessage(roomData: TexasGameRoomData, text: string, sendDanmu: boolean = false): void {
         const content = (text || '').trim();
         if (!content) return;
+        const timestamp = Date.now();
         roomData.chat.setPendingMessage({
+            userID: userStore.userID,
             name: userStore.name || '',
             content,
             headUrl: userStore.avatar || '',
             sex: userStore.sex || 0,
-            time: TexasGameRoomDataChat.formatNowTime()
+            timestamp,
+            time: TexasGameRoomDataChat.formatTimestamp(timestamp)
         });
-        this._sendChatBroadcast(roomData, content, Def.BroadcastMsgType.BC_MSG_AVATAR, false);
+        this._sendChatBroadcast(roomData, content, Def.BroadcastMsgType.BC_MSG_AVATAR, false, timestamp);
         if (sendDanmu) {
-            this._sendChatBroadcast(roomData, content, Def.BroadcastMsgType.BC_MSG_BULLET, true);
+            this._sendChatBroadcast(roomData, content, Def.BroadcastMsgType.BC_MSG_BULLET, true, timestamp);
             // 本人弹幕本地立即回显（网络回包在 GetMsg 中按 user_id 过滤，不会重复播放）
             roomData.chat.addDanmu({
                 name: userStore.name || '',
@@ -879,7 +882,8 @@ export default class TexasTableEvent {
         roomData: TexasGameRoomData,
         content: string,
         msgType: Def.BroadcastMsgTypeMap[keyof Def.BroadcastMsgTypeMap],
-        isDanmu: boolean
+        isDanmu: boolean,
+        timestamp: number
     ): void {
         const data: {
             name: string;
@@ -900,7 +904,7 @@ export default class TexasTableEvent {
             target_user_id: 0,
             message: content,
             msgType: 2,
-            time: Date.now(),
+            time: timestamp,
             sex: userStore.sex || 0,
             headUrl: userStore.avatar || ''
         };

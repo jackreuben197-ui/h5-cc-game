@@ -287,13 +287,16 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
             type: config.type,
             userID: userStore.userRID
         });
+        const timestamp = Date.now();
         // 发送者不会收到自己的 1121 推送，先记录待确认表情，1019 成功后再写入聊天室。
         this._roomData.chat.setPendingMessage({
+            userID: userStore.userRID,
             name: userStore.name || '',
             content: '',
             headUrl: userStore.avatar || '',
             sex: userStore.sex || 0,
-            time: TexasGameRoomDataChat.formatNowTime(),
+            timestamp,
+            time: TexasGameRoomDataChat.formatTimestamp(timestamp),
             emojiType: config.type
         });
         const msgType = Def.BroadcastMsgType.BC_MSG_EMOJI;
@@ -304,7 +307,7 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
             target_user_id: 0,
             message: '',
             msgType,
-            time: Date.now(),
+            time: timestamp,
             sex: userStore.sex,
             headUrl: userStore.avatar
         });

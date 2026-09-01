@@ -65,15 +65,18 @@ export function GetMsg(data: ServerMessageGetMsg.AsObject, roomID: number, match
     if (!broadcastMsg) return;
     console.log('[Chat][GetMsg] 解析消息', broadcastMsg);
     const isSelfMessage = broadcastMsg.user_id === userStore.userID;
+    const timestamp = TexasGameRoomDataChat.normalizeTimestamp(broadcastMsg.time || Date.now());
     // 表情消息：msgType=1，type 为 PropsID（对齐 Unity UIGameplayChatComponent 判定标准）
     if (broadcastMsg.msgType === 1 && typeof broadcastMsg.type === 'number') {
         roomData.chat.addMessage(
             {
+                userID: broadcastMsg.user_id,
                 name: broadcastMsg.name || '',
                 content: '',
                 headUrl: broadcastMsg.headUrl || '',
                 sex: broadcastMsg.sex || 0,
-                time: TexasGameRoomDataChat.formatNowTime(),
+                timestamp,
+                time: TexasGameRoomDataChat.formatTimestamp(timestamp),
                 emojiType: broadcastMsg.type
             },
             !isSelfMessage
@@ -93,11 +96,13 @@ export function GetMsg(data: ServerMessageGetMsg.AsObject, roomID: number, match
     }
     roomData.chat.addMessage(
         {
+            userID: broadcastMsg.user_id,
             name: broadcastMsg.name || '',
             content: broadcastMsg.message,
             headUrl: broadcastMsg.headUrl || '',
             sex: broadcastMsg.sex || 0,
-            time: TexasGameRoomDataChat.formatNowTime()
+            timestamp,
+            time: TexasGameRoomDataChat.formatTimestamp(timestamp)
         },
         true
     );

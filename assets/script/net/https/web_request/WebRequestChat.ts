@@ -119,15 +119,24 @@ export class WebChatRoomMessageSync extends WebCommon {
         block_user_random_ids?: string[];
         is_cowboy?: number;
         msg_types?: number[];
+        before_id?: number;
+        limit?: number;
     } | null = null;
     static ResponseData: {
-        data?: typeof WebChatRoomMessageSync.Data;
-    } | null = null;
-    static Data: {
         data?: (typeof WebChatRoomMessageSync.ChatData)[];
+        prologue?: string;
     } | null = null;
     static ChatData: {
+        id?: number;
+        user_id?: number;
+        room_id?: number;
+        consume?: number;
+        message?: string;
         extra?: string;
+        create_time?: string;
+        update_time?: string;
+        is_cowboy?: number;
+        msg_type?: number;
     } | null = null;
 
     static Request(param: typeof WebChatRoomMessageSync.RequestParams) {

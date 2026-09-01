@@ -102,7 +102,9 @@ class MttRoomLifecycle {
                 if (response.body.status != 0) {
                     _plog.error('进入换桌后的新牌桌失败', newRoomID, roomData.matchID, response.body.status);
                     viewManager.showToast(CPErrorCode.ServerErrorDescription(response.body.status));
+                    return;
                 }
+                roomData.chat.resetHistory();
             })
             .catch(error => {
                 // 保留新 roomID 和换桌状态，后续重连仍能按真实牌桌继续排查和恢复。
