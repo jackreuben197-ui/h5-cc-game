@@ -28,6 +28,8 @@ import USDTPaytype, { RateDetail } from './usdtdiamond/USDTPaytype';
 
 const { ccclass, menu, property } = cc._decorator;
 
+const TRADER_APPLY_FEE = 1000;
+
 /** 标题枚举 */
 export enum BringInTabType {
     /** 带入标题 */
@@ -401,10 +403,10 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     private async onPayNowOrApplyTraderClicked(apply: boolean, payType: number, data: HttpUSDTRechargeProtocol.RequestData) {
         //console.log(LN, apply, payType, data);
         if (apply) {
+            const applyFee = StringHelper.GetColorText(`${TRADER_APPLY_FEE}`, '#05E7AE');
             viewManager.openDialog('ConfirmOrNotice', {
-                content:
-                    '1、钻石批发商申请费为<color=#05E7AE>1000</color>钻石，审核被拒后退还；\n2、申请通过后，需在60天内购买批发商专属钻石，否则资格将失效；\n3、批发商资格失效或者审批被拒需重新付费<color=#05E7AE>1000</color>钻石申请；\n4、申请后，我们将通过系统消息联系您，请留意消息',
-                ok: '支付1000钻石',
+                content: StringHelper.Format(i18nMgr.Get('UIMineMallUSDTShopDiamondWholesalerContent'), [applyFee, applyFee]),
+                ok: StringHelper.Format(i18nMgr.Get('UIMineMallUSDTShopDiamondWholesalerPay'), [TRADER_APPLY_FEE]),
                 ok_click: () => {
                     this._applyForTrader();
                 }
