@@ -1,5 +1,7 @@
+import TexasGameRoomData from '../../data/room/texas/TexasGameRoomData';
 import { AGameplayEntranceProvider } from '../entrance/AGamelayEntranceProvider';
 import AGameplayEntrance from '../entrance/AGameplayEntrance';
+import guestSitdownFlow from '../GuestSitdownFlow';
 import ProcedureBase from './ProcedureBase';
 import ProcedureDefine from './ProcedureDefine';
 import ProcedureManager from './ProcedureManager';
@@ -13,14 +15,14 @@ export interface ProcedureEnterRoomParam {
 }
 
 export default class ProcedureEnterRoom extends ProcedureBase {
-    Name: string = 'ProcedureEnterRoom';
+    public override Name: string = 'ProcedureEnterRoom';
     /**
      * 德州玩法入口实例
      */
     private _entrance: AGameplayEntrance = null;
     private _enterSequence: number = 0;
 
-    override lateEnter(param: ProcedureEnterRoomParam) {
+    protected override lateEnter(param: ProcedureEnterRoomParam): void {
         super.lateEnter(param);
         this._beginEnter(param);
     }
@@ -29,6 +31,10 @@ export default class ProcedureEnterRoom extends ProcedureBase {
         // MTT 重购和换桌可直接重启进桌步骤，不重复切换场景流程。
         this.param = param;
         this._beginEnter(param);
+    }
+
+    public onRoomReady(roomData: TexasGameRoomData): void {
+        guestSitdownFlow.resumeAfterRoomEntered(roomData);
     }
 
     private _beginEnter(param: ProcedureEnterRoomParam): void {

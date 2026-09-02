@@ -30,6 +30,10 @@ interface QuickMessageRecord {
 /** 当前快捷语显示的语言（与 pokerqueen 保持一致：中文，取不到回退 us_name） */
 const QUICK_MESSAGE_LANG_FIELD = 'cn_name';
 
+const CHAT_HISTORY_PAGE_SIZE = 20;
+
+const CHAT_SCROLL_BOTTOM_THRESHOLD = 80;
+
 type ChatMode = 'chatOnly' | 'danmuAndChat';
 
 /**
@@ -94,6 +98,7 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
         this.dlgNode.on(cc.Node.EventType.TOUCH_START, (e: cc.Event.EventTouch) => e.stopPropagation());
         this.dlgNode.on(cc.Node.EventType.TOUCH_END, (e: cc.Event.EventTouch) => e.stopPropagation());
         this.chatEditBox.node.on('text-submit', this.onClickSendMsg, this);
+        this.chatListScroll.node.on('scroll-to-top', this.onScrollToTop, this);
         // 修复 WebH5 构建后原生 <input> 被 H5 层 #app(z-index:10) 遮挡导致输入不可见
         this.chatEditBox.node.on('editing-did-began', (editbox: cc.EditBox) => {
             const prepareKeyboard = (window as any).__H5_PREPARE_KEYBOARD__;
@@ -144,7 +149,9 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
         // 先确定开场白占用的高度，再按最终视口尺寸定位聊天记录。
         this._refreshWelcome();
         this._renderAllMessages();
-        this._fetchHistoryAndPrologue();
+        if (!this._chat.historyInitialized) {
+            this._fetchHistoryAndPrologue();
+        }
         this._loadQuickMessages();
     }
 
@@ -183,15 +190,28 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
     // ============================================================
     @bindEvent(TexasGameRoomDataChat.MESSAGE_ADDED, { dataSource: 'chat', initIgnore: true })
     private onMessageAdded(msg: TexasChatMessage): void {
+        const wasNearBottom = this._isNearBottom();
         this._appendItem(msg, true);
-        this._scrollToBottom();
+        if (wasNearBottom) {
+            this._scrollToBottom();
+        }
     }
 
-    @bindEvent(TexasGameRoomDataChat.MESSAGES_RESET, { dataSource: 'chat', initIgnore: true })
-    private onMessagesReset(): void {
-        // HTTP 历史合并后也先刷新视口，避免列表按旧高度滚动后再次跳位。
+    @bindEvent(TexasGameRoomDataChat.HISTORY_PAGE_MERGED, { dataSource: 'chat', initIgnore: true })
+    private onHistoryPageMerged(added: TexasChatMessage[], initial: boolean): void {
+        this._refreshWelcome();
+        if (initial) {
+            this._renderAllMessages();
+            return;
+        }
+        this._prependItems(added);
+    }
+
+    @bindEvent(TexasGameRoomDataChat.HISTORY_RESET, { dataSource: 'chat', initIgnore: true })
+    private onHistoryReset(): void {
         this._refreshWelcome();
         this._renderAllMessages();
+        this._fetchHistoryAndPrologue();
     }
     // ============================================================
     // 渲染
@@ -221,12 +241,35 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
         }
     }
 
+    private _prependItems(messages: TexasChatMessage[]): void {
+        if (messages.length === 0) return;
+        const content = this.chatListScroll.content;
+        const contentLayout = content.getComponent(cc.Layout);
+        if (contentLayout) contentLayout.updateLayout();
+        const oldHeight = content.height;
+        const oldOffset = this.chatListScroll.getScrollOffset();
+        for (let i = 0; i < messages.length; i++) {
+            this._appendItem(messages[i], false);
+            content.children[content.children.length - 1].setSiblingIndex(i);
+        }
+        if (contentLayout) contentLayout.updateLayout();
+        const heightDelta = Math.max(0, content.height - oldHeight);
+        this.chatListScroll.stopAutoScroll();
+        this.chatListScroll.scrollToOffset(cc.v2(oldOffset.x, oldOffset.y + heightDelta), 0);
+    }
+
     /** 条目已 forceLayout，content 当帧结算后立即滚动，目标位置基于真实高度不会滚过头 */
     private _scrollToBottom(animated: boolean = true): void {
         const contentLayout = this.chatListScroll.content.getComponent(cc.Layout);
         if (contentLayout) contentLayout.updateLayout();
         this.chatListScroll.stopAutoScroll();
         this.chatListScroll.scrollToBottom(animated ? 0.1 : 0);
+    }
+
+    private _isNearBottom(): boolean {
+        const current = this.chatListScroll.getScrollOffset();
+        const max = this.chatListScroll.getMaxScrollOffset();
+        return max.y - current.y <= CHAT_SCROLL_BOTTOM_THRESHOLD;
     }
 
     private _finishMessageListLayout(): void {
@@ -263,41 +306,89 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
     // ============================================================
     // 历史消息 + 开场白（HTTP）
     // ============================================================
-    private _fetchHistoryAndPrologue(): void {
-        const roomID = this._roomData.roomID;
+    private onScrollToTop(): void {
+        if (!this._chat) return;
+        if (!this._chat.historyInitialized) {
+            this._fetchHistoryAndPrologue();
+            return;
+        }
+        const beforeID = this._chat.oldestHistoryID;
+        if (beforeID !== null && this._chat.hasMoreHistory) {
+            this._fetchHistoryAndPrologue(beforeID);
+        }
+    }
+
+    private _fetchHistoryAndPrologue(beforeID: number | null = null): void {
+        const loadOlder = beforeID !== null;
+        const roomData = this._roomData;
+        const chat = this._chat;
+        if (!roomData || !chat || !chat.beginHistoryLoad(loadOlder)) return;
+        const roomID = roomData.roomID;
+        const matchID = roomData.matchID;
+        const body: {
+            room_id: number;
+            block_user_random_ids: string[];
+            is_cowboy: number;
+            msg_types: number[];
+            limit: number;
+            before_id?: number;
+        } = {
+            room_id: roomID,
+            block_user_random_ids: [],
+            is_cowboy: 0,
+            msg_types: [0, 1, 3],
+            limit: CHAT_HISTORY_PAGE_SIZE
+        };
+        if (beforeID !== null) {
+            body.before_id = beforeID;
+        }
         HttpRequest.Send({
             request: WebChatRoomMessageSync,
-            body: WebChatRoomMessageSync.Request({
-                room_id: roomID,
-                block_user_random_ids: [],
-                is_cowboy: 0,
-                msg_types: [0, 1, 3]
-            }),
+            body: WebChatRoomMessageSync.Request(body),
             juhua: false,
-            onSuccess: () => {
-                if (!cc.isValid(this.node) || !this._roomData || this._roomData.roomID !== roomID) return;
-                const chatDataArr = WebChatRoomMessageSync.Response?.data?.data;
-                if (!chatDataArr || !Array.isArray(chatDataArr) || chatDataArr.length === 0) {
-                    this._refreshWelcome();
+            onSuccess: (response: any) => {
+                if (roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID) !== roomData) {
+                    return;
+                }
+                const responseData = response?.data || WebChatRoomMessageSync.Response?.data;
+                const chatDataArr = responseData?.data;
+                if (!Array.isArray(chatDataArr)) {
+                    chat.failHistoryLoad();
+                    if (cc.isValid(this.node) && this._chat === chat) this._refreshWelcome();
                     return;
                 }
                 const history: TexasChatMessage[] = [];
-                let prologue: string | null = null;
+                let prologue: string | null = typeof responseData?.prologue === 'string' ? responseData.prologue : null;
+                let pageOldestID: number | null = null;
                 for (const chatData of chatDataArr) {
+                    const historyID = Number(chatData?.id);
+                    if (Number.isFinite(historyID) && historyID > 0) {
+                        pageOldestID = pageOldestID === null ? historyID : Math.min(pageOldestID, historyID);
+                    }
                     if (!chatData || !chatData.extra) continue;
                     try {
                         const extraObj = JSON.parse(chatData.extra);
                         // 表情/文字都可能走 code=1000（Unity 端表情历史即 code=1000 + msgType=1）
                         if (extraObj.code !== 1000 && extraObj.code !== 10001) continue;
                         const msgData = typeof extraObj.data === 'string' ? JSON.parse(extraObj.data) : extraObj.data;
+                        if (!msgData || typeof msgData !== 'object') continue;
+                        const messageTimestamp = TexasGameRoomDataChat.normalizeTimestamp(msgData.time);
+                        const timestamp = messageTimestamp || TexasGameRoomDataChat.normalizeTimestamp(chatData.create_time);
+                        const userID = Number(msgData.user_id || chatData.user_id);
+                        const common = {
+                            id: Number.isFinite(historyID) && historyID > 0 ? historyID : undefined,
+                            userID: Number.isFinite(userID) && userID > 0 ? userID : undefined,
+                            name: msgData.name || '',
+                            headUrl: msgData.headUrl || '',
+                            sex: msgData.sex || 0,
+                            timestamp,
+                            time: TexasGameRoomDataChat.formatTimestamp(timestamp)
+                        };
                         // msgType：1=表情（type 为 PropsID），2=文字，3=语音（跳过）
                         if (msgData.msgType === 1 && typeof msgData.type === 'number') {
                             history.push({
-                                name: msgData.name || '',
+                                ...common,
                                 content: '',
-                                headUrl: msgData.headUrl || '',
-                                sex: msgData.sex || 0,
-                                time: TexasGameRoomDataChat.formatTimestamp(msgData.time),
                                 emojiType: msgData.type
                             });
                             continue;
@@ -309,22 +400,20 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
                         }
                         if (!msgData.message) continue;
                         history.push({
-                            name: msgData.name || '',
-                            content: msgData.message || '',
-                            headUrl: msgData.headUrl || '',
-                            sex: msgData.sex || 0,
-                            time: TexasGameRoomDataChat.formatTimestamp(msgData.time)
+                            ...common,
+                            content: msgData.message || ''
                         });
                     } catch (e) {
                         this.tracelog.warn('parse chat extra failed:', e);
                     }
                 }
-                console.log('[Chat][History] 解析完成，有效消息', history, '开场白', prologue);
-                this._chat.mergeHistory(history, prologue);
+                const hasMore = chatDataArr.length >= CHAT_HISTORY_PAGE_SIZE;
+                this.tracelog.debug('[Chat][History] 解析完成', { beforeID, pageOldestID, hasMore, history, prologue });
+                chat.mergeHistoryPage(history, prologue, pageOldestID, hasMore, !loadOlder);
             },
             onFailure: () => {
-                if (!cc.isValid(this.node)) return;
-                this._refreshWelcome();
+                chat.failHistoryLoad();
+                if (cc.isValid(this.node) && this._chat === chat) this._refreshWelcome();
             }
         });
     }

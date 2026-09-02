@@ -11,11 +11,12 @@ import globalConfigStore from './data/system/GlobalConfigStore';
 import diamondModel from './data/trade/DiamondModel';
 import userStore, { ClubData } from './data/user/UserStore';
 import { MTT_MATCH_ENTRY_ROOM_ID } from './game/constant/Constants';
+import guestSitdownFlow from './game/GuestSitdownFlow';
 import ProcedureDefine from './game/procedure/ProcedureDefine';
 import ProcedureManager from './game/procedure/ProcedureManager';
 import roomReconnectManager from './game/RoomReconnectManager';
 import GameplayUtil from './game/util/GameplayUtil';
-import h5MessageManager, { EnterMttMatchInfo, EnterTableRoomInfo, SyncUserClubResponse, SyncUserInfo } from './H5MsgMgr';
+import h5MessageManager, { EnterMttMatchInfo, EnterTableRoomInfo, SyncUserClubResponse } from './H5MsgMgr';
 import { i18nMgr } from './i18n/i18nMgr';
 import agoraManager from './net/agora/AgoraManager';
 import ProtocolAgency from './net/websocket/ProtocolAgency';
@@ -221,6 +222,11 @@ export async function registerH5Listeners(): Promise<void> {
         // gc.jackPot_id = jackpotId;
         // === 6. 启动进入牌桌流程 ===
         // → ProtocolAgency.Send(ClientMessageEnterRoom) → WebSocket 发送
+        const pendingReentry = guestSitdownFlow.matches(roomData.rid, 0);
+        if (pendingReentry) {
+            await guestSitdownFlow.waitForResetProcedure();
+            guestSitdownFlow.markReentering();
+        }
         await ProcedureManager.StartProcedure(ProcedureDefine.EnterRoom, {
             roomID: roomData.rid,
             matchID: 0,
@@ -235,29 +241,28 @@ export async function registerH5Listeners(): Promise<void> {
         // 重连 context 由 ProcedureReturn 离桌时统一清理，覆盖主动离桌和被踢两条路径
         // TODO: 调用离开牌桌的逻辑
     });
-    h5MessageManager.on('syncUser', payload => {
-        _ploger.info('[H5Bridge] 同步用户信息:', payload);
-        // bridge 协议里 raw 是 unknown（兼容 H5 端 ApiResponse 等宽松实参），
-        // 这里断言为 { user?: SyncUserInfo } 后再访问。
-        const raw = payload?.raw as { user?: SyncUserInfo } | undefined;
-        const userInfo = raw?.user;
-        if (!userInfo) {
-            _ploger.error('[H5Bridge] syncUser 数据异常：缺少 payload.raw.user');
+    h5MessageManager.on('tableSitdownAuth', payload => {
+        if (payload.state === 'switching') {
+            guestSitdownFlow.prepareForAccountSwitch();
             return;
         }
-        // 仅写入本地缓存，不触发 UI 事件和网络请求
-        // const gc = GameCache.Instance;
-        // gc.nUserId = Number(userInfo.un_id);
-        // gc.userId = Number(userInfo.p_u_id ?? 0);
-        // gc.strPhone = userInfo.phone;
-        // gc.sex = userInfo.sex;
-        // gc.nick = userInfo.nickname;
-        // gc.headPic = userInfo.avatar;
-        // gc.userType = userInfo.ut;
-        // gc.isHadClub = userInfo.club_id > 0;
-        // 直接写入 UserInfoModel 内部数据，绕过 setter（不触发 myGoldChange 事件）
-        _ploger.info('[H5Bridge] syncUser 缓存完成, user_id:', userInfo.un_id, 'nickname:', userInfo.nickname);
-        // 预加载声音和游戏资源（提前加载，避免 enterTable 时再加载影响进桌速度）
+        guestSitdownFlow.cancel(payload.reason || payload.state);
+    });
+    h5MessageManager.on('syncUser', payload => {
+        _ploger.info('[H5Bridge] 同步用户信息:', payload);
+        const userID = Number(payload.uid || 0);
+        const userRID = Number(payload.randomId || 0);
+        if (!Number.isFinite(userID) || userID <= 0 || !Number.isFinite(userRID) || userRID <= 0) {
+            _ploger.error('[H5Bridge] syncUser 数据异常：用户标识无效');
+            return;
+        }
+        userStore.isGuestAccount = payload.isExperience === true;
+        userStore.userID = userID;
+        userStore.userRID = userRID;
+        userStore.sex = Number(payload.sex || 0);
+        userStore.name = String(payload.nickname || '');
+        userStore.avatar = String(payload.avatar || '');
+        _ploger.info('[H5Bridge] syncUser 缓存完成, user_id:', payload.randomId, 'nickname:', payload.nickname, 'isGuestAccount:', userStore.isGuestAccount);
     });
     h5MessageManager.on('syncLanguage', payload => {
         const locale = payload?.locale;
@@ -326,10 +331,10 @@ export async function registerH5Listeners(): Promise<void> {
         _ploger.info('[H5Bridge] syncDiamondConfig 预填完成');
     });
     // syncToken：H5 在登录/续期/登出后把最新 token 推过来，写入 userStore，避免 H5/CC 两端 token 错开。
-    h5MessageManager.on('syncToken', (payload: any) => {
+    h5MessageManager.on('syncToken', payload => {
         const token = typeof payload?.token === 'string' ? payload.token.trim() : '';
         if (!token) {
-            userStore.token = '';
+            userStore.clearSessionIdentity();
             _ploger.info('[H5Bridge] syncToken 清空登录态');
             return;
         }

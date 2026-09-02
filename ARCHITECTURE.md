@@ -17,8 +17,10 @@
 7. [UI 资源管线：UIViewManager + UIPrefabDefinition](#7-ui-资源管线uiviewmanager--uiprefabdefinition)
    - 7.4 [资源加载管线：AssetManager + 预加载体系](#74-资源加载管线assetmanager--预加载体系)
 8. [H5 桥接层：H5MsgMgr](#8-h5-桥接层h5msgmgr)
+   - 8.7 [游客身份与牌桌登录协议](#87-游客身份与牌桌登录协议)
 9. [进房 / 离房流程](#9-进房--离房流程)
    - 9.4 [Agora 音视频链路](#94-agora-音视频链路)
+   - 9.5 [游客入座的完整重初始化流程](#95-游客入座的完整重初始化流程)
 10. [三层协作示例：ChipsChange](#10-三层协作示例chipschange)
 11. [目录结构速查](#11-目录结构速查)
 12. [添加新功能的标准步骤](#12-添加新功能的标准步骤)
@@ -898,6 +900,55 @@ h5-game 也走 npm git 依赖，但 import 自 `@silenthill/h5-cc-bridge/h5-side
 
 **`agora-rtc-sdk-ng`**：只作为 TypeScript 类型来源。Cocos Creator 运行时不能直接解析 `node_modules` 里的 Agora SDK，因此实际 SDK 仍由 `MainUtils.loadWebSDK()` 注入 `https://download.agora.io/sdk/release/AgoraRTC_N-4.24.5.js`，`AgoraManager.init()` 通过 `window.AgoraRTC` 创建 client。`assets/custom.d.ts` 使用 `import type AgoraRTC from 'agora-rtc-sdk-ng'` 给 `Window.AgoraRTC` 做全局类型增强，业务代码不要写运行时 `import AgoraRTC from 'agora-rtc-sdk-ng'`。
 
+### 8.7 游客身份与牌桌登录协议
+
+Cocos 不负责申请、释放或判断服务端体验账号。H5 根据 `user/info` 维护游客身份，再通过 `syncUser`
+下发稳定的语义数据：
+
+```ts
+interface SyncUserPayload {
+    uid: string;
+    randomId: string;
+    nickname: string;
+    avatar?: string;
+    sex: number;
+    isExperience: boolean;
+    raw?: unknown;
+}
+```
+
+`MainUtils` 只读取这些标准字段并写入 `userStore`；`isExperience` 写入
+`userStore.isGuestAccount`。禁止从 `raw` 解析 `user_type` / `ut`，也禁止在 Cocos 中硬编码服务端的
+游客类型数字。空 token 或会话重置必须调用 `userStore.clearSessionIdentity()`，避免游客 UID、俱乐部和
+钱包残留到真实账号。
+
+游客点击空座时，`TexasTableEvent.Sitdown` 不执行钱包、媒体权限或 Sitdown 协议，而是先把房间、比赛、
+座位保存到 `GuestSitdownFlow`，再发送：
+
+```ts
+h5MessageManager.sendToH5('h5Navigate', 1, {
+    name: 'login',
+    ensureVisible: true,
+    openLoginModal: true,
+    loginContext: 'table-sitdown',
+});
+```
+
+H5 回传 `tableSitdownAuth`：
+
+| state | Cocos 行为 |
+| --- | --- |
+| `switching` | 锁定待入座事务并启动 `ProcedureInit({ resetSession: true })` |
+| `cancelled` | 清除待入座状态；登录尚未切换时继续保持当前游客观战画面 |
+
+成功不增加第三种状态；H5 用带真实用户、token、WS 端口的 `enterTable` 表示切换成功，复用正常进房
+入口。这样协议不会同时维护“登录成功”和“重新进桌”两个可能漂移的完成信号。
+
+这里的 action 和 `loginContext` 在 Cocos 源码中使用字符串字面量是有意设计：Cocos 只能从
+`@silenthill/h5-cc-bridge/cc-side` 做 `import type`，不能导入运行时常量。字面量仍受
+`CocosToH5PayloadMap` / `H5ToCocosPayloadMap` 编译期约束；不要绕开 `H5MsgMgr` 直接调用
+`window.postMessage`。
+
 ---
 
 ## 9. 进房 / 离房流程
@@ -1192,6 +1243,81 @@ TexasGameRoomDataPlayer.remoteVideoVisible
 - 渲染：确认 `AgoraVideoRender` 开始渲染、头像视频更新、窗花覆盖可切换，本地镜像、远端不镜像。
 - 清理：站起、离桌、断线重连后确认视频 overlay、窗花、音量监控和 Agora 回调不会残留。
 
+### 9.5 游客入座的完整重初始化流程
+
+游客允许正常进入普通牌桌观战，但点击空座时不能直接进入余额和买入逻辑。该场景由
+`GuestSitdownFlow` 保存一次待执行的入座意图，真实登录完成后不热替换当前房间数据，而是完整重跑
+`ProcedureInit → ProcedureEnterTexas → EnterRoom`，房间快照就绪后再续接原有 `Sitdown`。
+
+```text
+TexasTableEvent.Sitdown(roomID, matchID, seatNo)
+  ├─ 真实账号：沿用原有权限检查、钱包检查和 Sitdown
+  └─ 游客：GuestSitdownFlow.begin(...)
+       → 保存 roomID / matchID / seatNo
+       → h5Navigate(loginContext='table-sitdown')
+       → H5 覆盖登录弹窗
+       ├─ 登录取消
+       │    → tableSitdownAuth(cancelled)
+       │    → GuestSitdownFlow.cancel()，游客继续观战
+       └─ 登录成功
+            → tableSitdownAuth(switching)
+            → GuestSitdownFlow.prepareForAccountSwitch()
+            → ProcedureInit({ resetSession: true })
+                 ├─ 清理旧重连上下文、RoomData 和会话 Store
+                 ├─ 清理牌桌弹窗/场景、声音和 Agora 会话
+                 └─ 重新执行 Loading 与资源准备
+            → H5 使用真实账号重新同步并发送 enterTable
+            → MainUtils 等待 Init 离开完成后启动正常进房 Procedure
+            → EnterRoom 应用真实账号房间快照并切换 TexasRoom
+            → ProcedureManager.NotifyRoomReady(roomData)
+            → ProcedureEnterRoom.onRoomReady(roomData)
+            → GuestSitdownFlow.resumeAfterRoomEntered(roomData)
+                 ├─ 校验当前账号不再是游客
+                 ├─ 校验仍是原 roomID / matchID
+                 ├─ 校验原 seatNo 仍为空
+                 └─ 再次调用 TexasTableEvent.Sitdown(...)
+                      → 原有买入 / 余额不足充值流程
+```
+
+#### 重置边界
+
+`ProcedureInitParam.resetSession` 只表示“账号会话切换”，不是重新加载网页或销毁所有 Cocos 资源。
+`ProcedureInit._resetSession()` 负责清理：
+
+- `RoomReconnectManager` 当前上下文和所有 `RoomData`；
+- `UserStore`、`PlayerStore`、`TradeStore` 的账号会话数据；
+- 旧牌桌弹窗、提示层、当前场景、声音状态和 Agora 频道；
+- 旧 token/用户对应的牌桌运行状态。
+
+以下内容不能因账号切换被清除：全局配置、语言、已经加载的公共资源以及 `UIViewManager` 的资源池。
+它们不属于游客身份，强制销毁会造成重复加载、首屏闪退或初始化时序竞争。
+
+#### 状态和并发约束
+
+- `GuestSitdownFlow` 同一时刻只保存一个待入座意图；重复点击不能创建多条登录/重进桌事务。
+- 收到 `switching` 前不能重置 Cocos。用户只打开或取消登录弹窗时，原游客房间必须保持不动。
+- `enterTable` 到达时若重置 Procedure 尚未结束，必须等待 `ProcedureInit.Leave()`，不能并行启动进房。
+- 房间快照是继续入座的唯一时机。不得在 `syncUser`、`syncToken` 或 Bridge 消息回调中直接发送
+  Sitdown，这些时点的用户、房间和座位数据可能尚未一致。
+- 如果原座位已被占用、房间不匹配或身份仍是游客，应清除 pending 并显示已有多语言提示，不得改坐
+  其他空位。
+- 登录后的真实用户未加入渠道俱乐部时，H5 不发送 `enterTable`，而是发送 `cancelled` 并显示官方首页；
+  Cocos 只负责终止 pending，不在牌桌内自行补加俱乐部。
+
+#### 分层职责
+
+| 层 | 职责 |
+| --- | --- |
+| `TexasTableEvent` | 捕获座位点击；游客分流，真实账号继续原 Sitdown |
+| `GuestSitdownFlow` | 保存/校验待入座意图，不负责 HTTP、登录 UI 或服务端身份判断 |
+| `MainUtils` / `H5MsgMgr` | 接收 typed Bridge 消息并转交状态，不承载进房业务编排 |
+| `ProcedureInit` | 执行账号会话重置和完整 Loading |
+| `ProcedureEnterRoom` | 在真实房间快照与场景就绪后通知续接入座 |
+| H5 | 体验账号登出、真实登录、WS/user/club 重同步、渠道俱乐部资格判断 |
+
+修改该流程时至少运行 `npm run commit:prepare`，并回归以下路径：取消登录、登录失败、真实用户未加入
+俱乐部、原座位被占用、余额不足充值、首次点击空座，以及初始化期间快速重复点击。
+
 ---
 
 ## 10. 三层协作示例：ChipsChange
@@ -1261,6 +1387,7 @@ h5-cc-game/assets/script/
 │   └── user/
 │       └── UserStore.ts / UserStoreUtils.ts     # 用户基础信息 + 钱包/信用列表
 ├── game/
+│   ├── GuestSitdownFlow.ts                     # 游客登录后重进原桌并续接入座
 │   ├── constant/                                # 游戏常量枚举（30+ 文件）
 │   │   ├── AnimateDisplayType.ts                #   动画类型枚举
 │   │   ├── AutoOpertaionType.ts                 #   自动操作类型

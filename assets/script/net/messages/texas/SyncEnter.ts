@@ -26,6 +26,7 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
         _plog.error('no store room data', roomID, matchID);
         return;
     }
+    roomData.chat.resetHistory();
     const myseat = data.myInfo?.seatId || 0;
     const seatCount = roomData.seatsStateManager.seatsCount;
     const myOp = myseat > 0 && data.operatorList.filter(v => v.seatId == myseat && !v.isAgreeSecondPc && !v.isInsurance).length > 0;

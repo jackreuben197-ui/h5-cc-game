@@ -1,26 +1,41 @@
 import { GameConfig } from '../../config/GameConfig';
 import { traceClass, traceMethod } from '../../core/decorator/LogTrace';
+import soundManager from '../../core/SoundManager';
+import playerStore from '../../data/player/PlayerStore';
+import roomDataManager from '../../data/room/RoomDataManager';
 import dlTexasRoomBackground from '../../data/room/texas/load/DLTexasRoomBacground';
 import texasGamePersonalSettings from '../../data/room/texas/TexasGamePersonalSettings';
 import ccviewData from '../../data/system/CCViewData';
+import tradeStore from '../../data/trade/TradeStore';
+import userStore from '../../data/user/UserStore';
 import h5MessageManager from '../../H5MsgMgr';
 import { i18nMgr } from '../../i18n/i18nMgr';
 import * as MainUtils from '../../MainUtils';
+import agoraManager from '../../net/agora/AgoraManager';
 import TelegramUtils from '../../tools/TelegramUtils';
 import { DynamicLoadDefinition, PreloadDefinitionGame, PreloadDefinitionSound } from '../../views/loader/AssetManager';
 import viewManager from '../../views/UIViewManager';
+import roomReconnectManager from '../RoomReconnectManager';
 import ProcedureBase from './ProcedureBase';
+
+export interface ProcedureInitParam {
+    resetSession?: boolean;
+}
 
 @traceClass()
 export default class ProcedureInit extends ProcedureBase {
-    Name: string = 'ProcedureInit';
-    private _resolveDone: (v: any) => void;
-    private _waitLoadingCompletePromise = new Promise(resolve => (this._resolveDone = resolve));
+    public override Name: string = 'ProcedureInit';
+    private _resolveDone: (value: unknown) => void = () => undefined;
+    private _waitLoadingCompletePromise: Promise<unknown> = Promise.resolve();
 
-    async lateEnter(param?: any) {
+    protected override async lateEnter(param: ProcedureInitParam = {}): Promise<void> {
         super.lateEnter(param);
-        this.setCCC();
-        this.setFit();
+        if (param.resetSession) {
+            this._resetSession();
+        }
+        this._waitLoadingCompletePromise = new Promise(resolve => (this._resolveDone = resolve));
+        this._setCCC();
+        this._setFit();
         // 初始化 Telegram WebApp SDK 并请求全屏
         TelegramUtils.Instance.expandToFullScreen();
         await GameConfig.setNetworkAsync();
@@ -50,26 +65,41 @@ export default class ProcedureInit extends ProcedureBase {
             },
             error: () => {
                 this.tracelog.error('ProcedureInit show preloading error');
+                this._resolveDone(false);
             }
         });
     }
 
-    async Leave() {
+    public override async Leave(): Promise<void> {
         h5MessageManager.sendToH5('h5Hide', 1);
         await this._waitLoadingCompletePromise;
         super.Leave();
     }
 
+    private _resetSession(): void {
+        roomReconnectManager.clearAllContext();
+        roomDataManager.clearAllRoomData();
+        userStore.clearSessionIdentity();
+        playerStore.clearSessionData();
+        tradeStore.clearSessionData();
+        soundManager.volumeOnOff(false);
+        viewManager.closeAllDialogs();
+        viewManager.hidePrompting();
+        viewManager.hideCurrentScene();
+        viewManager.showPreloadingLayer();
+        void agoraManager.clear();
+    }
+
     /**
      * 设置适配
      */
-    private setFit(): void {
+    private _setFit(): void {
         ProcedureInit.updateFitMode();
         ProcedureInit.bindFitModeToBrowserResize();
     }
 
     @traceMethod({ level: 'debug' })
-    static updateFitMode(): void {
+    public static updateFitMode(): void {
         if ((window as any).__H5_KEYBOARD_OPEN__ || (window as any).__H5_KEYBOARD_CLOSING__) return;
         // 以宿主锁定后的 GameDiv CSS 尺寸为准。移动端键盘只改变 visual viewport，
         // 不能再用键盘态 innerHeight 切换适配策略。
@@ -135,7 +165,7 @@ export default class ProcedureInit extends ProcedureBase {
     /**
      * 引擎设置
      */
-    private setCCC() {
+    private _setCCC(): void {
         this.tracelog.debug('set frame rate');
         cc.game.setFrameRate(GameConfig.FRAME_RATE); // FPS 设置
         cc.macro.ENABLE_MULTI_TOUCH = GameConfig.ENABLE_MULTI_TOUCH; // 禁止多点触摸

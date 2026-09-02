@@ -36,6 +36,7 @@ export class UserStore extends cc.EventTarget {
     public userRID: number;
     public sex: number = 0;
     public token: string;
+    public isGuestAccount: boolean = false;
     @observable(UserStore.DIAMONDS_CHANGE)
     public diamonds: number = 0;
     @observable(UserStore.NICKNAME_CHANGE)
@@ -54,6 +55,28 @@ export class UserStore extends cc.EventTarget {
     public forbid: boolean = false;
     @observable(UserStore.PROP_LIST_CHANGE)
     public propList: UserPropData[] = [];
+
+    public clearSessionIdentity(): void {
+        this.muteEvents();
+        try {
+            this.token = '';
+            this.isGuestAccount = false;
+            this.userID = 0;
+            this.userRID = 0;
+            this.sex = 0;
+            this.diamonds = 0;
+            this.name = '';
+            this.avatar = '';
+            this.clubsData = [];
+            this.currentClubID = 0;
+            this.wallets = [];
+            this.credits = [];
+            this.forbid = false;
+            this.propList = [];
+        } finally {
+            this.unmuteEvents();
+        }
+    }
 
     public getPropListByType(propType: number): UserPropData[] {
         return this.propList.filter(item => item.propType === propType);

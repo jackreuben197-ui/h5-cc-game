@@ -9,6 +9,7 @@ import userStore from '../../../../../data/user/UserStore';
 import UserStoreUtils from '../../../../../data/user/UserStoreUtils';
 import { BringInMode } from '../../../../../game/constant/BringInMode';
 import { GameType } from '../../../../../game/constant/LogicTypeConf';
+import guestSitdownFlow from '../../../../../game/GuestSitdownFlow';
 import ProcedureDefine from '../../../../../game/procedure/ProcedureDefine';
 import ProcedureManager from '../../../../../game/procedure/ProcedureManager';
 import h5MessageManager from '../../../../../H5MsgMgr';
@@ -105,6 +106,17 @@ export default class TexasTableEvent {
         // 已经坐下,点击不处理
         if (seatData.roomData.mine.seatNo > 0) {
             this.tracelog.debug('Sitdown 不应该能点');
+            return;
+        }
+        if (userStore.isGuestAccount) {
+            this.tracelog.info('Sitdown 体验账号拦截，打开 H5 注册/登录弹窗', seatNo);
+            guestSitdownFlow.begin(seatData.roomData, seatNo, (realMine, targetSeatNo) => TexasTableEvent.Sitdown(realMine, targetSeatNo));
+            h5MessageManager.sendToH5('h5Navigate', 1, {
+                name: 'login',
+                ensureVisible: true,
+                openLoginModal: true,
+                loginContext: 'table-sitdown'
+            });
             return;
         }
         this.tracelog.debug('Sitdown', seatNo);
@@ -845,16 +857,19 @@ export default class TexasTableEvent {
     public static SendChatMessage(roomData: TexasGameRoomData, text: string, sendDanmu: boolean = false): void {
         const content = (text || '').trim();
         if (!content) return;
+        const timestamp = Date.now();
         roomData.chat.setPendingMessage({
+            userID: userStore.userID,
             name: userStore.name || '',
             content,
             headUrl: userStore.avatar || '',
             sex: userStore.sex || 0,
-            time: TexasGameRoomDataChat.formatNowTime()
+            timestamp,
+            time: TexasGameRoomDataChat.formatTimestamp(timestamp)
         });
-        this._sendChatBroadcast(roomData, content, Def.BroadcastMsgType.BC_MSG_AVATAR, false);
+        this._sendChatBroadcast(roomData, content, Def.BroadcastMsgType.BC_MSG_AVATAR, false, timestamp);
         if (sendDanmu) {
-            this._sendChatBroadcast(roomData, content, Def.BroadcastMsgType.BC_MSG_BULLET, true);
+            this._sendChatBroadcast(roomData, content, Def.BroadcastMsgType.BC_MSG_BULLET, true, timestamp);
             // 本人弹幕本地立即回显（网络回包在 GetMsg 中按 user_id 过滤，不会重复播放）
             roomData.chat.addDanmu({
                 name: userStore.name || '',
@@ -867,7 +882,8 @@ export default class TexasTableEvent {
         roomData: TexasGameRoomData,
         content: string,
         msgType: Def.BroadcastMsgTypeMap[keyof Def.BroadcastMsgTypeMap],
-        isDanmu: boolean
+        isDanmu: boolean,
+        timestamp: number
     ): void {
         const data: {
             name: string;
@@ -888,7 +904,7 @@ export default class TexasTableEvent {
             target_user_id: 0,
             message: content,
             msgType: 2,
-            time: Date.now(),
+            time: timestamp,
             sex: userStore.sex || 0,
             headUrl: userStore.avatar || ''
         };

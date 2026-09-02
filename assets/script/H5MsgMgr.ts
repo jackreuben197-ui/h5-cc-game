@@ -40,7 +40,7 @@ const HANDSHAKE_TIMEOUT = 10000;
 import type {
     H5NavigatePayload,
     H5ReadyPayload,
-    H5ToCocosPayloadMap as SharedH5ToCocosPayloadMap,
+    H5ToCocosPayloadMap,
     SafeArea,
     CocosToH5PayloadMap as SharedCocosToH5PayloadMap
 } from '@silenthill/h5-cc-bridge/cc-side';
@@ -51,13 +51,7 @@ export interface CocosToH5PayloadMap extends Omit<SharedCocosToH5PayloadMap, 'ws
     wsSend: Uint8Array | ArrayBuffer;
 }
 
-export interface SyncCurrentClubPayload {
-    clubId?: number;
-}
-
-export interface H5ToCocosPayloadMap extends SharedH5ToCocosPayloadMap {
-    syncCurrentClub: SyncCurrentClubPayload;
-}
+export type { H5ToCocosPayloadMap };
 
 // 把协议层 payload 类型透传出去，老调用点 `import { H5NavigatePayload } from './H5MsgMgr'` 不需要改。
 export type {
@@ -82,6 +76,7 @@ export type {
     PanelEventPayload,
     SafeArea,
     SetHeartbeatModePayload,
+    SyncCurrentClubPayload,
     SyncDiamondConfigPayload,
     SyncGlobalConfigPayload,
     SyncLanguagePayload,
@@ -90,6 +85,7 @@ export type {
     SyncUserClubResponse,
     SyncUserInfo,
     SyncUserPayload,
+    TableSitdownAuthPayload,
     WsClosedPayload,
     WsClosePayload,
     WsConnectPayload,
@@ -148,6 +144,24 @@ declare global {
         /** bridge.js 注入的直连通道，H5 通过它向 CC 传递消息。*/
         CocosBridge?: {
             postMessage: (data: IncomingEnvelope | string) => void;
+        };
+        H5Bridge?: {
+            onMessgeRecv?: (
+                type: string,
+                payload?: unknown,
+                msgtype?: number,
+                requestId?: string,
+                timestamp?: number,
+                source?: string
+            ) => void;
+            onMessageRecv?: (
+                type: string,
+                payload?: unknown,
+                msgtype?: number,
+                requestId?: string,
+                timestamp?: number,
+                source?: string
+            ) => void;
         };
         /** CC 就绪标志，H5 读取后决定是否发送 h5Ready。*/
         __CC_READY__?: boolean;
@@ -438,6 +452,20 @@ class H5MsgMgr {
      */
     private static _post(msg: BridgeRawMessage): void {
         setTimeout(() => {
+            const h5Bridge = window.H5Bridge;
+            const directReceiver = h5Bridge?.onMessgeRecv || h5Bridge?.onMessageRecv;
+            if (typeof directReceiver === 'function') {
+                directReceiver.call(
+                    h5Bridge,
+                    msg.action,
+                    msg.payload,
+                    msg.msgtype,
+                    msg.requestId,
+                    msg.timestamp,
+                    msg.source
+                );
+                return;
+            }
             if (isBinaryEnvelope(msg.payload)) {
                 window.postMessage(msg, '*');
             } else {

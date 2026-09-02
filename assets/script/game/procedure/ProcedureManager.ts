@@ -10,16 +10,17 @@
  * 全局流程管理器
  */
 import { traceClass } from '../../core/decorator/LogTrace';
+import TexasGameRoomData from '../../data/room/texas/TexasGameRoomData';
 import ProcedureBase from '../procedure/ProcedureBase';
 import ProcedureEnterRoom, { ProcedureEnterRoomParam } from '../procedure/ProcedureEnterRoom';
 import ProcedureIdle from '../procedure/ProcedureIdle';
-import ProcedureInit from '../procedure/ProcedureInit';
+import ProcedureInit, { ProcedureInitParam } from '../procedure/ProcedureInit';
 import ProcedureReturn, { ProcedureReturnNavigateParam } from '../procedure/ProcedureReturn';
 import ProcedureDefine from './ProcedureDefine';
 
 type ProcedureParamLimit = {
     [ProcedureDefine.EnterRoom]: ProcedureEnterRoomParam;
-    [ProcedureDefine.Init]: void;
+    [ProcedureDefine.Init]: ProcedureInitParam | void;
     [ProcedureDefine.Return]: ProcedureReturnNavigateParam | void;
     [ProcedureDefine.Idle]: void;
 };
@@ -42,7 +43,7 @@ export default class ProcedureManager {
     //开始某个流程
     static async StartProcedure<T extends ProcedureDefine>(
         procedureIndex: T,
-        ...args: ProcedureParamLimit[T] extends void ? [param?: never] : [param: ProcedureParamLimit[T]]
+        ...args: void extends ProcedureParamLimit[T] ? [param?: Exclude<ProcedureParamLimit[T], void>] : [param: ProcedureParamLimit[T]]
     ): Promise<void> {
         let procedure = this.procedureDic.get(procedureIndex);
         if (!procedure) {
@@ -101,6 +102,13 @@ export default class ProcedureManager {
             param.roomID = roomID;
         } else {
             this.tracelog.error('刷新 MTT roomID 时 matchID 不匹配', matchID, param?.matchID, roomID);
+        }
+    }
+
+    public static NotifyRoomReady(roomData: TexasGameRoomData): void {
+        const procedure = this.procedureDic.get(ProcedureDefine.EnterRoom);
+        if (procedure instanceof ProcedureEnterRoom && this.prevProcedure === procedure) {
+            procedure.onRoomReady(roomData);
         }
     }
     // //设置当前流程

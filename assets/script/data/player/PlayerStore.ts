@@ -38,6 +38,11 @@ export class PlayerStore extends cc.EventTarget {
     private readonly _basicInfoMap: Map<number, PlayerBasicData> = new Map();
     private readonly _statsMap: Map<number, PlayerStatsData> = new Map();
 
+    public clearSessionData(): void {
+        this._basicInfoMap.clear();
+        this._statsMap.clear();
+    }
+
     public getBasicInfo(userRID: number): PlayerBasicData {
         return this._basicInfoMap.get(userRID) || null;
     }
