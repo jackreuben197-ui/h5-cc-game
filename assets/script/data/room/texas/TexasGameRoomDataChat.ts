@@ -49,6 +49,7 @@ export default class TexasGameRoomDataChat extends cc.EventTarget {
     private _historyLoading: boolean = false;
     private _hasMoreHistory: boolean = true;
     private _oldestHistoryID: number | null = null;
+    private _historyPrologueResolved: boolean = false;
     /** 俱乐部开场白缓存（服务端后续同步可能不再返回） */
     public prologue: string | null = null;
     @observable(TexasGameRoomDataChat.NEW_MESSAGE_ALERT_CHANGED)
@@ -120,6 +121,11 @@ export default class TexasGameRoomDataChat extends cc.EventTarget {
         this._historyLoading = false;
     }
 
+    public setDefaultPrologue(prologue: string | null): void {
+        if (this._historyPrologueResolved) return;
+        this.prologue = prologue;
+    }
+
     public resetHistory(): void {
         this._messages.length = 0;
         this._pendingMessage = null;
@@ -127,6 +133,7 @@ export default class TexasGameRoomDataChat extends cc.EventTarget {
         this._historyLoading = false;
         this._hasMoreHistory = true;
         this._oldestHistoryID = null;
+        this._historyPrologueResolved = false;
         this.prologue = null;
         this.hasNewMessageAlert = false;
         this._notifyHistoryReset();
@@ -173,9 +180,19 @@ export default class TexasGameRoomDataChat extends cc.EventTarget {
     @pureEvent(TexasGameRoomDataChat.DANMU_ADDED)
     public addDanmu(msg: TexasDanmuMessage): void {}
 
-    public mergeHistoryPage(history: TexasChatMessage[], prologue: string | null, pageOldestID: number | null, hasMore: boolean, initial: boolean): void {
+    public mergeHistoryPage(
+        history: TexasChatMessage[],
+        prologue: string | null,
+        prologueFromHistory: boolean,
+        pageOldestID: number | null,
+        hasMore: boolean,
+        initial: boolean
+    ): void {
         const previousOldestID = this._oldestHistoryID;
-        if (prologue !== null) {
+        if (prologueFromHistory) {
+            this.prologue = prologue;
+            this._historyPrologueResolved = true;
+        } else if (!this._historyPrologueResolved && prologue !== null) {
             this.prologue = prologue;
         }
         const added: TexasChatMessage[] = [];

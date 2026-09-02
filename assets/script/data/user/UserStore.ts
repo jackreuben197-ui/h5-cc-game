@@ -203,6 +203,8 @@ export class ClubData {
     public logo: string;
     public tribeID: number;
     public roomLogo: string;
+    public prologue?: string;
+    public prologueSwitch?: number;
 }
 
 export class ClubWallet {

@@ -3,6 +3,8 @@ import { traceClass } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataChat, { TexasChatMessage } from '../../../data/room/texas/TexasGameRoomDataChat';
+import userStore, { UserStore } from '../../../data/user/UserStore';
+import { RoomOriginType } from '../../../game/constant/RoomOriginType';
 import HttpRequest from '../../../net/https/HttpRequest';
 import { WebChatRoomMessageSync, WebConfigGlobalConfig } from '../../../net/https/WebRequest';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
@@ -136,6 +138,7 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
         }
         this._chat = this._roomData.chat;
         this._chat.setChatDialogOpen(true);
+        this._applyOrganizationPrologue();
         this.dlgTitleLabel.string = `${this._roomData.basicInfo.roomName || ''}\n#${this._roomData.roomID}`;
         this.chatEditBox.string = '';
         this._chatTemplatePanelActive = false;
@@ -173,7 +176,7 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
 
     private _bindEventsAndRefresh(): void {
         if (!this._chat) return;
-        autoBindEvents(this, { chat: this._chat });
+        autoBindEvents(this, { chat: this._chat, userStore });
     }
     // ============================================================
     // @bindEvent —— 数据驱动刷新
@@ -199,9 +202,16 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
 
     @bindEvent(TexasGameRoomDataChat.HISTORY_RESET, { dataSource: 'chat', initIgnore: true })
     private onHistoryReset(): void {
+        this._applyOrganizationPrologue();
         this._refreshWelcome();
         this._renderAllMessages();
         this._fetchHistoryAndPrologue();
+    }
+
+    @bindEvent(UserStore.CLUBS_INFO_CHANGE, { dataSource: 'userStore', initIgnore: true })
+    private onClubsInfoChanged(): void {
+        this._applyOrganizationPrologue();
+        this._refreshWelcome();
     }
     // ============================================================
     // 渲染
@@ -284,6 +294,18 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
             if (w) w.updateAlignment();
         }
     }
+
+    private _applyOrganizationPrologue(): void {
+        const originType = this._roomData?.basicInfo.originType;
+        if (originType !== RoomOriginType.UNION && originType !== RoomOriginType.CLUB) {
+            this._chat?.setDefaultPrologue(null);
+            return;
+        }
+        const clubID = this._roomData.basicInfo.clubID;
+        const club = userStore.clubsData.find(item => item._clubID === clubID);
+        if (!club) return;
+        this._chat.setDefaultPrologue(club.prologueSwitch === 2 ? '' : club.prologue || '');
+    }
     // ============================================================
     // 发送
     // ============================================================
@@ -348,7 +370,10 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
                     return;
                 }
                 const history: TexasChatMessage[] = [];
-                let prologue: string | null = typeof responseData?.prologue === 'string' ? responseData.prologue : null;
+                const isOrganizationRoom =
+                    roomData.basicInfo.originType === RoomOriginType.UNION || roomData.basicInfo.originType === RoomOriginType.CLUB;
+                const defaultPrologue = isOrganizationRoom && typeof responseData?.prologue === 'string' ? responseData.prologue : null;
+                let historyPrologue: string | null = null;
                 let pageOldestID: number | null = null;
                 for (const chatData of chatDataArr) {
                     const historyID = Number(chatData?.id);
@@ -384,8 +409,10 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
                             continue;
                         }
                         if (msgData.msgType === 3) continue;
-                        if (prologue === null && msgData.is_prologue === true) {
-                            prologue = msgData.message || '';
+                        if (msgData.is_prologue === true) {
+                            if (isOrganizationRoom) {
+                                historyPrologue = msgData.message || '';
+                            }
                             continue;
                         }
                         if (!msgData.message) continue;
@@ -398,8 +425,10 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
                     }
                 }
                 const hasMore = chatDataArr.length >= CHAT_HISTORY_PAGE_SIZE;
-                this.tracelog.debug('[Chat][History] 解析完成', { beforeID, pageOldestID, hasMore, history, prologue });
-                chat.mergeHistoryPage(history, prologue, pageOldestID, hasMore, !loadOlder);
+                const prologueFromHistory = historyPrologue !== null;
+                const prologue = prologueFromHistory ? historyPrologue : defaultPrologue;
+                this.tracelog.debug('[Chat][History] 解析完成', { beforeID, pageOldestID, hasMore, history, prologue, prologueFromHistory });
+                chat.mergeHistoryPage(history, prologue, prologueFromHistory, pageOldestID, hasMore, !loadOlder);
             },
             onFailure: () => {
                 chat.failHistoryLoad();

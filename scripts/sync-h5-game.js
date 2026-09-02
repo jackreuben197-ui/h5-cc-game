@@ -44,6 +44,32 @@ function cleanH5Assets(assetsDir) {
     }
 }
 
+function resolveLocalI18nRuntime() {
+    const candidates = [
+        path.resolve(rootDir, '../h5-cc-i18n/dist/h5-cc-i18n.min.js'),
+        path.resolve(rootDir, 'node_modules/@silenthill/h5-cc-i18n/dist/h5-cc-i18n.min.js'),
+    ];
+    return candidates.find((file) => fs.existsSync(file));
+}
+
+function overrideI18nRuntime() {
+    const source = resolveLocalI18nRuntime();
+    if (!source) {
+        console.warn('\n[WARN] 未找到本地 h5-cc-i18n runtime，保留 h5-game 构建产物中的版本。');
+        return;
+    }
+
+    const targets = [
+        path.join(h5GameDir, 'public/h5-cc-i18n.min.js'),
+        path.join(distDir, 'h5-cc-i18n.min.js'),
+    ];
+    for (const target of targets) {
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        fs.copyFileSync(source, target);
+    }
+    console.log(`\n[2.5/5] 已用本地 i18n runtime 覆盖 h5-game 产物: ${source}`);
+}
+
 // 检查仓库是否存在
 if (!fs.existsSync(h5GameDir)) {
     const sourceType = useLocalH5Game ? '同级本地 h5-game' : 'h5-game 子模块';
@@ -71,6 +97,7 @@ if (useLocalH5Game) {
     runCommand(`${pnpmCommand} install`, h5GameDir, { CI: 'true' });
 }
 runCommand(`${pnpmCommand} build`, h5GameDir, { VITE_BRIDGE_TARGET: 'h5-cc-game' });
+overrideI18nRuntime();
 
 // [3/5] 清理旧 H5 资源并复制当前 dist
 console.log('\n[3/5] 清理旧 H5 资源并复制 dist 文件...');
