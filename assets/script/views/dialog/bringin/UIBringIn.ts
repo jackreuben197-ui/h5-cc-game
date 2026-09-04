@@ -4,7 +4,7 @@ import { RoomPlayerGC } from '../../../data/room/RoomDataGenericConstraints';
 import TexasGameRoomDataPlayerMine from '../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import tradeStore, { TradeStore } from '../../../data/trade/TradeStore';
 import TradeStoreUtils from '../../../data/trade/TradeStoreUtils';
-import userStore, { IWallet } from '../../../data/user/UserStore';
+import userStore, { IWallet, UserStore } from '../../../data/user/UserStore';
 import UserStoreUtils from '../../../data/user/UserStoreUtils';
 import type { DialogResultPayload } from '../../../H5MsgMgr';
 import h5MessageManager from '../../../H5MsgMgr';
@@ -290,7 +290,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
                 this.balanceNode.active = false;
                 this.creditNode.active = false;
                 this.diamondNode.active = true;
-                this.textTotalDiamond.string = StringHelper.GetLongStringLocale(0, 1, 0);
+                this.textTotalDiamond.string = StringHelper.GetLongStringLocale(userStore.diamonds, 1, 0);
                 break;
             case 3:
                 this.balanceNode.active = false;
@@ -557,8 +557,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     // initDiamond 初始化钻石购买界面
     private async initDiamond(): Promise<void> {
         this.diamondAmountLabel.string = i18nMgr.Get('UISend_diamondsNum') + ':';
-        this.diamondAmount.string = StringHelper.GetLongStringLocale(userStore.diamonds);
-        autoBindEvents(this, { trade: tradeStore });
+        autoBindEvents(this, { trade: tradeStore, user: userStore });
         let promises = [];
         promises.push(TradeStoreUtils.prepareTradeItemsAndPaytypes());
         // 如果不是批发商，还需要请求是否在申请批发商中
@@ -566,6 +565,13 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
             promises.push(UserStoreUtils.checkIsApplying());
         }
         Promise.all(promises);
+    }
+
+    @bindEvent(UserStore.DIAMONDS_CHANGE, 'user')
+    private onDiamondsChange(diamonds: number): void {
+        const value = StringHelper.GetLongStringLocale(diamonds, 1, 0);
+        this.textTotalDiamond.string = value;
+        this.diamondAmount.string = value;
     }
 
     /** 点击带入Tab*/
