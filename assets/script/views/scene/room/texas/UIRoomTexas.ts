@@ -84,8 +84,12 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     private middleLayout: cc.Node = null;
     @property({ type: cc.Button, displayName: '带入筹码按钮右上角' })
     private bringInButton: cc.Button = null;
+    @property({ type: cc.SpriteFrame, displayName: '钻石桌带入按钮图片' })
+    private diamondBringInSpriteFrame: cc.SpriteFrame = null;
     private _roomData: TexasGameRoomData = null;
     private _mttTableStateView: MttTableStateView = null;
+    private _bringInButtonSprite: cc.Sprite = null;
+    private _bringInChipSpriteFrame: cc.SpriteFrame = null;
 
     protected onLoad(): void {
         //菜单项
@@ -103,6 +107,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this.chatBtn.on('click', this.onClickChatBtn, this);
         // bring in
         this.bringInButton.node.on('click', this.onClickBringIn, this);
+        this._bringInButtonSprite = this.bringInButton.node.getComponent(cc.Sprite);
+        this._bringInChipSpriteFrame = this._bringInButtonSprite.spriteFrame;
         this._setChatAlertVisible(false);
         // MTT 状态组件复用现有牌桌节点，无需在 prefab 增加脚本引用。
         this._mttTableStateView = this.node.addComponent(MttTableStateView);
@@ -110,6 +116,11 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
 
     private onClickBringIn() {
         TexasTableEvent.BringIn(this._roomData.mine);
+    }
+
+    private _updateBringInButtonSprite(goldType: number): void {
+        this._bringInButtonSprite.spriteFrame =
+            goldType == 4 && this.diamondBringInSpriteFrame ? this.diamondBringInSpriteFrame : this._bringInChipSpriteFrame;
     }
 
     private onSafetyGuardClicked(): void {
@@ -153,6 +164,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         const roomData = roomDataManager.getRoomData<TexasGameRoomData>(param.roomID, param.matchID);
         this._roomData = roomData;
         this._mine = roomData.mine;
+        this._updateBringInButtonSprite(roomData.basicInfo.goldType);
         autoBindEvents(this, { chat: roomData.chat, basic: roomData.basicInfo, mine: roomData.mine, secondPcs: roomData.secondPcs });
         this.btnSafetyGuard.node.active = roomData.basicInfo.tribeID > 0;
         this.roomInfo.initData(param.roomID, param.matchID);
