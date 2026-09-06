@@ -24,14 +24,14 @@ export class StringHelper {
     }
 
     static GetLongStringLocale(num: number, ratio = 100, fixed = 2): string {
-        if (num % 100 != 0) {
-            const n: number = num / ratio;
+        const n: number = num / ratio;
+        if (!Number.isInteger(n)) {
             return n.toLocaleString('en-US', {
                 minimumFractionDigits: fixed,
                 maximumFractionDigits: fixed
             });
         }
-        return (num / 100).toLocaleString('en-US');
+        return n.toLocaleString('en-US');
     }
 
     public static GetLongStringUnit(num: number): string {

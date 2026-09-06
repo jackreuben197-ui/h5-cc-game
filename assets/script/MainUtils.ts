@@ -35,6 +35,8 @@ interface SyncedClubInfo {
     club_logo?: string;
     tribe_random_id?: number;
     room_logo?: string;
+    prologue?: string;
+    prologue_switch?: number;
 }
 // ==================== SDK 动态加载 ====================
 /**
@@ -294,7 +296,9 @@ export async function registerH5Listeners(): Promise<void> {
                 name: String(club.club_name || ''),
                 logo: String(club.logo || club.club_logo || ''),
                 tribeID: Number(club.tribe_random_id || 0),
-                roomLogo: String(club.room_logo || '').trim()
+                roomLogo: String(club.room_logo || '').trim(),
+                prologue: String(club.prologue || '').trim(),
+                prologueSwitch: Number(club.prologue_switch || 0)
             }))
             .filter(club => club._clubID > 0);
         _ploger.info('[H5Bridge] syncUserClub 缓存完成, 共', clubList.length, '个俱乐部');
