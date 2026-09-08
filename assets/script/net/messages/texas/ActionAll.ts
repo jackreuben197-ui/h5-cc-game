@@ -1,4 +1,4 @@
-import { ServerMessageActionAll } from '@silenthill/agreement-web';
+import { Def, ServerMessageActionAll } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
@@ -15,7 +15,13 @@ export function ActionAll(data: ServerMessageActionAll.AsObject, roomID: number,
     const seatPlayer = roomData.seatsStateManager.getSeatPlayer(data.operatorSeatId);
     seatPlayer.setAction(data.action, AnimateDisplayTypeAction.Done);
     seatPlayer.roundActioned = true;
-    seatPlayer.chip = data.leftChips;
+    if (data.leftChips != null && data.leftChips > 0) {
+        seatPlayer.chip = data.leftChips;
+    } else if (data.action === Def.Action.ALLIN) {
+        seatPlayer.chip = 0;
+    } else {
+        seatPlayer.chip = Math.max(0, seatPlayer.chip - (data.amount || 0));
+    }
     seatPlayer.setRoundBet(seatPlayer.roundBet + data.amount, AnimateDisplayTypeRoundBet.PutNear);
     seatPlayer.operator = null;
     if (roomData.mine.seatNo > 0) {
