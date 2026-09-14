@@ -5,6 +5,7 @@ import soundManager, { SoundEffectKey } from '../../../../core/SoundManager';
 import { OperatorMine, OpertionType } from '../../../../data/room/texas/model/Operator';
 import texasGamePersonalSettings, { ShortCut, TexasGamePersonalSettings } from '../../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
+import globalConfigStore from '../../../../data/system/GlobalConfigStore';
 import { AutoOperationTypeTexas } from '../../../../game/constant/AutoOpertaionType';
 import { DiamondConfigType } from '../../../../game/constant/DiamondConfigType';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
@@ -195,6 +196,8 @@ export default class Operation extends cc.Component {
 
     private async _refreshAddTime(alreadlyDelayTimes: number): Promise<void> {
         this._delayTimes = alreadlyDelayTimes;
+        this.addTimeCost.node.parent.active = !globalConfigStore.isChannelDiamondFreeMode;
+        if (globalConfigStore.isChannelDiamondFreeMode) return;
         const cost = await this._seatPlayer.roomData.basicInfo.getDiamondPrice(alreadlyDelayTimes, DiamondConfigType.DiamondConfigTypeAddTime);
         this.addTimeCost.string = '' + cost;
     }

@@ -188,8 +188,11 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         this.viewPlayerCardsConfigNode.active = isAudienceViewPlayerCardsEnabled(this._roomData.basicInfo);
         this._bindEventsAndRefresh();
         this._initTopInfo();
-        this._reqDiamondBalance();
-        if (this.viewPlayerCardsConfigNode.active) this._reqPeekPrice();
+        this._refreshDiamondElements();
+        if (!globalConfigStore.isChannelDiamondFreeMode) {
+            this._reqDiamondBalance();
+            if (this.viewPlayerCardsConfigNode.active) this._reqPeekPrice();
+        }
         // 第一手没打完不请求
         this._totalPage = Math.max(0, this._roomData.basicInfo.handNum - 1);
         this._currentPage = this._totalPage;
@@ -252,6 +255,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     @bindEvent(GlobalConfigStore.CONFIG_CHANGED, { dataSource: 'globalConfig', initIgnore: true })
     private onGlobalConfigChanged(): void {
         this.viewPlayerCardsConfigNode.active = isAudienceViewPlayerCardsEnabled(this._roomData.basicInfo);
+        this._refreshDiamondElements();
     }
     // ====================================================
     // 翻页(StepSlider:拖动只刷页码,松手才请求;对齐 UITexasReport 的接线方式)
@@ -500,7 +504,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     private _refreshPeekButton() {
         const hasHidden = hasHiddenCards(this._currentData, this._model, userStore.userRID);
         this._setButtonEnabled(this.peekBtnNode, hasHidden);
-        if (hasHidden) this._reqPeekPrice();
+        if (hasHidden && !globalConfigStore.isChannelDiamondFreeMode) this._reqPeekPrice();
     }
 
     private async onPeekClicked() {
@@ -512,8 +516,10 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         if (result.code === 0) {
             // 成功后合并数据已同步触发 REPLAY_DATA_CHANGE → _refreshPeekButton,
             // 按是否还有未亮牌决定按钮态(全看完则保持置灰),此处不再强制恢复高亮
-            this._reqPeekPrice();
-            this._reqDiamondBalance();
+            if (!globalConfigStore.isChannelDiamondFreeMode) {
+                this._reqPeekPrice();
+                this._reqDiamondBalance();
+            }
         } else {
             this._setButtonEnabled(this.peekBtnNode, true);
             viewManager.showToast(CPErrorCode.ServerErrorDescription(result.code));
@@ -539,7 +545,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         // 参与过这手牌且还有未发出的公共牌才可发发看
         const hasHidden = model.hasMe && hasHiddenPublicCards(model.publicCards);
         this._setButtonEnabled(this.viewPubBtnNode, hasHidden);
-        if (hasHidden) this._reqViewPubPrice();
+        if (hasHidden && !globalConfigStore.isChannelDiamondFreeMode) this._reqViewPubPrice();
     }
 
     private async onViewPubClicked() {
@@ -551,7 +557,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         if (!cc.isValid(this.node)) return;
         if (result.code === 0) {
             // 成功后合并数据已同步触发 REPLAY_DATA_CHANGE → _refreshViewPubButton 决定按钮态,此处不强制恢复高亮
-            this._reqDiamondBalance();
+            if (!globalConfigStore.isChannelDiamondFreeMode) this._reqDiamondBalance();
         } else if (result.code === UITexasHistory.CODE_REPLAY_NOT_SYNCED) {
             // 无专用 i18n key,用通用"服务器正忙,请稍后再试"
             this._setButtonEnabled(this.viewPubBtnNode, true);
@@ -662,5 +668,12 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         if (diamonds != null) {
             this.diamondNumLabel.string = diamonds.toLocaleString('en-US');
         }
+    }
+
+    private _refreshDiamondElements(): void {
+        const visible = !globalConfigStore.isChannelDiamondFreeMode;
+        this.diamondNumLabel.node.parent.active = visible;
+        this.peekCostLabel.node.parent.active = visible;
+        this.viewPubCostLabel.node.parent.active = visible;
     }
 }

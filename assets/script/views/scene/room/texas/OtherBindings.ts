@@ -181,6 +181,7 @@ export default class OtherBindings extends cc.Component {
     private onGlobalConfigChanged(): void {
         this.onShowViewPlayerCardsButtonChanged(this._roomData.mine.showViewPlayerCardsButton);
         this.onShowViewPublicCardsButtonChanged(this._roomData.mine.showViewPublicCardsButton);
+        this._refreshDiamondPriceVisibility();
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.SHOW_VIEW_PLAYER_CARDS_BUTTON, 'mine')
@@ -193,6 +194,7 @@ export default class OtherBindings extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayerMine.VIEW_PLAYER_CARDS_COST, 'mine')
     private onUpdateViewPlayerCardsCost(cost: number): void {
         this.viewPlayerCardsCost.string = cost + '';
+        this._refreshDiamondPriceVisibility();
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.SHOW_VIEW_PUBLIC_CARDS_BUTTON, 'mine')
@@ -244,6 +246,13 @@ export default class OtherBindings extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayerMine.VIEW_PUBLIC_CARDS_COST, 'mine')
     private onUpdateViewPublicCardsCost(cost: number): void {
         this.viewPublicCardsCost.string = cost + '';
+        this._refreshDiamondPriceVisibility();
+    }
+
+    private _refreshDiamondPriceVisibility(): void {
+        const visible = !globalConfigStore.isChannelDiamondFreeMode;
+        this.viewPlayerCardsCost.node.parent.active = visible;
+        this.viewPublicCardsCost.node.parent.active = visible;
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE, 'mine')

@@ -3,6 +3,7 @@ import { Code, Def } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataChat from '../../../data/room/texas/TexasGameRoomDataChat';
+import globalConfigStore from '../../../data/system/GlobalConfigStore';
 import userStore, { UserPropData, UserStore } from '../../../data/user/UserStore';
 import UserStoreUtils from '../../../data/user/UserStoreUtils';
 import { BroadcastCode } from '../../../game/constant/BroadcastCode';
@@ -249,7 +250,7 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
             item.initialize({
                 skeletonLoading: skeletonLoading.get(itemData.config.spine),
                 animation: itemData.config.animation,
-                showDiamond: !isFree,
+                showDiamond: !globalConfigStore.isChannelDiamondFreeMode && !isFree,
                 diamond: itemData.data.payPrice,
                 onClick: () => this.onEmojiClicked(itemData.data, itemData.config)
             });
