@@ -4,7 +4,9 @@ import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataReplay, { ReplayHandData } from '../../../data/room/texas/TexasGameRoomDataReplay';
 import { CCViewData } from '../../../data/system/CCViewData';
+import globalConfigStore, { GlobalConfigStore } from '../../../data/system/GlobalConfigStore';
 import userStore from '../../../data/user/UserStore';
+import { isAudienceViewPlayerCardsEnabled } from '../../../game/util/ViewPlayerCardsConfig';
 import { StringHelper } from '../../../helper/StringHelper';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../i18n/i18nMgr';
@@ -73,6 +75,8 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     private diamondNumLabel: cc.Label = null;
     @property({ type: cc.Node, displayName: '偷偷看按钮($PeekButton)' })
     private peekBtnNode: cc.Node = null;
+    @property({ type: cc.Node, displayName: '观众看牌权限控制节点($PeekNode)' })
+    private viewPlayerCardsConfigNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '发发看按钮($ViewPubButton)' })
     private viewPubBtnNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '收藏按钮($favoBtn)' })
@@ -181,10 +185,11 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         this._model = null;
         this._detailsExpanded = false;
         this._isCollected = false;
+        this.viewPlayerCardsConfigNode.active = isAudienceViewPlayerCardsEnabled(this._roomData.basicInfo);
         this._bindEventsAndRefresh();
         this._initTopInfo();
         this._reqDiamondBalance();
-        this._reqPeekPrice();
+        if (this.viewPlayerCardsConfigNode.active) this._reqPeekPrice();
         // 第一手没打完不请求
         this._totalPage = Math.max(0, this._roomData.basicInfo.handNum - 1);
         this._currentPage = this._totalPage;
@@ -224,7 +229,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
 
     private _bindEventsAndRefresh() {
         if (!this._roomData) return;
-        autoBindEvents(this, { replay: this._roomData.replay });
+        autoBindEvents(this, { globalConfig: globalConfigStore, replay: this._roomData.replay });
     }
     // ====================================================
     // 数据订阅
@@ -242,6 +247,11 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     @bindEvent(TexasGameRoomDataReplay.REPLAY_EMPTY, { dataSource: 'replay', initIgnore: true })
     private onReplayEmpty() {
         this.tracelog.warn('回放数据为空', this._currentPage);
+    }
+
+    @bindEvent(GlobalConfigStore.CONFIG_CHANGED, { dataSource: 'globalConfig', initIgnore: true })
+    private onGlobalConfigChanged(): void {
+        this.viewPlayerCardsConfigNode.active = isAudienceViewPlayerCardsEnabled(this._roomData.basicInfo);
     }
     // ====================================================
     // 翻页(StepSlider:拖动只刷页码,松手才请求;对齐 UITexasReport 的接线方式)
@@ -494,7 +504,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     }
 
     private async onPeekClicked() {
-        if (!this._currentData) return;
+        if (!this._currentData || !isAudienceViewPlayerCardsEnabled(this._roomData.basicInfo)) return;
         this._setButtonEnabled(this.peekBtnNode, false);
         // 合并写数据在 TexasTableEvent → replay 数据层,视图经 REPLAY_DATA_CHANGE 自动刷新
         const result = await TexasTableEvent.PeekReplayHands(this._roomData, this._currentPage);
@@ -533,7 +543,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     }
 
     private async onViewPubClicked() {
-        if (!this._currentData) return;
+        if (!this._currentData || !isAudienceViewPlayerCardsEnabled(this._roomData.basicInfo)) return;
         this._setButtonEnabled(this.viewPubBtnNode, false);
         const round = getViewPubRound(this._model.publicCards);
         // 合并写数据在 TexasTableEvent → replay 数据层,视图经 REPLAY_DATA_CHANGE 自动刷新

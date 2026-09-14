@@ -7819,11 +7819,17 @@
     "viewPlayerCards": {
       "__id__": 174
     },
+    "viewPlayerCardsConfigNode": {
+      "__id__": 147
+    },
     "viewPlayerCardsCost": {
       "__id__": 166
     },
     "viewPublicCards": {
       "__id__": 204
+    },
+    "viewPublicCardsConfigNode": {
+      "__id__": 177
     },
     "viewPublicCardsCost": {
       "__id__": 196
