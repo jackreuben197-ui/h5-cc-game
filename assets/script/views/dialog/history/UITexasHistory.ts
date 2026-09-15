@@ -265,7 +265,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     private _refreshWatchCardVisibility(): void {
         const isSeated = this._roomData.mine.seatNo > 0;
         const canWatchPlayer = canWatchPlayerCards(this._roomData.basicInfo, isSeated);
-        const canWatchPublic = canWatchPublicCards(this._roomData.basicInfo, isSeated);
+        const canWatchPublic = this._model?.hasMe === true && canWatchPublicCards(this._roomData.basicInfo, isSeated);
         this.viewPlayerCardsConfigNode.active = canWatchPlayer || canWatchPublic;
         this.peekBtnNode.active = canWatchPlayer;
         this.viewPubBtnNode.active = canWatchPublic;
@@ -363,13 +363,14 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         this.roomHandLabel.string = `${this._roomData.roomID}-${this._currentPage}`;
         this._renderDashboard();
         this._renderSections();
+        this._refreshWatchCardVisibility();
         this._refreshPeekButton();
         this._refreshViewPubButton();
         // 收藏态随牌谱一起缓存(replay.collected):命中缓存直接同步点亮,避免"先置白再异步点亮"的闪烁;
         // 仅未缓存过(null)才发起查询兜底
         const cachedCollected = this._roomData.replay.getCollected(this._currentPage);
         this._refreshCollectShow(cachedCollected ?? false);
-        if (cachedCollected == null) {
+        if (model.hasMe && cachedCollected == null) {
             this._reqCollectStatus();
         }
     }
@@ -556,14 +557,14 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
 
     private _refreshViewPubButton() {
         const model = this._model;
-        const canWatch = canWatchPublicCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0);
+        const canWatch = model.hasMe && canWatchPublicCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0);
         const hasHidden = canWatch && hasHiddenPublicCards(model.publicCards);
         this._setButtonEnabled(this.viewPubBtnNode, hasHidden);
         if (hasHidden && !globalConfigStore.isChannelDiamondFreeMode) this._reqViewPubPrice();
     }
 
     private async onViewPubClicked() {
-        if (!this._currentData || !canWatchPublicCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0)) return;
+        if (!this._currentData || !this._model?.hasMe || !canWatchPublicCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0)) return;
         this._setButtonEnabled(this.viewPubBtnNode, false);
         const round = getViewPubRound(this._model.publicCards);
         // 合并写数据在 TexasTableEvent → replay 数据层,视图经 REPLAY_DATA_CHANGE 自动刷新
@@ -621,6 +622,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     }
 
     private async _reqCollectStatus() {
+        if (!this._model?.hasMe) return;
         const params = this._collectParamsBase();
         if (!params.room_id || !params.hand_num) return;
         const isCollected = await TexasTableEvent.ReqReplayCollectStatus(this._roomData, params);
@@ -667,6 +669,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     private _refreshCollectShow(isCollected: boolean) {
         this._isCollected = isCollected;
         const canCollect = !!this._model?.hasMe;
+        this.favoBtnNode.active = canCollect;
         this._setButtonEnabled(this.favoBtnNode, canCollect);
         if (this.favoStar) {
             this.favoStar.color = canCollect && isCollected ? UITexasHistory.COLLECTED_STAR_COLOR : cc.Color.WHITE;
