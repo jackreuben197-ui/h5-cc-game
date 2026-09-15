@@ -4,14 +4,30 @@ import { CurrencyType } from '../constant/CurrencyType';
 import { RoomOriginType } from '../constant/RoomOriginType';
 
 type AudienceRoomConfigKey = 'audience_friend_room' | 'audience_scoreboard_club_room' | 'audience_tribe_room';
+type WatchCardConfigName = 'view_player_cards_config' | 'view_public_cards_config';
 
-type ViewPlayerCardsConfig = Partial<Record<AudienceRoomConfigKey, boolean>>;
+type WatchCardPermissionConfig = Partial<Record<AudienceRoomConfigKey, number>>;
 
-export function isAudienceViewPlayerCardsEnabled(basicInfo: TexasGameRoomDataBasic): boolean {
+enum WatchCardPermission {
+    DISABLED = 0,
+    SEATED_PLAYER = 1,
+    SEATED_PLAYER_AND_AUDIENCE = 2
+}
+
+export function canWatchPlayerCards(basicInfo: TexasGameRoomDataBasic, isSeated: boolean): boolean {
+    return canWatchCards('view_player_cards_config', basicInfo, isSeated);
+}
+
+export function canWatchPublicCards(basicInfo: TexasGameRoomDataBasic, isSeated: boolean): boolean {
+    return canWatchCards('view_public_cards_config', basicInfo, isSeated);
+}
+
+function canWatchCards(configName: WatchCardConfigName, basicInfo: TexasGameRoomDataBasic, isSeated: boolean): boolean {
     const configKey = getAudienceRoomConfigKey(basicInfo);
     if (!configKey) return true;
-    const config = parseViewPlayerCardsConfig(globalConfigStore.get('view_player_cards_config'));
-    return config?.[configKey] === true;
+    const config = parseWatchCardPermissionConfig(globalConfigStore.get(configName));
+    const permission = config?.[configKey] ?? WatchCardPermission.DISABLED;
+    return permission === WatchCardPermission.SEATED_PLAYER_AND_AUDIENCE || (permission === WatchCardPermission.SEATED_PLAYER && isSeated);
 }
 
 function getAudienceRoomConfigKey(basicInfo: TexasGameRoomDataBasic): AudienceRoomConfigKey | null {
@@ -23,7 +39,7 @@ function getAudienceRoomConfigKey(basicInfo: TexasGameRoomDataBasic): AudienceRo
     return null;
 }
 
-function parseViewPlayerCardsConfig(raw: unknown): ViewPlayerCardsConfig | null {
+function parseWatchCardPermissionConfig(raw: unknown): WatchCardPermissionConfig | null {
     if (typeof raw === 'string') {
         try {
             raw = JSON.parse(raw);
@@ -32,5 +48,5 @@ function parseViewPlayerCardsConfig(raw: unknown): ViewPlayerCardsConfig | null 
         }
     }
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
-    return raw as ViewPlayerCardsConfig;
+    return raw as WatchCardPermissionConfig;
 }

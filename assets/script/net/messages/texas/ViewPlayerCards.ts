@@ -2,6 +2,7 @@ import { Def, ServerMessageViewPlayerCards } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { ViewPlayerCardsMode } from '../../../game/constant/ViewPlayerCardsMode';
+import { canWatchPlayerCards } from '../../../game/util/ViewPlayerCardsConfig';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import viewManager from '../../../views/UIViewManager';
@@ -14,9 +15,8 @@ export function ViewPlayerCards(data: ServerMessageViewPlayerCards.AsObject, roo
         viewManager.showToast(CPErrorCode.ServerErrorDescription(data.status));
         roomData.mine.showViewPlayerCardsButton =
             roomData.basicInfo.gameStatus == Def.GameStatus.HAND_END &&
-            roomData.mine.seatNo > 0 &&
-            !!roomData.mine.player &&
             !roomData.basicInfo.isMtt &&
+            canWatchPlayerCards(roomData.basicInfo, roomData.mine.seatNo > 0) &&
             roomData.basicInfo.viewPlayerCards !== ViewPlayerCardsMode.CLOSE;
         return;
     }

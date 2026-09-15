@@ -3,6 +3,7 @@ import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { AnimateDisplayTypePublicCards } from '../../../game/constant/AnimateDisplayType';
 import { DiamondConfigType } from '../../../game/constant/DiamondConfigType';
+import { canWatchPublicCards } from '../../../game/util/ViewPlayerCardsConfig';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import viewManager from '../../../views/UIViewManager';
 
@@ -46,9 +47,8 @@ function canShowViewPublicCardsButton(roomData: TexasGameRoomData, seatNo: numbe
         roomData.basicInfo.gameStatus == Def.GameStatus.HAND_END &&
         roomData.basicInfo.handNum == handNum &&
         roomData.mine.seatNo == seatNo &&
-        roomData.mine.seatNo > 0 &&
-        !!roomData.mine.player &&
         !roomData.basicInfo.isMtt &&
+        canWatchPublicCards(roomData.basicInfo, roomData.mine.seatNo > 0) &&
         roomData.publicCards.publicCards.length == publicCardCount &&
         roomData.publicCards.publicCards.length < 5
     );

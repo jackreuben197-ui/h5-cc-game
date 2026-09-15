@@ -11,7 +11,7 @@ import { AntiCheatType } from '../../../../game/constant/AntiCheatType';
 import { ButtonState } from '../../../../game/constant/Constants';
 import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconState';
 import { VideoModel } from '../../../../game/constant/VideoModel';
-import { isAudienceViewPlayerCardsEnabled } from '../../../../game/util/ViewPlayerCardsConfig';
+import { canWatchPlayerCards, canWatchPublicCards } from '../../../../game/util/ViewPlayerCardsConfig';
 import h5MessageManager from '../../../../H5MsgMgr';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
 import agoraManager from '../../../../net/agora/AgoraManager';
@@ -186,7 +186,7 @@ export default class OtherBindings extends cc.Component {
 
     @bindEvent(TexasGameRoomDataPlayerMine.SHOW_VIEW_PLAYER_CARDS_BUTTON, 'mine')
     private onShowViewPlayerCardsButtonChanged(show: boolean): void {
-        const enabled = show && isAudienceViewPlayerCardsEnabled(this._roomData.basicInfo);
+        const enabled = show && canWatchPlayerCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0);
         this.viewPlayerCardsConfigNode.active = enabled;
         this.viewPlayerCards.interactable = enabled;
     }
@@ -199,7 +199,7 @@ export default class OtherBindings extends cc.Component {
 
     @bindEvent(TexasGameRoomDataPlayerMine.SHOW_VIEW_PUBLIC_CARDS_BUTTON, 'mine')
     private onShowViewPublicCardsButtonChanged(show: boolean): void {
-        const enabled = show && isAudienceViewPlayerCardsEnabled(this._roomData.basicInfo);
+        const enabled = show && canWatchPublicCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0);
         this.viewPublicCardsConfigNode.active = enabled;
         this.viewPublicCards.interactable = enabled;
     }
@@ -606,13 +606,15 @@ export default class OtherBindings extends cc.Component {
     };
 
     private onCLickViewPlayerCards() {
-        if (!this._roomData || !this._roomData.mine.showViewPlayerCardsButton || !isAudienceViewPlayerCardsEnabled(this._roomData.basicInfo)) return;
+        if (!this._roomData || !this._roomData.mine.showViewPlayerCardsButton || !canWatchPlayerCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0))
+            return;
         this.viewPlayerCards.interactable = false;
         TexasTableEvent.ViewPlayerCards(this._roomData.mine);
     }
 
     private onClickViewPublicCards() {
-        if (!this._roomData || !this._roomData.mine.showViewPublicCardsButton || !isAudienceViewPlayerCardsEnabled(this._roomData.basicInfo)) return;
+        if (!this._roomData || !this._roomData.mine.showViewPublicCardsButton || !canWatchPublicCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0))
+            return;
         const publicCardCount = this._roomData.publicCards.publicCards.length;
         if (publicCardCount >= 5) {
             this._roomData.mine.showViewPublicCardsButton = false;

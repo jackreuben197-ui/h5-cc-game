@@ -8,6 +8,7 @@ import TexasGameRoomDataSeatsStateManager, {
     ThrowPropBroadcastData
 } from '../../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
 import ccviewData, { CCViewData } from '../../../../data/system/CCViewData';
+import globalConfigStore from '../../../../data/system/GlobalConfigStore';
 import { AnimateDisplayTypeButton } from '../../../../game/constant/AnimateDisplayType';
 import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconState';
 import throwPropManager, { ThrowPropSeatNodes } from '../../../util/ThrowPropManager';
@@ -101,6 +102,7 @@ export default class SeatManager extends cc.Component {
 
     @bindEvent(TexasGameRoomDataSeatsStateManager.DIAMOND_GIFT, { dataSource: 'seats', initIgnore: true })
     private onDiamondGift(data: DiamondGiftBroadcastData): void {
+        if (globalConfigStore.isChannelDiamondFreeMode) return;
         const senderData = this._getThrowPropSeatNodes(data.senderID);
         const receiverData = this._getThrowPropSeatNodes(data.receiverID);
         throwPropManager.playDiamondGift(data, senderData, receiverData);
