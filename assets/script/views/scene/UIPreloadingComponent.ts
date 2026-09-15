@@ -13,7 +13,7 @@ const TEXT_BOTTOM_PORTRAIT = 1404;
 const TEXT_BOTTOM_WIDE = 960;
 const BAR_WIDTH_PORTRAIT = 900;
 const BAR_WIDTH_WIDE = 1400;
-const MIN_PROGRESS_DURATION = 1;
+const MIN_PROGRESS_DURATION = 2;
 
 @ccclass
 @traceClass()
