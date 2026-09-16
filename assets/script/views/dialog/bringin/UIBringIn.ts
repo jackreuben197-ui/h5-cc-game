@@ -1,7 +1,8 @@
-import { autoBindEvents, bindEvent } from '../../../core/decorator/DataBind';
+import { autoBindEvents, bindEvent, unBindEventsAll } from '../../../core/decorator/DataBind';
 import { traceClass, traceMethod } from '../../../core/decorator/LogTrace';
 import { RoomPlayerGC } from '../../../data/room/RoomDataGenericConstraints';
 import TexasGameRoomDataPlayerMine from '../../../data/room/texas/TexasGameRoomDataPlayerMine';
+import globalConfigStore, { GlobalConfigStore } from '../../../data/system/GlobalConfigStore';
 import tradeStore, { TradeStore } from '../../../data/trade/TradeStore';
 import TradeStoreUtils from '../../../data/trade/TradeStoreUtils';
 import userStore, { IWallet, UserStore } from '../../../data/user/UserStore';
@@ -237,7 +238,9 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
             this._provider = new BringInProviderTexas(this._roomPlayer, param.CommitFn, this);
         }
         this._provider.process();
-        this.initDiamond();
+        autoBindEvents(this, { globalConfig: globalConfigStore });
+        this._refreshDiamondVisibility();
+        if (!globalConfigStore.isChannelDiamondFreeMode) this.initDiamond();
     }
 
     public override close(): void {
@@ -297,7 +300,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
             case 2:
                 this.balanceNode.active = false;
                 this.creditNode.active = false;
-                this.diamondNode.active = true;
+                this.diamondNode.active = !globalConfigStore.isChannelDiamondFreeMode;
                 this.textTotalDiamond.string = StringHelper.GetLongStringLocale(userStore.diamonds, 1, 0);
                 break;
             case 3:
@@ -502,6 +505,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
 
     @bindEvent(TradeStore.TRADEITEMS_AND_PAYTYPES_CHANGE, 'trade')
     private onUpdateTradeItemsAndPayTimes(items: HttpUSDTPriceListProtocol.GoldInfo[], paytypes: HttpUSDTPriceListProtocol.PayType[]) {
+        if (globalConfigStore.isChannelDiamondFreeMode) return;
         this.diamondBoard.removeAllChildren();
         // 先初始化所有购买选项
         for (let i = 0; i < items.length; i++) {
@@ -564,6 +568,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
 
     // initDiamond 初始化钻石购买界面
     private async initDiamond(): Promise<void> {
+        if (globalConfigStore.isChannelDiamondFreeMode) return;
         this.diamondAmountLabel.string = i18nMgr.Get('UISend_diamondsNum') + ':';
         autoBindEvents(this, { trade: tradeStore, user: userStore });
         let promises = [];
@@ -589,11 +594,13 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
 
     /** 点击钻石Tab*/
     private onClickDiamond(obj: cc.Node): void {
+        if (globalConfigStore.isChannelDiamondFreeMode) return;
         this._changeTab(BringInTabType.Diamond);
     }
 
     /*** 切换TAB*/
     public _changeTab(titleType: BringInTabType): void {
+        if (globalConfigStore.isChannelDiamondFreeMode) titleType = BringInTabType.Chips;
         const diamondStatus = titleType == BringInTabType.Diamond;
         const balanceStatus = titleType == BringInTabType.Chips;
         this.titleBarDiamondLine.active = diamondStatus;
@@ -604,6 +611,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
 
     private onClickCommit(): void {
         if (
+            !globalConfigStore.isChannelDiamondFreeMode &&
             this._roomPlayer instanceof TexasGameRoomDataPlayerMine &&
             this._roomPlayer.roomData.basicInfo.goldType == CurrencyType.DIAMOND &&
             this._bringInAmount > userStore.diamonds * TABLE_AMOUNT_PER_DIAMOND
@@ -619,6 +627,20 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
         }
         this._provider.commit(this._bringInAmount, this._autoBringin ? this._autoOnTable : 0);
         this.close();
+    }
+
+    @bindEvent(GlobalConfigStore.CONFIG_CHANGED, { dataSource: 'globalConfig', initIgnore: true })
+    private onGlobalConfigChanged(): void {
+        this._refreshDiamondVisibility();
+    }
+
+    private _refreshDiamondVisibility(): void {
+        const visible = !globalConfigStore.isChannelDiamondFreeMode;
+        this.titleBarDiamondLine.parent.active = visible;
+        if (!visible) {
+            this.diamondNode.active = false;
+            this._changeTab(BringInTabType.Chips);
+        }
     }
 
     private _showBalanceInsufficientDialog(clubID: number): void {
@@ -768,6 +790,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
 
     protected onDisable(): void {
         super.onDisable();
+        unBindEventsAll(this);
         this._clearBalanceDialogState();
         if (this._provider) {
             this._provider.cleanup();

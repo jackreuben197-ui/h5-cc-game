@@ -19783,6 +19783,9 @@
     "peekBtnNode": {
       "__id__": 472
     },
+    "viewPlayerCardsConfigNode": {
+      "__id__": 471
+    },
     "viewPubBtnNode": {
       "__id__": 495
     },

@@ -3,6 +3,7 @@ import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { DiamondConfigType } from '../../../game/constant/DiamondConfigType';
 import { ViewPlayerCardsMode } from '../../../game/constant/ViewPlayerCardsMode';
+import { canWatchPlayerCards } from '../../../game/util/ViewPlayerCardsConfig';
 
 // ViewPlayerCardsNum 1029
 export async function ViewPlayerCardsNum(data: ServerMessageViewPlayerCardsNum.AsObject, roomID: number, matchID: number) {
@@ -26,9 +27,8 @@ function canShowViewPlayerCardsButton(roomData: TexasGameRoomData, seatNo: numbe
         roomData.basicInfo.gameStatus == Def.GameStatus.HAND_END &&
         roomData.basicInfo.handNum == handNum &&
         roomData.mine.seatNo == seatNo &&
-        roomData.mine.seatNo > 0 &&
-        !!roomData.mine.player &&
         !roomData.basicInfo.isMtt &&
+        canWatchPlayerCards(roomData.basicInfo, roomData.mine.seatNo > 0) &&
         roomData.basicInfo.viewPlayerCards !== ViewPlayerCardsMode.CLOSE
     );
 }

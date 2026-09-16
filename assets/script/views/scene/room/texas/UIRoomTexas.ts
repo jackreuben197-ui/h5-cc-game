@@ -6,6 +6,7 @@ import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataChat, { TexasDanmuMessage } from '../../../../data/room/texas/TexasGameRoomDataChat';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import TexasGameRoomDataSecondPcs from '../../../../data/room/texas/TexasGameRoomDataSecondPcs';
+import globalConfigStore from '../../../../data/system/GlobalConfigStore';
 import h5MessageManager from '../../../../H5MsgMgr';
 import { StringHelper } from '../../../../helper/StringHelper';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
@@ -166,7 +167,9 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
 
     private _updateBringInButtonSprite(goldType: number): void {
         this._bringInButtonSprite.spriteFrame =
-            goldType == 4 && this.diamondBringInSpriteFrame ? this.diamondBringInSpriteFrame : this._bringInChipSpriteFrame;
+            !globalConfigStore.isChannelDiamondFreeMode && goldType == 4 && this.diamondBringInSpriteFrame
+                ? this.diamondBringInSpriteFrame
+                : this._bringInChipSpriteFrame;
     }
 
     private onSafetyGuardClicked(): void {

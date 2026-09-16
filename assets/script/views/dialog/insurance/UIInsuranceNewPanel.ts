@@ -8,6 +8,7 @@ import TexasGameRoomDataBasic from '../../../data/room/texas/TexasGameRoomDataBa
 import TexasGameRoomDataPlayerMine from '../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import TexasGameRoomDataPublicCards from '../../../data/room/texas/TexasGameRoomDataPublicCards';
 import TexasGameRoomDataSeatsStateManager from '../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
+import globalConfigStore from '../../../data/system/GlobalConfigStore';
 import GameplayUtil from '../../../game/util/GameplayUtil';
 import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
@@ -997,6 +998,10 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
     private _refreshDelayButton(delayCount: number): void {
         const enabled = this._clickedDelayTimes <= 1 && delayCount < 2 && !this._isCommitting;
         this._setDelayButtonEnabled(enabled);
+        const showPrice = !globalConfigStore.isChannelDiamondFreeMode;
+        if (this.textDelayBean) this.textDelayBean.node.active = showPrice;
+        const diamondIcon = this.buttonDelay?.getChildByName('Image_bean');
+        if (diamondIcon) diamondIcon.active = showPrice;
         if (this.textDelayBean) {
             this.textDelayBean.string = enabled ? `${2 * Math.pow(2, delayCount)}` : '0';
         }

@@ -4,7 +4,9 @@ import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataReplay, { ReplayHandData } from '../../../data/room/texas/TexasGameRoomDataReplay';
 import { CCViewData } from '../../../data/system/CCViewData';
+import globalConfigStore, { GlobalConfigStore } from '../../../data/system/GlobalConfigStore';
 import userStore from '../../../data/user/UserStore';
+import { canWatchPlayerCards, canWatchPublicCards } from '../../../game/util/ViewPlayerCardsConfig';
 import { StringHelper } from '../../../helper/StringHelper';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../i18n/i18nMgr';
@@ -73,6 +75,8 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     private diamondNumLabel: cc.Label = null;
     @property({ type: cc.Node, displayName: '偷偷看按钮($PeekButton)' })
     private peekBtnNode: cc.Node = null;
+    @property({ type: cc.Node, displayName: '观众看牌权限控制节点($PeekNode)' })
+    private viewPlayerCardsConfigNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '发发看按钮($ViewPubButton)' })
     private viewPubBtnNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '收藏按钮($favoBtn)' })
@@ -181,10 +185,14 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         this._model = null;
         this._detailsExpanded = false;
         this._isCollected = false;
+        this._refreshWatchCardVisibility();
         this._bindEventsAndRefresh();
         this._initTopInfo();
-        this._reqDiamondBalance();
-        this._reqPeekPrice();
+        this._refreshDiamondElements();
+        if (!globalConfigStore.isChannelDiamondFreeMode) {
+            this._reqDiamondBalance();
+            if (this.peekBtnNode.active) this._reqPeekPrice();
+        }
         // 第一手没打完不请求
         this._totalPage = Math.max(0, this._roomData.basicInfo.handNum - 1);
         this._currentPage = this._totalPage;
@@ -224,7 +232,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
 
     private _bindEventsAndRefresh() {
         if (!this._roomData) return;
-        autoBindEvents(this, { replay: this._roomData.replay });
+        autoBindEvents(this, { globalConfig: globalConfigStore, replay: this._roomData.replay });
     }
     // ====================================================
     // 数据订阅
@@ -242,6 +250,25 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     @bindEvent(TexasGameRoomDataReplay.REPLAY_EMPTY, { dataSource: 'replay', initIgnore: true })
     private onReplayEmpty() {
         this.tracelog.warn('回放数据为空', this._currentPage);
+    }
+
+    @bindEvent(GlobalConfigStore.CONFIG_CHANGED, { dataSource: 'globalConfig', initIgnore: true })
+    private onGlobalConfigChanged(): void {
+        this._refreshWatchCardVisibility();
+        if (this._model) {
+            this._refreshPeekButton();
+            this._refreshViewPubButton();
+        }
+        this._refreshDiamondElements();
+    }
+
+    private _refreshWatchCardVisibility(): void {
+        const isSeated = this._roomData.mine.seatNo > 0;
+        const canWatchPlayer = canWatchPlayerCards(this._roomData.basicInfo, isSeated);
+        const canWatchPublic = this._model?.hasMe === true && canWatchPublicCards(this._roomData.basicInfo, isSeated);
+        this.viewPlayerCardsConfigNode.active = canWatchPlayer || canWatchPublic;
+        this.peekBtnNode.active = canWatchPlayer;
+        this.viewPubBtnNode.active = canWatchPublic;
     }
     // ====================================================
     // 翻页(StepSlider:拖动只刷页码,松手才请求;对齐 UITexasReport 的接线方式)
@@ -336,13 +363,14 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         this.roomHandLabel.string = `${this._roomData.roomID}-${this._currentPage}`;
         this._renderDashboard();
         this._renderSections();
+        this._refreshWatchCardVisibility();
         this._refreshPeekButton();
         this._refreshViewPubButton();
         // 收藏态随牌谱一起缓存(replay.collected):命中缓存直接同步点亮,避免"先置白再异步点亮"的闪烁;
         // 仅未缓存过(null)才发起查询兜底
         const cachedCollected = this._roomData.replay.getCollected(this._currentPage);
         this._refreshCollectShow(cachedCollected ?? false);
-        if (cachedCollected == null) {
+        if (model.hasMe && cachedCollected == null) {
             this._reqCollectStatus();
         }
     }
@@ -488,13 +516,14 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     }
 
     private _refreshPeekButton() {
+        if (!canWatchPlayerCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0)) return;
         const hasHidden = hasHiddenCards(this._currentData, this._model, userStore.userRID);
         this._setButtonEnabled(this.peekBtnNode, hasHidden);
-        if (hasHidden) this._reqPeekPrice();
+        if (hasHidden && !globalConfigStore.isChannelDiamondFreeMode) this._reqPeekPrice();
     }
 
     private async onPeekClicked() {
-        if (!this._currentData) return;
+        if (!this._currentData || !canWatchPlayerCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0)) return;
         this._setButtonEnabled(this.peekBtnNode, false);
         // 合并写数据在 TexasTableEvent → replay 数据层,视图经 REPLAY_DATA_CHANGE 自动刷新
         const result = await TexasTableEvent.PeekReplayHands(this._roomData, this._currentPage);
@@ -502,8 +531,10 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         if (result.code === 0) {
             // 成功后合并数据已同步触发 REPLAY_DATA_CHANGE → _refreshPeekButton,
             // 按是否还有未亮牌决定按钮态(全看完则保持置灰),此处不再强制恢复高亮
-            this._reqPeekPrice();
-            this._reqDiamondBalance();
+            if (!globalConfigStore.isChannelDiamondFreeMode) {
+                this._reqPeekPrice();
+                this._reqDiamondBalance();
+            }
         } else {
             this._setButtonEnabled(this.peekBtnNode, true);
             viewManager.showToast(CPErrorCode.ServerErrorDescription(result.code));
@@ -526,14 +557,14 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
 
     private _refreshViewPubButton() {
         const model = this._model;
-        // 参与过这手牌且还有未发出的公共牌才可发发看
-        const hasHidden = model.hasMe && hasHiddenPublicCards(model.publicCards);
+        const canWatch = model.hasMe && canWatchPublicCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0);
+        const hasHidden = canWatch && hasHiddenPublicCards(model.publicCards);
         this._setButtonEnabled(this.viewPubBtnNode, hasHidden);
-        if (hasHidden) this._reqViewPubPrice();
+        if (hasHidden && !globalConfigStore.isChannelDiamondFreeMode) this._reqViewPubPrice();
     }
 
     private async onViewPubClicked() {
-        if (!this._currentData) return;
+        if (!this._currentData || !this._model?.hasMe || !canWatchPublicCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0)) return;
         this._setButtonEnabled(this.viewPubBtnNode, false);
         const round = getViewPubRound(this._model.publicCards);
         // 合并写数据在 TexasTableEvent → replay 数据层,视图经 REPLAY_DATA_CHANGE 自动刷新
@@ -541,7 +572,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         if (!cc.isValid(this.node)) return;
         if (result.code === 0) {
             // 成功后合并数据已同步触发 REPLAY_DATA_CHANGE → _refreshViewPubButton 决定按钮态,此处不强制恢复高亮
-            this._reqDiamondBalance();
+            if (!globalConfigStore.isChannelDiamondFreeMode) this._reqDiamondBalance();
         } else if (result.code === UITexasHistory.CODE_REPLAY_NOT_SYNCED) {
             // 无专用 i18n key,用通用"服务器正忙,请稍后再试"
             this._setButtonEnabled(this.viewPubBtnNode, true);
@@ -591,6 +622,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     }
 
     private async _reqCollectStatus() {
+        if (!this._model?.hasMe) return;
         const params = this._collectParamsBase();
         if (!params.room_id || !params.hand_num) return;
         const isCollected = await TexasTableEvent.ReqReplayCollectStatus(this._roomData, params);
@@ -637,6 +669,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     private _refreshCollectShow(isCollected: boolean) {
         this._isCollected = isCollected;
         const canCollect = !!this._model?.hasMe;
+        this.favoBtnNode.active = canCollect;
         this._setButtonEnabled(this.favoBtnNode, canCollect);
         if (this.favoStar) {
             this.favoStar.color = canCollect && isCollected ? UITexasHistory.COLLECTED_STAR_COLOR : cc.Color.WHITE;
@@ -652,5 +685,12 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         if (diamonds != null) {
             this.diamondNumLabel.string = diamonds.toLocaleString('en-US');
         }
+    }
+
+    private _refreshDiamondElements(): void {
+        const visible = !globalConfigStore.isChannelDiamondFreeMode;
+        this.diamondNumLabel.node.parent.parent.active = visible;
+        this.peekCostLabel.node.parent.active = visible;
+        this.viewPubCostLabel.node.parent.active = visible;
     }
 }

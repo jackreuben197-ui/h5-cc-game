@@ -3,6 +3,7 @@ import { Code, Def } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataChat from '../../../data/room/texas/TexasGameRoomDataChat';
+import globalConfigStore from '../../../data/system/GlobalConfigStore';
 import userStore from '../../../data/user/UserStore';
 import { BroadcastCode, pickerEmojiTypeFromIndex } from '../../../game/constant/BroadcastCode';
 import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
@@ -212,7 +213,7 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
             if (item) {
                 item.initializeStatic({
                     spriteFrame,
-                    showDiamond: true,
+                    showDiamond: !globalConfigStore.isChannelDiamondFreeMode,
                     diamond: UIEmojiDlg.EMOJI_COST,
                     onClick: () => this._onEmojiClicked(index)
                 });

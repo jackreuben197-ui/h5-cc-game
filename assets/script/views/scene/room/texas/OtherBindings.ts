@@ -4,9 +4,13 @@ import { traceClass } from '../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
+import ccviewData, { CCViewData } from '../../../../data/system/CCViewData';
+import globalConfigStore, { GlobalConfigStore } from '../../../../data/system/GlobalConfigStore';
+import { AntiCheatType } from '../../../../game/constant/AntiCheatType';
 import { ButtonState } from '../../../../game/constant/Constants';
 import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconState';
 import { VideoModel } from '../../../../game/constant/VideoModel';
+import { canWatchPlayerCards, canWatchPublicCards } from '../../../../game/util/ViewPlayerCardsConfig';
 import h5MessageManager from '../../../../H5MsgMgr';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
 import agoraManager from '../../../../net/agora/AgoraManager';
@@ -53,10 +57,14 @@ export default class OtherBindings extends cc.Component {
     private certBanner: cc.Node = null;
     @property({ type: cc.Button, displayName: '偷偷看' })
     private viewPlayerCards: cc.Button = null;
+    @property({ type: cc.Node, displayName: '偷偷看权限控制节点(viewcards)' })
+    private viewPlayerCardsConfigNode: cc.Node = null;
     @property({ type: cc.Label, displayName: '偷偷看花费' })
     private viewPlayerCardsCost: cc.Label = null;
     @property({ type: cc.Button, displayName: '发发看' })
     private viewPublicCards: cc.Button = null;
+    @property({ type: cc.Node, displayName: '发发看权限控制节点(viewpub)' })
+    private viewPublicCardsConfigNode: cc.Node = null;
     @property({ type: cc.Label, displayName: '发发看花费' })
     private viewPublicCardsCost: cc.Label = null;
     private _roomData: TexasGameRoomData;
@@ -120,6 +128,8 @@ export default class OtherBindings extends cc.Component {
         if (!this._roomData) return;
         autoBindEvents(this, {
             mine: this._roomData.mine,
+            ccviewData: ccviewData,
+            globalConfig: globalConfigStore,
             userStore: userStore
         });
     }
@@ -140,21 +150,31 @@ export default class OtherBindings extends cc.Component {
         }
     }
 
+    @bindEvent(GlobalConfigStore.CONFIG_CHANGED, { dataSource: 'globalConfig', initIgnore: true })
+    private onGlobalConfigChanged(): void {
+        this.onShowViewPlayerCardsButtonChanged(this._roomData.mine.showViewPlayerCardsButton);
+        this.onShowViewPublicCardsButtonChanged(this._roomData.mine.showViewPublicCardsButton);
+        this._refreshDiamondPriceVisibility();
+    }
+
     @bindEvent(TexasGameRoomDataPlayerMine.SHOW_VIEW_PLAYER_CARDS_BUTTON, 'mine')
     private onShowViewPlayerCardsButtonChanged(show: boolean): void {
-        this.viewPlayerCards.node.active = show;
-        this.viewPlayerCards.interactable = show;
+        const enabled = show && canWatchPlayerCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0);
+        this.viewPlayerCardsConfigNode.active = enabled;
+        this.viewPlayerCards.interactable = enabled;
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.VIEW_PLAYER_CARDS_COST, 'mine')
     private onUpdateViewPlayerCardsCost(cost: number): void {
         this.viewPlayerCardsCost.string = cost + '';
+        this._refreshDiamondPriceVisibility();
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.SHOW_VIEW_PUBLIC_CARDS_BUTTON, 'mine')
     private onShowViewPublicCardsButtonChanged(show: boolean): void {
-        this.viewPublicCards.node.active = show;
-        this.viewPublicCards.interactable = show;
+        const enabled = show && canWatchPublicCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0);
+        this.viewPublicCardsConfigNode.active = enabled;
+        this.viewPublicCards.interactable = enabled;
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.EMOJI_DIALOG_OPEN_CHANGE, 'mine')
@@ -199,6 +219,13 @@ export default class OtherBindings extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayerMine.VIEW_PUBLIC_CARDS_COST, 'mine')
     private onUpdateViewPublicCardsCost(cost: number): void {
         this.viewPublicCardsCost.string = cost + '';
+        this._refreshDiamondPriceVisibility();
+    }
+
+    private _refreshDiamondPriceVisibility(): void {
+        const visible = !globalConfigStore.isChannelDiamondFreeMode;
+        this.viewPlayerCardsCost.node.parent.active = visible;
+        this.viewPublicCardsCost.node.parent.active = visible;
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE, 'mine')
@@ -552,13 +579,15 @@ export default class OtherBindings extends cc.Component {
     };
 
     private onCLickViewPlayerCards() {
-        if (!this._roomData || !this._roomData.mine.showViewPlayerCardsButton) return;
+        if (!this._roomData || !this._roomData.mine.showViewPlayerCardsButton || !canWatchPlayerCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0))
+            return;
         this.viewPlayerCards.interactable = false;
         TexasTableEvent.ViewPlayerCards(this._roomData.mine);
     }
 
     private onClickViewPublicCards() {
-        if (!this._roomData || !this._roomData.mine.showViewPublicCardsButton) return;
+        if (!this._roomData || !this._roomData.mine.showViewPublicCardsButton || !canWatchPublicCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0))
+            return;
         const publicCardCount = this._roomData.publicCards.publicCards.length;
         if (publicCardCount >= 5) {
             this._roomData.mine.showViewPublicCardsButton = false;

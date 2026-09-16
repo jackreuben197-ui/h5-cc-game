@@ -4,6 +4,7 @@ import PlayerStoreUtils from '../../../data/player/PlayerStoreUtils';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayer from '../../../data/room/texas/TexasGameRoomDataPlayer';
+import globalConfigStore from '../../../data/system/GlobalConfigStore';
 import userStore, { UserPropData, UserStore } from '../../../data/user/UserStore';
 import UserStoreUtils from '../../../data/user/UserStoreUtils';
 import { AntiCheatType } from '../../../game/constant/AntiCheatType';
@@ -683,7 +684,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             if (data) this._propListData.set(definition.type, data);
             const diamondCost = propNode.getChildByName('diamondCost');
             if (diamondCost) {
-                diamondCost.active = data ? !userStore.isPropFree(data) : true;
+                diamondCost.active = !globalConfigStore.isChannelDiamondFreeMode && (data ? !userStore.isPropFree(data) : true);
                 const costLabel = diamondCost.getChildByName('costNum')?.getComponent(cc.Label);
                 if (costLabel) costLabel.string = `${data ? data.payPrice : 10}`;
             }
@@ -873,7 +874,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _canGiftDiamond(): boolean {
-        return !this._isSelf && !!this._requestRID && !!this._roomData?.mine?.seatNo;
+        return !globalConfigStore.isChannelDiamondFreeMode && !this._isSelf && !!this._requestRID && !!this._roomData?.mine?.seatNo;
     }
 
     private _clickAudioClose(): void {

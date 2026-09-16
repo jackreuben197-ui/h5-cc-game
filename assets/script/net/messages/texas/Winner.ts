@@ -4,6 +4,7 @@ import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { AnimateDisplayTypeCards, AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDisplayType';
 import { DiamondConfigType } from '../../../game/constant/DiamondConfigType';
 import { ViewPlayerCardsMode } from '../../../game/constant/ViewPlayerCardsMode';
+import { canWatchPlayerCards, canWatchPublicCards } from '../../../game/util/ViewPlayerCardsConfig';
 import { UISquidEndItemShowData } from '../../../views/dialog/squidover/UISquidEndItem';
 import TexasTableEvent from '../../../views/scene/room/texas/events/TexasTableEvent';
 
@@ -114,13 +115,15 @@ export function Winner(data: ServerMessageWinner.AsObject, roomID: number, match
     roomData.report.applyWinnerResult(data);
     roomData.seatsStateManager.handEnd();
     const mineResult = data.resultsList.find(result => result.seatId == roomData.mine.seatNo);
-    const canShowSettlementButtons = canShowMineSettlementButtons(roomData, mineResult);
-    if (canShowSettlementButtons && roomData.basicInfo.viewPlayerCards !== ViewPlayerCardsMode.CLOSE) {
+    const isSeated = roomData.mine.seatNo > 0;
+    const canShowPlayerCardsButton = canShowSettlementButton(roomData, mineResult, canWatchPlayerCards(roomData.basicInfo, isSeated));
+    if (canShowPlayerCardsButton && roomData.basicInfo.viewPlayerCards !== ViewPlayerCardsMode.CLOSE) {
         TexasTableEvent.ViewPlayerCardsNum(roomData.mine);
     } else {
         roomData.mine.showViewPlayerCardsButton = false;
     }
-    if (canShowSettlementButtons && roomData.publicCards.publicCards.length < 5) {
+    const canShowPublicCardsButton = canShowSettlementButton(roomData, mineResult, canWatchPublicCards(roomData.basicInfo, isSeated));
+    if (canShowPublicCardsButton && roomData.publicCards.publicCards.length < 5) {
         calculateViewPublicCardsCost(roomData, data.round, roomData.mine.seatNo, roomData.basicInfo.handNum, roomData.publicCards.publicCards.length);
     } else {
         roomData.mine.showViewPublicCardsButton = false;
@@ -129,8 +132,10 @@ export function Winner(data: ServerMessageWinner.AsObject, roomID: number, match
     roomData.mtt.handleHandEnd();
 }
 
-function canShowMineSettlementButtons(roomData: TexasGameRoomData, mineResult: Result.AsObject | undefined): boolean {
-    return roomData.mine.seatNo > 0 && !!roomData.mine.player && !!mineResult && !mineResult.standUp && !roomData.basicInfo.isMtt;
+function canShowSettlementButton(roomData: TexasGameRoomData, mineResult: Result.AsObject | undefined, hasPermission: boolean): boolean {
+    if (roomData.basicInfo.isMtt || !hasPermission) return false;
+    if (roomData.mine.seatNo === 0) return true;
+    return !!roomData.mine.player && !!mineResult && !mineResult.standUp;
 }
 
 function canShowViewPublicCardsButton(roomData: TexasGameRoomData, seatNo: number, handNum: number, publicCardCount: number): boolean {
@@ -138,9 +143,8 @@ function canShowViewPublicCardsButton(roomData: TexasGameRoomData, seatNo: numbe
         roomData.basicInfo.gameStatus == Def.GameStatus.HAND_END &&
         roomData.basicInfo.handNum == handNum &&
         roomData.mine.seatNo == seatNo &&
-        roomData.mine.seatNo > 0 &&
-        !!roomData.mine.player &&
         !roomData.basicInfo.isMtt &&
+        canWatchPublicCards(roomData.basicInfo, roomData.mine.seatNo > 0) &&
         roomData.publicCards.publicCards.length == publicCardCount &&
         roomData.publicCards.publicCards.length < 5
     );
