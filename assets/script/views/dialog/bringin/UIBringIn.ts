@@ -67,6 +67,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     private titleBarDiamondLine: cc.Node = null;
     @property(cc.Node)
     private titleBarBalanceLine: cc.Node = null;
+    private _balanceTabDefaultX: number = 0;
     // 带入区域（第一行）
     @property({ type: cc.Node, tooltip: '带入区域' })
     private bringInFullArea: cc.Node = null;
@@ -206,6 +207,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
 
     @traceMethod()
     protected onLoad(): void {
+        this._balanceTabDefaultX = this.titleBarBalanceLine.parent.x;
         // 初始化一个节点
         const targetIndex = this.buttonSelectWallet.getSiblingIndex();
         const cnd = cc.instantiate(this.clueItemPrefab);
@@ -633,6 +635,7 @@ export default class UIBringIn extends UIComponentBaseDialog<UIBringInParam> {
     private _refreshDiamondVisibility(): void {
         const visible = !globalConfigStore.isChannelDiamondFreeMode;
         this.titleBarDiamondLine.parent.active = visible;
+        this.titleBarBalanceLine.parent.x = visible ? this._balanceTabDefaultX : 0;
         if (!visible) {
             this.diamondNode.active = false;
             this._changeTab(BringInTabType.Chips);
