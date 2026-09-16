@@ -516,7 +516,11 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     }
 
     private _refreshPeekButton() {
-        if (!canWatchPlayerCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0)) return;
+        const canWatch = canWatchPlayerCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0);
+        if (!canWatch) {
+            this.peekBtnNode.active = false;
+            return;
+        }
         const hasHidden = hasHiddenCards(this._currentData, this._model, userStore.userRID);
         this._setButtonEnabled(this.peekBtnNode, hasHidden);
         if (hasHidden && !globalConfigStore.isChannelDiamondFreeMode) this._reqPeekPrice();
@@ -558,7 +562,11 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     private _refreshViewPubButton() {
         const model = this._model;
         const canWatch = model.hasMe && canWatchPublicCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0);
-        const hasHidden = canWatch && hasHiddenPublicCards(model.publicCards);
+        if (!canWatch) {
+            this.viewPubBtnNode.active = false;
+            return;
+        }
+        const hasHidden = hasHiddenPublicCards(model.publicCards);
         this._setButtonEnabled(this.viewPubBtnNode, hasHidden);
         if (hasHidden && !globalConfigStore.isChannelDiamondFreeMode) this._reqViewPubPrice();
     }

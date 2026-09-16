@@ -6,7 +6,7 @@ import { RoomOriginType } from '../constant/RoomOriginType';
 type AudienceRoomConfigKey = 'audience_friend_room' | 'audience_scoreboard_club_room' | 'audience_tribe_room';
 type WatchCardConfigName = 'view_player_cards_config' | 'view_public_cards_config';
 
-type WatchCardPermissionConfig = Partial<Record<AudienceRoomConfigKey, number>>;
+type WatchCardPermissionConfig = Partial<Record<AudienceRoomConfigKey, unknown>>;
 
 enum WatchCardPermission {
     DISABLED = 0,
@@ -24,19 +24,39 @@ export function canWatchPublicCards(basicInfo: TexasGameRoomDataBasic, isSeated:
 
 function canWatchCards(configName: WatchCardConfigName, basicInfo: TexasGameRoomDataBasic, isSeated: boolean): boolean {
     const configKey = getAudienceRoomConfigKey(basicInfo);
-    if (!configKey) return true;
     const config = parseWatchCardPermissionConfig(globalConfigStore.get(configName));
-    const permission = config?.[configKey] ?? WatchCardPermission.DISABLED;
-    return permission === WatchCardPermission.SEATED_PLAYER_AND_AUDIENCE || (permission === WatchCardPermission.SEATED_PLAYER && isSeated);
+    const rawPermission = config?.[configKey];
+
+    let permission: number = WatchCardPermission.DISABLED;
+
+    if (rawPermission === undefined || rawPermission === null) {
+        permission = WatchCardPermission.DISABLED;
+    } else if (typeof rawPermission === 'boolean') {
+        permission = rawPermission ? WatchCardPermission.SEATED_PLAYER_AND_AUDIENCE : WatchCardPermission.DISABLED;
+    } else if (typeof rawPermission === 'string') {
+        if (rawPermission === 'true') permission = WatchCardPermission.SEATED_PLAYER_AND_AUDIENCE;
+        else if (rawPermission === 'false') permission = WatchCardPermission.DISABLED;
+        else permission = Number(rawPermission);
+    } else if (typeof rawPermission === 'number') {
+        permission = rawPermission;
+    }
+
+    if (permission === WatchCardPermission.SEATED_PLAYER_AND_AUDIENCE) {
+        return true;
+    }
+    if (permission === WatchCardPermission.SEATED_PLAYER) {
+        return isSeated;
+    }
+    return false;
 }
 
-function getAudienceRoomConfigKey(basicInfo: TexasGameRoomDataBasic): AudienceRoomConfigKey | null {
-    if (basicInfo.tribeID > 0) return 'audience_tribe_room';
+function getAudienceRoomConfigKey(basicInfo: TexasGameRoomDataBasic): AudienceRoomConfigKey {
+    if (!basicInfo) return 'audience_tribe_room';
     if (basicInfo.originType === RoomOriginType.FRIEND) return 'audience_friend_room';
     if (basicInfo.originType === RoomOriginType.CLUB && basicInfo.goldType === CurrencyType.SCORE_BOARD) {
         return 'audience_scoreboard_club_room';
     }
-    return null;
+    return 'audience_tribe_room';
 }
 
 function parseWatchCardPermissionConfig(raw: unknown): WatchCardPermissionConfig | null {

@@ -160,8 +160,11 @@ export default class OtherBindings extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayerMine.SHOW_VIEW_PLAYER_CARDS_BUTTON, 'mine')
     private onShowViewPlayerCardsButtonChanged(show: boolean): void {
         const enabled = show && canWatchPlayerCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0);
-        this.viewPlayerCardsConfigNode.active = enabled;
-        this.viewPlayerCards.interactable = enabled;
+        if (this.viewPlayerCardsConfigNode) this.viewPlayerCardsConfigNode.active = enabled;
+        if (this.viewPlayerCards) {
+            this.viewPlayerCards.node.active = enabled;
+            this.viewPlayerCards.interactable = enabled;
+        }
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.VIEW_PLAYER_CARDS_COST, 'mine')
@@ -173,8 +176,11 @@ export default class OtherBindings extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayerMine.SHOW_VIEW_PUBLIC_CARDS_BUTTON, 'mine')
     private onShowViewPublicCardsButtonChanged(show: boolean): void {
         const enabled = show && canWatchPublicCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0);
-        this.viewPublicCardsConfigNode.active = enabled;
-        this.viewPublicCards.interactable = enabled;
+        if (this.viewPublicCardsConfigNode) this.viewPublicCardsConfigNode.active = enabled;
+        if (this.viewPublicCards) {
+            this.viewPublicCards.node.active = enabled;
+            this.viewPublicCards.interactable = enabled;
+        }
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.EMOJI_DIALOG_OPEN_CHANGE, 'mine')
