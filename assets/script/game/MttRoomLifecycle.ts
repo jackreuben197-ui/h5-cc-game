@@ -15,9 +15,8 @@ const _plog = createLogger('MttRoomLifecycle');
 
 const MTT_SETTLEMENT_PANEL = 'mttSettlement';
 
-const PANEL_EVENT_REBUY = 'rebuy';
-
-const PANEL_CLOSE_EVENTS = ['confirm', 'done', 'close'];
+// 淘汰弹窗只负责把玩家送回 H5；真正的重购由赛事详情页完成。
+const PANEL_RETURN_EVENTS = ['rebuy', 'confirm', 'done', 'close'];
 
 const FULL_MTT_BRING_IN = 0;
 
@@ -26,22 +25,30 @@ class MttRoomLifecycle {
     private _settlementRoomData: TexasGameRoomData = null;
     private _listening: boolean = false;
 
-    public showSettlement(roomData: TexasGameRoomData, rebuy: boolean): void {
-        // MTT 结算和重购统一由 H5 面板承载，Cocos 只维护牌桌生命周期。
+    public async showSettlement(roomData: TexasGameRoomData, rebuy: boolean): Promise<void> {
+        // 先保存面板需要的快照；Return 会清理 RoomData 和当前牌桌场景。
+        const panelProps = {
+            matchId: roomData.matchID,
+            matchName: roomData.mtt.matchName || roomData.basicInfo.roomName,
+            startTime: roomData.mtt.startTime,
+            isRebuy: rebuy,
+            currentBlindLevel: roomData.mtt.blindLevel,
+            maxRebuyBlindLevel: roomData.mtt.maxRebuyBlindLevel,
+            remainRebuyTimes: roomData.mtt.remainRebuyTimes,
+            clubId: roomData.basicInfo.clubID
+        };
         this._ensureListening();
         this._settlementRoomData = roomData;
+        // 不能只依赖 H5 DOM 覆盖牌桌：先完成 Cocos 场景退出，再展示结算面板。
+        try {
+            await ProcedureManager.StartProcedure(ProcedureDefine.Return);
+        } catch (error) {
+            // 即使场景清理出现异常，也必须让玩家看到结算面板，不能继续卡在牌桌。
+            _plog.error('MTT 结算前退出牌桌失败', panelProps.matchId, error);
+        }
         this._panelRequestId = h5MessageManager.sendToH5('showPanel', 1, {
             panelType: MTT_SETTLEMENT_PANEL,
-            props: {
-                matchId: roomData.matchID,
-                matchName: roomData.mtt.matchName || roomData.basicInfo.roomName,
-                startTime: roomData.mtt.startTime,
-                isRebuy: rebuy,
-                currentBlindLevel: roomData.mtt.blindLevel,
-                maxRebuyBlindLevel: roomData.mtt.maxRebuyBlindLevel,
-                remainRebuyTimes: roomData.mtt.remainRebuyTimes,
-                clubId: roomData.basicInfo.clubID
-            },
+            props: panelProps,
             closeOnClickOverlay: false,
             ensureVisible: true,
             showH5Bg: true
@@ -122,18 +129,8 @@ class MttRoomLifecycle {
 
     private _onPanelEvent(payload: PanelEventPayload): void {
         if (!payload || payload.panelRequestId != this._panelRequestId || !this._settlementRoomData) return;
-        const roomData = this._settlementRoomData;
-        if (payload.event == PANEL_EVENT_REBUY) {
-            const result = payload.payload as { status?: number } | undefined;
-            if (result?.status == 0) {
-                // H5 确认重购成功后再清面板并重新进桌。
-                this._clearPanelState();
-                this.reenter(roomData);
-            } else {
-                _plog.error('H5 重购事件返回失败状态', roomData.matchID, result);
-            }
-        } else if (PANEL_CLOSE_EVENTS.indexOf(payload.event) >= 0) {
-            // 确认结算或主动关闭后返回大厅。
+        if (PANEL_RETURN_EVENTS.indexOf(payload.event) >= 0) {
+            // showSettlement 正常路径已经进入 Return；再次调用作为旧版本/异常时序的兜底。
             this._clearPanelState();
             ProcedureManager.StartProcedure(ProcedureDefine.Return);
         }

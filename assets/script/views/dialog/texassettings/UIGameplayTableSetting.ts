@@ -241,9 +241,11 @@ export default class UIGameplayTableSetting extends UIComponentBaseDialog<UIGame
             }
         }
         if (this.IsPermitted('room_random_ante')) {
-            const randomAnteEnabled = this._roomData.basicInfo.randomAnte.length > 0;
+            // MTT/旧协议可能不下发 randomAnte；只有完整的三段配置才按开启展示。
+            const randomAnte = this._roomData.basicInfo.randomAnte || [];
+            const randomAnteEnabled = randomAnte.length >= 3;
             if (randomAnteEnabled) {
-                const detail = this.BuildRandomAnteDetail(this._roomData.basicInfo.randomAnte);
+                const detail = this.BuildRandomAnteDetail(randomAnte);
                 this.FillTipsAndDetailData(
                     'room_random_ante',
                     this.L('UIAnteRandomJump1'),
