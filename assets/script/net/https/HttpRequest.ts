@@ -55,6 +55,9 @@ export default class HttpRequest {
         timeoutMs,
         waitForNetwork = false
     }: HttpRequestParams) {
+        if (!cuscomHost) {
+            await GameConfig.waitForNetwork();
+        }
         const host = cuscomHost || GameConfig.Network.WebHost || '';
         const finalApi = api || request?.API || '';
         if (!host || !finalApi) {

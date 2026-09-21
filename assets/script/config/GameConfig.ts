@@ -132,11 +132,34 @@ class GameConfig {
         }
     }
 
-    public static async setNetworkAsync() {
+    private static _networkTask: Promise<void> | null = null;
+    private static _networkPending = false;
+    private static _networkFromConfig = false;
+
+    public static setNetworkAsync(): Promise<void> {
+        if (GameConfig._networkPending && GameConfig._networkTask) {
+            return GameConfig._networkTask;
+        }
+        GameConfig._networkPending = true;
+        const task = GameConfig.resolveNetworkAsync().then(() => {
+            GameConfig._networkPending = false;
+        });
+        GameConfig._networkTask = task;
+        return task;
+    }
+
+    public static waitForNetwork(): Promise<void> {
+        return GameConfig._networkTask || GameConfig.setNetworkAsync();
+    }
+
+    private static async resolveNetworkAsync(): Promise<void> {
         if (await GameConfig.setNetworkFromConfigJson()) {
+            GameConfig._networkFromConfig = true;
             return;
         }
-        GameConfig.setNetwork();
+        if (!GameConfig._networkFromConfig) {
+            GameConfig.setNetwork();
+        }
     }
 
     /**
