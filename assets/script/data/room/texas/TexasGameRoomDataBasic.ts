@@ -271,7 +271,8 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
         return `${StringHelper.GetDecimalNWithKM(value / ratio)}${ex}`;
     }
 
-    private _randomAnte: number[]; // anteMin, anteMax, randomStep
+    // MTT 详情不携带普通桌的随机前注配置，默认空数组保证统一的数据契约。
+    private _randomAnte: number[] = []; // anteMin, anteMax, randomStep
     public get randomAnte() {
         return this._randomAnte;
     }
