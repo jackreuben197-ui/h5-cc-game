@@ -109,6 +109,8 @@ export default class Operation extends cc.Component {
 
     private onFreeBetBgClicked: () => void = () => {
         this.freeBetContainer.active = false;
+        // 取消自由加注后仍处于当前操作轮，恢复加注入口供玩家重新选择。
+        this.btnRaise.node.active = this._actionMap.has(Def.Action.RAISE) || this._actionMap.has(Def.Action.BET);
     };
     private _onAddTimeClicked: () => void = () => {
         TexasTableEvent.AddTime(this._seatPlayer, this._delayTimes);

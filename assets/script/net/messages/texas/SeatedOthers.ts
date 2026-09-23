@@ -22,6 +22,11 @@ export function SeatedOthers(data: ServerMessageSeatedOthers.AsObject, roomID: n
         return;
     }
     const userRid = data.userRid;
+    // 拆合桌可能直接复用仍标记为在座的座位。先结束旧玩家的展示生命周期，
+    // 再写入新玩家数据，保证 SeatPlayer 能清掉旧头像旁已展开的手牌。
+    if (seatData.seated && seatData.userID != userRid) {
+        seatData.setSeated(false, seatData.mine);
+    }
     // 填充新玩家数据
     seatData.userID = userRid;
     seatData.name = data.name;

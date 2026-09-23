@@ -182,6 +182,7 @@ export default class SeatPlayer extends cc.Component {
         this.avatar.node.on(cc.Node.EventType.TOUCH_END, this._clickPlayerInfo, this);
         this.insuranceCountdownBubble.node.active = false;
         this.returnToGameButton.node.on('click', this._clickReturnToGame, this);
+        cc.game.on(cc.game.EVENT_SHOW, this._onGameShow, this);
         // 旧 prefab 已有托管图标，运行时绑定服务端托管状态。
         this._trustNode = this._findNode(this.node, MTT_TRUST_NODE_NAME);
         if (this._trustNode) {
@@ -210,6 +211,7 @@ export default class SeatPlayer extends cc.Component {
         this.avatar?.node.targetOff(this);
         this.userSeat?.targetOff(this);
         this.returnToGameButton?.node.targetOff(this);
+        cc.game.off(cc.game.EVENT_SHOW, this._onGameShow, this);
     }
 
     /**
@@ -256,6 +258,12 @@ export default class SeatPlayer extends cc.Component {
             card.node.setScale(1, 1);
             card.node.angle = 0;
         });
+    }
+
+    /** 浏览器从后台恢复时，停止可能被冻结在中间帧的发牌动画并按当前数据还原手牌。 */
+    private _onGameShow(): void {
+        if (!this._seatPlayer) return;
+        this.onUpdateCards(this._seatPlayer.cards, AnimateDisplayTypeCards.Static);
     }
 
     /**
@@ -306,6 +314,9 @@ export default class SeatPlayer extends cc.Component {
         this.emptySeat.node.active = !b;
         this.emptySeat.interactable = !b;
         this._refreshNicknameVisibility();
+        // 座位节点会被不同玩家复用。入座状态切换时按数据重新收口手牌展示，
+        // 避免 clearData 静默清理后重新激活 userSeat 时露出上一位玩家的牌面。
+        this.onUpdateCards(b ? this._seatPlayer.cards : [], AnimateDisplayTypeCards.Static);
         // 本人相关,设置属性
         if (b && mine) {
             autoBindEvents(this, { mine: mine });
