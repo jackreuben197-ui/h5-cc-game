@@ -24,6 +24,10 @@ import RemoteSprite from '../../../widget/RemoteSprite';
 
 const { ccclass, property, menu } = cc._decorator;
 
+const CERT_BANNER_X_COMPACT = 0;
+
+const CERT_BANNER_X_WIDE = 366;
+
 @ccclass
 @menu('Scene/Room/Texas/OtherBindings')
 @traceClass()
@@ -84,9 +88,7 @@ export default class OtherBindings extends cc.Component {
         this.btnEffect.node.active = isVideoRoom;
         this.btnAudio.node.active = isVideoRoom;
         this.btnCamera.node.active = isVideoRoom;
-        if (this.certBanner) {
-            this.certBanner.x = isVideoRoom ? 0 : 410;
-        }
+        this._refreshBottomBarLayout();
         if (!isVideoRoom) return;
         const layout = this.btnCamera.node.parent.getComponent(cc.Layout);
         if (layout) {
@@ -94,6 +96,31 @@ export default class OtherBindings extends cc.Component {
             layout.spacingX = 20;
             layout.updateLayout();
         }
+    }
+
+    public get hasVisibleVideoButtons(): boolean {
+        return [this.btnEffect, this.btnAudio, this.btnCamera].some(button => !!button && button.node.active);
+    }
+
+    public onVideoButtonsVisibilityChanged: () => void = null;
+
+    private _refreshBottomBarLayout(): void {
+        const compact = this.hasVisibleVideoButtons;
+        if (this.certBanner) {
+            this.certBanner.x = compact ? CERT_BANNER_X_COMPACT : CERT_BANNER_X_WIDE;
+        }
+        if (this.onVideoButtonsVisibilityChanged) this.onVideoButtonsVisibilityChanged();
+    }
+
+    private _setVideoButtonVisible(button: cc.Button, visible: boolean): void {
+        if (!button || !this._roomData) return;
+        const show = visible && this._roomData.basicInfo.isInVideoRoom;
+        UIViewUtil.setNodeGray(button.node, false);
+        if (button.node.active === show) return;
+        button.node.active = show;
+        const layout = button.node.parent?.getComponent(cc.Layout);
+        if (layout) layout.updateLayout();
+        this._refreshBottomBarLayout();
     }
 
     public onLoad() {
@@ -262,12 +289,12 @@ export default class OtherBindings extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_BTN_STATE_CHANGE, 'mine')
     private onLocalCameraStateChanged(val: ButtonState): Promise<void> {
         if (val == ButtonState.DISABLE) {
-            UIViewUtil.setNodeGray(this.btnCamera.node, true);
+            this._setVideoButtonVisible(this.btnCamera, false);
             this.btnCameratIcon.changeSpriteFrame(1);
             this.btnCamera.interactable = false;
             return;
         }
-        UIViewUtil.setNodeGray(this.btnCamera.node, false);
+        this._setVideoButtonVisible(this.btnCamera, true);
         this.btnCamera.interactable = true;
         const antiCheatConfig = this._roomData.basicInfo.antiCheatConfig;
         const canSwitchPowerSaving = antiCheatConfig.getSeatedSetting().canSwitchPowerSaving;
@@ -346,12 +373,12 @@ export default class OtherBindings extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayerMine.VIDEO_MASK_BTN_STATE_CHAGE, 'mine')
     private onMaskBtnState(val: ButtonState) {
         if (val == ButtonState.DISABLE) {
-            UIViewUtil.setNodeGray(this.btnEffect.node, true);
+            this._setVideoButtonVisible(this.btnEffect, false);
             this.btnEffectIcon.changeSpriteFrame(1);
             this.btnEffect.interactable = false;
             return;
         }
-        UIViewUtil.setNodeGray(this.btnEffect.node, false);
+        this._setVideoButtonVisible(this.btnEffect, true);
         this.btnEffect.interactable = true;
         if (val == ButtonState.ON) {
             this.btnEffectIcon.changeSpriteFrame(0);
@@ -383,12 +410,12 @@ export default class OtherBindings extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_MICROPHONE_BTN_STATE_CHANGE, 'mine')
     private onLocalMicrophoneEnabledChanged(val: ButtonState): Promise<void> {
         if (val == ButtonState.DISABLE) {
-            UIViewUtil.setNodeGray(this.btnAudio.node, true);
+            this._setVideoButtonVisible(this.btnAudio, false);
             this.btnAudio.interactable = false;
             this.btnAudioIcon.changeSpriteFrame(1);
             return;
         }
-        UIViewUtil.setNodeGray(this.btnAudio.node, false);
+        this._setVideoButtonVisible(this.btnAudio, true);
         this.btnAudio.interactable = true;
         let muted: boolean;
         if (val == ButtonState.ON) {

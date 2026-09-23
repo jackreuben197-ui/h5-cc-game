@@ -6,6 +6,7 @@ import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataChat, { TexasDanmuMessage } from '../../../../data/room/texas/TexasGameRoomDataChat';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import TexasGameRoomDataSecondPcs from '../../../../data/room/texas/TexasGameRoomDataSecondPcs';
+import ccviewData from '../../../../data/system/CCViewData';
 import globalConfigStore from '../../../../data/system/GlobalConfigStore';
 import h5MessageManager from '../../../../H5MsgMgr';
 import { StringHelper } from '../../../../helper/StringHelper';
@@ -48,6 +49,14 @@ const IM_BUTTON_PADDING_RIGHT = 17.5;
 const IM_BUTTON_LABEL_GAP = 23.5;
 
 const IM_BUTTON_RIGHT_MARGIN = 20;
+
+const MAIN_MENU_PADDING_COMPACT = 51;
+
+const MAIN_MENU_SPACING_COMPACT = 20;
+
+const MAIN_MENU_PADDING_WIDE = 150;
+
+const MAIN_MENU_SPACING_WIDE = 135;
 
 @ccclass
 @menu('Scene/Room/Texas/UIRoomTexas')
@@ -226,6 +235,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         // 入桌即拉一次 Roomers 填战绩缓存：后续 Seated/Standup/ChipsChange/Winner 在消息层做增量。
         // 对应 pokerqueen UITexas.requestRoomersForCache（history=true 包含已离桌玩家）。
         TexasReportEvent.PrefetchRoomers(roomData);
+        this._otherBindings.onVideoButtonsVisibilityChanged = () => this._applyMainMenuLayout();
         this._otherBindings.initData(param.roomID, param.matchID);
         this._applyMainMenuLayout();
         this.jackpotFeature.initData(param.roomID, param.matchID);
@@ -271,11 +281,11 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     }
 
     private _applyMainMenuLayout(): void {
-        const isVideoRoom = this._roomData.basicInfo.isInVideoRoom;
+        const compact = !!this._otherBindings?.hasVisibleVideoButtons;
         const layout = this.btnReport.node.parent.getComponent(cc.Layout);
         if (!layout) return;
-        layout.paddingLeft = isVideoRoom ? 51 : 160;
-        layout.spacingX = isVideoRoom ? 20 : 152;
+        layout.paddingLeft = compact ? MAIN_MENU_PADDING_COMPACT : MAIN_MENU_PADDING_WIDE;
+        layout.spacingX = compact ? MAIN_MENU_SPACING_COMPACT : MAIN_MENU_SPACING_WIDE;
         layout.updateLayout();
     }
 
@@ -371,9 +381,9 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         visibleSizeHeight: number,
         frameSizeWidth: number,
         frameSizeHeight: number,
-        suggestScale: number,
-        saveAreaTop: number
+        suggestScale: number
     ) {
+        const saveAreaTop = ccviewData.saveAreaTop;
         this.tracelog.debug(visibleSizeWidth, suggestScale, saveAreaTop);
         const widget = this.scaleNode.getComponent(cc.Widget);
         widget.top = saveAreaTop;

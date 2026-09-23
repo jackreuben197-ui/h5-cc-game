@@ -13,7 +13,7 @@ import TexasGameRoomDataReport, {
     TexasReportSquidRoundSnapshot,
     TexasReportSummary
 } from '../../../data/room/texas/TexasGameRoomDataReport';
-import { CCViewData } from '../../../data/system/CCViewData';
+import ccviewData, { CCViewData } from '../../../data/system/CCViewData';
 import userStore from '../../../data/user/UserStore';
 import { StringHelper } from '../../../helper/StringHelper';
 import TimeHelper from '../../../helper/TimeHelper';
@@ -403,11 +403,10 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         visibleSizeHeight: number,
         frameSizeWidth: number,
         frameSizeHeight: number,
-        suggestScale: number,
-        saveAreaTop: number
+        suggestScale: number
     ) {
         const bgWidget = this.bgNode.getComponent(cc.Widget);
-        bgWidget.top = saveAreaTop;
+        bgWidget.top = ccviewData.saveAreaTop;
         bgWidget.updateAlignment();
     }
 

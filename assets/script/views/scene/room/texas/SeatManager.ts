@@ -53,9 +53,9 @@ export default class SeatManager extends cc.Component {
         visibleSizeHeight: number,
         frameSizeWidth: number,
         frameSizeHeight: number,
-        suggestScale: number,
-        saveAreaTop: number
+        suggestScale: number
     ) {
+        const saveAreaTop = ccviewData.saveAreaTop;
         this.tracelog.debug(visibleSizeWidth, suggestScale, saveAreaTop);
         const menuHeight = 200 * suggestScale;
         let offsetY = 100;
