@@ -109,6 +109,9 @@ export default class Operation extends cc.Component {
 
     private onFreeBetBgClicked: () => void = () => {
         this.freeBetContainer.active = false;
+        if (this._actionMap.has(Def.Action.RAISE) || this._actionMap.has(Def.Action.BET)) {
+            this.btnRaise.node.active = true;
+        }
     };
     private _onAddTimeClicked: () => void = () => {
         TexasTableEvent.AddTime(this._seatPlayer, this._delayTimes);
