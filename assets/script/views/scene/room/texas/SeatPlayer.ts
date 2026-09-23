@@ -159,6 +159,7 @@ export default class SeatPlayer extends cc.Component {
         this._seatPlayer = seatPlayer;
         this._potNode = potNode;
         this._dealNode = dealNode;
+        this._resetCardVisualState();
         // 一些无法通过init初始化的状态在这里初始化
         this.winBoard.node.active = false;
         // 绑定数据
@@ -227,6 +228,7 @@ export default class SeatPlayer extends cc.Component {
     protected onDisable(): void {
         this._stopRoundBetAnimation();
         this.insuranceCountdownBubble.node.active = false;
+        this._resetCardVisualState();
         this.avatarVideoRender.stopMask();
         this.avatarVideoRender.stopOverlay();
         this.setMicrophoneIconState(MicrophoneIconState.HIDDEN);
@@ -491,7 +493,6 @@ export default class SeatPlayer extends cc.Component {
                     // 大牌的显示位置调整,并隐藏
                     this.bigCardsContainer.setPosition(0, 235);
                     this.bigCardsContainer.setScale(1, 1);
-                    this._bigCards.forEach(v => (v.node.parent.active = false));
                     //隐藏名字
                     this.nickName.node.active = false;
                     this.nickNameSplash.active = false;
@@ -503,7 +504,6 @@ export default class SeatPlayer extends cc.Component {
                     // 大牌的显示位置调整,并隐藏
                     this.bigCardsContainer.setPosition(0, 0);
                     this.bigCardsContainer.setScale(0.65, 0.65);
-                    this._bigCards.forEach(v => (v.node.parent.active = false));
                     // 显示名字
                     this.nickName.node.active = true;
                     this.nickNameSplash.active = true;
@@ -593,6 +593,8 @@ export default class SeatPlayer extends cc.Component {
                 this.micIconSprite.node.setPosition(90, 0);
                 break;
         }
+        this._resetCardVisualState();
+        this._refreshNicknameVisibility();
         const realPos = seatPostionCaculator.getPosition(pos);
         if (pat == AnimateDisplayTypePosition.ToTarget) {
             this.node.opacity = 0;
@@ -831,6 +833,7 @@ export default class SeatPlayer extends cc.Component {
                 if (aat == AnimateDisplayTypeAction.Done) {
                     soundManager.playEffect(SoundEffectKey.Fold);
                     if (this._seatPlayer.mine) {
+                        this._resetCardVisualState();
                         const startPos = this.bigCardsContainer.position;
                         const endPos = UIViewUtil.caculatePostion(this.bigCardsContainer, this._dealNode);
                         cc.tween(this.bigCardsContainer)

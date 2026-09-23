@@ -25,6 +25,10 @@ export class CCViewData extends cc.EventTarget {
         this.onResizeCallback();
     }
 
+    public get saveAreaTop(): number {
+        return this._realSaveTop;
+    }
+
     public get isWideLayout(): boolean {
         if (this._fw > 0 && this._fh > 0) {
             return this._fw / this._fh > CCViewData.WIDE_LAYOUT_RATIO;

@@ -3,7 +3,7 @@ import { traceClass } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataReplay, { ReplayHandData } from '../../../data/room/texas/TexasGameRoomDataReplay';
-import { CCViewData } from '../../../data/system/CCViewData';
+import ccviewData, { CCViewData } from '../../../data/system/CCViewData';
 import globalConfigStore, { GlobalConfigStore } from '../../../data/system/GlobalConfigStore';
 import userStore from '../../../data/user/UserStore';
 import { canWatchPlayerCards, canWatchPublicCards } from '../../../game/util/ViewPlayerCardsConfig';
@@ -218,11 +218,10 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         visibleSizeHeight: number,
         frameSizeWidth: number,
         frameSizeHeight: number,
-        suggestScale: number,
-        saveAreaTop: number
+        suggestScale: number
     ): void {
         const bgWidget = this.bgNode.getComponent(cc.Widget);
-        bgWidget.top = saveAreaTop;
+        bgWidget.top = ccviewData.saveAreaTop;
         bgWidget.updateAlignment();
     }
 

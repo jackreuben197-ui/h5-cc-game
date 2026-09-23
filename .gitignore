@@ -106,5 +106,6 @@ assets/Hotfix
 Hotfix
 /*.md
 !/README.md
+!/MERGE-NOTES.md
 .npmrc
 .pnpmfile.cjs

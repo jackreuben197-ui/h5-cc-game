@@ -87,9 +87,9 @@ export default class MorePlayTypeInfo extends cc.Component {
         visibleSizeHeight: number,
         frameSizeWidth: number,
         frameSizeHeight: number,
-        suggestScale: number,
-        saveAreaTop: number
+        suggestScale: number
     ) {
+        const saveAreaTop = ccviewData.saveAreaTop;
         if (suggestScale < 1) {
             this.squidButton.height = 390;
             this.joinButton.node.setPosition(0, -visibleSizeHeight / 2 + 200 * suggestScale + 440 * suggestScale);
