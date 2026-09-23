@@ -16,11 +16,22 @@ import {
 } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
 import roomReconnectManager from '../../../game/RoomReconnectManager';
+import { CPErrorCode } from '../../../i18n/CPErrorCode';
+import ProcedureDefine from '../../../game/procedure/ProcedureDefine';
+import viewManager from '../../../views/UIViewManager';
+import ProcedureManager from '../../../game/procedure/ProcedureManager';
 
 const _plog = createLogger('ServerMessageSyncEnter');
 
 // SyncEnter 1025 —— 拉取房间最新快照
 export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number, matchID: number) {
+    if (data.status != 0) {
+        _plog.debug('sync enter room error, status:', data.status, CPErrorCode.ServerErrorDescription(data.status));
+        viewManager.showToast(CPErrorCode.ServerErrorDescription(data.status), undefined, () => {
+            ProcedureManager.StartProcedure(ProcedureDefine.Return);
+        });
+        return;
+    }
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     if (!roomData) {
         _plog.error('no store room data', roomID, matchID);
