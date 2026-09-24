@@ -240,8 +240,9 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this._applyMainMenuLayout();
         this.jackpotFeature.initData(param.roomID, param.matchID);
         if (roomData.basicInfo?.isMtt || roomData.matchID > 0) {
-            // 仅 MTT 房间绑定比赛状态和共用倒计时浮层。
+            // 仅 MTT 房间绑定比赛状态和共用倒计时浮层，隐藏带入按钮。
             this._mttTableStateView.initialize(roomData);
+            this.bringInButton.node.active = false;
         }
         //展示介绍对话框
         await this._showSquidIntroDialog(roomData);
@@ -363,7 +364,8 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     //(优先于seated执行保证展示正确)
     @bindEvent(TexasGameRoomDataPlayerMine.SEATNO_CHANGED, 'mine')
     private onUpdateSeated(seatNo: number) {
-        if (seatNo == 0) {
+        const isMtt = !!(this._roomData?.basicInfo?.isMtt || (this._roomData?.matchID ?? 0) > 0);
+        if (seatNo == 0 || isMtt) {
             this.bringInButton.node.active = false;
             return;
         }
