@@ -14,6 +14,7 @@ import {
     AnimateDisplayTypeMushroomPool,
     AnimateDisplayTypePlayType,
     AnimateDisplayTypePosition,
+    AnimateDisplayTypePublicCards,
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
@@ -89,8 +90,11 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             roomData.potInfo.potList = data.handInfo.potsList;
             roomData.potInfo.secPotList = data.handInfo.secondPotsList;
             roomData.seatsStateManager.setButtonPosition(data.handInfo.buSeatId, AnimateDisplayTypeButton.Static);
-            roomData.publicCards.publicCards = data.handInfo.publicCardsList;
-            roomData.publicCards.secondPublicCards = data.handInfo.secondPublicCardsList;
+            roomData.publicCards.replacePublicCards(
+                data.handInfo.publicCardsList,
+                data.handInfo.secondPublicCardsList,
+                AnimateDisplayTypePublicCards.Static
+            );
             roomData.basicInfo.currentConfigContinueRounds = data.handInfo.conRounds;
             //Critial
             roomData.basicInfo.setCriticalHitStatusEnabled(data.handInfo.criticalHitOpen, AnimateDisplayTypePlayType.Staic);

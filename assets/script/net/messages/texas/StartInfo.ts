@@ -44,8 +44,11 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
         roomData.potInfo.potList = data.handInfo.potsList;
         roomData.potInfo.secPotList = data.handInfo.secondPotsList;
         roomData.seatsStateManager.setButtonPosition(data.handInfo.buSeatId, AnimateDisplayTypeButton.Next);
-        roomData.publicCards.addPublicCards(data.handInfo.publicCardsList, AnimateDisplayTypePublicCards.Static);
-        roomData.publicCards.addSecondPublicCards(data.handInfo.secondPublicCardsList, AnimateDisplayTypePublicCards.Static);
+        roomData.publicCards.replacePublicCards(
+            data.handInfo.publicCardsList,
+            data.handInfo.secondPublicCardsList,
+            AnimateDisplayTypePublicCards.Static
+        );
     }
     const pm: Map<number, PlayerStartInfo.AsObject> = new Map();
     data.playersList.forEach(player => {

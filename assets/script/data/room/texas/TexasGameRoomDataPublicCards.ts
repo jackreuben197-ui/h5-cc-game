@@ -16,6 +16,13 @@ export default class TexasGameRoomDataPublicCards extends cc.EventTarget {
         this._publicCards = cards;
     }
 
+    public replacePublicCards(cards: number[], secondCards: number[], pat: AnimateDisplayTypePublicCards) {
+        // Enter/Sync/StartInfo 都是当前手牌的完整快照，必须先终止上一桌/上一手的展示再整体恢复。
+        this.resetAllPublicCard();
+        this.addPublicCards(cards || [], pat);
+        this.addSecondPublicCards(secondCards || [], pat);
+    }
+
     public addPublicCards(cards: number[], pat: AnimateDisplayTypePublicCards) {
         if (cards.length == 0) return;
         const old = this._publicCards;
@@ -48,6 +55,7 @@ export default class TexasGameRoomDataPublicCards extends cc.EventTarget {
     }
 
     public addSecondPublicCards(cards: number[], pat: AnimateDisplayTypePublicCards) {
+        if (cards.length == 0) return;
         const old = this._secondPublicCards;
         let newarray = [];
         newarray.push(...old);

@@ -79,6 +79,8 @@ class MttRoomLifecycle {
             return;
         }
         const oldRoomID = roomData.roomID;
+        // RoomData 会继续复用给新牌桌，迁移键之前先清掉旧桌本手，避免旧公牌和动画进入新桌。
+        roomData.clearHandPresentation();
         // 先原子迁移 RoomData 和重连键，再向新牌桌发送 EnterRoom。
         const movedRoomData = roomDataManager.moveRoomData(oldRoomID, newRoomID, roomData.matchID);
         if (!movedRoomData) {

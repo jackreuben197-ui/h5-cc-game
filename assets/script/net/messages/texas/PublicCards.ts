@@ -10,6 +10,25 @@ const _plog = createLogger('ServerMessagePublicCards');
 // PublicCards 1104
 export function PublicCards(data: ServerMessagePublicCards.AsObject, roomID: number, matchID: number) {
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
+    if (matchID > 0 && roomData.mtt.tableTransferWaiting) {
+        // 新桌 EnterRoom 快照落地前不消费增量消息，避免它与旧桌残留状态拼接。
+        _plog.warn('ignore public cards before table transfer snapshot', roomID, matchID, data.rnd, data.publicCardsArrayList);
+        return;
+    }
+    const expectedCardCount = getExpectedPublicCardCount(data.rnd);
+    const currentCardCount = roomData.publicCards.publicCards.length;
+    if (expectedCardCount == null || currentCardCount != expectedCardCount) {
+        // 对齐 Unity：只接受与当前公共牌进度一致的增量，拦截换桌期间的旧包、重复包和乱序包。
+        _plog.warn('ignore out-of-order public cards', {
+            roomID,
+            matchID,
+            round: data.rnd,
+            currentCardCount,
+            expectedCardCount,
+            cards: data.publicCardsArrayList
+        });
+        return;
+    }
     roomData.secondPcs.finish();
     roomData.publicCards.addPublicCards(data.publicCardsArrayList, AnimateDisplayTypePublicCards.Deal);
     if (data.publicCardsArray2List.length > 0) {
@@ -88,5 +107,18 @@ export function PublicCards(data: ServerMessagePublicCards.AsObject, roomID: num
             }
             seatData.operator = op;
         }
+    }
+}
+
+function getExpectedPublicCardCount(round: Def.RoundMap[keyof Def.RoundMap]): number | null {
+    switch (round) {
+        case Def.Round.FLOP:
+            return 0;
+        case Def.Round.TURN:
+            return 3;
+        case Def.Round.RIVER:
+            return 4;
+        default:
+            return null;
     }
 }
