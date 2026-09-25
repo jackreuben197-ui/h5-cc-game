@@ -196,7 +196,9 @@ export default class SeatPlayer extends cc.Component {
     }
 
     protected onDisable(): void {
+        this.unschedule(this._restoreCardsFromData);
         this._stopRoundBetAnimation();
+        this._stopWinnerPresentation();
         this._insuranceBuying = false;
         this.insuranceCountdownBubble.node.active = false;
         this._resetCardVisualState();
@@ -212,6 +214,7 @@ export default class SeatPlayer extends cc.Component {
         this.userSeat?.targetOff(this);
         this.returnToGameButton?.node.targetOff(this);
         cc.game.off(cc.game.EVENT_SHOW, this._onGameShow, this);
+        this.unschedule(this._restoreCardsFromData);
     }
 
     /**
@@ -254,16 +257,20 @@ export default class SeatPlayer extends cc.Component {
         this.smallCardsContainer.setScale(1, 1);
         this.smallCardsContainer.opacity = 255;
         this._bigCards.forEach(card => {
-            cc.Tween.stopAllByTarget(card.node);
-            card.node.setScale(1, 1);
-            card.node.angle = 0;
+            card.stopAnimations();
         });
     }
 
-    /** 浏览器从后台恢复时，停止可能被冻结在中间帧的发牌动画并按当前数据还原手牌。 */
-    private _onGameShow(): void {
-        if (!this._seatPlayer) return;
+    private _restoreCardsFromData(): void {
+        if (!this._seatPlayer || !this.node.activeInHierarchy) return;
         this.onUpdateCards(this._seatPlayer.cards, AnimateDisplayTypeCards.Static);
+    }
+
+    /** 浏览器从后台恢复时，停止冻结动画，并在消息队列恢复后再校准一次手牌。 */
+    private _onGameShow(): void {
+        this._restoreCardsFromData();
+        this.unschedule(this._restoreCardsFromData);
+        this.scheduleOnce(this._restoreCardsFromData, 0);
     }
 
     /**
@@ -310,6 +317,8 @@ export default class SeatPlayer extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayer.SEATED_CHANGE, { dataSource: 'player', initPriority: 10 })
     @traceMethod()
     private onUpdateSeated(b: boolean, mine: TexasGameRoomDataPlayerMine) {
+        // 座位槽在拆合桌和换人时会复用，赢家展示不能跟随节点留到新玩家。
+        this._stopWinnerPresentation();
         this.userSeat.active = b;
         this.emptySeat.node.active = !b;
         this.emptySeat.interactable = !b;
@@ -409,7 +418,7 @@ export default class SeatPlayer extends cc.Component {
 
     @bindEvent(TexasGameRoomDataPlayer.CHIPS_CHANGE, 'player')
     private onUpdateChip(chip: number) {
-        this.chips.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(chip);
+        this.chips.string = this._seatPlayer.roomData.basicInfo.showPlayerBalanceWithShowBB(chip);
     }
 
     @bindEvent(TexasGameRoomDataPlayer.AUTO_OP_CHANGE, 'player')
@@ -422,7 +431,7 @@ export default class SeatPlayer extends cc.Component {
 
     @bindEvent(TexasGamePersonalSettings.SHOW_BB, { dataSource: 'setting', initPriority: 99 })
     private onUpdateShowBB(b: number) {
-        this.chips.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(this._seatPlayer.chip);
+        this.chips.string = this._seatPlayer.roomData.basicInfo.showPlayerBalanceWithShowBB(this._seatPlayer.chip);
         this.roundBetLabel.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(this._seatPlayer.roundBet);
     }
 
@@ -632,10 +641,9 @@ export default class SeatPlayer extends cc.Component {
         this.tracelog.debug('cards', cards, this._seatPlayer.seatNo, this._seatPlayer.name);
         this._resetCardVisualState();
         const l = cards.length;
-        // reset
-        if (l == 0) {
-            this._bigCards.forEach(v => v.reset());
-        }
+        // 拆合桌可能直接从上一桌的结算牌切到新一手，不一定经过空牌事件。
+        // 每次收到手牌都清掉旧桌遗留的高亮、暗色遮罩和弹起位置。
+        this._bigCards.forEach(v => v.reset());
         if (l > 0 && this._seatPlayer.action == Def.Action.FOLD) {
             this.smallCardsContainer.active = false;
             if (this._seatPlayer.mine) {
@@ -985,9 +993,10 @@ export default class SeatPlayer extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayer.WINNER, { dataSource: 'player', initIgnore: true })
     private onWin(play: boolean, handValueType: number, chip: number) {
         if (!play) {
-            this.winBoard.node.active = false;
+            this._stopWinnerPresentation();
             return;
         }
+        this._stopWinnerPresentation();
         this.tracelog.debug('winner', this._seatPlayer.seatNo, this._seatPlayer.name);
         this.winBoard.node.active = true;
         if (handValueType != 0) {
@@ -1021,6 +1030,19 @@ export default class SeatPlayer extends cc.Component {
             //cc.log("动画结束");
             this.winAnimation.node.active = false;
         });
+    }
+
+    /** 清除上一手/上一桌的赢家数字、收池筹码和赢家特效。 */
+    private _stopWinnerPresentation(): void {
+        this.winBoard.node.active = false;
+        this._stopRoundBetAnimation();
+        cc.Tween.stopAllByTarget(this.animatingChips);
+        this.animatingChips.active = false;
+        this.animatingChips.setScale(1, 1);
+        if (this.winAnimation) {
+            this.winAnimation.clearTracks();
+            this.winAnimation.node.active = false;
+        }
     }
 
     private _clickReturnToGame() {

@@ -21,6 +21,7 @@ import ProcedureManager from '../../../game/procedure/ProcedureManager';
 import roomReconnectManager from '../../../game/RoomReconnectManager';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import viewManager from '../../../views/UIViewManager';
+import { auditHandSnapshot } from './TexasStateAudit';
 
 const _plog = createLogger('ServerMessageSyncEnter');
 
@@ -38,6 +39,9 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
         _plog.error('no store room data', roomID, matchID);
         return;
     }
+    auditHandSnapshot('SyncEnter', roomID, matchID, data.gameStatus, data.handInfo, data.playersList, data.operatorList, roomData);
+    // SyncEnter 是权威全量快照：先清理可能丢失 HandClear 后残留的本地一手缓存，再用快照重建。
+    roomData.clearHandPresentation();
     roomData.chat.resetHistory();
     const myseat = data.myInfo?.seatId || 0;
     const seatCount = roomData.seatsStateManager.seatsCount;
@@ -226,6 +230,11 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
                 op.opType = OpertionType.AGREESECPUB;
             } else {
                 op.opType = OpertionType.NORMAL;
+            }
+            if (op.opType == OpertionType.NORMAL && operator.cardsList.length > 0) {
+                // 对齐 ActionAll/Unity：重连恢复到自己操作时，用 operator.cards 揭开延迟看牌的手牌。
+                seatData.setCards(operator.cardsList, AnimateDisplayTypeCards.Static);
+                roomData.mine.caculateHandValueTypeAndHighlight();
             }
             seatData.mine.operator = op;
         } else {

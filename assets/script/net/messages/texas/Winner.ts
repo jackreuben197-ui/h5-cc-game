@@ -1,4 +1,5 @@
 import { Def, Result, ServerMessageWinner } from '@silenthill/agreement-web';
+import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { AnimateDisplayTypeCards, AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDisplayType';
@@ -8,9 +9,26 @@ import { canWatchPlayerCards, canWatchPublicCards } from '../../../game/util/Vie
 import { UISquidEndItemShowData } from '../../../views/dialog/squidover/UISquidEndItem';
 import TexasTableEvent from '../../../views/scene/room/texas/events/TexasTableEvent';
 
+const _plog = createLogger('ServerMessageWinner');
+
 // Winner 1112
 export function Winner(data: ServerMessageWinner.AsObject, roomID: number, matchID: number) {
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
+    if (!roomData) {
+        _plog.warn('ignore winner without room data', roomID, matchID, data.handNum);
+        return;
+    }
+    if (roomData.mtt.tableTransferWaiting || data.handNum != roomData.basicInfo.handNum) {
+        // Winner 自带 handNum，可严格拦截拆合桌期间延迟到达的上一桌/上一手结算。
+        _plog.error('[server_hand_mismatch] ignore stale winner', {
+            roomID,
+            matchID,
+            tableTransferWaiting: roomData.mtt.tableTransferWaiting,
+            localHandNum: roomData.basicInfo.handNum,
+            serverHandNum: data.handNum
+        });
+        return;
+    }
     roomData.basicInfo.gameStatus = Def.GameStatus.HAND_END;
     let squidEnded = false;
     let squidResult: UISquidEndItemShowData[] = [];
@@ -42,7 +60,9 @@ export function Winner(data: ServerMessageWinner.AsObject, roomID: number, match
             });
         }
         if (result.win - result.handBet > 0) {
-            seatData.claimWin(true, result.handValueType, result.chip);
+            // 对齐 Unity _winChips：这里展示本手净收池，不是结算后总余额 result.chip。
+            const collectedChips = result.win + result.insuranceWin - result.insurance - result.handBet - result.fee;
+            seatData.claimWin(true, result.handValueType, collectedChips);
             if (result.handValueType > maxHv) {
                 maxResult = result;
             }

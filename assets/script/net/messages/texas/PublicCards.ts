@@ -4,6 +4,7 @@ import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { AnimateDisplayTypeCards, AnimateDisplayTypePublicCards } from '../../../game/constant/AnimateDisplayType';
+import { auditPublicCardsIncrement } from './TexasStateAudit';
 
 const _plog = createLogger('ServerMessagePublicCards');
 
@@ -15,18 +16,16 @@ export function PublicCards(data: ServerMessagePublicCards.AsObject, roomID: num
         _plog.warn('ignore public cards before table transfer snapshot', roomID, matchID, data.rnd, data.publicCardsArrayList);
         return;
     }
-    const expectedCardCount = getExpectedPublicCardCount(data.rnd);
-    const currentCardCount = roomData.publicCards.publicCards.length;
-    if (expectedCardCount == null || currentCardCount != expectedCardCount) {
-        // 对齐 Unity：只接受与当前公共牌进度一致的增量，拦截换桌期间的旧包、重复包和乱序包。
-        _plog.warn('ignore out-of-order public cards', {
+    if (
+        !auditPublicCardsIncrement(
             roomID,
             matchID,
-            round: data.rnd,
-            currentCardCount,
-            expectedCardCount,
-            cards: data.publicCardsArrayList
-        });
+            roomData.basicInfo.handNum,
+            data.rnd,
+            roomData.publicCards.publicCards,
+            data.publicCardsArrayList
+        )
+    ) {
         return;
     }
     roomData.secondPcs.finish();
@@ -107,18 +106,5 @@ export function PublicCards(data: ServerMessagePublicCards.AsObject, roomID: num
             }
             seatData.operator = op;
         }
-    }
-}
-
-function getExpectedPublicCardCount(round: Def.RoundMap[keyof Def.RoundMap]): number | null {
-    switch (round) {
-        case Def.Round.FLOP:
-            return 0;
-        case Def.Round.TURN:
-            return 3;
-        case Def.Round.RIVER:
-            return 4;
-        default:
-            return null;
     }
 }

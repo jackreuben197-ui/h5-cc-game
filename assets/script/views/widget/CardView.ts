@@ -60,14 +60,15 @@ export default class CardView extends cc.Component {
         }
     }
 
-    private _offset: cc.Vec2 = new cc.Vec2(0, 0);
+    private _popUpOrigin: cc.Vec3 = null;
 
     public popUp(offset: cc.Vec2) {
-        this._offset = offset;
+        this.stopAnimations();
+        this._popUpOrigin = cc.v3(this.cardSprite.node.position.x, this.cardSprite.node.position.y, this.cardSprite.node.position.z);
         cc.tween(this.cardSprite.node)
             .to(0.3, {
-                x: this.cardSprite.node.position.x + offset.x,
-                y: this.cardSprite.node.position.y + offset.y
+                x: this._popUpOrigin.x + offset.x,
+                y: this._popUpOrigin.y + offset.y
             })
             .start();
     }
@@ -78,13 +79,27 @@ export default class CardView extends cc.Component {
         }
     }
 
-    public reset() {
-        this.highlight(false);
-        if (this._offset.x != 0 && this._offset.y != 0) {
-            this.cardSprite.node.setPosition(this.cardSprite.node.x - this._offset.x, this.cardSprite.node.y - this._offset.y);
-            this._offset.x = 0;
-            this._offset.y = 0;
+    /**
+     * 浏览器挂起会让 tween 停在任意一帧；恢复时先终止旧动画并还原牌节点，
+     * 避免旧回调再次把已经同步好的牌面改回牌背或旧牌。
+     */
+    public stopAnimations(): void {
+        cc.Tween.stopAllByTarget(this.node);
+        this.node.setScale(1, 1);
+        this.node.angle = 0;
+        if (this.cardSprite) {
+            cc.Tween.stopAllByTarget(this.cardSprite.node);
         }
+        if (this._popUpOrigin) {
+            this.cardSprite.node.setPosition(this._popUpOrigin);
+            this._popUpOrigin = null;
+        }
+    }
+
+    public reset() {
+        this.stopAnimations();
+        this.delayHighlight = false;
+        this.highlight(false);
         this.gray(false);
     }
 
@@ -126,10 +141,9 @@ export default class CardView extends cc.Component {
             return;
         }
         const halfDuration = duration / 2;
+        this.stopAnimations();
         // 前置状态重置：确保卡牌初始为背面且缩放、角度均恢复默认值
         this.cardNum = 0;
-        this.node.scaleX = 1;
-        this.node.angle = 0;
         // 使用 cc.tween 链式构造 2D 空间翻转动效
         cc.tween(this.node)
             // 第一阶段：卡牌水平压扁至侧面（scaleX由1变为0）

@@ -13,12 +13,16 @@ import {
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
+import { auditHandSnapshot } from './TexasStateAudit';
 
 const _plog = createLogger('ServerMessageStartInfo');
 
 // StartInfo 1103
 export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number, matchID: number) {
     let roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
+    auditHandSnapshot('StartInfo', roomID, matchID, Def.GameStatus.HAND_PREFLOP, data.handInfo, data.playersList, [data.nextOperator].filter(Boolean), roomData);
+    // StartInfo 是新一手的权威快照；即使后台期间漏了 HandClear，也不能沿用上一手表现缓存。
+    roomData.clearHandPresentation();
     // 新一手开始时立即隐藏可能等待展示的休息浮层。
     roomData.mtt.handleHandStart();
     roomData.basicInfo.gameStatus = Def.GameStatus.HAND_PREFLOP;
@@ -132,6 +136,11 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
                 op.opType = OpertionType.AGREESECPUB;
             } else {
                 op.opType = OpertionType.NORMAL;
+            }
+            if (op.opType == OpertionType.NORMAL && operator.cardsList.length > 0) {
+                // 新一手在后台开始且轮到自己时，operator.cards 是延迟看牌的最新手牌。
+                seatData.setCards(operator.cardsList, AnimateDisplayTypeCards.Static);
+                roomData.mine.caculateHandValueTypeAndHighlight();
             }
             seatData.mine.operator = op;
         } else {

@@ -27,6 +27,7 @@ import viewManager from '../../../views/UIViewManager';
 import throwPropManager from '../../../views/util/ThrowPropManager';
 import agoraManager from '../../agora/AgoraManager';
 import TexasVideoMediaHelper from './TexasVideoMediaHelper';
+import { auditHandSnapshot } from './TexasStateAudit';
 
 const _plog = createLogger('ServerMessageEnterRoom');
 
@@ -53,6 +54,9 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         _plog.error('no store room data');
         return;
     }
+    auditHandSnapshot('EnterRoom', roomID, matchID, data.gameStatus, data.handInfo, data.playersList, data.operatorList, roomData);
+    // EnterRoom 是权威全量快照；先清理上一桌/上一手残留，再按本次快照重建。
+    roomData.clearHandPresentation();
     throwPropManager.preloadEffects();
     // 声音处理
     soundManager.volumeOnOff(roomData.setting.soundOn);
@@ -226,6 +230,11 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
                     op.opType = OpertionType.AGREESECPUB;
                 } else {
                     op.opType = OpertionType.NORMAL;
+                }
+                if (op.opType == OpertionType.NORMAL && operator.cardsList.length > 0) {
+                    // 延迟看牌模式下，重连时 players 可能仍是牌背，当前操作人的 cards 才是真实手牌。
+                    seatData.setCards(operator.cardsList, AnimateDisplayTypeCards.Static);
+                    roomData.mine.caculateHandValueTypeAndHighlight();
                 }
                 seatData.mine.operator = op;
             } else {

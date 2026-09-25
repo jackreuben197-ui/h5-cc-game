@@ -335,6 +335,7 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     }
 
     public handClear() {
+        this.operator = null;
         this.handValueType = '';
         this.showViewPlayerCardsButton = false;
         this.showViewPublicCardsButton = false;

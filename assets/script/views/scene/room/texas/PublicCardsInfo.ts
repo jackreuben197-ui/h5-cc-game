@@ -48,14 +48,19 @@ export default class PublicCardsInfo extends cc.Component {
     }
 
     public onDisable(): void {
+        this.unschedule(this._syncPublicCards);
         unBindEventsAll(this);
     }
 
     public onDestroy(): void {
         cc.game.off(cc.game.EVENT_SHOW, this.onGameShow, this);
+        this.unschedule(this._syncPublicCards);
     }
 
     private _bindEventsAndRefresh() {
+        // 多牌桌来回切换时，上一桌的发牌 tween 可能停在临时坐标；
+        // 重绑数据前先按 prefab 中记录的基准位置还原当前桌牌面。
+        this._syncPublicCards();
         autoBindEvents(this, { publicCards: this._publicCardsData });
     }
 
@@ -68,6 +73,9 @@ export default class PublicCardsInfo extends cc.Component {
 
     private onGameShow(): void {
         this._syncPublicCards();
+        // EVENT_SHOW 与浏览器恢复后的 WebSocket/动画队列可能在同一帧交错，下一帧再以数据为准。
+        this.unschedule(this._syncPublicCards);
+        this.scheduleOnce(this._syncPublicCards, 0);
     }
 
     private _syncPublicCards(): void {
@@ -79,10 +87,8 @@ export default class PublicCardsInfo extends cc.Component {
 
     private _syncCardViews(views: CardView[], positions: cc.Vec3[], cards: number[]): void {
         views.forEach((view, index) => {
-            cc.Tween.stopAllByTarget(view.node);
+            view.stopAnimations();
             view.node.setPosition(positions[index]);
-            view.node.setScale(1, 1);
-            view.node.angle = 0;
             view.node.active = index < cards.length;
             if (index < cards.length) {
                 view.storeCardNum = cards[index];
@@ -106,7 +112,7 @@ export default class PublicCardsInfo extends cc.Component {
             return;
         }
         //要做复杂动画
-        let startPos = this._publicCards[0].node.position;
+        const startPos = this._publicCardPositions[0];
         let moveDuration = 0.6;
         if (prevCardsLen > 0) {
             moveDuration = 0;
@@ -124,7 +130,8 @@ export default class PublicCardsInfo extends cc.Component {
             node.storeCardNum = v;
             node.node.active = true;
             if (prevCardsLen == 0) {
-                const endPos = node.node.position;
+                const endPos = this._publicCardPositions[index + prevCardsLen];
+                node.stopAnimations();
                 node.node.setPosition(startPos);
                 node.cardNum = 0;
                 cc.tween(node.node)
@@ -158,7 +165,7 @@ export default class PublicCardsInfo extends cc.Component {
             return;
         }
         //要做复杂动画
-        let startPos = this._secPublicCards[0].node.position;
+        const startPos = this._secPublicCardPositions[0];
         let moveDuration = 0.6;
         if (prevCardsLen > 0) {
             moveDuration = 0;
@@ -168,7 +175,8 @@ export default class PublicCardsInfo extends cc.Component {
             node.node.active = true;
             node.storeCardNum = v;
             if (prevCardsLen == 0) {
-                const endPos = node.node.position;
+                const endPos = this._secPublicCardPositions[index + prevCardsLen];
+                node.stopAnimations();
                 node.node.setPosition(startPos);
                 node.cardNum = 0;
                 cc.tween(node.node)

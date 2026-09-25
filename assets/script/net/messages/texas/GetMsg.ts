@@ -66,6 +66,9 @@ export function GetMsg(data: ServerMessageGetMsg.AsObject, roomID: number, match
     console.log('[Chat][GetMsg] 解析消息', broadcastMsg);
     const isSelfMessage = broadcastMsg.user_id === userStore.userID;
     const timestamp = TexasGameRoomDataChat.normalizeTimestamp(broadcastMsg.time || Date.now());
+    // Unity 使用 GetMsg.Message 作为服务端处理后的最终文本；extra.message 只保留发送时的原文。
+    // 普通桌的屏蔽字由服务端替换，因此展示聊天和弹幕时必须优先使用顶层 message。
+    const displayMessage = data.message || broadcastMsg.message || '';
     // 表情消息：msgType=1，type 为 PropsID（对齐 Unity UIGameplayChatComponent 判定标准）
     if (broadcastMsg.msgType === 1 && typeof broadcastMsg.type === 'number') {
         roomData.chat.addMessage(
@@ -84,13 +87,13 @@ export function GetMsg(data: ServerMessageGetMsg.AsObject, roomID: number, match
         return;
     }
     // 只处理文本聊天/弹幕：type=0 且有内容
-    if (broadcastMsg.type !== 0 || !broadcastMsg.message) return;
+    if (broadcastMsg.type !== 0 || !displayMessage) return;
     // 本人消息走 1019 确认路径（BroadcastMsg.ts），此处过滤
     if (isSelfMessage) return;
     if (broadcastMsg.isDanmu === true) {
         roomData.chat.addDanmu({
             name: broadcastMsg.name || '',
-            content: broadcastMsg.message
+            content: displayMessage
         });
         return;
     }
@@ -98,7 +101,7 @@ export function GetMsg(data: ServerMessageGetMsg.AsObject, roomID: number, match
         {
             userID: broadcastMsg.user_id,
             name: broadcastMsg.name || '',
-            content: broadcastMsg.message,
+            content: displayMessage,
             headUrl: broadcastMsg.headUrl || '',
             sex: broadcastMsg.sex || 0,
             timestamp,

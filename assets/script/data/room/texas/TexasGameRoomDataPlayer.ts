@@ -233,18 +233,21 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     }
 
     public handClear() {
-        if (this.userID > 0) {
-            this.setAction(Def.Action.NONE, AnimateDisplayTypeAction.Done);
-            this.handBet = 0;
-            this.setRoundBet(0, AnimateDisplayTypeRoundBet.Static);
-            this.setCards([], AnimateDisplayTypeCards.Static, 0);
-            this.roundActioned = false;
-            this.winPercent100 = -1;
-            if (this.mine) {
-                this.mine.handClear();
-            }
-            this.claimWin(false, 0, 0);
+        // 展示状态必须对所有座位槽清理。拆合桌时旧玩家可能已先被置空，
+        // 若在 userID == 0 时跳过，纯事件 WINNER 不会在新桌初始化时自动覆盖。
+        this.setAction(Def.Action.NONE, AnimateDisplayTypeAction.Done);
+        this.handBet = 0;
+        this.setRoundBet(0, AnimateDisplayTypeRoundBet.Static);
+        this.setCards([], AnimateDisplayTypeCards.Static, 0);
+        this.roundActioned = false;
+        this.operator = null;
+        this.buyInsuranceStep = 0;
+        this.buyInsuranceList = [];
+        this.winPercent100 = -1;
+        if (this.userID > 0 && this.mine) {
+            this.mine.handClear();
         }
+        this.claimWin(false, 0, 0);
     }
 }
 
