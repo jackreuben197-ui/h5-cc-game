@@ -209,6 +209,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this._bindClick(this.panelClick, this.close);
         this.dialogNode.on(cc.Node.EventType.TOUCH_START, (event: cc.Event.EventTouch) => event.stopPropagation(), this);
         this.dialogNode.on(cc.Node.EventType.TOUCH_END, (event: cc.Event.EventTouch) => event.stopPropagation(), this);
+        this._bindClick(this.dialogNode.getChildByName('closeBtn'), this.close);
         this._bindClick(this.noteBtn, this._clickEditNote);
         this._bindClick(this.playerNoteNode, this._clickEditNote);
         this.noteEditBox.node.on('editing-did-ended', this._onNoteEditEnded, this);
@@ -856,7 +857,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _clickProp(definition: ThrowPropDefinition, clickNode: cc.Node): void {
-        this._playClickScale(clickNode, true);
+        this._playClickScale(clickNode, false);
         const propData = this._propListData.get(definition.type);
         const consume = (userStore.isPropFree(propData) ? Def.ConsumeType.CT_NONE : propData.priceID) as ClientMessageBroadcastMsg.AsObject['consume'];
         this._roomData.seatsStateManager.setPendingThrowProp({

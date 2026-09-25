@@ -247,7 +247,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
     @bindEvent(TexasGameRoomDataPlayerMine.PLAYER_INFO_DIALOG_OPEN_CHANGE, 'mine')
     private async onPlayerInfoDialogOpenChanged(open: boolean): Promise<void> {
         if (!open) {
-            viewManager.closeDialog('PlayerInfo');
+            // viewManager.closeDialog('PlayerInfo');
             return;
         }
         await viewManager.openDialog('PlayerInfo', {
