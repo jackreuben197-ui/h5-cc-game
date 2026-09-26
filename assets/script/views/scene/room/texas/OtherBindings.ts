@@ -139,6 +139,11 @@ export default class OtherBindings extends cc.Component {
         //
         this.viewPlayerCards.node.on('click', this.onCLickViewPlayerCards, this);
         this.viewPublicCards.node.on('click', this.onClickViewPublicCards, this);
+        cc.game.on(cc.game.EVENT_SHOW, this._onGameShow, this);
+    }
+
+    public onDestroy(): void {
+        cc.game.off(cc.game.EVENT_SHOW, this._onGameShow, this);
     }
 
     public onEnable(): void {
@@ -175,6 +180,23 @@ export default class OtherBindings extends cc.Component {
                 this.certBanner.getComponent(cc.Sprite).spriteFrame = this._certLogoDefaultSpriteFrame;
             }
         }
+    }
+
+    /** 底部三个基础入口为常驻节点，回到前台时主动恢复，避免浏览器挂起期间遗留隐藏状态。 */
+    private _onGameShow(): void {
+        const self = this as any;
+        const bottomButtons = self.btnReport?.node.parent;
+        if (bottomButtons) {
+            // 同一帧重建底栏渲染状态，不会产生闪烁，也不改变各功能按钮原本的 active 配置。
+            bottomButtons.active = false;
+            bottomButtons.active = true;
+            bottomButtons.opacity = 255;
+        }
+        [self.btnReport, self.btnReplay, self.btnEmoji].forEach((button: any) => {
+            if (!button) return;
+            button.node.active = true;
+            button.node.opacity = 255;
+        });
     }
 
     @bindEvent(GlobalConfigStore.CONFIG_CHANGED, { dataSource: 'globalConfig', initIgnore: true })

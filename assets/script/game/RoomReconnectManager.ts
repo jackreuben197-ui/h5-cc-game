@@ -22,11 +22,16 @@ interface InternalContext extends RoomReconnectContext {
 class RoomReconnectManager {
     private _contexts: InternalContext[] = [];
     private _reconnectMap: Map<string, ReturnType<typeof setTimeout>> = new Map();
+    private _resumeSyncTimer: ReturnType<typeof setTimeout> = null;
+    private _lifecycleListening: boolean = false;
+    private _transportReconnecting: boolean = false;
     private static readonly RECONNECT_TIMEOUT = 10000; //10s
+    private static readonly RESUME_SYNC_DELAY = 300;
     // 单 context 连续失败超过该阈值即剔除, 避免对死房间无限重试
     private static readonly MAX_FAILED_COUNT = 3;
 
     public addContext(context: RoomReconnectContext): void {
+        this._ensureLifecycleListening();
         // 1. 同时校验 roomID 和 matchID
         const index = this._contexts.findIndex(c => c.roomID === context.roomID && c.matchID === context.matchID);
         if (index !== -1) {
@@ -47,6 +52,11 @@ class RoomReconnectManager {
 
     public clearAllContext() {
         this._contexts = [];
+        this._transportReconnecting = false;
+        if (this._resumeSyncTimer) {
+            clearTimeout(this._resumeSyncTimer);
+            this._resumeSyncTimer = null;
+        }
         this._reconnectMap.forEach(t => clearTimeout(t));
         this._reconnectMap.clear();
         viewManager.hidePrompting();
@@ -122,6 +132,7 @@ class RoomReconnectManager {
     }
 
     public markReconnecting(): void {
+        this._transportReconnecting = true;
         if (!this._isInRoom()) return;
         // 清掉上一轮残留 timer, 否则下一次 requestReconnect 会被 _reconnectMap.has(key) 短路
         this._reconnectMap.forEach(t => clearTimeout(t));
@@ -149,40 +160,14 @@ class RoomReconnectManager {
         if (this._reconnectMap.size > 0) {
             this.tracelog.warn('last reconnect is not complete, ignore, continue');
         }
-        // 调用这个时候是 wsConnected 必然是可以的
-        // 拷贝一份再迭代, 因为超时回调可能改动 _contexts (虽然 setTimeout 异步, 但保持习惯)
-        const contexts = this._contexts.slice();
-        contexts.forEach(context => {
-            const key = this._genKey(context.roomID, context.matchID);
-            // 上次重连还没结束
-            if (this._reconnectMap.has(key)) {
-                return;
-            }
-            const roomData = roomDataManager.getRoomData(context.roomID, context.matchID);
-            if (!roomData) {
-                this.tracelog.warn('no room data for reconnect', context.roomID, context.matchID);
-                return;
-            }
-            // 超时清理(超时时间可以优化到以后阶梯处理5，10，20，30，60等)
-            const timer = setTimeout(() => {
-                this._onReconnectTimeout(context.roomID, context.matchID);
-            }, RoomReconnectManager.RECONNECT_TIMEOUT);
-            // 设置重连房间锁（不要重复请求)
-            this._reconnectMap.set(key, timer);
-            if (roomData instanceof TexasGameRoomData) {
-                const body: ClientMessageSyncEnter.AsObject = {
-                    room: { roomId: context.roomID, matchId: context.matchID }
-                };
-                ProtocolAgency.Send({
-                    code: Code.MSG_D_SYNC_ENTER,
-                    roomID: context.roomID,
-                    matchID: context.matchID,
-                    body
-                });
-            }
-            this.tracelog.info('sync enter requested(start)', context.roomID, context.matchID);
-        });
-        this._updatePromptingForVisible();
+        // 拷贝一份再迭代，超时回调可能改动 contexts。
+        this._requestContexts(this._contexts.slice());
+    }
+
+    /** H5 WebSocket 已恢复，放开页面恢复同步并立即拉取权威快照。 */
+    public markReconnected(): void {
+        this._transportReconnecting = false;
+        this.requestReconnect();
     }
 
     private _onReconnectTimeout(roomID: number, matchID: number): void {
@@ -237,8 +222,69 @@ class RoomReconnectManager {
 
     /** 清理所有重连房间 */
     public failReconnect(reason: string): void {
+        this._transportReconnecting = false;
         this.tracelog.warn('reconnect failed', reason);
         this.clearAllContext();
+    }
+
+    private _ensureLifecycleListening(): void {
+        if (this._lifecycleListening) return;
+        this._lifecycleListening = true;
+        cc.game.on(cc.game.EVENT_SHOW, this._onGameShow, this);
+    }
+
+    private _onGameShow(): void {
+        if (this._resumeSyncTimer) clearTimeout(this._resumeSyncTimer);
+        // 给 H5 的 wsReconnecting/wsReconnected 事件留出一小段时间，避免在传输层尚未就绪时发包。
+        this._resumeSyncTimer = setTimeout(() => {
+            this._resumeSyncTimer = null;
+            this._requestVisibleRoomSnapshot();
+        }, RoomReconnectManager.RESUME_SYNC_DELAY);
+    }
+
+    private _requestVisibleRoomSnapshot(): void {
+        if (this._transportReconnecting || !this._isInRoom()) return;
+        const visible = this._getVisibleRoom();
+        if (!visible || !this._hasContext(visible.roomID, visible.matchID)) return;
+        const roomData = roomDataManager.getRoomData<TexasGameRoomData>(visible.roomID, visible.matchID);
+        if (!roomData) return;
+        if (roomData.basicInfo.isMtt && roomData.mtt.tableTransferWaiting) {
+            // 换桌期间由新桌 EnterRoom 快照接管，不再向旧桌/迁移中的房间发 SyncEnter。
+            this.tracelog.info('skip resume sync while table transfer is waiting', visible.roomID, visible.matchID);
+            return;
+        }
+        this.tracelog.info('page resumed, request visible room snapshot', visible.roomID, visible.matchID);
+        const context = this._contexts.find(c => c.roomID === visible.roomID && c.matchID === visible.matchID);
+        if (context) this._requestContexts([context]);
+    }
+
+    private _requestContexts(contexts: InternalContext[]): void {
+        contexts.forEach(context => {
+            const key = this._genKey(context.roomID, context.matchID);
+            if (this._reconnectMap.has(key)) return;
+            const roomData = roomDataManager.getRoomData(context.roomID, context.matchID);
+            if (!roomData) {
+                this.tracelog.warn('no room data for reconnect', context.roomID, context.matchID);
+                return;
+            }
+            const timer = setTimeout(() => {
+                this._onReconnectTimeout(context.roomID, context.matchID);
+            }, RoomReconnectManager.RECONNECT_TIMEOUT);
+            this._reconnectMap.set(key, timer);
+            if (roomData instanceof TexasGameRoomData) {
+                const body: ClientMessageSyncEnter.AsObject = {
+                    room: { roomId: context.roomID, matchId: context.matchID }
+                };
+                ProtocolAgency.Send({
+                    code: Code.MSG_D_SYNC_ENTER,
+                    roomID: context.roomID,
+                    matchID: context.matchID,
+                    body
+                });
+            }
+            this.tracelog.info('sync enter requested(start)', context.roomID, context.matchID);
+        });
+        this._updatePromptingForVisible();
     }
 }
 

@@ -271,6 +271,20 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
         return `${StringHelper.GetDecimalNWithKM(value / ratio)}${ex}`;
     }
 
+    /** MTT 牌桌余额：不足 1 时保留小数，达到 1 后沿用赛事筹码的取整展示。 */
+    public showPlayerBalanceWithShowBB(value: number): string {
+        const base = this.sbante.sb * 2;
+        const ratio = texasGamePersonalSettings.showBB ? base : 100;
+        const displayValue = value / ratio;
+        const normalizedValue = this.isMtt && displayValue >= 1 ? Math.floor(displayValue) : displayValue;
+        const formattedValue =
+            this.isMtt && displayValue > 0 && displayValue < 1
+                ? StringHelper.GetDecimalN(displayValue, 2)
+                : StringHelper.GetDecimalNWithKM(normalizedValue);
+        const ex: string = texasGamePersonalSettings.showBB ? 'BB' : '';
+        return `${formattedValue}${ex}`;
+    }
+
     // MTT 详情不携带普通桌的随机前注配置，默认空数组保证统一的数据契约。
     private _randomAnte: number[] = []; // anteMin, anteMax, randomStep
     public get randomAnte() {

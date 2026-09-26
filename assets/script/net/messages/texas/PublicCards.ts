@@ -4,12 +4,30 @@ import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import { AnimateDisplayTypeCards, AnimateDisplayTypePublicCards } from '../../../game/constant/AnimateDisplayType';
+import { auditPublicCardsIncrement } from './TexasStateAudit';
 
 const _plog = createLogger('ServerMessagePublicCards');
 
 // PublicCards 1104
 export function PublicCards(data: ServerMessagePublicCards.AsObject, roomID: number, matchID: number) {
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
+    if (matchID > 0 && roomData.mtt.tableTransferWaiting) {
+        // 新桌 EnterRoom 快照落地前不消费增量消息，避免它与旧桌残留状态拼接。
+        _plog.warn('ignore public cards before table transfer snapshot', roomID, matchID, data.rnd, data.publicCardsArrayList);
+        return;
+    }
+    if (
+        !auditPublicCardsIncrement(
+            roomID,
+            matchID,
+            roomData.basicInfo.handNum,
+            data.rnd,
+            roomData.publicCards.publicCards,
+            data.publicCardsArrayList
+        )
+    ) {
+        return;
+    }
     roomData.secondPcs.finish();
     roomData.publicCards.addPublicCards(data.publicCardsArrayList, AnimateDisplayTypePublicCards.Deal);
     if (data.publicCardsArray2List.length > 0) {

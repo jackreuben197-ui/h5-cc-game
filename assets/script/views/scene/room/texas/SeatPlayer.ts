@@ -35,6 +35,8 @@ import seatPostionCaculator, { SeatPosition } from './widget/SeatPositionCaculat
 
 const { ccclass, property, menu } = cc._decorator;
 
+const MTT_TRUST_NODE_NAME = 'Image_Trust';
+
 // 操作气泡颜色，取自 pokerqueen。
 // pokerqueen 是每个操作各一张底图（new_texture/game/bubble/Rectangle 1278*.png，均不着色），
 // 本项目是同一张 seat/action.png 用代码着色，所以这里把那几张图的颜色取出来按操作对应上。
@@ -144,6 +146,7 @@ export default class SeatPlayer extends cc.Component {
     private _potNode: cc.Node = null!;
     // 发牌
     private _dealNode: cc.Node = null!;
+    private _trustNode: cc.Node = null;
     /** 暴露头像节点供视频渲染使用 */
     public get avatarNode(): cc.Node {
         return this.avatar.node;
@@ -195,9 +198,13 @@ export default class SeatPlayer extends cc.Component {
         this.avatar.node.on(cc.Node.EventType.TOUCH_END, this._clickPlayerInfo, this);
         this.insuranceCountdownBubble.node.active = false;
         this.returnToGameButton.node.on('click', this._clickReturnToGame, this);
-        // 鱿鱼触手遮罩(squid_mask)按需求彻底移除：无论预制体/library 缓存状态如何，
-        // onLoad 一定执行，运行时强制隐藏，避免非鱿鱼房未触发事件时触手仍显示。
         this._hideSquidTentacles();
+        cc.game.on(cc.game.EVENT_SHOW, this._onGameShow, this);
+        // 旧 prefab 已有托管图标，运行时绑定服务端托管状态。
+        this._trustNode = this._findNode(this.node, MTT_TRUST_NODE_NAME);
+        if (this._trustNode) {
+            this._trustNode.active = false;
+        }
     }
 
     /**
@@ -226,7 +233,10 @@ export default class SeatPlayer extends cc.Component {
     }
 
     protected onDisable(): void {
+        this.unschedule(this._restoreCardsFromData);
         this._stopRoundBetAnimation();
+        this._stopWinnerPresentation();
+        this._insuranceBuying = false;
         this.insuranceCountdownBubble.node.active = false;
         this._resetCardVisualState();
         this.avatarVideoRender.stopMask();
@@ -240,6 +250,8 @@ export default class SeatPlayer extends cc.Component {
         this.avatar?.node.targetOff(this);
         this.userSeat?.targetOff(this);
         this.returnToGameButton?.node.targetOff(this);
+        cc.game.off(cc.game.EVENT_SHOW, this._onGameShow, this);
+        this.unschedule(this._restoreCardsFromData);
     }
 
     /**
@@ -283,11 +295,24 @@ export default class SeatPlayer extends cc.Component {
         this.smallCardsContainer.setScale(1, 1);
         this.smallCardsContainer.opacity = 255;
         this._bigCards.forEach(card => {
-            cc.Tween.stopAllByTarget(card.node);
-            card.node.setScale(1, 1);
-            card.node.angle = 0;
+            card.stopAnimations();
         });
     }
+
+
+    private _restoreCardsFromData(): void {
+        if (!this._seatPlayer || !this.node.activeInHierarchy) return;
+        this.onUpdateCards(this._seatPlayer.cards, AnimateDisplayTypeCards.Static);
+    }
+
+    /** 浏览器从后台恢复时，停止冻结动画，并在消息队列恢复后再校准一次手牌。 */
+    private _onGameShow(): void {
+        this._restoreCardsFromData();
+        this.unschedule(this._restoreCardsFromData);
+        this.scheduleOnce(this._restoreCardsFromData, 0);
+    }
+
+
     /**
      * 设置麦克风图标状态
      * @param state HIDDEN=不显示, SPEAKING=正在说话, MUTED=麦克风被禁止/未开启
@@ -332,10 +357,15 @@ export default class SeatPlayer extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayer.SEATED_CHANGE, { dataSource: 'player', initPriority: 10 })
     @traceMethod()
     private onUpdateSeated(b: boolean, mine: TexasGameRoomDataPlayerMine) {
+        // 座位槽在拆合桌和换人时会复用，赢家展示不能跟随节点留到新玩家。
+        this._stopWinnerPresentation();
         this.userSeat.active = b;
         this.emptySeat.node.active = !b;
         this.emptySeat.interactable = !b;
         this._refreshNicknameVisibility();
+        // 座位节点会被不同玩家复用。入座状态切换时按数据重新收口手牌展示，
+        // 避免 clearData 静默清理后重新激活 userSeat 时露出上一位玩家的牌面。
+        this.onUpdateCards(b ? this._seatPlayer.cards : [], AnimateDisplayTypeCards.Static);
         // 本人相关,设置属性
         if (b && mine) {
             autoBindEvents(this, { mine: mine });
@@ -427,12 +457,12 @@ export default class SeatPlayer extends cc.Component {
 
     @bindEvent(TexasGameRoomDataPlayer.CHIPS_CHANGE, 'player')
     private onUpdateChip(chip: number) {
-        this.chips.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(chip);
+        this.chips.string = this._seatPlayer.roomData.basicInfo.showPlayerBalanceWithShowBB(chip);
     }
 
     @bindEvent(TexasGamePersonalSettings.SHOW_BB, { dataSource: 'setting', initPriority: 99 })
     private onUpdateShowBB(b: number) {
-        this.chips.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(this._seatPlayer.chip);
+        this.chips.string = this._seatPlayer.roomData.basicInfo.showPlayerBalanceWithShowBB(this._seatPlayer.chip);
         this.roundBetLabel.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(this._seatPlayer.roundBet);
     }
 
@@ -641,9 +671,10 @@ export default class SeatPlayer extends cc.Component {
         this.tracelog.debug('cards', cards, this._seatPlayer.seatNo, this._seatPlayer.name);
         this._resetCardVisualState();
         const l = cards.length;
-        // reset
+        // 拆合桌可能直接从上一桌的结算牌切到新一手，不一定经过空牌事件。
+        // 每次收到手牌都清掉旧桌遗留的高亮、暗色遮罩和弹起位置。
+        this._bigCards.forEach(v => v.reset());
         if (l == 0) {
-            this._bigCards.forEach(v => v.reset());
             // 新一局：停掉上一局残留的 ALLIN 循环特效
             this._stopAllinAnim();
         }
@@ -973,9 +1004,10 @@ export default class SeatPlayer extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayer.WINNER, { dataSource: 'player', initIgnore: true })
     private onWin(play: boolean, handValueType: number, chip: number) {
         if (!play) {
-            this.winBoard.node.active = false;
+            this._stopWinnerPresentation();
             return;
         }
+        this._stopWinnerPresentation();
         this.tracelog.debug('winner', this._seatPlayer.seatNo, this._seatPlayer.name);
         this.winBoard.node.active = true;
         if (handValueType != 0) {
@@ -1029,7 +1061,7 @@ export default class SeatPlayer extends cc.Component {
         });
     }
 
-    /** 停掉 ALLIN 环形循环特效（自己/他人两个节点都停）。对应 pokerqueen 的 StopAllinArmature。 */
+        /** 停掉 ALLIN 环形循环特效（自己/他人两个节点都停）。对应 pokerqueen 的 StopAllinArmature。 */
     private _stopAllinAnim() {
         if (this.allInAnimation && this.allInAnimation.node.active) {
             this.allInAnimation.setCompleteListener(null);
@@ -1041,6 +1073,36 @@ export default class SeatPlayer extends cc.Component {
             this.allInOtherAnimation.clearTracks();
             this.allInOtherAnimation.node.active = false;
         }
+    }
+
+    /** 清除上一手/上一桌的赢家数字、收池筹码和赢家特效。 */
+    private _stopWinnerPresentation(): void {
+        this.winBoard.node.active = false;
+        this._stopRoundBetAnimation();
+        cc.Tween.stopAllByTarget(this.animatingChips);
+        this.animatingChips.active = false;
+        this.animatingChips.setScale(1, 1);
+        if (this.winAnimation) {
+            this.winAnimation.clearTracks();
+            this.winAnimation.node.active = false;
+        }
+    }
+
+    @bindEvent(TexasGameRoomDataPlayer.AUTO_OP_CHANGE, 'player')
+    private onAutoOpChanged(enabled: boolean): void {
+        if (this._trustNode) {
+            this._trustNode.active = enabled;
+        }
+    }
+
+    private _findNode(root: cc.Node, name: string): cc.Node | null {
+        if (!root) return null;
+        if (root.name == name) return root;
+        for (const child of root.children) {
+            const result = this._findNode(child, name);
+            if (result) return result;
+        }
+        return null;
     }
 
     private _clickReturnToGame() {

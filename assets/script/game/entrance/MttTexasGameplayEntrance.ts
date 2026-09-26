@@ -268,7 +268,8 @@ export default class MttTexasGameplayEntrance extends AGameplayEntrance {
             this._isObserver,
             displayMatchName,
             this._mttDetails.mtt.startTime,
-            this._mttDetails.mtt.applyFeePool + this._mttDetails.mtt.applyFeeService
+            this._mttDetails.mtt.applyFeePool + this._mttDetails.mtt.applyFeeService,
+            this._mttDetails.mtt.delayTimeType
         );
         if (this._mttDetails.mtt.antiCheatType == AntiCheatType.VIDEO || this._mttDetails.mtt.antiCheatType == AntiCheatType.AUDIO) {
             roomData.basicInfo.antiCheatConfig = new VideoAntiCheatConfig(

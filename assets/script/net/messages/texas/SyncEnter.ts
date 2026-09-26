@@ -4,7 +4,7 @@ import PlayerStoreUtils from '../../../data/player/PlayerStoreUtils';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import { Operator, OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
-import TexasGameRoomDataPlayer from '../../../data/room/texas/TexasGameRoomDataPlayer';
+import TexasGameRoomDataPlayer, { mergeRevealedCards } from '../../../data/room/texas/TexasGameRoomDataPlayer';
 import {
     AnimateDisplayTypeAction,
     AnimateDisplayTypeButton,
@@ -12,14 +12,16 @@ import {
     AnimateDisplayTypeMushroomPool,
     AnimateDisplayTypePlayType,
     AnimateDisplayTypePosition,
+    AnimateDisplayTypePublicCards,
     AnimateDisplayTypeRoundBet
 } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
+import ProcedureDefine from '../../../game/procedure/ProcedureDefine';
+import ProcedureManager from '../../../game/procedure/ProcedureManager';
 import roomReconnectManager from '../../../game/RoomReconnectManager';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
-import ProcedureDefine from '../../../game/procedure/ProcedureDefine';
 import viewManager from '../../../views/UIViewManager';
-import ProcedureManager from '../../../game/procedure/ProcedureManager';
+import { auditHandSnapshot } from './TexasStateAudit';
 
 const _plog = createLogger('ServerMessageSyncEnter');
 
@@ -37,7 +39,19 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
         _plog.error('no store room data', roomID, matchID);
         return;
     }
-    roomData.chat.resetHistory();
+    auditHandSnapshot('SyncEnter', roomID, matchID, data.gameStatus, data.handInfo, data.playersList, data.operatorList, roomData);
+    // 页面恢复时，亮牌/Winner 与 SyncEnter 可能交错到达。若仍是同一手，先记住
+    // 本地已经公开的牌，快照中的 0 只能表示牌背占位，不能让牌面倒退。
+    const retainedCardsBySeat = new Map<number, number[]>();
+    if (data.handInfo?.handNum > 0 && data.handInfo.handNum == roomData.basicInfo.handNum) {
+        const seatCount = roomData.seatsStateManager.seatsCount;
+        for (let seat = 1; seat <= seatCount; seat++) {
+            retainedCardsBySeat.set(seat, [...roomData.seatsStateManager.getSeatPlayer(seat).cards]);
+        }
+    }
+    // SyncEnter 是权威全量快照：先清理可能丢失 HandClear 后残留的本地一手缓存，再用快照重建。
+    roomData.clearHandPresentation();
+    // 浏览器从后台恢复也会触发 SyncEnter；聊天不属于单手快照，保留当前房间已有历史记录。
     const myseat = data.myInfo?.seatId || 0;
     const seatCount = roomData.seatsStateManager.seatsCount;
     const myOp = myseat > 0 && data.operatorList.filter(v => v.seatId == myseat && !v.isAgreeSecondPc && !v.isInsurance).length > 0;
@@ -91,8 +105,11 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
         roomData.potInfo.potList = data.handInfo.potsList;
         roomData.potInfo.secPotList = data.handInfo.secondPotsList;
         roomData.seatsStateManager.setButtonPosition(data.handInfo.buSeatId, AnimateDisplayTypeButton.Static);
-        roomData.publicCards.publicCards = data.handInfo.publicCardsList;
-        roomData.publicCards.secondPublicCards = data.handInfo.secondPublicCardsList;
+        roomData.publicCards.replacePublicCards(
+            data.handInfo.publicCardsList,
+            data.handInfo.secondPublicCardsList,
+            AnimateDisplayTypePublicCards.Static
+        );
         roomData.basicInfo.currentConfigContinueRounds = data.handInfo.conRounds;
         //Critial
         roomData.basicInfo.setCriticalHitStatusEnabled(data.handInfo.criticalHitOpen, AnimateDisplayTypePlayType.Staic);
@@ -125,6 +142,7 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
             seatData.setAction(player.action, AnimateDisplayTypeAction.Static);
             // 延迟看牌做个修正,目前服务端逻辑异常
             // 非自己操作 && 手牌有内容 && 起手轮前且未行动过 && 非ALLIN
+            let snapshotCards = player.cardsList;
             if (myseat == player.seatId) {
                 if (
                     data.roomInfo.delaySeeCard &&
@@ -134,13 +152,10 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
                     !player.roundActioned &&
                     player.action != Def.Action.ALLIN
                 ) {
-                    seatData.setCards([...defaultHandCards], AnimateDisplayTypeCards.Static);
-                } else {
-                    seatData.setCards(player.cardsList, AnimateDisplayTypeCards.Static);
+                    snapshotCards = [...defaultHandCards];
                 }
-            } else {
-                seatData.setCards(player.cardsList, AnimateDisplayTypeCards.Static);
             }
+            seatData.setCards(mergeRevealedCards(retainedCardsBySeat.get(seat), snapshotCards), AnimateDisplayTypeCards.Static);
             seatData.name = player.name;
             seatData.avatar = player.avatar;
             seatData.chip = player.chip;
@@ -222,6 +237,11 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
                 op.opType = OpertionType.AGREESECPUB;
             } else {
                 op.opType = OpertionType.NORMAL;
+            }
+            if (op.opType == OpertionType.NORMAL && operator.cardsList.length > 0) {
+                // 对齐 ActionAll/Unity：重连恢复到自己操作时，用 operator.cards 揭开延迟看牌的手牌。
+                seatData.setCards(operator.cardsList, AnimateDisplayTypeCards.Static);
+                roomData.mine.caculateHandValueTypeAndHighlight();
             }
             seatData.mine.operator = op;
         } else {

@@ -109,11 +109,11 @@ export default class Operation extends cc.Component {
 
     private onFreeBetBgClicked: () => void = () => {
         this.freeBetContainer.active = false;
-        if (this._actionMap.has(Def.Action.RAISE) || this._actionMap.has(Def.Action.BET)) {
-            this.btnRaise.node.active = true;
-        }
+        // 取消自由加注后仍处于当前操作轮，恢复加注入口供玩家重新选择。
+        this.btnRaise.node.active = this._actionMap.has(Def.Action.RAISE) || this._actionMap.has(Def.Action.BET);
     };
     private _onAddTimeClicked: () => void = () => {
+        if (!this._canAddTime()) return;
         TexasTableEvent.AddTime(this._seatPlayer, this._delayTimes);
     };
     private _onRaiseClicked: () => void;
@@ -178,8 +178,14 @@ export default class Operation extends cc.Component {
 
     public initData(mine: TexasGameRoomDataPlayerMine) {
         this._seatPlayer = mine;
+        this.addTimeButton.node.active = this._canAddTime();
         this._autoOpPanel.initData(mine);
         this._bindEventsAndRefresh();
+    }
+
+    private _canAddTime(): boolean {
+        const roomData = this._seatPlayer?.roomData;
+        return !!roomData && (!roomData.basicInfo.isMtt || roomData.mtt.delayTimeType !== 0);
     }
 
     public adjustPostion(targeNode: cc.Node, pos: cc.Vec3, scale: number) {
@@ -355,6 +361,7 @@ export default class Operation extends cc.Component {
         // 先把自动操作面板隐藏
         this._seatPlayer.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
         this.rootNode.active = true;
+        this.addTimeButton.node.active = this._canAddTime();
         this.opTimer.startTimer({
             totalTime: oper.totalOpDuration,
             stepInterval: 1,
@@ -374,7 +381,9 @@ export default class Operation extends cc.Component {
         });
         this._delayTimes = oper.alreadyDelayTImes;
         this._refreshUI(oper.roundBetEqual);
-        this._refreshAddTime(this._delayTimes);
+        if (this._canAddTime()) {
+            this._refreshAddTime(this._delayTimes);
+        }
     }
 
     protected onEnable(): void {

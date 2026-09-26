@@ -11,6 +11,6 @@ export function ShowViewCards(data: ServerMessageShowViewCards.AsObject, roomID:
         if (card.seatId == 0 || card.seatId == roomData.mine.seatNo) return;
         const seat = roomData.seatsStateManager.getSeatPlayer(card.seatId);
         if (!seat || seat.userID == 0) return;
-        seat.setCards(card.cardsList, AnimateDisplayTypeCards.ShowCards);
+        seat.revealCards(card.cardsList, AnimateDisplayTypeCards.ShowCards);
     });
 }

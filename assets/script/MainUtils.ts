@@ -500,7 +500,7 @@ export async function registerH5Listeners(): Promise<void> {
     });
     h5MessageManager.on('wsReconnected', payload => {
         _ploger.info('[H5Bridge] wsReconnected:', payload);
-        roomReconnectManager.requestReconnect();
+        roomReconnectManager.markReconnected();
     });
     h5MessageManager.on('wsReconnectFailed', payload => {
         _ploger.error('[H5Bridge] wsReconnectFailed:', payload);

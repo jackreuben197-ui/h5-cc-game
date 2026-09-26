@@ -225,9 +225,10 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _bindStaticEvents(): void {
-        this._bindClick(this.panelClick, this.close);
+        if (this.panelClick) this._bindClick(this.panelClick, this.close);
         this.dialogNode.on(cc.Node.EventType.TOUCH_START, (event: cc.Event.EventTouch) => event.stopPropagation(), this);
         this.dialogNode.on(cc.Node.EventType.TOUCH_END, (event: cc.Event.EventTouch) => event.stopPropagation(), this);
+        this._bindClick(this.dialogNode.getChildByName('closeBtn'), this.close);
         this._bindClick(this.noteBtn, this._clickEditNote);
         this._bindClick(this.playerNoteNode, this._clickEditNote);
         this.noteEditBox.node.on('editing-did-ended', this._onNoteEditEnded, this);
@@ -435,9 +436,11 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             mask.setContentSize(1242, 2688);
             mask.opacity = 190;
         }
-        this.panelClick.setPosition(0, 0);
-        this.panelClick.setContentSize(1242, 2688);
-        this.panelClick.opacity = 0;
+        if (this.panelClick) {
+            this.panelClick.setPosition(0, 0);
+            this.panelClick.setContentSize(1242, 2688);
+            this.panelClick.opacity = 0;
+        }
         this.dialogNode.setPosition(0, 0);
         this.dialogNode.setContentSize(1088, 2280);
         this.dialogNode.opacity = 255;
@@ -894,7 +897,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _clickProp(definition: ThrowPropDefinition, clickNode: cc.Node): void {
-        this._playClickScale(clickNode, true);
+        this._playClickScale(clickNode, false);
         const propData = this._propListData.get(definition.type);
         // pokerqueen 逻辑：未拥有的道具用默认 consumeType(CT_EMOJI_2) 也能发送
         const consume = (propData

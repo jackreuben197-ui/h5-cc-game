@@ -44,6 +44,8 @@ export default class TexasGameRoomData extends RoomData {
         this.potInfo.handClear();
         this.seatsStateManager.handClear();
         this.publicCards.handClear();
+        this.secondPcs.finish();
+        this.roundState.roundBet = 0;
         this.basicInfo.handClear();
     }
 }

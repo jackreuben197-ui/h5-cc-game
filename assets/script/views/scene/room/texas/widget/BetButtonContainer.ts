@@ -14,42 +14,34 @@ export interface IBetBtnData {
 
 // maxRaise > 0 时表示有限不能allin
 export function caculatePotsBet(scs: ShortCut[], roundBet: number, minRaise: number, maxRaise: number, player: TexasGameRoomDataPlayer): IBetBtnData[] {
-    // const ibtn:IBetBtnData = {
-    //     label: '1/2',
-    //     amount: 100,
-    //     cb: (a,b) => { }
-    // }
-    // return [ibtn , ibtn, ibtn,ibtn];
     if (!player || !player.mine) return [];
-    const actionLimitList = player.mine.operator.actionLimitList;
-    if (!actionLimitList.some(v => v.action == Def.Action.BET || v.action == Def.Action.RAISE)) return [];
+    const actionLimitList = player.mine.operator.actionLimitList || [];
+    const raiseAction = actionLimitList.find(v => v.action == Def.Action.BET || v.action == Def.Action.RAISE)?.action;
+    const hasAllIn = actionLimitList.some(v => v.action == Def.Action.ALLIN);
+    const onlyAllInRaise =
+        raiseAction == null && hasAllIn && actionLimitList.some(v => v.action == Def.Action.CALL || v.action == Def.Action.CHECK);
+    if (raiseAction == null && !onlyAllInRaise) return [];
     const pot = player.roomData.potInfo.allPot + roundBet - player.roundBet;
     const myCall = roundBet - player.roundBet;
     const myChip = player.chip;
-    const ret: IBetBtnData[] = [];
-    scs.forEach((v, i) => {
-        const amount = Math.floor(pot * v.percent + myCall);
-        //有钱，还得大于最小下注
-        if (amount <= myChip && amount >= minRaise && (maxRaise == 0 || amount <= maxRaise)) {
-            ret.push({
-                label: v.name,
-                amount: amount,
-                cb: function (amount: number, ratio: string): void {
-                    if (amount == myChip) {
-                        TexasTableEvent.DoAction(player.mine, Def.Action.ALLIN, player.chip);
-                        return;
-                    }
-                    if (roundBet == 0) {
-                        TexasTableEvent.DoAction(player.mine, Def.Action.BET, amount);
-                        return;
-                    }
-                    TexasTableEvent.DoAction(player.mine, Def.Action.RAISE, amount);
+    const minAmount = onlyAllInRaise ? myChip : minRaise;
+    const maxAmount = onlyAllInRaise ? myChip : maxRaise > 0 ? Math.min(maxRaise, myChip) : myChip;
+    if (minAmount > maxAmount) return [];
+    return scs.map(v => {
+        // 快捷下注超出本轮合法范围时取边界值，保持玩家配置的按钮数量不变。
+        const amount = Math.min(maxAmount, Math.max(minAmount, Math.floor(pot * v.percent + myCall)));
+        return {
+            label: v.name,
+            amount,
+            cb: function (amount: number, ratio: string): void {
+                if (hasAllIn && amount == myChip) {
+                    TexasTableEvent.DoAction(player.mine, Def.Action.ALLIN, player.chip);
                     return;
                 }
-            });
-        }
+                TexasTableEvent.DoAction(player.mine, raiseAction!, amount);
+            }
+        };
     });
-    return ret;
 }
 
 const { ccclass, property } = cc._decorator;

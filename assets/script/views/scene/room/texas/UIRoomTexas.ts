@@ -223,6 +223,11 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         this._roomData = roomData;
         this._mine = roomData.mine;
         this._updateBringInButtonSprite(roomData.basicInfo.goldType);
+        this.chatBtn.active = !roomData.basicInfo.isMtt;
+        if (roomData.basicInfo.isMtt) {
+            viewManager.closeDialog('TexasChat');
+            roomData.chat.hideNewMessageAlert();
+        }
         autoBindEvents(this, { chat: roomData.chat, basic: roomData.basicInfo, mine: roomData.mine, secondPcs: roomData.secondPcs });
         this.btnSafetyGuard.node.active = roomData.basicInfo.tribeID > 0;
         this.roomInfo.initData(param.roomID, param.matchID);
@@ -297,16 +302,21 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
 
     @bindEvent(TexasGameRoomDataChat.DANMU_ADDED, { dataSource: 'chat', initIgnore: true })
     private onDanmuAdded(msg: TexasDanmuMessage): void {
+        if (this._roomData?.basicInfo.isMtt) return;
         danmuManager.playDanmu(`${msg.name || ''}: ${msg.content}`, viewManager.dialogLayer);
     }
 
     @bindEvent(TexasGameRoomDataChat.NEW_MESSAGE_ALERT_CHANGED, 'chat')
     private onChatAlertChanged(hasNewMessageAlert: boolean): void {
-        this._setChatAlertVisible(hasNewMessageAlert);
+        this._setChatAlertVisible(!this._roomData?.basicInfo.isMtt && hasNewMessageAlert);
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.CHAT_DIALOG_OPEN_CHANGE, 'mine')
     private async onChatDialogOpenChanged(open: boolean): Promise<void> {
+        if (this._roomData?.basicInfo.isMtt) {
+            viewManager.closeDialog('TexasChat');
+            return;
+        }
         if (!open) {
             viewManager.closeDialog('TexasChat');
             return;
@@ -467,7 +477,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
 
     /** 聊天按钮：打开牌桌聊天对话框 */
     private onClickChatBtn(): void {
-        if (!this._mine) return;
+        if (!this._mine || this._mine.roomData.basicInfo.isMtt) return;
         this._mine.roomData.chat.hideNewMessageAlert();
         this._mine.chatDialogOpen = true;
     }
