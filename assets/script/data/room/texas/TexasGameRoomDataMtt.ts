@@ -43,6 +43,7 @@ class TexasGameRoomDataMtt extends cc.EventTarget {
     public observer: boolean = false;
     public matchName: string = '';
     public startTime: string = '';
+    public delayTimeType: number = 0;
     public startCountDown: number = 0;
     public gameStarted: boolean = false;
     public blindLevel: number = 0;
@@ -103,11 +104,12 @@ class TexasGameRoomDataMtt extends cc.EventTarget {
         this._roomData = roomData;
     }
 
-    public initialize(observer: boolean, matchName: string, startTime: string, rebuyCost: number): void {
+    public initialize(observer: boolean, matchName: string, startTime: string, rebuyCost: number, delayTimeType: number): void {
         this.observer = observer;
         this.matchName = matchName;
         this.startTime = startTime;
         this.rebuyCost = rebuyCost;
+        this.delayTimeType = delayTimeType;
         this._change();
     }
 
