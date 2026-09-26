@@ -42,7 +42,9 @@ export function Winner(data: ServerMessageWinner.AsObject, roomID: number, match
         // 更新筹码
         seatData.chip = result.chip;
         seatData.deposit = result.deposit;
-        seatData.setCards(result.myCardsList, AnimateDisplayTypeCards.ShowCards);
+        // Showcards 可能已先揭开完整手牌；Winner 的 0 只是“本包未携带牌面”，
+        // 不能把同一手内已经公开的牌重新覆盖成牌背。
+        seatData.revealCards(result.myCardsList, AnimateDisplayTypeCards.ShowCards);
         // SQUID
         seatData.squidCount = result.squidCount;
         seatData.squidEscaped = result.squidEscaped;

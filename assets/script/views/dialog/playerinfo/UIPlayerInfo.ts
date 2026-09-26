@@ -206,7 +206,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _bindStaticEvents(): void {
-        this._bindClick(this.panelClick, this.close);
+        if (this.panelClick) this._bindClick(this.panelClick, this.close);
         this.dialogNode.on(cc.Node.EventType.TOUCH_START, (event: cc.Event.EventTouch) => event.stopPropagation(), this);
         this.dialogNode.on(cc.Node.EventType.TOUCH_END, (event: cc.Event.EventTouch) => event.stopPropagation(), this);
         this._bindClick(this.dialogNode.getChildByName('closeBtn'), this.close);
@@ -404,9 +404,11 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             mask.setContentSize(1242, 2688);
             mask.opacity = 190;
         }
-        this.panelClick.setPosition(0, 0);
-        this.panelClick.setContentSize(1242, 2688);
-        this.panelClick.opacity = 0;
+        if (this.panelClick) {
+            this.panelClick.setPosition(0, 0);
+            this.panelClick.setContentSize(1242, 2688);
+            this.panelClick.opacity = 0;
+        }
         this.dialogNode.setPosition(0, 0);
         this.dialogNode.setContentSize(1088, 2280);
         this.dialogNode.opacity = 255;
