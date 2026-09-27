@@ -63,7 +63,10 @@ export default class CardView extends cc.Component {
     private _popUpOrigin: cc.Vec3 = null;
 
     public popUp(offset: cc.Vec2) {
-        this.stopAnimations();
+        cc.Tween.stopAllByTarget(this.cardSprite.node);
+        if (this._popUpOrigin) {
+            this.cardSprite.node.setPosition(this._popUpOrigin);
+        }
         this._popUpOrigin = cc.v3(this.cardSprite.node.position.x, this.cardSprite.node.position.y, this.cardSprite.node.position.z);
         cc.tween(this.cardSprite.node)
             .to(0.3, {
