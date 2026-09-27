@@ -135,6 +135,7 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         // main_menu 按钮事件注册
         if (this.btnEmoji) this.btnEmoji.node.on('click', this.onClickBtnEmoji, this);
         this.chatBtn.on('click', this.onClickChatBtn, this);
+        this.chatBtn.parent.on(cc.Node.EventType.SIZE_CHANGED, this._alignBottomGroups, this);
         // bring in
         this.bringInButton.node.on('click', this.onClickBringIn, this);
         this._bringInButtonSprite = this.bringInButton.node.getComponent(cc.Sprite);
@@ -284,6 +285,10 @@ export default class UIRoomTexas extends UIComponentBase<UIRoomTexasEnterParam> 
         widget.isAlignRight = true;
         widget.right = IM_BUTTON_RIGHT_MARGIN;
         widget.updateAlignment();
+    }
+
+    private _alignBottomGroups(): void {
+        this.chatBtn.parent.getComponent(cc.Widget)?.updateAlignment();
     }
 
     private _applyMainMenuLayout(): void {
