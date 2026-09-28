@@ -88,8 +88,7 @@ export function GetMsg(data: ServerMessageGetMsg.AsObject, roomID: number, match
     }
     // 只处理文本聊天/弹幕：type=0 且有内容
     if (broadcastMsg.type !== 0 || !displayMessage) return;
-    // 本人消息走 1019 确认路径（BroadcastMsg.ts），此处过滤
-    if (isSelfMessage) return;
+    // 1019 只返回发送状态，不含屏蔽字处理后的文本；本人消息也必须使用这里的服务端最终文本。
     if (broadcastMsg.isDanmu === true) {
         roomData.chat.addDanmu({
             name: broadcastMsg.name || '',
@@ -107,6 +106,6 @@ export function GetMsg(data: ServerMessageGetMsg.AsObject, roomID: number, match
             timestamp,
             time: TexasGameRoomDataChat.formatTimestamp(timestamp)
         },
-        true
+        !isSelfMessage
     );
 }

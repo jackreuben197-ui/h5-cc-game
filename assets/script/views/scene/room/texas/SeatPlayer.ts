@@ -664,21 +664,23 @@ export default class SeatPlayer extends cc.Component {
         const l = cards.length;
         const isFolded = this._seatPlayer.action == Def.Action.FOLD;
         const hasFoldedCards = isFolded && l > 0;
+        const hasShowCard = cards.some(card => card > 0);
+        const isShowingCards = hasShowCard && (atc == AnimateDisplayTypeCards.Static || atc == AnimateDisplayTypeCards.ShowCards);
         const showMineFoldedCards = hasFoldedCards && !!this._seatPlayer.mine;
+        const showFoldedCards = hasFoldedCards && (showMineFoldedCards || isShowingCards);
         // 拆合桌可能直接从上一桌的结算牌切到新一手，不一定经过空牌事件。
         // 每次收到手牌都清掉旧桌遗留的高亮、暗色遮罩和弹起位置。
         this._bigCards.forEach(v => v.reset());
         if (hasFoldedCards) {
             this.smallCardsContainer.active = false;
-            // 自己弃牌后保留手牌并置灰；其他玩家仍按原逻辑收起牌背。
-            this.bigCardsContainer.active = showMineFoldedCards;
+            // 自己弃牌后保留手牌并置灰；其他玩家仅在收到亮牌数据后展示。
+            this.bigCardsContainer.active = showFoldedCards;
         } else {
             this.smallCardsContainer.active = true;
             this.bigCardsContainer.active = true;
         }
-        const hasShowCard = cards.filter(v => v != 0).length > 0;
         // 如果是显示牌
-        if (hasShowCard && (atc == AnimateDisplayTypeCards.Static || atc == AnimateDisplayTypeCards.ShowCards)) {
+        if (isShowingCards) {
             // 背面(全部隐藏)
             this._cardBacks.forEach(v => (v.active = false));
             //动作相关隐藏掉

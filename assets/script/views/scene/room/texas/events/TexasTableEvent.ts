@@ -917,7 +917,7 @@ export default class TexasTableEvent {
 
     /**
      * 发送牌桌聊天消息（对应 pokerqueen UIChatDlg.click_sendMsg）。
-     * 先写 pending 等 1019 status=0 确认（BroadcastMsg.ts → chat.confirmPendingMessage）后才落聊天记录。
+     * 展示统一等待 GetMsg 下发的服务端过滤文本，不使用本地原文回显。
      */
     public static SendChatMessage(roomData: TexasGameRoomData, text: string, sendDanmu: boolean = false): void {
         const content = (text || '').trim();
@@ -935,11 +935,6 @@ export default class TexasTableEvent {
         this._sendChatBroadcast(roomData, content, Def.BroadcastMsgType.BC_MSG_AVATAR, false, timestamp);
         if (sendDanmu) {
             this._sendChatBroadcast(roomData, content, Def.BroadcastMsgType.BC_MSG_BULLET, true, timestamp);
-            // 本人弹幕本地立即回显（网络回包在 GetMsg 中按 user_id 过滤，不会重复播放）
-            roomData.chat.addDanmu({
-                name: userStore.name || '',
-                content
-            });
         }
     }
 
