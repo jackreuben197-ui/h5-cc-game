@@ -63,7 +63,10 @@ export default class CardView extends cc.Component {
     private _popUpOrigin: cc.Vec3 = null;
 
     public popUp(offset: cc.Vec2) {
-        this.stopAnimations();
+        // 翻牌 tween 作用在 this.node，上移 tween 作用在 cardSprite.node。
+        // 这里只能终止上一次上移动画；若调用 stopAnimations，会把刚开始的
+        // 翻牌一并停在牌背，导致赢家使用几张手牌就有几张牌无法翻开。
+        this._stopPopupAnimation();
         this._popUpOrigin = cc.v3(this.cardSprite.node.position.x, this.cardSprite.node.position.y, this.cardSprite.node.position.z);
         cc.tween(this.cardSprite.node)
             .to(0.3, {
@@ -71,6 +74,15 @@ export default class CardView extends cc.Component {
                 y: this._popUpOrigin.y + offset.y
             })
             .start();
+    }
+
+    private _stopPopupAnimation(): void {
+        if (!this.cardSprite) return;
+        cc.Tween.stopAllByTarget(this.cardSprite.node);
+        if (this._popUpOrigin) {
+            this.cardSprite.node.setPosition(this._popUpOrigin);
+            this._popUpOrigin = null;
+        }
     }
 
     public gray(b: boolean) {
@@ -87,13 +99,7 @@ export default class CardView extends cc.Component {
         cc.Tween.stopAllByTarget(this.node);
         this.node.setScale(1, 1);
         this.node.angle = 0;
-        if (this.cardSprite) {
-            cc.Tween.stopAllByTarget(this.cardSprite.node);
-        }
-        if (this._popUpOrigin) {
-            this.cardSprite.node.setPosition(this._popUpOrigin);
-            this._popUpOrigin = null;
-        }
+        this._stopPopupAnimation();
     }
 
     public reset() {

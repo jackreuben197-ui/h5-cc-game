@@ -423,6 +423,10 @@ class UIViewManager {
 
     // showToast 显示提示
     public showToast(content: string, customConfig?: IToastConfig, cb?: () => void) {
+        if (!content || !content.trim()) {
+            if (cb) cb();
+            return;
+        }
         this._toastManayer.showToast(content, customConfig, cb);
     }
 
