@@ -164,7 +164,10 @@ export default class SeatPlayer extends cc.Component {
         for (let i = 0; i < this.bigCardsContainer.children[0].childrenCount; i++) {
             //Cards/l2r/New Node/Image_Card(CardView)
             const node = this.bigCardsContainer.children[0].children[i].children[0].getComponent(CardView);
-            if (node) this._bigCards.push(node);
+            if (node) {
+                this._bigCards.push(node);
+                node.node.on('click', () => this.onCardClicked(i), this);
+            }
         }
         for (let i = 0; i < this.smallCardsContainer.children[0].childrenCount; i++) {
             const node = this.smallCardsContainer.children[0].children[i];
@@ -213,6 +216,7 @@ export default class SeatPlayer extends cc.Component {
         this.avatar?.node.targetOff(this);
         this.userSeat?.targetOff(this);
         this.returnToGameButton?.node.targetOff(this);
+        this._bigCards.forEach(card => card.node.targetOff(this));
         cc.game.off(cc.game.EVENT_SHOW, this._onGameShow, this);
         this.unschedule(this._restoreCardsFromData);
     }
@@ -258,6 +262,19 @@ export default class SeatPlayer extends cc.Component {
         this.smallCardsContainer.opacity = 255;
         this._bigCards.forEach(card => {
             card.stopAnimations();
+        });
+    }
+
+    private onCardClicked(cardIndex: number): void {
+        const mine = this._seatPlayer?.mine;
+        if (!mine) return;
+        TexasTableEvent.Showdown(mine, cardIndex);
+    }
+
+    private _refreshShowdownSelection(selection: number[] = this._seatPlayer?.showCardsSelection): void {
+        const mine = this._seatPlayer?.mine;
+        this._bigCards.forEach((card, index) => {
+            card.showShowdownSelection(!!mine && !!selection && selection[index] == 1 && index < this._seatPlayer.cards.length);
         });
     }
 
@@ -643,6 +660,7 @@ export default class SeatPlayer extends cc.Component {
     private onUpdateCards(cards: number[], atc: AnimateDisplayTypeCards, order?: number) {
         this.tracelog.debug('cards', cards, this._seatPlayer.seatNo, this._seatPlayer.name);
         this._resetCardVisualState();
+        this._refreshShowdownSelection();
         const l = cards.length;
         const isFolded = this._seatPlayer.action == Def.Action.FOLD;
         const hasFoldedCards = isFolded && l > 0;
@@ -807,6 +825,11 @@ export default class SeatPlayer extends cc.Component {
                 })
                 .start();
         }
+    }
+
+    @bindEvent(TexasGameRoomDataPlayer.SHOW_CARDS_SELECTION_CHANGE, 'player')
+    private onShowCardsSelectionChange(selection: number[]): void {
+        this._refreshShowdownSelection(selection);
     }
 
     @bindEvent(TexasGameRoomDataPlayer.ACTION_CHANGE, 'player', AnimateDisplayTypeAction.Static)

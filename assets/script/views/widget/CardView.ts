@@ -15,6 +15,8 @@ export default class CardView extends cc.Component {
     private highLightSprite: cc.Node = null;
     @property(cc.Node)
     private grayLayer: cc.Node = null;
+    @property({ type: cc.Node, displayName: '主动秀牌眼睛图标' })
+    private showCardEye: cc.Node = null;
     @property(cc.Material)
     private cardBackMaterial: cc.Material = null;
     private _defaultMaterial: cc.Material = null;
@@ -88,6 +90,12 @@ export default class CardView extends cc.Component {
     public gray(b: boolean) {
         if (this.grayLayer) {
             this.grayLayer.active = b;
+        }
+    }
+
+    public showShowdownSelection(selected: boolean): void {
+        if (this.showCardEye) {
+            this.showCardEye.active = selected;
         }
     }
 

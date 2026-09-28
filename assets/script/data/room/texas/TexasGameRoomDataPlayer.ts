@@ -34,6 +34,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public static readonly ACTION_CHANGE = 'ACTION_CHANGE';
     public static readonly SEAT_POSITION_CHANGE = 'SEAT_POSITION_CHANGE';
     public static readonly SHOW_CARDS_CHANGE = 'SHOW_CARDS_CHANGE';
+    public static readonly SHOW_CARDS_SELECTION_CHANGE = 'SHOW_CARDS_SELECTION_CHANGE';
     public static readonly NICKNAME_CHANGE = 'NICKNAME_CHANGE';
     public static readonly AVATAR_CHANGE = 'AVATAR_CHANGE';
     public static readonly CHIPS_CHANGE = 'CHIPS_CHANGE';
@@ -147,6 +148,11 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public position: SeatPosition = SeatPosition.Default;
     @observable(TexasGameRoomDataPlayer.SHOW_CARDS_CHANGE)
     public cards: number[] = [];
+    @observable(TexasGameRoomDataPlayer.SHOW_CARDS_SELECTION_CHANGE)
+    public showCardsSelection: number[] = [];
+    public get isParticipateInTheGame(): boolean {
+        return (this.status == Def.CanPlayStatus.NORMAL || this.status == Def.CanPlayStatus.AGREE_POST) && this.action != Def.Action.NONE;
+    }
     public get canOpearate() {
         return (
             this.roomData.basicInfo.gameStatus >= Def.GameStatus.HAND_STARTED &&
@@ -180,6 +186,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
         this.avatar = '';
         this.name = '';
         this.cards = [];
+        this.showCardsSelection = [];
         this.status = undefined;
         this.squidCount = 0;
         this.squidEscaped = false;
@@ -212,6 +219,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
 
     public handStart() {
         if (this.userID > 0) {
+            this.showCardsSelection = new Array(this.roomData.basicInfo.handCardNum).fill(0);
             if (this.mine) {
                 this.mine.handStart();
             }
@@ -239,6 +247,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
         this.handBet = 0;
         this.setRoundBet(0, AnimateDisplayTypeRoundBet.Static);
         this.setCards([], AnimateDisplayTypeCards.Static, 0);
+        this.showCardsSelection = [];
         this.roundActioned = false;
         this.operator = null;
         this.buyInsuranceStep = 0;
