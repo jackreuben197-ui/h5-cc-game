@@ -264,6 +264,9 @@ export default class SeatPlayer extends cc.Component {
     private _restoreCardsFromData(): void {
         if (!this._seatPlayer || !this.node.activeInHierarchy) return;
         this.onUpdateCards(this._seatPlayer.cards, AnimateDisplayTypeCards.Static);
+        // 手牌静态刷新可能会切换操作节点；最后按当前数据恢复一次操作状态，
+        // 保证浏览器从后台回来后，所有已弃牌玩家的“弃牌”标记仍然可见。
+        this.onUpdateAction(this._seatPlayer.action, AnimateDisplayTypeAction.Static);
     }
 
     /** 浏览器从后台恢复时，停止冻结动画，并在消息队列恢复后再校准一次手牌。 */
@@ -641,14 +644,16 @@ export default class SeatPlayer extends cc.Component {
         this.tracelog.debug('cards', cards, this._seatPlayer.seatNo, this._seatPlayer.name);
         this._resetCardVisualState();
         const l = cards.length;
+        const isFolded = this._seatPlayer.action == Def.Action.FOLD;
+        const hasFoldedCards = isFolded && l > 0;
+        const showMineFoldedCards = hasFoldedCards && !!this._seatPlayer.mine;
         // 拆合桌可能直接从上一桌的结算牌切到新一手，不一定经过空牌事件。
         // 每次收到手牌都清掉旧桌遗留的高亮、暗色遮罩和弹起位置。
         this._bigCards.forEach(v => v.reset());
-        if (l > 0 && this._seatPlayer.action == Def.Action.FOLD) {
+        if (hasFoldedCards) {
             this.smallCardsContainer.active = false;
-            if (this._seatPlayer.mine) {
-                this.bigCardsContainer.active = false;
-            }
+            // 自己弃牌后保留手牌并置灰；其他玩家仍按原逻辑收起牌背。
+            this.bigCardsContainer.active = showMineFoldedCards;
         } else {
             this.smallCardsContainer.active = true;
             this.bigCardsContainer.active = true;
@@ -659,7 +664,10 @@ export default class SeatPlayer extends cc.Component {
             // 背面(全部隐藏)
             this._cardBacks.forEach(v => (v.active = false));
             //动作相关隐藏掉
-            this.seatActionDisplay.node.active = false;
+            // 弃牌标记属于持续到本手结束的状态，不能被手牌或重连快照覆盖。
+            if (!isFolded) {
+                this.seatActionDisplay.node.active = false;
+            }
             if (AnimateDisplayTypeCards.ShowCards == atc) {
                 soundManager.playEffect(SoundEffectKey.DealCards);
             }
@@ -684,6 +692,7 @@ export default class SeatPlayer extends cc.Component {
                 }
                 node.node.parent.active = false;
             }
+            this._bigCards.forEach((card, index) => card.gray(showMineFoldedCards && index < l));
             return;
         }
         // 以下是把牌正确显示出来, 对应AnimateDisplayTypeCards.Static
@@ -725,13 +734,16 @@ export default class SeatPlayer extends cc.Component {
             // 如果是静态就直接展示
             if (atc == AnimateDisplayTypeCards.Static) {
                 //动作相关隐藏掉
-                this.seatActionDisplay.node.active = false;
+                if (!isFolded) {
+                    this.seatActionDisplay.node.active = false;
+                }
                 // 直接显示
                 animateCards.forEach(nd => {
                     nd.cardNum = nd.storeCardNum;
                 });
             }
         }
+        this._bigCards.forEach((card, index) => card.gray(showMineFoldedCards && index < l));
         // 如果是发牌,则额外做个动画
         if (atc == AnimateDisplayTypeCards.Deal) {
             const currentOrder = order || 0;
@@ -827,18 +839,8 @@ export default class SeatPlayer extends cc.Component {
                 if (aat == AnimateDisplayTypeAction.Done) {
                     soundManager.playEffect(SoundEffectKey.Fold);
                     if (this._seatPlayer.mine) {
-                        this._resetCardVisualState();
-                        const startPos = this.bigCardsContainer.position;
-                        const endPos = UIViewUtil.caculatePostion(this.bigCardsContainer, this._dealNode);
-                        cc.tween(this.bigCardsContainer)
-                            .to(0.8, { x: endPos.x, y: endPos.y, scaleX: 0, scaleY: 0 }, { easing: 'cubicOut' })
-                            .call(() => {
-                                this.bigCardsContainer.setScale(1, 1);
-                                this.bigCardsContainer.setPosition(startPos);
-                                this.bigCardsContainer.opacity = 255;
-                                this.bigCardsContainer.active = false;
-                            })
-                            .start();
+                        // 自己弃牌后不再收走手牌，立即按静态状态重绘并置灰。
+                        this.onUpdateCards(this._seatPlayer.cards, AnimateDisplayTypeCards.Static);
                         break;
                     }
                     const startPos = this.smallCardsContainer.position;
