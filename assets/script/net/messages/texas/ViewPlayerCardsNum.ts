@@ -16,7 +16,11 @@ export async function ViewPlayerCardsNum(data: ServerMessageViewPlayerCardsNum.A
     const seatNo = roomData.mine.seatNo;
     const handNum = roomData.basicInfo.handNum;
     if (!canShowViewPlayerCardsButton(roomData, seatNo, handNum)) return;
-    const cost = await roomData.basicInfo.getDiamondPrice(data.payTimes, DiamondConfigType.DiamondConfigTypePayWatchOtherCardWatchAll);
+    const configType =
+        roomData.basicInfo.viewPlayerCards === ViewPlayerCardsMode.SPECIFY
+            ? DiamondConfigType.DiamondConfigTypePayWatchOtherCard
+            : DiamondConfigType.DiamondConfigTypePayWatchOtherCardWatchAll;
+    const cost = await roomData.basicInfo.getDiamondPrice(data.payTimes, configType);
     if (!canShowViewPlayerCardsButton(roomData, seatNo, handNum)) return;
     roomData.mine.viewPlayerCardsCost = cost;
     roomData.mine.showViewPlayerCardsButton = true;

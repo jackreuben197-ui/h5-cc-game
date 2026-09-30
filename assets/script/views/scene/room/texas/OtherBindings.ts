@@ -6,11 +6,13 @@ import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import ccviewData, { CCViewData } from '../../../../data/system/CCViewData';
 import globalConfigStore, { GlobalConfigStore } from '../../../../data/system/GlobalConfigStore';
+import privateUcChargeStore, { PrivateUcFee } from '../../../../data/trade/PrivateUcChargeStore';
 import userStore, { ClubData, UserStore } from '../../../../data/user/UserStore';
 import { AntiCheatType } from '../../../../game/constant/AntiCheatType';
 import { ButtonState } from '../../../../game/constant/Constants';
 import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconState';
 import { VideoModel } from '../../../../game/constant/VideoModel';
+import { ViewPlayerCardsMode } from '../../../../game/constant/ViewPlayerCardsMode';
 import { canWatchPlayerCards, canWatchPublicCards } from '../../../../game/util/ViewPlayerCardsConfig';
 import h5MessageManager from '../../../../H5MsgMgr';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
@@ -18,6 +20,7 @@ import agoraManager from '../../../../net/agora/AgoraManager';
 import TexasVideoMediaHelper from '../../../../net/messages/texas/TexasVideoMediaHelper';
 import viewManager from '../../../UIViewManager';
 import UIViewUtil from '../../../util/UIViewUtil';
+import { applyPrivateUcChargeIcon } from '../../../util/PrivateUcChargeView';
 import RemoteSprite from '../../../widget/RemoteSprite';
 import SpriteSwitcher from '../../../widget/SpriteSwitcher';
 import TexasTableEvent from './events/TexasTableEvent';
@@ -76,6 +79,8 @@ export default class OtherBindings extends cc.Component {
     private viewPublicCardsConfigNode: cc.Node = null;
     @property({ type: cc.Label, displayName: '发发看花费' })
     private viewPublicCardsCost: cc.Label = null;
+    @property({ type: cc.SpriteFrame, displayName: '私域UC收费图标' })
+    private ucChargeIcon: cc.SpriteFrame = null;
     private _roomData: TexasGameRoomData;
     private _certLogoDefaultSpriteFrame: cc.SpriteFrame = null;
 
@@ -271,9 +276,29 @@ export default class OtherBindings extends cc.Component {
     }
 
     private _refreshDiamondPriceVisibility(): void {
-        const visible = !globalConfigStore.isChannelDiamondFreeMode;
-        this.viewPlayerCardsCost.node.parent.active = visible;
-        this.viewPublicCardsCost.node.parent.active = visible;
+        const isPrivateUcPackage = globalConfigStore.isChannelDiamondFreeMode;
+        if (!isPrivateUcPackage) {
+            this.viewPlayerCardsCost.node.parent.active = true;
+            this.viewPublicCardsCost.node.parent.active = true;
+            return;
+        }
+        const playerCardsFeeType =
+            this._roomData.basicInfo.viewPlayerCards === ViewPlayerCardsMode.SPECIFY
+                ? PrivateUcFee.ViewOnePlayer
+                : PrivateUcFee.ViewAllPlayers;
+        const playerCardsPrice = privateUcChargeStore.getVisiblePrice(playerCardsFeeType);
+        this.viewPlayerCardsCost.node.parent.active = playerCardsPrice !== null;
+        if (playerCardsPrice !== null) {
+            this.viewPlayerCardsCost.string = `${playerCardsPrice}`;
+            applyPrivateUcChargeIcon(this.viewPlayerCardsCost, this.ucChargeIcon);
+        }
+
+        const publicCardsPrice = privateUcChargeStore.getVisiblePrice(PrivateUcFee.ViewPublicCards);
+        this.viewPublicCardsCost.node.parent.active = publicCardsPrice !== null;
+        if (publicCardsPrice !== null) {
+            this.viewPublicCardsCost.string = `${publicCardsPrice}`;
+            applyPrivateUcChargeIcon(this.viewPublicCardsCost, this.ucChargeIcon);
+        }
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE, 'mine')

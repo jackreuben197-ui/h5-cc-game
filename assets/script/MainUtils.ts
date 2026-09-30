@@ -9,6 +9,7 @@ import { createLogger } from './core/decorator/LogTrace';
 import bridgeStorage from './data/BridgeStorage';
 import globalConfigStore from './data/system/GlobalConfigStore';
 import diamondModel from './data/trade/DiamondModel';
+import privateUcChargeStore from './data/trade/PrivateUcChargeStore';
 import userStore, { ClubData } from './data/user/UserStore';
 import { MTT_MATCH_ENTRY_ROOM_ID } from './game/constant/Constants';
 import guestSitdownFlow from './game/GuestSitdownFlow';
@@ -333,6 +334,10 @@ export async function registerH5Listeners(): Promise<void> {
             }
         }
         _ploger.info('[H5Bridge] syncDiamondConfig 预填完成');
+    });
+    h5MessageManager.on('syncPrivateUcChargeConfig', payload => {
+        privateUcChargeStore.setFromH5Sync(payload);
+        _ploger.info('[H5Bridge] 私域 UC 收费配置同步完成, 共', payload?.items?.length || 0, '项');
     });
     // syncToken：H5 在登录/续期/登出后把最新 token 推过来，写入 userStore，避免 H5/CC 两端 token 错开。
     h5MessageManager.on('syncToken', payload => {

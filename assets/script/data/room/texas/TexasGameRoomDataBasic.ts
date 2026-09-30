@@ -19,7 +19,9 @@ import { ViewPlayerCardsMode } from '../../../game/constant/ViewPlayerCardsMode'
 import GameplayUtil from '../../../game/util/GameplayUtil';
 import { StringHelper } from '../../../helper/StringHelper';
 import { UISquidEndItemShowData } from '../../../views/dialog/squidover/UISquidEndItem';
+import globalConfigStore from '../../system/GlobalConfigStore';
 import diamondModel from '../../trade/DiamondModel';
+import privateUcChargeStore, { PrivateUcFee } from '../../trade/PrivateUcChargeStore';
 import texasGamePersonalSettings from './TexasGamePersonalSettings';
 import TexasGameRoomData from './TexasGameRoomData';
 
@@ -161,6 +163,27 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public shareTable: number;
 
     public async getDiamondPrice(times: number, dct: DiamondConfigType): Promise<number> {
+        if (globalConfigStore.isChannelDiamondFreeMode) {
+            let feeType: PrivateUcFee | null = null;
+            switch (dct) {
+                case DiamondConfigType.DiamondConfigTypeAddTime:
+                    feeType = PrivateUcFee.AddTime;
+                    break;
+                case DiamondConfigType.DiamondConfigTypeViewPublicCards:
+                    feeType = PrivateUcFee.ViewPublicCards;
+                    break;
+                case DiamondConfigType.DiamondConfigTypeRecordFee:
+                    feeType = PrivateUcFee.NormalTableRecord;
+                    break;
+                case DiamondConfigType.DiamondConfigTypePayWatchOtherCard:
+                    feeType = PrivateUcFee.ViewOnePlayer;
+                    break;
+                case DiamondConfigType.DiamondConfigTypePayWatchOtherCardWatchAll:
+                    feeType = PrivateUcFee.ViewAllPlayers;
+                    break;
+            }
+            return feeType === null ? 0 : privateUcChargeStore.getVisiblePrice(feeType) || 0;
+        }
         const confgExt = diamondModel.getDiamondConfigTypeExt(this.originType, this.shareTable, this.isMtt, times);
         await diamondModel.reqDiamondConfig(dct);
         const config = diamondModel.getDiamondConfig(confgExt, dct);
