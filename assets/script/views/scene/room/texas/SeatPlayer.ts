@@ -180,7 +180,10 @@ export default class SeatPlayer extends cc.Component {
         for (let i = 0; i < this.bigCardsContainer.children[0].childrenCount; i++) {
             //Cards/l2r/New Node/Image_Card(CardView)
             const node = this.bigCardsContainer.children[0].children[i].children[0].getComponent(CardView);
-            if (node) this._bigCards.push(node);
+            if (node) {
+                this._bigCards.push(node);
+                node.node.on('click', () => this.onCardClicked(i), this);
+            }
         }
         for (let i = 0; i < this.smallCardsContainer.children[0].childrenCount; i++) {
             const node = this.smallCardsContainer.children[0].children[i];
@@ -250,6 +253,7 @@ export default class SeatPlayer extends cc.Component {
         this.avatar?.node.targetOff(this);
         this.userSeat?.targetOff(this);
         this.returnToGameButton?.node.targetOff(this);
+        this._bigCards.forEach(card => card.node.targetOff(this));
         cc.game.off(cc.game.EVENT_SHOW, this._onGameShow, this);
         this.unschedule(this._restoreCardsFromData);
     }
@@ -299,10 +303,25 @@ export default class SeatPlayer extends cc.Component {
         });
     }
 
+    private onCardClicked(cardIndex: number): void {
+        const mine = this._seatPlayer?.mine;
+        if (!mine) return;
+        TexasTableEvent.Showdown(mine, cardIndex);
+    }
+
+    private _refreshShowdownSelection(selection: number[] = this._seatPlayer?.showCardsSelection): void {
+        const mine = this._seatPlayer?.mine;
+        this._bigCards.forEach((card, index) => {
+            card.showShowdownSelection(!!mine && !!selection && selection[index] == 1 && index < this._seatPlayer.cards.length);
+        });
+    }
 
     private _restoreCardsFromData(): void {
         if (!this._seatPlayer || !this.node.activeInHierarchy) return;
         this.onUpdateCards(this._seatPlayer.cards, AnimateDisplayTypeCards.Static);
+        // 手牌静态刷新可能会切换操作节点；最后按当前数据恢复一次操作状态，
+        // 保证浏览器从后台回来后，所有已弃牌玩家的“弃牌”标记仍然可见。
+        this.onUpdateAction(this._seatPlayer.action, AnimateDisplayTypeAction.Static);
     }
 
     /** 浏览器从后台恢复时，停止冻结动画，并在消息队列恢复后再校准一次手牌。 */
@@ -670,7 +689,14 @@ export default class SeatPlayer extends cc.Component {
     private onUpdateCards(cards: number[], atc: AnimateDisplayTypeCards, order?: number) {
         this.tracelog.debug('cards', cards, this._seatPlayer.seatNo, this._seatPlayer.name);
         this._resetCardVisualState();
+        this._refreshShowdownSelection();
         const l = cards.length;
+        const isFolded = this._seatPlayer.action == Def.Action.FOLD;
+        const hasFoldedCards = isFolded && l > 0;
+        const hasShowCard = cards.some(card => card > 0);
+        const isShowingCards = hasShowCard && (atc == AnimateDisplayTypeCards.Static || atc == AnimateDisplayTypeCards.ShowCards);
+        const showMineFoldedCards = hasFoldedCards && !!this._seatPlayer.mine;
+        const showFoldedCards = hasFoldedCards && (showMineFoldedCards || isShowingCards);
         // 拆合桌可能直接从上一桌的结算牌切到新一手，不一定经过空牌事件。
         // 每次收到手牌都清掉旧桌遗留的高亮、暗色遮罩和弹起位置。
         this._bigCards.forEach(v => v.reset());
@@ -678,22 +704,23 @@ export default class SeatPlayer extends cc.Component {
             // 新一局：停掉上一局残留的 ALLIN 循环特效
             this._stopAllinAnim();
         }
-        if (l > 0 && this._seatPlayer.action == Def.Action.FOLD) {
+        if (hasFoldedCards) {
             this.smallCardsContainer.active = false;
-            if (this._seatPlayer.mine) {
-                this.bigCardsContainer.active = false;
-            }
+            // 自己弃牌后保留手牌并置灰；其他玩家仅在收到亮牌数据后展示。
+            this.bigCardsContainer.active = showFoldedCards;
         } else {
             this.smallCardsContainer.active = true;
             this.bigCardsContainer.active = true;
         }
-        const hasShowCard = cards.filter(v => v != 0).length > 0;
         // 如果是显示牌
-        if (hasShowCard && (atc == AnimateDisplayTypeCards.Static || atc == AnimateDisplayTypeCards.ShowCards)) {
+        if (isShowingCards) {
             // 背面(全部隐藏)
             this._cardBacks.forEach(v => (v.active = false));
             //动作相关隐藏掉
-            this.seatActionDisplay.node.active = false;
+            // 弃牌标记属于持续到本手结束的状态，不能被手牌或重连快照覆盖。
+            if (!isFolded) {
+                this.seatActionDisplay.node.active = false;
+            }
             if (AnimateDisplayTypeCards.ShowCards == atc) {
                 soundManager.playEffect(SoundEffectKey.DealCards);
             }
@@ -718,6 +745,7 @@ export default class SeatPlayer extends cc.Component {
                 }
                 node.node.parent.active = false;
             }
+            this._bigCards.forEach((card, index) => card.gray(showMineFoldedCards && index < l));
             return;
         }
         // 以下是把牌正确显示出来, 对应AnimateDisplayTypeCards.Static
@@ -759,13 +787,16 @@ export default class SeatPlayer extends cc.Component {
             // 如果是静态就直接展示
             if (atc == AnimateDisplayTypeCards.Static) {
                 //动作相关隐藏掉
-                this.seatActionDisplay.node.active = false;
+                if (!isFolded) {
+                    this.seatActionDisplay.node.active = false;
+                }
                 // 直接显示
                 animateCards.forEach(nd => {
                     nd.cardNum = nd.storeCardNum;
                 });
             }
         }
+        this._bigCards.forEach((card, index) => card.gray(showMineFoldedCards && index < l));
         // 如果是发牌,则额外做个动画
         if (atc == AnimateDisplayTypeCards.Deal) {
             const currentOrder = order || 0;
@@ -831,6 +862,11 @@ export default class SeatPlayer extends cc.Component {
         }
     }
 
+    @bindEvent(TexasGameRoomDataPlayer.SHOW_CARDS_SELECTION_CHANGE, 'player')
+    private onShowCardsSelectionChange(selection: number[]): void {
+        this._refreshShowdownSelection(selection);
+    }
+
     @bindEvent(TexasGameRoomDataPlayer.ACTION_CHANGE, 'player', AnimateDisplayTypeAction.Static)
     private onUpdateAction(action: Def.ActionMap[keyof Def.ActionMap], aat: AnimateDisplayTypeAction) {
         // if (this._seatPlayer.mine) {
@@ -843,7 +879,9 @@ export default class SeatPlayer extends cc.Component {
         }
         // pokerqueen 的 ALLIN 特效是循环播放的，直到该玩家有下一步操作/新一局才停。
         // 这里在每次动作变化时先停掉上一次的 ALLIN 环形特效，ALLIN 分支再重新循环起来。
-        this._stopAllinAnim();
+        if (!(action == Def.Action.ALLIN && aat == AnimateDisplayTypeAction.Static)) {
+            this._stopAllinAnim();
+        }
         switch (action) {
             case Def.Action.BET:
                 this.seatActionDisplay.node.active = true;
@@ -864,18 +902,8 @@ export default class SeatPlayer extends cc.Component {
                 if (aat == AnimateDisplayTypeAction.Done) {
                     soundManager.playEffect(SoundEffectKey.Fold);
                     if (this._seatPlayer.mine) {
-                        this._resetCardVisualState();
-                        const startPos = this.bigCardsContainer.position;
-                        const endPos = UIViewUtil.caculatePostion(this.bigCardsContainer, this._dealNode);
-                        cc.tween(this.bigCardsContainer)
-                            .to(0.8, { x: endPos.x, y: endPos.y, scaleX: 0, scaleY: 0 }, { easing: 'cubicOut' })
-                            .call(() => {
-                                this.bigCardsContainer.setScale(1, 1);
-                                this.bigCardsContainer.setPosition(startPos);
-                                this.bigCardsContainer.opacity = 255;
-                                this.bigCardsContainer.active = false;
-                            })
-                            .start();
+                        // 自己弃牌后不再收走手牌，立即按静态状态重绘并置灰。
+                        this.onUpdateCards(this._seatPlayer.cards, AnimateDisplayTypeCards.Static);
                         break;
                     }
                     const startPos = this.smallCardsContainer.position;
@@ -908,8 +936,7 @@ export default class SeatPlayer extends cc.Component {
             case Def.Action.ALLIN:
                 // pokerqueen：ALLIN 时立刻显示气泡文字，同时环形特效【循环】播放（不是播一次就停），
                 // 一直转到该玩家下一步操作/新一局由本函数顶部的 _stopAllinAnim() 或重置清掉。
-                this.seatActionDisplay.node.active = true;
-                this.seatActionDisplay.showAction(i18nMgr.Get('adaptation30074'), allinColor);
+                this._showAllinAction();
                 if (aat == AnimateDisplayTypeAction.Done) {
                     soundManager.playEffect(SoundEffectKey.AllIn);
                     const anim = this._seatPlayer.mine ? this.allInAnimation : this.allInOtherAnimation;

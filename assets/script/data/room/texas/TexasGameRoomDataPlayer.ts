@@ -27,24 +27,6 @@ type PlayerAnimBindings = {
  */
 interface TexasGameRoomDataPlayer extends IObservableBindings<TexasGameRoomDataPlayer, PlayerAnimBindings> {}
 
-/**
- * 同一手牌内，已经公开的牌不能被后到的牌背占位符覆盖。
- *
- * 亮牌、Winner 和后台恢复的 SyncEnter 可能在同一帧交错；后两个协议中的
- * cardsList/myCardsList 允许用 0 表示未携带牌面。这里按位置合并，只接受新的
- * 明牌值，避免 [12, 26] 被回退成 [12, 0] 或 [0, 0]。
- */
-export function mergeRevealedCards(current: number[] = [], incoming: number[] = []): number[] {
-    const length = Math.max(current.length, incoming.length);
-    const merged = new Array<number>(length);
-    for (let i = 0; i < length; i++) {
-        const nextCard = incoming[i] || 0;
-        const currentCard = current[i] || 0;
-        merged[i] = nextCard > 0 ? nextCard : currentCard;
-    }
-    return merged;
-}
-
 @bindData()
 @traceClass()
 class TexasGameRoomDataPlayer extends cc.EventTarget {
@@ -52,6 +34,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public static readonly ACTION_CHANGE = 'ACTION_CHANGE';
     public static readonly SEAT_POSITION_CHANGE = 'SEAT_POSITION_CHANGE';
     public static readonly SHOW_CARDS_CHANGE = 'SHOW_CARDS_CHANGE';
+    public static readonly SHOW_CARDS_SELECTION_CHANGE = 'SHOW_CARDS_SELECTION_CHANGE';
     public static readonly NICKNAME_CHANGE = 'NICKNAME_CHANGE';
     public static readonly AVATAR_CHANGE = 'AVATAR_CHANGE';
     public static readonly CHIPS_CHANGE = 'CHIPS_CHANGE';
@@ -165,6 +148,11 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public position: SeatPosition = SeatPosition.Default;
     @observable(TexasGameRoomDataPlayer.SHOW_CARDS_CHANGE)
     public cards: number[] = [];
+    @observable(TexasGameRoomDataPlayer.SHOW_CARDS_SELECTION_CHANGE)
+    public showCardsSelection: number[] = [];
+    public get isParticipateInTheGame(): boolean {
+        return (this.status == Def.CanPlayStatus.NORMAL || this.status == Def.CanPlayStatus.AGREE_POST) && this.action != Def.Action.NONE;
+    }
     public get canOpearate() {
         return (
             this.roomData.basicInfo.gameStatus >= Def.GameStatus.HAND_STARTED &&
@@ -198,6 +186,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
         this.avatar = '';
         this.name = '';
         this.cards = [];
+        this.showCardsSelection = [];
         this.status = undefined;
         this.squidCount = 0;
         this.squidEscaped = false;
@@ -230,15 +219,11 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
 
     public handStart() {
         if (this.userID > 0) {
+            this.showCardsSelection = new Array(this.roomData.basicInfo.handCardNum).fill(0);
             if (this.mine) {
                 this.mine.handStart();
             }
         }
-    }
-
-    /** 同一手内追加亮牌；牌背占位符不会把已经亮出的牌重新盖住。 */
-    public revealCards(cards: number[], animation: AnimateDisplayTypeCards): void {
-        this.setCards(mergeRevealedCards(this.cards, cards), animation);
     }
 
     /** 重置视频和音频状态 */
@@ -262,6 +247,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
         this.handBet = 0;
         this.setRoundBet(0, AnimateDisplayTypeRoundBet.Static);
         this.setCards([], AnimateDisplayTypeCards.Static, 0);
+        this.showCardsSelection = [];
         this.roundActioned = false;
         this.operator = null;
         this.buyInsuranceStep = 0;

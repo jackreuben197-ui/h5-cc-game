@@ -152,8 +152,8 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
         // 先确定开场白占用的高度，再按最终视口尺寸定位聊天记录。
         this._refreshWelcome();
         this._renderAllMessages();
-        if (!this._chat.historyInitialized) {
-            this._fetchHistoryAndPrologue();
+        if (!this._chat.historyInitialized || this._chat.needsLatestHistorySync) {
+            this._fetchHistoryAndPrologue(null, this._chat.needsLatestHistorySync);
         }
         this._loadQuickMessages();
     }
@@ -198,6 +198,11 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
         if (wasNearBottom) {
             this._scrollToBottom();
         }
+    }
+
+    @bindEvent(TexasGameRoomDataChat.OUTGOING_TEXT_CONFIRMED, { dataSource: 'chat', initIgnore: true })
+    private onOutgoingTextConfirmed(): void {
+        this._fetchHistoryAndPrologue(null, true);
     }
 
     @bindEvent(TexasGameRoomDataChat.HISTORY_PAGE_MERGED, { dataSource: 'chat', initIgnore: true })
@@ -340,11 +345,12 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
         }
     }
 
-    private _fetchHistoryAndPrologue(beforeID: number | null = null): void {
+    private _fetchHistoryAndPrologue(beforeID: number | null = null, forceLatest: boolean = false): void {
         const loadOlder = beforeID !== null;
         const roomData = this._roomData;
         const chat = this._chat;
-        if (!roomData || !chat || !chat.beginHistoryLoad(loadOlder)) return;
+        if (!roomData || !chat || !chat.beginHistoryLoad(loadOlder, forceLatest)) return;
+        const latestHistoryRevision = chat.latestHistoryRevision;
         const roomID = roomData.roomID;
         const matchID = roomData.matchID;
         const body: {
@@ -439,6 +445,12 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
                 const prologue = prologueFromHistory ? historyPrologue : defaultPrologue;
                 this.tracelog.debug('[Chat][History] 解析完成', { beforeID, pageOldestID, hasMore, history, prologue, prologueFromHistory });
                 chat.mergeHistoryPage(history, prologue, prologueFromHistory, pageOldestID, hasMore, !loadOlder);
+                if (!loadOlder) {
+                    chat.markLatestHistorySynced(latestHistoryRevision);
+                    if (chat.needsLatestHistorySync) {
+                        this.scheduleOnce(() => this._fetchHistoryAndPrologue(null, true), 0);
+                    }
+                }
             },
             onFailure: () => {
                 chat.failHistoryLoad();

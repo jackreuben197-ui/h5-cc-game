@@ -29,21 +29,23 @@ export interface TexasDanmuMessage {
  * 牌桌聊天数据（对应 pokerqueen ChatManager 的缓存职责）。
  *
  * 数据来源：
- *  - 实时：GetMsg(1121) 消息层解析他人聊天后 addMessage
- *  - 本人：视图层发送后写 pendingMessage，BroadcastMsg(1019) status=0 确认后 confirmPendingMessage
+ *  - 实时：GetMsg(1121) 消息层解析服务端最终文本后 addMessage（包括本人消息）
+ *  - 若服务端不向发送者推送 1121，则在 1019 成功后由聊天视图同步最新服务端历史
  */
 @bindData()
 @traceClass()
 export default class TexasGameRoomDataChat extends cc.EventTarget {
     public static readonly MESSAGE_ADDED = 'MESSAGE_ADDED';
+    public static readonly OUTGOING_TEXT_CONFIRMED = 'OUTGOING_TEXT_CONFIRMED';
     public static readonly HISTORY_PAGE_MERGED = 'HISTORY_PAGE_MERGED';
     public static readonly HISTORY_RESET = 'HISTORY_RESET';
     public static readonly DANMU_ADDED = 'DANMU_ADDED';
     public static readonly NEW_MESSAGE_ALERT_CHANGED = 'NEW_MESSAGE_ALERT_CHANGED';
     public readonly roomData: TexasGameRoomData;
     private _messages: TexasChatMessage[] = [];
-    /** 本人发送后等待服务端 1019 确认的消息 */
     private _pendingMessage: TexasChatMessage | null = null;
+    private _latestHistoryRevision = 0;
+    private _syncedHistoryRevision = 0;
     private _chatDialogOpen: boolean = false;
     private _historyInitialized: boolean = false;
     private _historyLoading: boolean = false;
@@ -105,12 +107,18 @@ export default class TexasGameRoomDataChat extends cc.EventTarget {
     public get oldestHistoryID(): number | null {
         return this._oldestHistoryID;
     }
+    public get latestHistoryRevision(): number {
+        return this._latestHistoryRevision;
+    }
+    public get needsLatestHistorySync(): boolean {
+        return this._syncedHistoryRevision < this._latestHistoryRevision;
+    }
 
-    public beginHistoryLoad(loadOlder: boolean): boolean {
+    public beginHistoryLoad(loadOlder: boolean, forceLatest: boolean = false): boolean {
         if (this._historyLoading) return false;
         if (loadOlder) {
             if (!this._historyInitialized || !this._hasMoreHistory || this._oldestHistoryID === null) return false;
-        } else if (this._historyInitialized) {
+        } else if (this._historyInitialized && !forceLatest) {
             return false;
         }
         this._historyLoading = true;
@@ -129,6 +137,8 @@ export default class TexasGameRoomDataChat extends cc.EventTarget {
     public resetHistory(): void {
         this._messages.length = 0;
         this._pendingMessage = null;
+        this._latestHistoryRevision = 0;
+        this._syncedHistoryRevision = 0;
         this._historyInitialized = false;
         this._historyLoading = false;
         this._hasMoreHistory = true;
@@ -146,6 +156,26 @@ export default class TexasGameRoomDataChat extends cc.EventTarget {
         this._pendingMessage = msg;
     }
 
+    /** 1019 不含过滤文本：表情可本地确认，文字则通知视图同步服务端最新记录。 */
+    public confirmPendingMessage(status: number): void {
+        const pending = this._pendingMessage;
+        this._pendingMessage = null;
+        if (status !== 0 || !pending) return;
+        if (pending.emojiType !== undefined) {
+            this.addMessage(pending);
+            return;
+        }
+        this._latestHistoryRevision++;
+        this._notifyOutgoingTextConfirmed();
+    }
+
+    @pureEvent(TexasGameRoomDataChat.OUTGOING_TEXT_CONFIRMED)
+    private _notifyOutgoingTextConfirmed(): void {}
+
+    public markLatestHistorySynced(revision: number): void {
+        this._syncedHistoryRevision = Math.max(this._syncedHistoryRevision, revision);
+    }
+
     public setChatDialogOpen(open: boolean): void {
         this._chatDialogOpen = open;
         if (open) {
@@ -155,14 +185,6 @@ export default class TexasGameRoomDataChat extends cc.EventTarget {
 
     public hideNewMessageAlert(): void {
         this.hasNewMessageAlert = false;
-    }
-
-    /** BroadcastMsg(1019) 确认结果；status=0 时把 pending 消息落进记录 */
-    public confirmPendingMessage(status: number): void {
-        const pending = this._pendingMessage;
-        this._pendingMessage = null;
-        if (status !== 0 || !pending) return;
-        this.addMessage(pending);
     }
 
     public addMessage(msg: TexasChatMessage, showAlert: boolean = false): void {

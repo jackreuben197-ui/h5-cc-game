@@ -15,6 +15,8 @@ export default class CardView extends cc.Component {
     private highLightSprite: cc.Node = null;
     @property(cc.Node)
     private grayLayer: cc.Node = null;
+    @property({ type: cc.Node, displayName: '主动秀牌眼睛图标' })
+    private showCardEye: cc.Node = null;
     @property(cc.Material)
     private cardBackMaterial: cc.Material = null;
     private _defaultMaterial: cc.Material = null;
@@ -63,10 +65,10 @@ export default class CardView extends cc.Component {
     private _popUpOrigin: cc.Vec3 = null;
 
     public popUp(offset: cc.Vec2) {
-        cc.Tween.stopAllByTarget(this.cardSprite.node);
-        if (this._popUpOrigin) {
-            this.cardSprite.node.setPosition(this._popUpOrigin);
-        }
+        // 翻牌 tween 作用在 this.node，上移 tween 作用在 cardSprite.node。
+        // 这里只能终止上一次上移动画；若调用 stopAnimations，会把刚开始的
+        // 翻牌一并停在牌背，导致赢家使用几张手牌就有几张牌无法翻开。
+        this._stopPopupAnimation();
         this._popUpOrigin = cc.v3(this.cardSprite.node.position.x, this.cardSprite.node.position.y, this.cardSprite.node.position.z);
         cc.tween(this.cardSprite.node)
             .to(0.3, {
@@ -76,9 +78,24 @@ export default class CardView extends cc.Component {
             .start();
     }
 
+    private _stopPopupAnimation(): void {
+        if (!this.cardSprite) return;
+        cc.Tween.stopAllByTarget(this.cardSprite.node);
+        if (this._popUpOrigin) {
+            this.cardSprite.node.setPosition(this._popUpOrigin);
+            this._popUpOrigin = null;
+        }
+    }
+
     public gray(b: boolean) {
         if (this.grayLayer) {
             this.grayLayer.active = b;
+        }
+    }
+
+    public showShowdownSelection(selected: boolean): void {
+        if (this.showCardEye) {
+            this.showCardEye.active = selected;
         }
     }
 
@@ -90,13 +107,7 @@ export default class CardView extends cc.Component {
         cc.Tween.stopAllByTarget(this.node);
         this.node.setScale(1, 1);
         this.node.angle = 0;
-        if (this.cardSprite) {
-            cc.Tween.stopAllByTarget(this.cardSprite.node);
-        }
-        if (this._popUpOrigin) {
-            this.cardSprite.node.setPosition(this._popUpOrigin);
-            this._popUpOrigin = null;
-        }
+        this._stopPopupAnimation();
     }
 
     public reset() {

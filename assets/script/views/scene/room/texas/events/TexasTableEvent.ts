@@ -1,4 +1,4 @@
-import { ClientMessageSeated, Code, Def, PotInsuranceBuy, RoomInfo } from '@silenthill/agreement-web';
+import { ClientMessageSeated, Code, Def, PotInsuranceBuy, RoomInfo, ServerMessageShowdown } from '@silenthill/agreement-web';
 import { traceClass } from '../../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../../data/room/texas/TexasGameRoomData';
@@ -44,6 +44,9 @@ const MTT_NO_PROP_TYPE = 0;
 
 @traceClass()
 export default class TexasTableEvent {
+    private static readonly SHOWDOWN_RESPONSE_TIMEOUT = 5000;
+    private static readonly _showdownPendingPlayers: WeakSet<TexasGameRoomDataPlayer> = new WeakSet();
+
     public static MttAddOn(roomData: TexasGameRoomData): void {
         const mode = roomData.mtt.currentAddOnMode;
         if (!roomData.mtt.beginAddOn(mode)) {
@@ -536,6 +539,68 @@ export default class TexasTableEvent {
         });
     }
 
+    public static Showdown(player: TexasGameRoomDataPlayerMine, cardIndex: number): void {
+        const seatPlayer = player?.player;
+        if (
+            !seatPlayer ||
+            !seatPlayer.isParticipateInTheGame ||
+            !h5MessageManager.handshakeDone ||
+            !userStore.token ||
+            TexasTableEvent._showdownPendingPlayers.has(seatPlayer) ||
+            cardIndex < 0 ||
+            cardIndex >= seatPlayer.cards.length ||
+            seatPlayer.cards[cardIndex] <= 0
+        ) {
+            return;
+        }
+        const handCardNum = player.roomData.basicInfo.handCardNum;
+        const showCards = new Array(handCardNum).fill(0);
+        seatPlayer.showCardsSelection.forEach((selected, index) => {
+            if (index < handCardNum) showCards[index] = selected;
+        });
+        showCards[cardIndex] = showCards[cardIndex] == 1 ? 0 : 1;
+        void TexasTableEvent._sendShowdown(player, seatPlayer, showCards);
+    }
+
+    private static async _sendShowdown(player: TexasGameRoomDataPlayerMine, seatPlayer: TexasGameRoomDataPlayer, showCards: number[]): Promise<void> {
+        const roomID = player.roomData.roomID;
+        const matchID = player.roomData.matchID;
+        const handNum = player.roomData.basicInfo.handNum;
+        TexasTableEvent._showdownPendingPlayers.add(seatPlayer);
+        const responsePromise = ProtocolAgency.waitForMessage<ServerMessageShowdown.AsObject>(
+            Code.MSG_D_SHOWDOWN,
+            (_data, responseRoomID, responseMatchID) => responseRoomID == roomID && responseMatchID == matchID,
+            TexasTableEvent.SHOWDOWN_RESPONSE_TIMEOUT
+        );
+        ProtocolAgency.Send({
+            code: Code.MSG_D_SHOWDOWN,
+            roomID,
+            matchID,
+            body: {
+                room: {
+                    roomId: roomID,
+                    matchId: matchID
+                },
+                showCardsList: showCards
+            }
+        });
+        try {
+            const response = await responsePromise;
+            if (
+                response.body.status == 0 &&
+                player.player === seatPlayer &&
+                player.roomData.basicInfo.handNum == handNum &&
+                seatPlayer.isParticipateInTheGame
+            ) {
+                seatPlayer.showCardsSelection = showCards;
+            }
+        } catch (error) {
+            TexasTableEvent.tracelog.warn('等待主动秀牌回包失败', roomID, matchID, error);
+        } finally {
+            TexasTableEvent._showdownPendingPlayers.delete(seatPlayer);
+        }
+    }
+
     public static AgreePost(player: TexasGameRoomDataPlayerMine) {
         ProtocolAgency.Send({
             code: Code.MSG_D_AGREE_POST,
@@ -852,7 +917,7 @@ export default class TexasTableEvent {
 
     /**
      * 发送牌桌聊天消息（对应 pokerqueen UIChatDlg.click_sendMsg）。
-     * 先写 pending 等 1019 status=0 确认（BroadcastMsg.ts → chat.confirmPendingMessage）后才落聊天记录。
+     * 展示统一等待 GetMsg 下发的服务端过滤文本，不使用本地原文回显。
      */
     public static SendChatMessage(roomData: TexasGameRoomData, text: string, sendDanmu: boolean = false): void {
         const content = (text || '').trim();
@@ -870,11 +935,6 @@ export default class TexasTableEvent {
         this._sendChatBroadcast(roomData, content, Def.BroadcastMsgType.BC_MSG_AVATAR, false, timestamp);
         if (sendDanmu) {
             this._sendChatBroadcast(roomData, content, Def.BroadcastMsgType.BC_MSG_BULLET, true, timestamp);
-            // 本人弹幕本地立即回显（网络回包在 GetMsg 中按 user_id 过滤，不会重复播放）
-            roomData.chat.addDanmu({
-                name: userStore.name || '',
-                content
-            });
         }
     }
 
