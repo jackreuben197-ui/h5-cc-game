@@ -6,13 +6,11 @@ import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import ccviewData, { CCViewData } from '../../../../data/system/CCViewData';
 import globalConfigStore, { GlobalConfigStore } from '../../../../data/system/GlobalConfigStore';
-import privateUcChargeStore, { PrivateUcFee } from '../../../../data/trade/PrivateUcChargeStore';
 import userStore, { ClubData, UserStore } from '../../../../data/user/UserStore';
 import { AntiCheatType } from '../../../../game/constant/AntiCheatType';
 import { ButtonState } from '../../../../game/constant/Constants';
 import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconState';
 import { VideoModel } from '../../../../game/constant/VideoModel';
-import { ViewPlayerCardsMode } from '../../../../game/constant/ViewPlayerCardsMode';
 import { canWatchPlayerCards, canWatchPublicCards } from '../../../../game/util/ViewPlayerCardsConfig';
 import h5MessageManager from '../../../../H5MsgMgr';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
@@ -282,20 +280,16 @@ export default class OtherBindings extends cc.Component {
             this.viewPublicCardsCost.node.parent.active = true;
             return;
         }
-        const playerCardsFeeType =
-            this._roomData.basicInfo.viewPlayerCards === ViewPlayerCardsMode.SPECIFY
-                ? PrivateUcFee.ViewOnePlayer
-                : PrivateUcFee.ViewAllPlayers;
-        const playerCardsPrice = privateUcChargeStore.getVisiblePrice(playerCardsFeeType);
-        this.viewPlayerCardsCost.node.parent.active = playerCardsPrice !== null;
-        if (playerCardsPrice !== null) {
+        const playerCardsPrice = Number(this._roomData.mine.viewPlayerCardsCost) || 0;
+        this.viewPlayerCardsCost.node.parent.active = playerCardsPrice > 0;
+        if (playerCardsPrice > 0) {
             this.viewPlayerCardsCost.string = `${playerCardsPrice}`;
             applyPrivateUcChargeIcon(this.viewPlayerCardsCost, this.ucChargeIcon);
         }
 
-        const publicCardsPrice = privateUcChargeStore.getVisiblePrice(PrivateUcFee.ViewPublicCards);
-        this.viewPublicCardsCost.node.parent.active = publicCardsPrice !== null;
-        if (publicCardsPrice !== null) {
+        const publicCardsPrice = Number(this._roomData.mine.viewPublicCardsCost) || 0;
+        this.viewPublicCardsCost.node.parent.active = publicCardsPrice > 0;
+        if (publicCardsPrice > 0) {
             this.viewPublicCardsCost.string = `${publicCardsPrice}`;
             applyPrivateUcChargeIcon(this.viewPublicCardsCost, this.ucChargeIcon);
         }
@@ -667,7 +661,9 @@ export default class OtherBindings extends cc.Component {
             return;
         }
         let round: Def.RoundMap[keyof Def.RoundMap];
-        if (publicCardCount == 0) {
+        if (globalConfigStore.viewPublicCards.viewType === 2) {
+            round = 0 as Def.RoundMap[keyof Def.RoundMap];
+        } else if (publicCardCount == 0) {
             round = Def.Round.PREFLOP;
         } else if (publicCardCount == 3) {
             round = Def.Round.FLOP;

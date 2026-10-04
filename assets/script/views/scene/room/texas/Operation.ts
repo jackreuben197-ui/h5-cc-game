@@ -6,7 +6,6 @@ import { OperatorMine, OpertionType } from '../../../../data/room/texas/model/Op
 import texasGamePersonalSettings, { ShortCut, TexasGamePersonalSettings } from '../../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import globalConfigStore from '../../../../data/system/GlobalConfigStore';
-import privateUcChargeStore, { PrivateUcFee } from '../../../../data/trade/PrivateUcChargeStore';
 import { AutoOperationTypeTexas } from '../../../../game/constant/AutoOpertaionType';
 import { DiamondConfigType } from '../../../../game/constant/DiamondConfigType';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
@@ -209,16 +208,17 @@ export default class Operation extends cc.Component {
 
     private async _refreshAddTime(alreadlyDelayTimes: number): Promise<void> {
         this._delayTimes = alreadlyDelayTimes;
-        if (globalConfigStore.isChannelDiamondFreeMode) {
-            const price = privateUcChargeStore.getVisiblePrice(PrivateUcFee.AddTime);
-            this.addTimeCost.node.parent.active = price !== null;
-            if (price === null) return;
-            this.addTimeCost.string = `${price}`;
-            applyPrivateUcChargeIcon(this.addTimeCost, this.ucChargeIcon);
-            return;
-        }
-        this.addTimeCost.node.parent.active = true;
-        const cost = await this._seatPlayer.roomData.basicInfo.getDiamondPrice(alreadlyDelayTimes, DiamondConfigType.DiamondConfigTypeAddTime);
+        const isPrivateUcPackage = globalConfigStore.isChannelDiamondFreeMode;
+        const [cost, freeCount] = await Promise.all([
+            this._seatPlayer.roomData.basicInfo.getDiamondPrice(alreadlyDelayTimes + 1, DiamondConfigType.DiamondConfigTypeAddTime),
+            isPrivateUcPackage && globalConfigStore.privateFreeAddTimeDailyTimes > 0
+                ? TexasTableEvent.ReqAddTimeFreeCount()
+                : Promise.resolve(0)
+        ]);
+        if (!cc.isValid(this.node) || alreadlyDelayTimes !== this._delayTimes) return;
+        const shouldShowCharge = freeCount <= 0 && (!isPrivateUcPackage || cost > 0);
+        this.addTimeCost.node.parent.active = shouldShowCharge;
+        if (isPrivateUcPackage && shouldShowCharge) applyPrivateUcChargeIcon(this.addTimeCost, this.ucChargeIcon);
         this.addTimeCost.string = '' + cost;
     }
 

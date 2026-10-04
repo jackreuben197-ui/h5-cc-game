@@ -11,8 +11,8 @@ export interface DiamondConfig {
     setting: DiamondConfigSetting[];
     start_date: string;
     end_date: string;
-    start_time: string;
-    end_time: string;
+    start_time: number | string;
+    end_time: number | string;
 }
 
 export interface DiamondConfigSetting {
@@ -63,11 +63,9 @@ export class DiamondModel {
         }
         this._diamondMap.set(configType, typeMap);
     }
-    // H5 bridge 预填：直接接收已转换的 typeMap（{[type_ext]: item}），无需再做分组。
-    // 仅在本地尚无该 config_type 数据时写入，避免覆盖已有缓存。
+    // H5 bridge 下发的是当前登录态的权威配置；空 map 也要覆盖，避免沿用上一会话缓存。
     public setFromH5Sync(configType: number, typeMap: DiamondTypeMap): void {
-        if (this._diamondMap.has(configType)) return;
-        this._diamondMap.set(configType, typeMap);
+        this._diamondMap.set(configType, typeMap || {});
     }
 
     // 按需拉取指定 config_type 的配置；已有缓存时直接 resolve，不发网络请求。
@@ -96,6 +94,20 @@ export class DiamondModel {
         const typeMap = this._diamondMap.get(configType);
         if (!typeMap) return null;
         return typeMap[typeExt] ?? null;
+    }
+
+    /** 按精确盲注档位取价；折扣时段内使用 discount_price，配置缺失或价格为 0 时隐藏。 */
+    public getPrice(configType: number, typeExt: number, sb: number, useDiscountPrice: boolean = false): number {
+        const config = this.getDiamondConfig(typeExt, configType);
+        if (!config || config.status !== 1 || !Array.isArray(config.setting)) return 0;
+        const setting = config.setting.find(item => Number(item.sb) === Number(sb));
+        if (!setting) return 0;
+        const startTime = Number(config.start_time);
+        const endTime = Number(config.end_time);
+        const now = Math.floor(Date.now() / 1000);
+        const inDiscountWindow = startTime > 0 && endTime >= startTime && startTime <= now && now <= endTime;
+        const price = useDiscountPrice && inDiscountWindow ? Number(setting.discount_price) : Number(setting.price);
+        return Number.isFinite(price) && price > 0 ? price : 0;
     }
 
     public getDiamondConfigTypeExt(originType: number, share: number, isMTT: boolean, addTimeTimes: number): number {

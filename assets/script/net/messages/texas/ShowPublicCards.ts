@@ -1,11 +1,12 @@
 import { Def, ServerMessageShowPublicCards } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
+import globalConfigStore from '../../../data/system/GlobalConfigStore';
 import { AnimateDisplayTypePublicCards } from '../../../game/constant/AnimateDisplayType';
-import { DiamondConfigType } from '../../../game/constant/DiamondConfigType';
 import { canWatchPublicCards } from '../../../game/util/ViewPlayerCardsConfig';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import viewManager from '../../../views/UIViewManager';
+import TexasTableEvent from '../../../views/scene/room/texas/events/TexasTableEvent';
 
 // ShowPublicCards 1013
 export async function ShowPublicCards(data: ServerMessageShowPublicCards.AsObject, roomID: number, matchID: number) {
@@ -21,6 +22,8 @@ export async function ShowPublicCards(data: ServerMessageShowPublicCards.AsObjec
         );
         return;
     }
+    // 查看成功后剩余免费次数可能已经变化，下次展示价格时重新向服务端取值。
+    roomData.replay.clearViewPubFreeCount();
     roomData.publicCards.addPublicCards(data.publicCardsList, AnimateDisplayTypePublicCards.Static);
     if (data.publicCards2List && data.publicCards2List.length > 0) {
         const needPub = 5 - data.publicCards2List.length;
@@ -33,7 +36,10 @@ export async function ShowPublicCards(data: ServerMessageShowPublicCards.AsObjec
     const publicCardCount = roomData.publicCards.publicCards.length;
     if (canShowViewPublicCardsButton(roomData, seatNo, handNum, publicCardCount)) {
         roomData.mine.showViewPublicCardsButton = false;
-        const cost = await roomData.basicInfo.getDiamondPrice(Number(data.round), DiamondConfigType.DiamondConfigTypeViewPublicCards);
+        const freeCount = globalConfigStore.isChannelDiamondFreeMode && globalConfigStore.viewPublicCards.freeCount > 0
+            ? await TexasTableEvent.ReqReplayViewPubFreeCount(roomData)
+            : 0;
+        const cost = freeCount > 0 ? 0 : await roomData.basicInfo.getViewPublicCardsPrice(Number(data.round));
         if (!canShowViewPublicCardsButton(roomData, seatNo, handNum, publicCardCount)) return;
         roomData.mine.viewPublicCardsCost = cost;
         roomData.mine.showViewPublicCardsButton = true;

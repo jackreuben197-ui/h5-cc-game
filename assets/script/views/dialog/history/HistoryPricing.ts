@@ -1,10 +1,8 @@
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
-import diamondModel, { DiamondConfig } from '../../../data/trade/DiamondModel';
+import globalConfigStore from '../../../data/system/GlobalConfigStore';
+import diamondModel from '../../../data/trade/DiamondModel';
 import { DiamondConfigType } from '../../../game/constant/DiamondConfigType';
 import TexasTableEvent from '../../scene/room/texas/events/TexasTableEvent';
-
-/** 偷偷看阶梯计价: type_ext = 11 + 10 * 已付费次数,超过4次按4次档 */
-const PEEK_TIER_BASE = 11;
 
 const PEEK_TIER_STEP = 10;
 
@@ -17,26 +15,28 @@ const VIEW_PUB_ROUND_EXT = 1000;
 export default class HistoryPricing {
     public static async getPeekPrice(roomData: TexasGameRoomData): Promise<number> {
         const peekCount = await TexasTableEvent.ReqReplayPeekTimes(roomData);
-        const typeExt = PEEK_TIER_BASE + PEEK_TIER_STEP * Math.min(peekCount, PEEK_TIER_MAX);
+        const viewerTypeExt = roomData.mine.seatNo > 0 ? 12 : 11;
+        const typeExt = viewerTypeExt + PEEK_TIER_STEP * Math.min(peekCount, PEEK_TIER_MAX);
         return this._getPrice(DiamondConfigType.DiamondConfigTypePayWatchOtherCardWatchAll, typeExt, roomData);
     }
 
     public static async getViewPubPrice(roomData: TexasGameRoomData, round: number): Promise<number> {
-        return this._getPrice(DiamondConfigType.DiamondConfigTypeViewPublicCards, round * VIEW_PUB_ROUND_EXT, roomData);
+        const viewAll = globalConfigStore.viewPublicCards.viewType === 2;
+        return this._getPrice(
+            viewAll
+                ? DiamondConfigType.DiamondConfigTypeViewPublicCardsAll
+                : DiamondConfigType.DiamondConfigTypeViewPublicCards,
+            viewAll ? 0 : round * VIEW_PUB_ROUND_EXT,
+            roomData
+        );
     }
 
     private static async _getPrice(configType: DiamondConfigType, typeExt: number, roomData: TexasGameRoomData): Promise<number> {
-        await diamondModel.reqDiamondConfig(configType);
-        const config = diamondModel.getDiamondConfig(typeExt, configType);
-        return this._matchPriceBySb(config, roomData.basicInfo.sbante?.sb || 0);
-    }
-
-    /** 按房间小盲取对应档位价格,无匹配档位时回退第一档 */
-    private static _matchPriceBySb(config: DiamondConfig, sb: number): number {
-        if (!config?.setting) return 0;
-        for (const item of config.setting) {
-            if (item.sb === sb) return item.price || 0;
-        }
-        return config.setting.length > 0 ? config.setting[0].price || 0 : 0;
+        const isPrivateUcPackage = globalConfigStore.isChannelDiamondFreeMode;
+        if (!isPrivateUcPackage) await diamondModel.reqDiamondConfig(configType);
+        const basicInfo = roomData.basicInfo;
+        const rawSb = basicInfo.sbante?.sb || 0;
+        const sb = (basicInfo.bombpotStatusEnabled || basicInfo.pokerType === 2) ? rawSb * 2 : rawSb;
+        return diamondModel.getPrice(configType, typeExt, sb, isPrivateUcPackage);
     }
 }

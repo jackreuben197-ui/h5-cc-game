@@ -2,8 +2,8 @@ import { Def, Result, ServerMessageWinner } from '@silenthill/agreement-web';
 import { createLogger } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
+import globalConfigStore from '../../../data/system/GlobalConfigStore';
 import { AnimateDisplayTypeCards, AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDisplayType';
-import { DiamondConfigType } from '../../../game/constant/DiamondConfigType';
 import { ViewPlayerCardsMode } from '../../../game/constant/ViewPlayerCardsMode';
 import { canWatchPlayerCards, canWatchPublicCards } from '../../../game/util/ViewPlayerCardsConfig';
 import { UISquidEndItemShowData } from '../../../views/dialog/squidover/UISquidEndItem';
@@ -178,7 +178,10 @@ async function calculateViewPublicCardsCost(
     handNum: number,
     publicCardCount: number
 ) {
-    const cost = await roomData.basicInfo.getDiamondPrice(Number(round), DiamondConfigType.DiamondConfigTypeViewPublicCards);
+    const freeCount = globalConfigStore.isChannelDiamondFreeMode && globalConfigStore.viewPublicCards.freeCount > 0
+        ? await TexasTableEvent.ReqReplayViewPubFreeCount(roomData)
+        : 0;
+    const cost = freeCount > 0 ? 0 : await roomData.basicInfo.getViewPublicCardsPrice(Number(round));
     if (!canShowViewPublicCardsButton(roomData, seatNo, handNum, publicCardCount)) return;
     roomData.mine.viewPublicCardsCost = cost;
     roomData.mine.showViewPublicCardsButton = true;
