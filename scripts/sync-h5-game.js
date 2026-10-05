@@ -46,17 +46,20 @@ function cleanH5Assets(assetsDir) {
 }
 
 function resolveLocalI18nRuntime() {
-    const candidates = [
-        path.resolve(rootDir, '../h5-cc-i18n/dist/h5-cc-i18n.min.js'),
-        path.resolve(rootDir, 'node_modules/@silenthill/h5-cc-i18n/dist/h5-cc-i18n.min.js'),
-    ];
-    return candidates.find((file) => fs.existsSync(file));
+    const localDir = process.env.H5_CC_I18N_DIR;
+    if (!localDir) return null;
+    const file = path.resolve(h5GameDir, localDir, 'dist/h5-cc-i18n.min.js');
+    return fs.existsSync(file) ? file : null;
 }
 
 function overrideI18nRuntime() {
     const source = resolveLocalI18nRuntime();
     if (!source) {
-        console.warn('\n[WARN] 未找到本地 h5-cc-i18n runtime，保留 h5-game 构建产物中的版本。');
+        if (process.env.H5_CC_I18N_DIR) {
+            console.warn('\n[WARN] H5_CC_I18N_DIR 下未找到 h5-cc-i18n runtime，保留 h5-game 构建产物中的版本。');
+        } else {
+            console.log('\n[2.5/5] 未设置 H5_CC_I18N_DIR，保留 h5-game 构建产物中的 i18n runtime。');
+        }
         return;
     }
 
