@@ -149,4 +149,13 @@ export default class AssetManager {
         }
         throw new Error(`[AssetManager] Asset not found for key: ${key}. Did you forget to preload it?`);
     }
+
+    /**
+     * 查询已经完成预加载的集合资源。用于声音等后台资源：尚未就绪时允许业务安全跳过，
+     * 不能因为首个音效比后台下载更早触发而中断牌桌流程。
+     */
+    public static tryGetAsset<T extends AssetCollectionType>(collection: T, name: string): AssetTypeMapping[T] | null {
+        const key = `${collection}|${name}`;
+        return (AssetManager._map.get(key) as AssetTypeMapping[T] | undefined) ?? null;
+    }
 }

@@ -1,5 +1,5 @@
 import { AssetCollectionType } from '../views/loader/AssetLoader';
-import AssetManager from '../views/loader/AssetManager';
+import AssetManager, { BUNDLE_RESOURCES } from '../views/loader/AssetManager';
 import { traceClass } from './decorator/LogTrace';
 
 export enum SoundEffectKey {
@@ -46,6 +46,8 @@ export class SoundManager {
     // 进桌时，iOS 页面恢复后的首次点击也会被误判为需要恢复牌桌音乐。
     private _lastMusicKey: SoundMusicKey | null = null;
     private _lastMusicVolume: number = 0.3;
+    private _assetsReady: boolean = false;
+    private _preloadPromise: Promise<boolean> | null = null;
     public get isOn() {
         return this._soundOn;
     }
@@ -65,16 +67,55 @@ export class SoundManager {
         return this.playMusic(SoundMusicKey.BgmGame, true, 0.3);
     }
 
+    /**
+     * 声音资源后台预热。Promise 始终 resolve，避免非关键资源失败形成未处理拒绝；
+     * 重复调用会复用同一个加载任务。
+     */
+    preload(): Promise<boolean> {
+        if (this._assetsReady) return Promise.resolve(true);
+        if (this._preloadPromise) return this._preloadPromise;
+
+        const preloadTask = new Promise<boolean>(resolve => {
+            cc.resources.loadDir('sound', (error: Error, assets: cc.Asset[]) => {
+                if (error) {
+                    this.tracelog.warn('声音资源后台加载失败', error);
+                    resolve(false);
+                    return;
+                }
+
+                AssetManager.assetForeach(assets, BUNDLE_RESOURCES);
+                this._assetsReady = true;
+                this.tracelog.info('声音资源后台加载完成', assets.length);
+                resolve(true);
+
+                // 进桌可能早于声音下载完成；资源就绪后补上此前请求的 BGM。
+                if (this._soundOn && this._lastMusicKey && this._playingMusic === -1) {
+                    this.playMusic(this._lastMusicKey, true, this._lastMusicVolume);
+                }
+            });
+        });
+        this._preloadPromise = preloadTask;
+        void preloadTask.then(() => {
+            if (this._preloadPromise === preloadTask) {
+                this._preloadPromise = null;
+            }
+        });
+        return preloadTask;
+    }
+
     /** 播放 BGM，返回 audioID。自动停掉上次的 BGM，保证同一时刻只有一个 BGM */
     playMusic(key: SoundMusicKey, loop = true, volume = 1): number {
         if (!this._soundOn) return -1;
-        const clip = AssetManager.getAsset(AssetCollectionType.AudioSourceSound, key);
-        if (!clip) return -1;
+        this._lastMusicKey = key;
+        this._lastMusicVolume = volume;
+        const clip = AssetManager.tryGetAsset(AssetCollectionType.AudioSourceSound, key);
+        if (!clip) {
+            void this.preload();
+            return -1;
+        }
         if (this._playingMusic !== -1) {
             cc.audioEngine.stop(this._playingMusic);
         }
-        this._lastMusicKey = key;
-        this._lastMusicVolume = volume;
         this._playingMusic = cc.audioEngine.play(clip, loop, volume);
         return this._playingMusic;
     }
@@ -83,8 +124,11 @@ export class SoundManager {
     playEffect(key: SoundEffectKey, loop = false): number {
         if (!this._soundOn) return -1;
         // cc.audioEngine.setEffectsVolume(volume);
-        const clip = AssetManager.getAsset(AssetCollectionType.AudioSourceSound, key);
-        if (!clip) return -1;
+        const clip = AssetManager.tryGetAsset(AssetCollectionType.AudioSourceSound, key);
+        if (!clip) {
+            void this.preload();
+            return -1;
+        }
         return cc.audioEngine.playEffect(clip, loop);
     }
 
