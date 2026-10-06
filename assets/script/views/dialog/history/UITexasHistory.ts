@@ -12,6 +12,7 @@ import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import AssetManager, { BUNDLE_RESOURCES } from '../../loader/AssetManager';
+import { applyPrivateUcChargeIcon } from '../../util/PrivateUcChargeView';
 import TexasTableEvent from '../../scene/room/texas/events/TexasTableEvent';
 import viewManager from '../../UIViewManager';
 import StepSlider from '../../widget/StepSlider';
@@ -98,6 +99,8 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     private peekCostLabel: cc.Label = null;
     @property({ type: cc.Label, displayName: '发发看价格($ViewPubButton/diamondIcon/$ViewPubCost)' })
     private viewPubCostLabel: cc.Label = null;
+    @property({ type: cc.SpriteFrame, displayName: '私域UC收费图标' })
+    private ucChargeIcon: cc.SpriteFrame = null;
     @property({ type: cc.Node, displayName: '收藏星星($favoBtn/Background/$star)' })
     private favoStar: cc.Node = null;
     // ==================== 运行时实例化的详情区块 ====================
@@ -189,10 +192,8 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         this._bindEventsAndRefresh();
         this._initTopInfo();
         this._refreshDiamondElements();
-        if (!globalConfigStore.isChannelDiamondFreeMode) {
-            this._reqDiamondBalance();
-            if (this.peekBtnNode.active) this._reqPeekPrice();
-        }
+        if (!globalConfigStore.isChannelDiamondFreeMode) this._reqDiamondBalance();
+        if (this.peekBtnNode.active) this._reqPeekPrice();
         // 第一手没打完不请求
         this._totalPage = Math.max(0, this._roomData.basicInfo.handNum - 1);
         this._currentPage = this._totalPage;
@@ -522,7 +523,8 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         }
         const hasHidden = hasHiddenCards(this._currentData, this._model, userStore.userRID);
         this._setButtonEnabled(this.peekBtnNode, hasHidden);
-        if (hasHidden && !globalConfigStore.isChannelDiamondFreeMode) this._reqPeekPrice();
+        if (!hasHidden) return;
+        this._reqPeekPrice();
     }
 
     private async onPeekClicked() {
@@ -534,10 +536,8 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         if (result.code === 0) {
             // 成功后合并数据已同步触发 REPLAY_DATA_CHANGE → _refreshPeekButton,
             // 按是否还有未亮牌决定按钮态(全看完则保持置灰),此处不再强制恢复高亮
-            if (!globalConfigStore.isChannelDiamondFreeMode) {
-                this._reqPeekPrice();
-                this._reqDiamondBalance();
-            }
+            this._reqPeekPrice();
+            if (!globalConfigStore.isChannelDiamondFreeMode) this._reqDiamondBalance();
         } else {
             this._setButtonEnabled(this.peekBtnNode, true);
             viewManager.showToast(CPErrorCode.ServerErrorDescription(result.code));
@@ -550,6 +550,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
             const price = await HistoryPricing.getPeekPrice(this._roomData);
             if (!cc.isValid(this.node)) return;
             this.peekCostLabel.string = `${price}`;
+            this._applyPrivateUcPrice(this.peekCostLabel, price);
         } catch (e) {
             this.tracelog.warn('_reqPeekPrice failed', e);
         }
@@ -567,13 +568,14 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         }
         const hasHidden = hasHiddenPublicCards(model.publicCards);
         this._setButtonEnabled(this.viewPubBtnNode, hasHidden);
-        if (hasHidden && !globalConfigStore.isChannelDiamondFreeMode) this._reqViewPubPrice();
+        if (!hasHidden) return;
+        this._reqViewPubPrice();
     }
 
     private async onViewPubClicked() {
         if (!this._currentData || !this._model?.hasMe || !canWatchPublicCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0)) return;
         this._setButtonEnabled(this.viewPubBtnNode, false);
-        const round = getViewPubRound(this._model.publicCards);
+        const round = globalConfigStore.viewPublicCards.viewType === 2 ? 0 : getViewPubRound(this._model.publicCards);
         // 合并写数据在 TexasTableEvent → replay 数据层,视图经 REPLAY_DATA_CHANGE 自动刷新
         const result = await TexasTableEvent.RevealReplayPublicCards(this._roomData, this._currentPage, round);
         if (!cc.isValid(this.node)) return;
@@ -593,15 +595,18 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     /** 发发看价格(VIP 免费次数优先,否则按轮次取钻石配置,计价规则见 HistoryPricing) */
     private async _reqViewPubPrice() {
         try {
-            const freeCount = await TexasTableEvent.ReqReplayViewPubFreeCount(this._roomData);
-            if (!cc.isValid(this.node)) return;
-            if (freeCount > 0) {
-                this.viewPubCostLabel.string = `${i18nMgr.Get('UIMIneVIPFreeTip')} ${freeCount}`;
-                return;
+            if (!globalConfigStore.isChannelDiamondFreeMode || globalConfigStore.viewPublicCards.freeCount > 0) {
+                const freeCount = await TexasTableEvent.ReqReplayViewPubFreeCount(this._roomData);
+                if (!cc.isValid(this.node)) return;
+                if (freeCount > 0) {
+                    this.viewPubCostLabel.string = `${i18nMgr.Get('UIMIneVIPFreeTip')} ${freeCount}`;
+                    return;
+                }
             }
             const price = await HistoryPricing.getViewPubPrice(this._roomData, getViewPubRound(this._model.publicCards));
             if (!cc.isValid(this.node)) return;
             this.viewPubCostLabel.string = `${price}`;
+            this._applyPrivateUcPrice(this.viewPubCostLabel, price);
         } catch (e) {
             this.tracelog.warn('_reqViewPubPrice failed', e);
         }
@@ -695,9 +700,20 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     }
 
     private _refreshDiamondElements(): void {
-        const visible = !globalConfigStore.isChannelDiamondFreeMode;
-        this.diamondNumLabel.node.parent.parent.active = visible;
-        this.peekCostLabel.node.parent.active = visible;
-        this.viewPubCostLabel.node.parent.active = visible;
+        const isPrivateUcPackage = globalConfigStore.isChannelDiamondFreeMode;
+        this.diamondNumLabel.node.parent.parent.active = !isPrivateUcPackage;
+        if (!isPrivateUcPackage) {
+            this.peekCostLabel.node.parent.active = true;
+            this.viewPubCostLabel.node.parent.active = true;
+            return;
+        }
+        this.peekCostLabel.node.parent.active = false;
+        this.viewPubCostLabel.node.parent.active = false;
+    }
+
+    private _applyPrivateUcPrice(label: cc.Label, price: number): void {
+        if (!globalConfigStore.isChannelDiamondFreeMode) return;
+        label.node.parent.active = Number.isFinite(price) && price > 0;
+        if (label.node.parent.active) applyPrivateUcChargeIcon(label, this.ucChargeIcon);
     }
 }

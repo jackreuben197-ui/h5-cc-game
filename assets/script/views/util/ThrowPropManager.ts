@@ -926,7 +926,12 @@ class ThrowPropManager {
 
     private _playSound(name: string): void {
         if (!name || !soundManager.isOn) return;
-        const clip = AssetManager.mustGetLoaded(BUNDLE_RESOURCES, name, cc.AudioClip);
+        const clip = cc.resources.get<cc.AudioClip>(name, cc.AudioClip);
+        if (!clip) {
+            // 声音目录后台加载期间允许跳过当前非关键道具音效，不能中断动画和牌桌流程。
+            void soundManager.preload();
+            return;
+        }
         cc.audioEngine.playEffect(clip, false);
     }
 

@@ -13,7 +13,7 @@ import { i18nMgr } from '../../i18n/i18nMgr';
 import * as MainUtils from '../../MainUtils';
 import agoraManager from '../../net/agora/AgoraManager';
 import TelegramUtils from '../../tools/TelegramUtils';
-import { DynamicLoadDefinition, PreloadDefinitionGame, PreloadDefinitionSound } from '../../views/loader/AssetManager';
+import { DynamicLoadDefinition, PreloadDefinitionGame } from '../../views/loader/AssetManager';
 import viewManager from '../../views/UIViewManager';
 import roomReconnectManager from '../RoomReconnectManager';
 import ProcedureBase from './ProcedureBase';
@@ -58,10 +58,11 @@ export default class ProcedureInit extends ProcedureBase {
         };
         //显示房间进入loading
         viewManager.showPreloading({
-            preloadDefinition: [PreloadDefinitionGame, PreloadDefinitionSound, loadTexasBg],
+            preloadDefinition: [PreloadDefinitionGame, loadTexasBg],
             complete: () => {
-                this.tracelog.debug('ProcedureInit 结束，资源加载完全');
+                this.tracelog.debug('ProcedureInit 核心资源加载完成，声音转入后台预热');
                 this._resolveDone(true);
+                void soundManager.preload();
             },
             error: () => {
                 this.tracelog.error('ProcedureInit show preloading error');

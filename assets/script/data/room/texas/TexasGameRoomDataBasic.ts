@@ -19,6 +19,7 @@ import { ViewPlayerCardsMode } from '../../../game/constant/ViewPlayerCardsMode'
 import GameplayUtil from '../../../game/util/GameplayUtil';
 import { StringHelper } from '../../../helper/StringHelper';
 import { UISquidEndItemShowData } from '../../../views/dialog/squidover/UISquidEndItem';
+import globalConfigStore from '../../system/GlobalConfigStore';
 import diamondModel from '../../trade/DiamondModel';
 import texasGamePersonalSettings from './TexasGamePersonalSettings';
 import TexasGameRoomData from './TexasGameRoomData';
@@ -161,18 +162,45 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public shareTable: number;
 
     public async getDiamondPrice(times: number, dct: DiamondConfigType): Promise<number> {
-        const confgExt = diamondModel.getDiamondConfigTypeExt(this.originType, this.shareTable, this.isMtt, times);
-        await diamondModel.reqDiamondConfig(dct);
-        const config = diamondModel.getDiamondConfig(confgExt, dct);
-        if (!config || !config.setting || config.setting.length == 0) {
-            return 0;
+        let configExt: number;
+        switch (dct) {
+            case DiamondConfigType.DiamondConfigTypeViewPublicCards:
+                configExt = times * 1000;
+                break;
+            case DiamondConfigType.DiamondConfigTypeViewPublicCardsAll:
+                configExt = 0;
+                break;
+            case DiamondConfigType.DiamondConfigTypePayWatchOtherCard:
+                configExt = this._roomData.mine.seatNo > 0 ? 3 : 1;
+                break;
+            case DiamondConfigType.DiamondConfigTypePayWatchOtherCardWatchAll:
+                configExt = (this._roomData.mine.seatNo > 0 ? 12 : 11) + 10 * Math.min(times, 4);
+                break;
+            default:
+                configExt = diamondModel.getDiamondConfigTypeExt(
+                    this.originType,
+                    this.shareTable,
+                    this.isMtt,
+                    dct === DiamondConfigType.DiamondConfigTypeAddTime ? Math.min(times, 5) : times
+                );
+                break;
         }
-        for (const item of config.setting) {
-            if (item.sb === this.sbante.sb) {
-                return item.price;
-            }
-        }
-        return 0;
+        // 渠道包只使用 H5 下发的 UC 配置，缺失即隐藏，绝不回源请求钻石配置接口。
+        const isPrivateUcPackage = globalConfigStore.isChannelDiamondFreeMode;
+        if (!isPrivateUcPackage) await diamondModel.reqDiamondConfig(dct);
+        const sb = (this.bombpotStatusEnabled || this.pokerType === 2) ? this.sbante.sb * 2 : this.sbante.sb;
+        return diamondModel.getPrice(dct, configExt, sb, isPrivateUcPackage);
+    }
+
+    /** 查看公共牌模式来自全局配置；收费价格仍来自对应的钻石型/UC 价格表。 */
+    public getViewPublicCardsPrice(round: number): Promise<number> {
+        const viewAll = globalConfigStore.viewPublicCards.viewType === 2;
+        return this.getDiamondPrice(
+            viewAll ? 0 : round,
+            viewAll
+                ? DiamondConfigType.DiamondConfigTypeViewPublicCardsAll
+                : DiamondConfigType.DiamondConfigTypeViewPublicCards
+        );
     }
 
     //安全房间

@@ -17,6 +17,7 @@ import agoraManager from '../../../../net/agora/AgoraManager';
 import TexasVideoMediaHelper from '../../../../net/messages/texas/TexasVideoMediaHelper';
 import viewManager from '../../../UIViewManager';
 import UIViewUtil from '../../../util/UIViewUtil';
+import { applyPrivateUcChargeIcon } from '../../../util/PrivateUcChargeView';
 import SpriteSwitcher from '../../../widget/SpriteSwitcher';
 import TexasTableEvent from './events/TexasTableEvent';
 import userStore, { ClubData, UserStore } from '../../../../data/user/UserStore';
@@ -71,6 +72,8 @@ export default class OtherBindings extends cc.Component {
     private viewPublicCardsConfigNode: cc.Node = null;
     @property({ type: cc.Label, displayName: '发发看花费' })
     private viewPublicCardsCost: cc.Label = null;
+    @property({ type: cc.SpriteFrame, displayName: '私域UC收费图标' })
+    private ucChargeIcon: cc.SpriteFrame = null;
     private _roomData: TexasGameRoomData;
     private _remoteSprite: RemoteSprite = null;
     private _certLogoDefaultSpriteFrame: cc.SpriteFrame = null;
@@ -278,9 +281,25 @@ export default class OtherBindings extends cc.Component {
     }
 
     private _refreshDiamondPriceVisibility(): void {
-        const visible = !globalConfigStore.isChannelDiamondFreeMode;
-        this.viewPlayerCardsCost.node.parent.active = visible;
-        this.viewPublicCardsCost.node.parent.active = visible;
+        const isPrivateUcPackage = globalConfigStore.isChannelDiamondFreeMode;
+        if (!isPrivateUcPackage) {
+            this.viewPlayerCardsCost.node.parent.active = true;
+            this.viewPublicCardsCost.node.parent.active = true;
+            return;
+        }
+        const playerCardsPrice = Number(this._roomData.mine.viewPlayerCardsCost) || 0;
+        this.viewPlayerCardsCost.node.parent.active = playerCardsPrice > 0;
+        if (playerCardsPrice > 0) {
+            this.viewPlayerCardsCost.string = `${playerCardsPrice}`;
+            applyPrivateUcChargeIcon(this.viewPlayerCardsCost, this.ucChargeIcon);
+        }
+
+        const publicCardsPrice = Number(this._roomData.mine.viewPublicCardsCost) || 0;
+        this.viewPublicCardsCost.node.parent.active = publicCardsPrice > 0;
+        if (publicCardsPrice > 0) {
+            this.viewPublicCardsCost.string = `${publicCardsPrice}`;
+            applyPrivateUcChargeIcon(this.viewPublicCardsCost, this.ucChargeIcon);
+        }
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE, 'mine')
@@ -649,7 +668,9 @@ export default class OtherBindings extends cc.Component {
             return;
         }
         let round: Def.RoundMap[keyof Def.RoundMap];
-        if (publicCardCount == 0) {
+        if (globalConfigStore.viewPublicCards.viewType === 2) {
+            round = 0 as Def.RoundMap[keyof Def.RoundMap];
+        } else if (publicCardCount == 0) {
             round = Def.Round.PREFLOP;
         } else if (publicCardCount == 3) {
             round = Def.Round.FLOP;

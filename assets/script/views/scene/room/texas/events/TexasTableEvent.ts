@@ -27,6 +27,7 @@ import {
     WebRoomCenterGameWatchNum,
     WebRoomCenterHistoryViewPublicCards,
     WebRoomCenterHistoryViewPublicCardsFreeCount,
+    WebUserActionRemaind,
     WebUserDiamondsWallet,
     WebUserRoom,
     WebUserRoomBringin,
@@ -901,6 +902,17 @@ export default class TexasTableEvent {
                 roomData.replay.setViewPubFreeCount(count);
                 return count;
             },
+            () => 0
+        );
+    }
+
+    /** 牌桌加时的当日剩余免费次数；上限来自全局配置，接口只返回当前剩余量。 */
+    public static ReqAddTimeFreeCount(): Promise<number> {
+        return WWW.Instance.CommonAPI({
+            web_class: WebUserActionRemaind,
+            body: WebUserActionRemaind.Request({})
+        }).then(
+            (res: any) => Math.max(0, Number(res?.data?.addtime_free_count) || 0),
             () => 0
         );
     }

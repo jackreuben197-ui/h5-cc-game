@@ -9,6 +9,7 @@ import { createLogger } from './core/decorator/LogTrace';
 import bridgeStorage from './data/BridgeStorage';
 import globalConfigStore from './data/system/GlobalConfigStore';
 import diamondModel from './data/trade/DiamondModel';
+import privateUcChargeStore from './data/trade/PrivateUcChargeStore';
 import userStore, { ClubData } from './data/user/UserStore';
 import { MTT_MATCH_ENTRY_ROOM_ID } from './game/constant/Constants';
 import guestSitdownFlow from './game/GuestSitdownFlow';
@@ -316,10 +317,9 @@ export async function registerH5Listeners(): Promise<void> {
         globalConfigStore.setConfig(config);
         _ploger.info('[H5Bridge] syncGlobalConfig 缓存完成');
     });
-    // 仅预填 Cocos 侧实际用到的 config_type：2(加时) 8(延迟看牌) 30(历史偷看)。
+    // 预填私域 UC 对应的完整钻石型配置：按相同 config_type/type_ext/盲注规则取价。
     // payload.raw 已是 H5 转换好的 map：{ [configType]: { [typeExt]: item } }。
-    // DiamondModel.setFromH5Sync 会跳过已有缓存，后续按需拉取时命中缓存不再发请求。
-    const DIAMOND_PRELOAD_TYPES = [2, 8, 30];
+    const DIAMOND_PRELOAD_TYPES = [2, 8, 9, 17, 30, 31];
     h5MessageManager.on('syncDiamondConfig', payload => {
         const map = payload?.raw;
         if (!map || typeof map !== 'object') {
@@ -328,11 +328,13 @@ export async function registerH5Listeners(): Promise<void> {
         }
         for (const configType of DIAMOND_PRELOAD_TYPES) {
             const typeMap = map[configType];
-            if (typeMap && typeof typeMap === 'object') {
-                diamondModel.setFromH5Sync(configType, typeMap as Record<number, any>);
-            }
+            diamondModel.setFromH5Sync(configType, typeMap && typeof typeMap === 'object' ? (typeMap as Record<number, any>) : {});
         }
         _ploger.info('[H5Bridge] syncDiamondConfig 预填完成');
+    });
+    h5MessageManager.on('syncPrivateUcChargeConfig', payload => {
+        privateUcChargeStore.setFromH5Sync(payload);
+        _ploger.info('[H5Bridge] 私域 UC 收费配置同步完成, 共', payload?.items?.length || 0, '项');
     });
     // syncToken：H5 在登录/续期/登出后把最新 token 推过来，写入 userStore，避免 H5/CC 两端 token 错开。
     h5MessageManager.on('syncToken', payload => {

@@ -12,6 +12,7 @@ import { CPErrorCode } from '../../../../i18n/CPErrorCode';
 import { UIComfirmDialogType } from '../../../dialog/confirm/UIConfirmDialog';
 import viewManager from '../../../UIViewManager';
 import UIViewUtil from '../../../util/UIViewUtil';
+import { applyPrivateUcChargeIcon } from '../../../util/PrivateUcChargeView';
 import ShiningPathTimer from '../../../widget/ShiningPathTimer';
 import StepSlider from '../../../widget/StepSlider';
 import TexasTableEvent from './events/TexasTableEvent';
@@ -72,6 +73,8 @@ export default class Operation extends cc.Component {
     private addTimeButton: cc.Button = null;
     @property({ type: cc.Label, displayName: '加时Cost' })
     private addTimeCost: cc.Label = null;
+    @property({ type: cc.SpriteFrame, displayName: '私域UC收费图标' })
+    private ucChargeIcon: cc.SpriteFrame = null;
     private _delayTimes = 0;
     private _autoOpPanel: AutoOperation = null;
     private _raiseAmount: number = 0;
@@ -205,9 +208,17 @@ export default class Operation extends cc.Component {
 
     private async _refreshAddTime(alreadlyDelayTimes: number): Promise<void> {
         this._delayTimes = alreadlyDelayTimes;
-        this.addTimeCost.node.parent.active = !globalConfigStore.isChannelDiamondFreeMode;
-        if (globalConfigStore.isChannelDiamondFreeMode) return;
-        const cost = await this._seatPlayer.roomData.basicInfo.getDiamondPrice(alreadlyDelayTimes, DiamondConfigType.DiamondConfigTypeAddTime);
+        const isPrivateUcPackage = globalConfigStore.isChannelDiamondFreeMode;
+        const [cost, freeCount] = await Promise.all([
+            this._seatPlayer.roomData.basicInfo.getDiamondPrice(alreadlyDelayTimes + 1, DiamondConfigType.DiamondConfigTypeAddTime),
+            isPrivateUcPackage && globalConfigStore.privateFreeAddTimeDailyTimes > 0
+                ? TexasTableEvent.ReqAddTimeFreeCount()
+                : Promise.resolve(0)
+        ]);
+        if (!cc.isValid(this.node) || alreadlyDelayTimes !== this._delayTimes) return;
+        const shouldShowCharge = freeCount <= 0 && (!isPrivateUcPackage || cost > 0);
+        this.addTimeCost.node.parent.active = shouldShowCharge;
+        if (isPrivateUcPackage && shouldShowCharge) applyPrivateUcChargeIcon(this.addTimeCost, this.ucChargeIcon);
         this.addTimeCost.string = '' + cost;
     }
 
