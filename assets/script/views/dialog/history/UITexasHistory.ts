@@ -5,6 +5,7 @@ import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataReplay, { ReplayHandData } from '../../../data/room/texas/TexasGameRoomDataReplay';
 import { CCViewData } from '../../../data/system/CCViewData';
 import globalConfigStore, { GlobalConfigStore } from '../../../data/system/GlobalConfigStore';
+import privateUcChargeStore, { PrivateUcFee } from '../../../data/trade/PrivateUcChargeStore';
 import userStore from '../../../data/user/UserStore';
 import { canWatchPlayerCards, canWatchPublicCards } from '../../../game/util/ViewPlayerCardsConfig';
 import { StringHelper } from '../../../helper/StringHelper';
@@ -103,6 +104,8 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     private ucChargeIcon: cc.SpriteFrame = null;
     @property({ type: cc.Node, displayName: '收藏星星($favoBtn/Background/$star)' })
     private favoStar: cc.Node = null;
+    @property({ type: cc.Label, displayName: '收藏文案($favoBtn/Background/Label)' })
+    private favoTextLabel: cc.Label = null;
     // ==================== 运行时实例化的详情区块 ====================
     private flopSection: HistoryStreetSection = null;
     private turnSection: HistoryStreetSection = null;
@@ -117,6 +120,8 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
     private _totalPage: number = 0;
     private _detailsExpanded: boolean = false;
     private _isCollected: boolean = false;
+    private _collectCostNode: cc.Node = null;
+    private _collectCostLabel: cc.Label = null;
     private _dashboardItems: HistoryPlayerCardItem[] = [];
     private _playerCardPrefab: cc.Prefab = null;
     private static readonly COLLECTED_STAR_COLOR = cc.color(255, 200, 50);
@@ -128,6 +133,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         const blockComp = this.topBlockNode?.getComponent(cc.BlockInputEvents);
         if (blockComp) blockComp.enabled = false;
         this._buildSections();
+        this._buildCollectCostView();
         this._registerTouchEvents();
         this._loadPrefabs();
     }
@@ -516,6 +522,32 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         btnNode.opacity = enabled ? 255 : 128;
     }
 
+    private _buildCollectCostView(): void {
+        const container = new cc.Node('$CollectCostIcon');
+        container.parent = this.favoBtnNode;
+        container.setContentSize(53, 43);
+        container.setPosition(15.4, -19.1);
+        container.scale = 0.6;
+        container.active = false;
+        const sprite = container.addComponent(cc.Sprite);
+        sprite.spriteFrame = this.ucChargeIcon;
+        sprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
+
+        const labelNode = new cc.Node('$CollectCost');
+        labelNode.parent = container;
+        labelNode.anchorX = 0;
+        labelNode.setContentSize(120, 53);
+        labelNode.setPosition(30, 0);
+        const label = labelNode.addComponent(cc.Label);
+        label.fontSize = 40;
+        label.lineHeight = 42;
+        label.horizontalAlign = cc.Label.HorizontalAlign.LEFT;
+        label.verticalAlign = cc.Label.VerticalAlign.CENTER;
+
+        this._collectCostNode = container;
+        this._collectCostLabel = label;
+    }
+
     private _refreshPeekButton() {
         if (!canWatchPlayerCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0)) return;
         const hasHidden = hasHiddenCards(this._currentData, this._model, userStore.userRID);
@@ -678,6 +710,16 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         this._setButtonEnabled(this.favoBtnNode, canCollect);
         if (this.favoStar) {
             this.favoStar.color = canCollect && isCollected ? UITexasHistory.COLLECTED_STAR_COLOR : cc.Color.WHITE;
+        }
+        const price = privateUcChargeStore.getVisiblePrice(PrivateUcFee.ReplayCollect);
+        const showPrivateUcCost =
+            globalConfigStore.isChannelDiamondFreeMode && canCollect && !isCollected && price !== null;
+        if (this._collectCostNode) this._collectCostNode.active = showPrivateUcCost;
+        if (this._collectCostLabel && showPrivateUcCost) this._collectCostLabel.string = `${price}`;
+        if (this.favoTextLabel) {
+            this.favoTextLabel.node.y = showPrivateUcCost ? 20 : 0;
+            this.favoTextLabel.fontSize = showPrivateUcCost ? 28 : 40;
+            this.favoTextLabel.lineHeight = showPrivateUcCost ? 40 : 45;
         }
     }
     // ====================================================
