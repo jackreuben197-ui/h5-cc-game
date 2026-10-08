@@ -21,6 +21,7 @@ import { StringHelper } from '../../../helper/StringHelper';
 import { UISquidEndItemShowData } from '../../../views/dialog/squidover/UISquidEndItem';
 import globalConfigStore from '../../system/GlobalConfigStore';
 import diamondModel from '../../trade/DiamondModel';
+import privateUcChargeStore, { PrivateUcFee } from '../../trade/PrivateUcChargeStore';
 import texasGamePersonalSettings from './TexasGamePersonalSettings';
 import TexasGameRoomData from './TexasGameRoomData';
 
@@ -189,7 +190,11 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
         const isPrivateUcPackage = globalConfigStore.isChannelDiamondFreeMode;
         if (!isPrivateUcPackage) await diamondModel.reqDiamondConfig(dct);
         const sb = (this.bombpotStatusEnabled || this.pokerType === 2) ? this.sbante.sb * 2 : this.sbante.sb;
-        return diamondModel.getPrice(dct, configExt, sb, isPrivateUcPackage);
+        const price = diamondModel.getPrice(dct, configExt, sb, isPrivateUcPackage);
+        if (isPrivateUcPackage && dct === DiamondConfigType.DiamondConfigTypePayWatchOtherCard) {
+            return privateUcChargeStore.applyTieredPrice(PrivateUcFee.ViewOnePlayer, price, times);
+        }
+        return price;
     }
 
     /** 查看公共牌模式来自全局配置；收费价格仍来自对应的钻石型/UC 价格表。 */
