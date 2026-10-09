@@ -1,6 +1,5 @@
 import TexasGameRoomDataBasic from '../../data/room/texas/TexasGameRoomDataBasic';
 import globalConfigStore from '../../data/system/GlobalConfigStore';
-import { CurrencyType } from '../constant/CurrencyType';
 import { RoomOriginType } from '../constant/RoomOriginType';
 
 type AudienceRoomConfigKey = 'audience_friend_room' | 'audience_scoreboard_club_room' | 'audience_tribe_room';
@@ -31,10 +30,18 @@ function canWatchCards(configName: WatchCardConfigName, basicInfo: TexasGameRoom
 }
 
 function getAudienceRoomConfigKey(basicInfo: TexasGameRoomDataBasic): AudienceRoomConfigKey | null {
-    if (basicInfo.tribeID > 0) return 'audience_tribe_room';
-    if (basicInfo.originType === RoomOriginType.FRIEND) return 'audience_friend_room';
-    if (basicInfo.originType === RoomOriginType.CLUB && basicInfo.goldType === CurrencyType.SCORE_BOARD) {
-        return 'audience_scoreboard_club_room';
+    // shareTable 才是服务端区分内部桌/外部桌的字段。私域内部桌使用 UC，
+    // 不能再通过 goldType === SCORE_BOARD 判断，否则会被当成未配置房型直接放行。
+    if (basicInfo.shareTable === 1) {
+        if (basicInfo.originType === RoomOriginType.FRIEND) return 'audience_friend_room';
+        if (basicInfo.originType === RoomOriginType.CLUB) return 'audience_scoreboard_club_room';
+    }
+    if (
+        basicInfo.tribeID > 0 ||
+        basicInfo.originType === RoomOriginType.UNION ||
+        basicInfo.originType === RoomOriginType.CLUB
+    ) {
+        return 'audience_tribe_room';
     }
     return null;
 }

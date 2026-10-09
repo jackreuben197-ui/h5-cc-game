@@ -96,7 +96,7 @@ export class DiamondModel {
         return typeMap[typeExt] ?? null;
     }
 
-    /** 按精确盲注档位取价；折扣时段内使用 discount_price，配置缺失或价格为 0 时隐藏。 */
+    /** 按精确盲注档位取价；折扣时段内且 discount < 1 时使用折扣价。 */
     public getPrice(configType: number, typeExt: number, sb: number, useDiscountPrice: boolean = false): number {
         const config = this.getDiamondConfig(typeExt, configType);
         if (!config || config.status !== 1 || !Array.isArray(config.setting)) return 0;
@@ -106,7 +106,10 @@ export class DiamondModel {
         const endTime = Number(config.end_time);
         const now = Math.floor(Date.now() / 1000);
         const inDiscountWindow = startTime > 0 && endTime >= startTime && startTime <= now && now <= endTime;
-        const price = useDiscountPrice && inDiscountWindow ? Number(setting.discount_price) : Number(setting.price);
+        const discount = Number(setting.discount);
+        // CMS 中 discount=1 表示按原价收费，此时 discount_price 通常为 0，不能误判为免费。
+        const hasDiscount = Number.isFinite(discount) && discount >= 0 && discount < 1;
+        const price = useDiscountPrice && inDiscountWindow && hasDiscount ? Number(setting.discount_price) : Number(setting.price);
         return Number.isFinite(price) && price > 0 ? price : 0;
     }
 
