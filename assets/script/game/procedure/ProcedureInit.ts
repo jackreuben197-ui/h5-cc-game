@@ -22,17 +22,30 @@ export interface ProcedureInitParam {
     resetSession?: boolean;
 }
 
+const PRELOAD_QUIET_WINDOW = 2000;
+const PRELOAD_MAX_WAIT = 10000;
+const PRELOAD_CHECK_INTERVAL = 500;
+
 @traceClass()
 export default class ProcedureInit extends ProcedureBase {
     public override Name: string = 'ProcedureInit';
     private _resolveDone: (value: unknown) => void = () => undefined;
     private _waitLoadingCompletePromise: Promise<unknown> = Promise.resolve();
+    private static _preloadedOnce = false;
+    private _preloadReady = false;
+    private _preloadRequested = false;
+    private _preloadStarted = false;
+    private _preloadTimer: ReturnType<typeof setTimeout> | null = null;
+    private _preloadObserver: PerformanceObserver | null = null;
 
     protected override async lateEnter(param: ProcedureInitParam = {}): Promise<void> {
         super.lateEnter(param);
         if (param.resetSession) {
             this._resetSession();
         }
+        this._preloadReady = false;
+        this._preloadStarted = false;
+        this._preloadRequested = !!param.resetSession || ProcedureInit._preloadedOnce;
         this._waitLoadingCompletePromise = new Promise(resolve => (this._resolveDone = resolve));
         this._setCCC();
         this._setFit();
@@ -50,6 +63,47 @@ export default class ProcedureInit extends ProcedureBase {
         MainUtils.loadWebSDK();
         // 引擎设置完成，等待 H5 层发送消息驱动后续流程
         this.tracelog.debug('等待 H5 层指令...');
+        this._preloadReady = true;
+        if (this._preloadRequested) {
+            this._startPreload();
+        } else {
+            this._schedulePreload();
+        }
+    }
+
+    private _schedulePreload(): void {
+        const scheduledAt = Date.now();
+        let lastActivity = scheduledAt;
+        try {
+            this._preloadObserver = new PerformanceObserver(() => (lastActivity = Date.now()));
+            this._preloadObserver.observe({ entryTypes: ['resource'] });
+        } catch (e) {
+            this._preloadObserver = null;
+        }
+        const check = () => {
+            if (this._preloadStarted) return;
+            const now = Date.now();
+            const quiet = document.readyState === 'complete' && now - lastActivity >= PRELOAD_QUIET_WINDOW;
+            if (quiet || now - scheduledAt >= PRELOAD_MAX_WAIT) {
+                this._startPreload();
+                return;
+            }
+            this._preloadTimer = setTimeout(check, PRELOAD_CHECK_INTERVAL);
+        };
+        check();
+    }
+
+    private _startPreload(): void {
+        if (this._preloadStarted) return;
+        this._preloadStarted = true;
+        if (this._preloadTimer !== null) {
+            clearTimeout(this._preloadTimer);
+            this._preloadTimer = null;
+        }
+        if (this._preloadObserver) {
+            this._preloadObserver.disconnect();
+            this._preloadObserver = null;
+        }
         const loadTexasBg: DynamicLoadDefinition = {
             AsyncFunc: async () => {
                 dlTexasRoomBackground.getBackground(texasGamePersonalSettings.deskType);
@@ -61,6 +115,7 @@ export default class ProcedureInit extends ProcedureBase {
             preloadDefinition: [PreloadDefinitionGame, loadTexasBg],
             complete: () => {
                 this.tracelog.debug('ProcedureInit 核心资源加载完成，声音转入后台预热');
+                ProcedureInit._preloadedOnce = true;
                 this._resolveDone(true);
                 void soundManager.preload();
             },
@@ -73,6 +128,10 @@ export default class ProcedureInit extends ProcedureBase {
 
     public override async Leave(): Promise<void> {
         h5MessageManager.sendToH5('h5Hide', 1);
+        this._preloadRequested = true;
+        if (this._preloadReady) {
+            this._startPreload();
+        }
         await this._waitLoadingCompletePromise;
         super.Leave();
     }

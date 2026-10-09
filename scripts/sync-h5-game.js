@@ -15,6 +15,7 @@ const targetDir = path.join(rootDir, 'build-templates/web-mobile');
 const previewAssetsDir = path.join(rootDir, 'preview-templates/assets');
 const cocosBuildDir = path.join(rootDir, 'build');
 const h5AssetDirs = ['js', 'css', 'images', 'fonts', 'media', 'misc'];
+const i18nLocalesDir = 'i18n';
 
 // 默认【不】对 H5 源做 git reset —— 它是我们的活动工作副本（含本地分支改动，如
 // VITE_BRIDGE_TARGET / h5-cc-bridge 依赖），reset 会破坏这些改动。
@@ -67,9 +68,15 @@ function overrideI18nRuntime() {
         path.join(h5GameDir, 'public/h5-cc-i18n.min.js'),
         path.join(distDir, 'h5-cc-i18n.min.js'),
     ];
+    const localesSource = path.join(path.dirname(source), i18nLocalesDir);
     for (const target of targets) {
         fs.mkdirSync(path.dirname(target), { recursive: true });
         fs.copyFileSync(source, target);
+        const localesTarget = path.join(path.dirname(target), i18nLocalesDir);
+        fs.rmSync(localesTarget, { recursive: true, force: true });
+        if (fs.existsSync(localesSource)) {
+            fs.cpSync(localesSource, localesTarget, { recursive: true });
+        }
     }
     console.log(`\n[2.5/5] 已用本地 i18n runtime 覆盖 h5-game 产物: ${source}`);
 }
@@ -103,6 +110,7 @@ console.log('\n[3/5] 清理旧 H5 资源并复制 dist 文件...');
 try {
     cleanH5Assets(path.join(targetDir, 'assets'));
     cleanH5Assets(previewAssetsDir);
+    fs.rmSync(path.join(targetDir, i18nLocalesDir), { recursive: true, force: true });
 
     if (!fs.existsSync(targetDir)) {
         fs.mkdirSync(targetDir, { recursive: true });

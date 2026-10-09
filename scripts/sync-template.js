@@ -134,6 +134,15 @@ if (runtimeSynced) {
   console.log('  ✓ 根目录运行时已同步')
 }
 
+const I18N_LOCALES_DIR = 'i18n'
+const buildLocales = path.join(BUILD_DIR, I18N_LOCALES_DIR)
+const previewLocales = path.join(PREVIEW_DIR, I18N_LOCALES_DIR)
+fs.rmSync(previewLocales, { recursive: true, force: true })
+if (fs.existsSync(buildLocales)) {
+  copyDirSync(buildLocales, previewLocales)
+  console.log('  ✓ i18n 语言包已同步')
+}
+
 // --- 步骤 3：读取并提取 build index.html 资源 ---
 const src = fs.readFileSync(BUILD_HTML, 'utf-8')
 
