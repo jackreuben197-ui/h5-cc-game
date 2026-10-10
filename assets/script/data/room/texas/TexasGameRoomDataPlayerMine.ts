@@ -215,10 +215,15 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public showViewPlayerCardsButton: boolean = false;
     @observable(TexasGameRoomDataPlayerMine.VIEW_PLAYER_CARDS_COST)
     public viewPlayerCardsCost: number = 0;
+    /** 最近一次服务端返回的看牌次数；收费配置异步更新时用于重新计价。 */
+    public viewPlayerCardsPayTimes: number = 0;
     @observable(TexasGameRoomDataPlayerMine.SHOW_VIEW_PUBLIC_CARDS_BUTTON, { forceEmit: true })
     public showViewPublicCardsButton: boolean = false;
     @observable(TexasGameRoomDataPlayerMine.VIEW_PUBLIC_CARDS_COST)
     public viewPublicCardsCost: number = 0;
+    /** 发发看当前计价轮次，以及是否仍有免费次数。 */
+    public viewPublicCardsRound: number = 0;
+    public viewPublicCardsHasFreeCount: boolean = false;
     @observable(TexasGameRoomDataPlayerMine.EMOJI_DIALOG_OPEN_CHANGE)
     public emojiDialogOpen: boolean = false;
     @observable(TexasGameRoomDataPlayerMine.REPORT_DIALOG_OPEN_CHANGE)

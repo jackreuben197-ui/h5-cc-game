@@ -330,7 +330,6 @@ export async function registerH5Listeners(): Promise<void> {
             const typeMap = map[configType];
             diamondModel.setFromH5Sync(configType, typeMap && typeof typeMap === 'object' ? (typeMap as Record<number, any>) : {});
         }
-        _ploger.info('[H5Bridge] syncDiamondConfig 预填完成');
     });
     h5MessageManager.on('syncPrivateUcChargeConfig', payload => {
         privateUcChargeStore.setFromH5Sync(payload);

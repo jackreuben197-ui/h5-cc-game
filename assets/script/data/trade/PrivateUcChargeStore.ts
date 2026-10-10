@@ -26,7 +26,9 @@ export const PrivateUcFee = {
 
 export type PrivateUcFee = (typeof PrivateUcFee)[keyof typeof PrivateUcFee];
 
-class PrivateUcChargeStore {
+export class PrivateUcChargeStore extends cc.EventTarget {
+    public static readonly CONFIG_CHANGED = 'PRIVATE_UC_CHARGE_CONFIG_CHANGED';
+
     private _configs: Partial<Record<PrivateUcFeeType, PrivateUcChargeConfigItemExt>> = {};
 
     public setFromH5Sync(payload: SyncPrivateUcChargeConfigPayload): void {
@@ -56,6 +58,7 @@ class PrivateUcChargeStore {
             configs[feeType] = config;
         }
         this._configs = configs;
+        this.emit(PrivateUcChargeStore.CONFIG_CHANGED);
     }
 
     public getConfig(feeType: PrivateUcFeeType): PrivateUcChargeConfigItemExt | null {

@@ -10,7 +10,7 @@ import { bindData, IObservableBindings, observable, pureEvent } from '../../../c
 import { traceClass } from '../../../core/decorator/LogTrace';
 import { AnimateDisplayTypePlayType } from '../../../game/constant/AnimateDisplayType';
 import { ChatType } from '../../../game/constant/ChatType';
-import { DiamondConfigType } from '../../../game/constant/DiamondConfigType';
+import { DiamondConfigType, resolvePrivateUcDiamondConfigType } from '../../../game/constant/DiamondConfigType';
 import { GameTypeToTableCategory } from '../../../game/constant/LogicTypeConf';
 import { MushroomMode } from '../../../game/constant/Mushroom';
 import { SquidLeaveMode, SquidMode } from '../../../game/constant/Squid';
@@ -163,6 +163,22 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public shareTable: number;
 
     public async getDiamondPrice(times: number, dct: DiamondConfigType): Promise<number> {
+        const isPrivateUcPackage = globalConfigStore.isChannelDiamondFreeMode;
+        const { configExt, configType, sb } = this._resolveDiamondPriceContext(times, dct, isPrivateUcPackage);
+        // 渠道包只使用 H5 下发的 UC 配置，缺失即隐藏，绝不回源请求钻石配置接口。
+        if (!isPrivateUcPackage) await diamondModel.reqDiamondConfig(configType);
+        let price = diamondModel.getPrice(configType, configExt, sb, isPrivateUcPackage);
+        if (isPrivateUcPackage && dct === DiamondConfigType.DiamondConfigTypePayWatchOtherCard) {
+            price = privateUcChargeStore.applyTieredPrice(PrivateUcFee.ViewOnePlayer, price, times);
+        }
+        return price;
+    }
+
+    private _resolveDiamondPriceContext(
+        times: number,
+        dct: DiamondConfigType,
+        isPrivateUcPackage: boolean
+    ): { configExt: number; configType: number; sb: number } {
         let configExt: number;
         switch (dct) {
             case DiamondConfigType.DiamondConfigTypeViewPublicCards:
@@ -186,15 +202,17 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
                 );
                 break;
         }
-        // 渠道包只使用 H5 下发的 UC 配置，缺失即隐藏，绝不回源请求钻石配置接口。
-        const isPrivateUcPackage = globalConfigStore.isChannelDiamondFreeMode;
-        if (!isPrivateUcPackage) await diamondModel.reqDiamondConfig(dct);
-        const sb = (this.bombpotStatusEnabled || this.pokerType === 2) ? this.sbante.sb * 2 : this.sbante.sb;
-        const price = diamondModel.getPrice(dct, configExt, sb, isPrivateUcPackage);
-        if (isPrivateUcPackage && dct === DiamondConfigType.DiamondConfigTypePayWatchOtherCard) {
-            return privateUcChargeStore.applyTieredPrice(PrivateUcFee.ViewOnePlayer, price, times);
-        }
-        return price;
+        return {
+            configExt,
+            configType: isPrivateUcPackage ? resolvePrivateUcDiamondConfigType(dct) : dct,
+            sb: this._getEffectivePricingSmallBlind()
+        };
+    }
+
+    private _getEffectivePricingSmallBlind(): number {
+        // CMS setting.sb 定义的是房间小盲。官方包同样直接按 smallBlind 精确匹配；
+        // BombPot/短牌只影响玩法展示，不能把收费档位改成大盲。
+        return Number(this.sbante?.sb || 0);
     }
 
     /** 查看公共牌模式来自全局配置；收费价格仍来自对应的钻石型/UC 价格表。 */

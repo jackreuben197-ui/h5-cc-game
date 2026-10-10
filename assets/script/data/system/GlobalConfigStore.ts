@@ -14,7 +14,9 @@ export class GlobalConfigStore extends cc.EventTarget {
     public get isChannelDiamondFreeMode(): boolean {
         const value = this.get<boolean>('channel_package_diamond_free_mode');
         if (typeof value === 'boolean') return value;
-        return typeof document !== 'undefined' && document.documentElement.getAttribute('data-channel-package') === '1';
+        if (typeof document === 'undefined') return false;
+        const root = document.documentElement;
+        return root.getAttribute('data-channel-package') === '1' || root.hasAttribute('data-channel-package');
     }
 
     /** 私域牌桌创建时可选的最大加时次数。 */

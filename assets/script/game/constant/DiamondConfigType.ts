@@ -43,3 +43,22 @@ export enum DiamondConfigType {
     DiamondConfigTypeMJMttVideoRandom, //麻将mtt视频（随机验证）
     DiamondConfigTypeMJMttVideoOrder //麻将mtt视频（麦序）
 }
+
+/**
+ * 私域 UC 接口中“看全部手牌/看全部公共牌”沿用了服务端的 30/31。
+ * 这两个值与官方钻石枚举 28/29 不同，只能在私域取价时做别名转换。
+ */
+export const PrivateUcDiamondConfigType = {
+    PayWatchOtherCardWatchAll: 30,
+    ViewPublicCardsAll: 31
+} as const;
+
+export function resolvePrivateUcDiamondConfigType(configType: DiamondConfigType): number {
+    if (configType === DiamondConfigType.DiamondConfigTypePayWatchOtherCardWatchAll) {
+        return PrivateUcDiamondConfigType.PayWatchOtherCardWatchAll;
+    }
+    if (configType === DiamondConfigType.DiamondConfigTypeViewPublicCardsAll) {
+        return PrivateUcDiamondConfigType.ViewPublicCardsAll;
+    }
+    return configType;
+}

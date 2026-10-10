@@ -6,6 +6,7 @@ import { OperatorMine, OpertionType } from '../../../../data/room/texas/model/Op
 import texasGamePersonalSettings, { ShortCut, TexasGamePersonalSettings } from '../../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import globalConfigStore from '../../../../data/system/GlobalConfigStore';
+import diamondModel, { DiamondModel } from '../../../../data/trade/DiamondModel';
 import { AutoOperationTypeTexas } from '../../../../game/constant/AutoOpertaionType';
 import { DiamondConfigType } from '../../../../game/constant/DiamondConfigType';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
@@ -222,6 +223,18 @@ export default class Operation extends cc.Component {
         this.addTimeCost.string = '' + cost;
     }
 
+    @bindEvent(DiamondModel.CONFIG_CHANGED, { dataSource: 'diamondConfig', initIgnore: true })
+    private onDiamondConfigChanged(configType: number): void {
+        if (
+            Number(configType) === DiamondConfigType.DiamondConfigTypeAddTime &&
+            globalConfigStore.isChannelDiamondFreeMode &&
+            this._seatPlayer?.operator &&
+            this._canAddTime()
+        ) {
+            this._refreshAddTime(this._delayTimes);
+        }
+    }
+
     private _refreshUI(roundBetEqual: number) {
         this.btnAllIn.node.active = false;
         this.btnAllIn2.node.active = false;
@@ -410,6 +423,10 @@ export default class Operation extends cc.Component {
      */
     private _bindEventsAndRefresh() {
         if (this._seatPlayer == null) return;
-        autoBindEvents(this, { mine: this._seatPlayer, setting: this._seatPlayer.roomData.setting });
+        autoBindEvents(this, {
+            mine: this._seatPlayer,
+            setting: this._seatPlayer.roomData.setting,
+            diamondConfig: diamondModel
+        });
     }
 }

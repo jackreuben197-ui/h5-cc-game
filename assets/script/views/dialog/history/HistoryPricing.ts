@@ -1,7 +1,7 @@
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import globalConfigStore from '../../../data/system/GlobalConfigStore';
 import diamondModel from '../../../data/trade/DiamondModel';
-import { DiamondConfigType } from '../../../game/constant/DiamondConfigType';
+import { DiamondConfigType, resolvePrivateUcDiamondConfigType } from '../../../game/constant/DiamondConfigType';
 import TexasTableEvent from '../../scene/room/texas/events/TexasTableEvent';
 
 const PEEK_TIER_STEP = 10;
@@ -34,9 +34,11 @@ export default class HistoryPricing {
     private static async _getPrice(configType: DiamondConfigType, typeExt: number, roomData: TexasGameRoomData): Promise<number> {
         const isPrivateUcPackage = globalConfigStore.isChannelDiamondFreeMode;
         if (!isPrivateUcPackage) await diamondModel.reqDiamondConfig(configType);
+        const resolvedConfigType = isPrivateUcPackage ? resolvePrivateUcDiamondConfigType(configType) : configType;
         const basicInfo = roomData.basicInfo;
         const rawSb = basicInfo.sbante?.sb || 0;
-        const sb = (basicInfo.bombpotStatusEnabled || basicInfo.pokerType === 2) ? rawSb * 2 : rawSb;
-        return diamondModel.getPrice(configType, typeExt, sb, isPrivateUcPackage);
+        // CMS setting.sb 是小盲档位；与牌桌收费保持一致，不按 BombPot/短牌翻倍。
+        const sb = rawSb;
+        return diamondModel.getPrice(resolvedConfigType, typeExt, sb, isPrivateUcPackage);
     }
 }

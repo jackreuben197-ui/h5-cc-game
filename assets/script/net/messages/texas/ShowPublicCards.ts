@@ -39,6 +39,8 @@ export async function ShowPublicCards(data: ServerMessageShowPublicCards.AsObjec
         const freeCount = globalConfigStore.isChannelDiamondFreeMode && globalConfigStore.viewPublicCards.freeCount > 0
             ? await TexasTableEvent.ReqReplayViewPubFreeCount(roomData)
             : 0;
+        roomData.mine.viewPublicCardsRound = Number(data.round) || 0;
+        roomData.mine.viewPublicCardsHasFreeCount = freeCount > 0;
         const cost = freeCount > 0 ? 0 : await roomData.basicInfo.getViewPublicCardsPrice(Number(data.round));
         if (!canShowViewPublicCardsButton(roomData, seatNo, handNum, publicCardCount)) return;
         roomData.mine.viewPublicCardsCost = cost;
