@@ -1,4 +1,4 @@
-import { Code, Def, InsurancePotLimit, OutsCard, PotInsuranceBuy } from '@silenthill/agreement-web';
+import { Def, InsurancePotLimit, OutsCard, PotInsuranceBuy } from '@silenthill/agreement-web';
 import { traceClass } from '../../../core/decorator/LogTrace';
 import soundManager, { SoundEffectKey } from '../../../core/SoundManager';
 import { OperatorMine, OpertionType } from '../../../data/room/texas/model/Operator';
@@ -9,15 +9,15 @@ import TexasGameRoomDataPlayerMine from '../../../data/room/texas/TexasGameRoomD
 import TexasGameRoomDataPublicCards from '../../../data/room/texas/TexasGameRoomDataPublicCards';
 import TexasGameRoomDataSeatsStateManager from '../../../data/room/texas/TexasGameRoomDataSeatsStateManager';
 import globalConfigStore from '../../../data/system/GlobalConfigStore';
+import { DiamondConfigType } from '../../../game/constant/DiamondConfigType';
 import GameplayUtil from '../../../game/util/GameplayUtil';
 import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
-import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import AssetManager from '../../loader/AssetManager';
 import TexasTableEvent from '../../scene/room/texas/events/TexasTableEvent';
 
-const { ccclass, menu } = cc._decorator;
+const { ccclass, menu, property } = cc._decorator;
 
 /** 六档投保按钮枚举（仅本组件内部使用） */
 enum PoolType {
@@ -127,6 +127,9 @@ export type UIGameplaySecuritySettingParam = {
 @menu('Scene/Room/Texas/Insurance/UIInsuranceNewPanel')
 @traceClass()
 export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGameplaySecuritySettingParam> {
+    @property({ type: cc.SpriteFrame, displayName: '私域UC收费图标' })
+    private ucChargeIcon: cc.SpriteFrame = null;
+
     // ─── 数据源句柄 ──────────────────────────────────────
     private _player: TexasGameRoomDataPlayerMine = null;
     private _roomData: TexasGameRoomData = null;
@@ -188,8 +191,8 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
     private _countDownEnd: number = 0;
     private _countDownTotal: number = 0;
     private _isCounting: boolean = false;
-    private _clickedDelayTimes: number = 0;
     private _isCommitting: boolean = false;
+    private _delayPriceRefreshToken: number = 0;
     // ============================================================
     // 生命周期
     // ============================================================
@@ -208,7 +211,6 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
         this._cachedBuyList.length = 0;
         this._currentPotIndex = 0;
         this._currentPool = PoolType.THIRD;
-        this._clickedDelayTimes = 0;
         this._isCommitting = false;
         // 倒计时
         this._countDownTotal = Math.max(1, op.totalOpDuration || this._basic.insuranceOpduration || 30);
@@ -222,7 +224,7 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
         // 当前池
         this._refreshCurrentPot();
         this._publicCardsChange();
-        this._refreshDelayButton(op.alreadyDelayTImes || 0);
+        void this._refreshDelayButton(op.alreadyDelayTImes || 0);
         // 显示
         this._setVisible(true);
     }
@@ -720,31 +722,17 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
         if (!this._player?.roomData) return;
         const op = this._currentOperator();
         const delayCount = op?.alreadyDelayTImes || 0;
-        if (this._clickedDelayTimes > 1 || delayCount >= 2) {
-            this._refreshDelayButton(delayCount);
+        if (!this._canAddTime(delayCount)) {
+            void this._refreshDelayButton(delayCount);
             return;
         }
-        const consume = this._nextDelayConsumeType(delayCount);
-        ProtocolAgency.Send({
-            code: Code.MSG_D_ADD_TIME,
-            roomID: this._player.roomData.roomID,
-            matchID: this._player.roomData.matchID,
-            body: {
-                room: {
-                    roomId: this._player.roomData.roomID,
-                    matchId: this._player.roomData.matchID
-                },
-                consume,
-                directConsume: false
-            }
-        });
+        TexasTableEvent.AddTime(this._player, delayCount);
         const now = Date.now() / 1000;
         const addSeconds = delayCount === 0 ? 30 : 20;
         this._countDownEnd = Math.max(this._countDownEnd, now) + addSeconds;
         this._countDownTotal += addSeconds;
         if (op) op.alreadyDelayTImes = (op.alreadyDelayTImes || 0) + 1;
-        this._clickedDelayTimes += 1;
-        this._refreshDelayButton(op?.alreadyDelayTImes || delayCount + 1);
+        void this._refreshDelayButton(op?.alreadyDelayTImes || delayCount + 1);
     }
 
     private _onClickSort(byGraphics: boolean): void {
@@ -944,7 +932,6 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
         this._cachedBuyList.length = 0;
         this._currentPotIndex = 0;
         this._overOutsPayValue = 0;
-        this._clickedDelayTimes = 0;
         this._isCommitting = false;
         this._destroyArray(this._multiToggleNodes);
         this._destroyArray(this._playerClones);
@@ -979,8 +966,9 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
         });
     }
 
-    private _nextDelayConsumeType(delayCount: number): Def.ConsumeTypeMap[keyof Def.ConsumeTypeMap] {
-        return (delayCount === 0 ? Def.ConsumeType.CT_DELAY_2 : Def.ConsumeType.CT_DELAY_3) as Def.ConsumeTypeMap[keyof Def.ConsumeTypeMap];
+    private _canAddTime(delayCount: number): boolean {
+        const limit = globalConfigStore.resolveGameDelayTimes(this._basic?.limitDelayTimes || 0);
+        return !this._isCommitting && delayCount < limit;
     }
 
     private _setDelayButtonEnabled(enabled: boolean): void {
@@ -990,15 +978,31 @@ export default class UIInsuranceNewPanel extends UIComponentBaseDialog<UIGamepla
         if (!enabled && this.textDelayBean) this.textDelayBean.string = '0';
     }
 
-    private _refreshDelayButton(delayCount: number): void {
-        const enabled = this._clickedDelayTimes <= 1 && delayCount < 2 && !this._isCommitting;
+    private async _refreshDelayButton(delayCount: number): Promise<void> {
+        const refreshToken = ++this._delayPriceRefreshToken;
+        const enabled = this._canAddTime(delayCount);
+        if (this.buttonDelay) this.buttonDelay.active = enabled;
         this._setDelayButtonEnabled(enabled);
-        const showPrice = !globalConfigStore.isChannelDiamondFreeMode;
-        if (this.textDelayBean) this.textDelayBean.node.active = showPrice;
-        const diamondIcon = this.buttonDelay?.getChildByName('Image_bean');
-        if (diamondIcon) diamondIcon.active = showPrice;
+        const chargeIcon = this.buttonDelay?.getChildByName('Image_bean');
+        if (this.textDelayBean) this.textDelayBean.node.active = false;
+        if (chargeIcon) chargeIcon.active = false;
+        if (!enabled || !this._basic) return;
+
+        const isPrivateUcPackage = globalConfigStore.isChannelDiamondFreeMode;
+        const cost = await this._basic.getDiamondPrice(delayCount + 1, DiamondConfigType.DiamondConfigTypeAddTime);
+        if (refreshToken !== this._delayPriceRefreshToken || !cc.isValid(this.node) || !this._canAddTime(delayCount)) return;
+
+        const showCharge = !isPrivateUcPackage || cost > 0;
         if (this.textDelayBean) {
-            this.textDelayBean.string = enabled ? `${2 * Math.pow(2, delayCount)}` : '0';
+            this.textDelayBean.node.active = showCharge;
+            this.textDelayBean.string = `${cost}`;
+        }
+        if (chargeIcon) {
+            chargeIcon.active = showCharge;
+            if (isPrivateUcPackage && showCharge && this.ucChargeIcon) {
+                const sprite = chargeIcon.getComponent(cc.Sprite);
+                if (sprite) sprite.spriteFrame = this.ucChargeIcon;
+            }
         }
     }
 

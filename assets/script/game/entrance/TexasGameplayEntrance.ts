@@ -378,6 +378,7 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         roomData.basicInfo.subRoomConfig = this._roomInfo.subConfigsList ?? [];
         roomData.basicInfo.roomName = this._roomInfo.name;
         roomData.basicInfo.roomType = this._roomInfo.roomType;
+        roomData.basicInfo.limitDelayTimes = this._roomInfo.limitDelayTimes;
         roomData.basicInfo.delaySeeCard = this._roomInfo.delayViewCardOn > 0;
         roomData.basicInfo.invitationCode = this._roomInfo.invitationCode;
         roomData.basicInfo.sbante = { sb: this._roomInfo.sb, ante: this._roomInfo.ante };

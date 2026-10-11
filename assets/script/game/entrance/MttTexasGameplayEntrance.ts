@@ -255,6 +255,7 @@ export default class MttTexasGameplayEntrance extends AGameplayEntrance {
         const displayMatchName = await resolveTemplateTextByKey(this._mttDetails.mtt.name);
         roomData.basicInfo.roomName = displayMatchName;
         roomData.basicInfo.roomType = this._mttDetails.mtt.type;
+        roomData.basicInfo.limitDelayTimes = this._mttDetails.mtt.limitDelayTimes;
         roomData.basicInfo.delaySeeCard = this._mttDetails.mtt.delayViewCardOn > 0;
         roomData.basicInfo.invitationCode = this._mttDetails.mtt.invitationCode;
         // 没法取到的数据(enterRoom后获取把)

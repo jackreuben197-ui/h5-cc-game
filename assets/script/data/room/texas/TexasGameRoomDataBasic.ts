@@ -62,6 +62,8 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
     public pokerType: number;
     public betType: number;
     public opDuration: number;
+    /** 当前牌桌设置的单轮操作加时上限。 */
+    public limitDelayTimes: number = 0;
     // 房间存续期（秒）；0 表示无限。战绩面板用它配合 summary.startTime 算剩余时间。
     public playDuration: number = 0;
     public isMtt: boolean;
