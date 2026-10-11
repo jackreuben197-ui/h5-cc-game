@@ -6,10 +6,17 @@ import TexasGameRoomData from '../../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import ccviewData, { CCViewData } from '../../../../data/system/CCViewData';
 import globalConfigStore, { GlobalConfigStore } from '../../../../data/system/GlobalConfigStore';
+import diamondModel, { DiamondModel } from '../../../../data/trade/DiamondModel';
+import privateUcChargeStore, { PrivateUcChargeStore } from '../../../../data/trade/PrivateUcChargeStore';
 import { AntiCheatType } from '../../../../game/constant/AntiCheatType';
 import { ButtonState } from '../../../../game/constant/Constants';
+import {
+    DiamondConfigType,
+    resolvePrivateUcDiamondConfigType
+} from '../../../../game/constant/DiamondConfigType';
 import { MicrophoneIconState } from '../../../../game/constant/MicrophoneIconState';
 import { VideoModel } from '../../../../game/constant/VideoModel';
+import { ViewPlayerCardsMode } from '../../../../game/constant/ViewPlayerCardsMode';
 import { canWatchPlayerCards, canWatchPublicCards } from '../../../../game/util/ViewPlayerCardsConfig';
 import h5MessageManager from '../../../../H5MsgMgr';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
@@ -164,7 +171,9 @@ export default class OtherBindings extends cc.Component {
         autoBindEvents(this, {
             mine: this._roomData.mine,
             ccviewData: ccviewData,
+            diamondConfig: diamondModel,
             globalConfig: globalConfigStore,
+            privateUcConfig: privateUcChargeStore,
             userStore: userStore
         });
     }
@@ -207,6 +216,53 @@ export default class OtherBindings extends cc.Component {
         this.onShowViewPlayerCardsButtonChanged(this._roomData.mine.showViewPlayerCardsButton);
         this.onShowViewPublicCardsButtonChanged(this._roomData.mine.showViewPublicCardsButton);
         this._refreshDiamondPriceVisibility();
+    }
+
+    @bindEvent(DiamondModel.CONFIG_CHANGED, { dataSource: 'diamondConfig', initIgnore: true })
+    private onDiamondConfigChanged(configType: number): void {
+        if (!globalConfigStore.isChannelDiamondFreeMode) return;
+        const playerCardsConfigType =
+            this._roomData.basicInfo.viewPlayerCards === ViewPlayerCardsMode.SPECIFY
+                ? DiamondConfigType.DiamondConfigTypePayWatchOtherCard
+                : DiamondConfigType.DiamondConfigTypePayWatchOtherCardWatchAll;
+        if (Number(configType) === resolvePrivateUcDiamondConfigType(playerCardsConfigType)) {
+            this._refreshViewPlayerCardsPrice();
+        }
+
+        const publicCardsConfigType =
+            globalConfigStore.viewPublicCards.viewType === 2
+                ? DiamondConfigType.DiamondConfigTypeViewPublicCardsAll
+                : DiamondConfigType.DiamondConfigTypeViewPublicCards;
+        if (Number(configType) === resolvePrivateUcDiamondConfigType(publicCardsConfigType)) {
+            this._refreshViewPublicCardsPrice();
+        }
+    }
+
+    @bindEvent(PrivateUcChargeStore.CONFIG_CHANGED, { dataSource: 'privateUcConfig', initIgnore: true })
+    private onPrivateUcChargeConfigChanged(): void {
+        if (globalConfigStore.isChannelDiamondFreeMode) this._refreshViewPlayerCardsPrice();
+    }
+
+    private async _refreshViewPlayerCardsPrice(): Promise<void> {
+        const mine = this._roomData?.mine;
+        if (!mine?.showViewPlayerCardsButton) return;
+        const payTimes = mine.viewPlayerCardsPayTimes;
+        const configType =
+            this._roomData.basicInfo.viewPlayerCards === ViewPlayerCardsMode.SPECIFY
+                ? DiamondConfigType.DiamondConfigTypePayWatchOtherCard
+                : DiamondConfigType.DiamondConfigTypePayWatchOtherCardWatchAll;
+        const cost = await this._roomData.basicInfo.getDiamondPrice(payTimes, configType);
+        if (!cc.isValid(this.node) || !mine.showViewPlayerCardsButton || mine.viewPlayerCardsPayTimes !== payTimes) return;
+        mine.viewPlayerCardsCost = cost;
+    }
+
+    private async _refreshViewPublicCardsPrice(): Promise<void> {
+        const mine = this._roomData?.mine;
+        if (!mine?.showViewPublicCardsButton) return;
+        const round = mine.viewPublicCardsRound;
+        const cost = mine.viewPublicCardsHasFreeCount ? 0 : await this._roomData.basicInfo.getViewPublicCardsPrice(round);
+        if (!cc.isValid(this.node) || !mine.showViewPublicCardsButton || mine.viewPublicCardsRound !== round) return;
+        mine.viewPublicCardsCost = cost;
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.SHOW_VIEW_PLAYER_CARDS_BUTTON, 'mine')

@@ -110,7 +110,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             if (data.roomInfo.ignorePreflop && data.roomInfo.isAlwaysSecondPcs) {
                 roomData.basicInfo.setBombpotStatusEnabled(true, AnimateDisplayTypePlayType.Staic);
             } else {
-                roomData.basicInfo.setBombpotStatusEnabled(true, AnimateDisplayTypePlayType.Staic);
+                roomData.basicInfo.setBombpotStatusEnabled(false, AnimateDisplayTypePlayType.Staic);
             }
         }
         const playerMap: Map<number, Player.AsObject> = new Map();

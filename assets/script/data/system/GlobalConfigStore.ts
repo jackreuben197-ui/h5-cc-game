@@ -14,7 +14,9 @@ export class GlobalConfigStore extends cc.EventTarget {
     public get isChannelDiamondFreeMode(): boolean {
         const value = this.get<boolean>('channel_package_diamond_free_mode');
         if (typeof value === 'boolean') return value;
-        return typeof document !== 'undefined' && document.documentElement.getAttribute('data-channel-package') === '1';
+        if (typeof document === 'undefined') return false;
+        const root = document.documentElement;
+        return root.getAttribute('data-channel-package') === '1' || root.hasAttribute('data-channel-package');
     }
 
     /** 私域牌桌创建时可选的最大加时次数。 */
@@ -22,9 +24,20 @@ export class GlobalConfigStore extends cc.EventTarget {
         return this._readNonNegativeInteger('private_game_delay_times');
     }
 
-    /** 私域牌桌加时的每日免费次数。 */
-    public get privateFreeAddTimeDailyTimes(): number {
-        return this._readNonNegativeInteger('private_free_addtime_daily_times');
+    /** 当前包的加时次数上限；旧配置缺失时沿用原有 2 次。 */
+    public get gameDelayTimes(): number {
+        const key = this.isChannelDiamondFreeMode ? 'private_game_delay_times' : 'game_delay_times';
+        const raw = this.get<unknown>(key);
+        if (raw === undefined || raw === null || raw === '') return 2;
+        const value = Number(raw);
+        return Number.isFinite(value) && value >= 0 ? Math.floor(value) : 2;
+    }
+
+    /** 房间可自定义更小的次数，但不能超过当前包的 CMS 上限。 */
+    public resolveGameDelayTimes(roomLimit: number = 0): number {
+        const configuredLimit = this.gameDelayTimes;
+        const normalizedRoomLimit = this._toNonNegativeInteger(roomLimit);
+        return normalizedRoomLimit > 0 ? Math.min(normalizedRoomLimit, configuredLimit) : configuredLimit;
     }
 
     /** 当前包使用的查看公共牌规则；1=逐条街查看，2=一次查看全部。 */

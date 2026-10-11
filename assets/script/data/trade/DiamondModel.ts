@@ -25,6 +25,7 @@ export interface DiamondConfigSetting {
     record_ratio?: number;
     decimal_type?: number;
 }
+
 // type DiamondConfigSetting struct {
 // 	SmallBlind    uint64  `json:"sb"`                     // 小盲
 // 	BlindTag      int8    `json:"blind_type"`             // 盲注分类 1 微 2 小 3 中 4 大
@@ -47,7 +48,9 @@ export interface DiamondConfigSetting {
 // 	EndTime    int64                   `json:"end_time"`    // 折扣结束时间
 // }
 
-export class DiamondModel {
+export class DiamondModel extends cc.EventTarget {
+    public static readonly CONFIG_CHANGED = 'DIAMOND_CONFIG_CHANGED';
+
     // 钻石配置表：主键 config_type，值为以 type_ext 为键的对象。
     private _diamondMap: Map<number, DiamondTypeMap> = new Map();
 
@@ -62,10 +65,12 @@ export class DiamondModel {
             }
         }
         this._diamondMap.set(configType, typeMap);
+        this.emit(DiamondModel.CONFIG_CHANGED, configType);
     }
     // H5 bridge 下发的是当前登录态的权威配置；空 map 也要覆盖，避免沿用上一会话缓存。
     public setFromH5Sync(configType: number, typeMap: DiamondTypeMap): void {
         this._diamondMap.set(configType, typeMap || {});
+        this.emit(DiamondModel.CONFIG_CHANGED, configType);
     }
 
     // 按需拉取指定 config_type 的配置；已有缓存时直接 resolve，不发网络请求。
@@ -96,7 +101,7 @@ export class DiamondModel {
         return typeMap[typeExt] ?? null;
     }
 
-    /** 按精确盲注档位取价；折扣时段内使用 discount_price，配置缺失或价格为 0 时隐藏。 */
+    /** 按精确盲注档位取价；折扣时段内且 discount < 1 时使用折扣价。 */
     public getPrice(configType: number, typeExt: number, sb: number, useDiscountPrice: boolean = false): number {
         const config = this.getDiamondConfig(typeExt, configType);
         if (!config || config.status !== 1 || !Array.isArray(config.setting)) return 0;
@@ -106,8 +111,12 @@ export class DiamondModel {
         const endTime = Number(config.end_time);
         const now = Math.floor(Date.now() / 1000);
         const inDiscountWindow = startTime > 0 && endTime >= startTime && startTime <= now && now <= endTime;
-        const price = useDiscountPrice && inDiscountWindow ? Number(setting.discount_price) : Number(setting.price);
-        return Number.isFinite(price) && price > 0 ? price : 0;
+        const discount = Number(setting.discount);
+        // CMS 中 discount=1 表示按原价收费，此时 discount_price 通常为 0，不能误判为免费。
+        const hasDiscount = Number.isFinite(discount) && discount >= 0 && discount < 1;
+        const useActiveDiscount = useDiscountPrice && inDiscountWindow && hasDiscount;
+        const rawPrice = useActiveDiscount ? Number(setting.discount_price) : Number(setting.price);
+        return Number.isFinite(rawPrice) && rawPrice > 0 ? rawPrice : 0;
     }
 
     public getDiamondConfigTypeExt(originType: number, share: number, isMTT: boolean, addTimeTimes: number): number {

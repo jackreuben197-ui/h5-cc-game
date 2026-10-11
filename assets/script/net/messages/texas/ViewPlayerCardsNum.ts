@@ -20,6 +20,7 @@ export async function ViewPlayerCardsNum(data: ServerMessageViewPlayerCardsNum.A
         roomData.basicInfo.viewPlayerCards === ViewPlayerCardsMode.SPECIFY
             ? DiamondConfigType.DiamondConfigTypePayWatchOtherCard
             : DiamondConfigType.DiamondConfigTypePayWatchOtherCardWatchAll;
+    roomData.mine.viewPlayerCardsPayTimes = Number(data.payTimes) || 0;
     const cost = await roomData.basicInfo.getDiamondPrice(data.payTimes, configType);
     if (!canShowViewPlayerCardsButton(roomData, seatNo, handNum)) return;
     roomData.mine.viewPlayerCardsCost = cost;

@@ -5,8 +5,10 @@ import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataReplay, { ReplayHandData } from '../../../data/room/texas/TexasGameRoomDataReplay';
 import ccviewData, { CCViewData } from '../../../data/system/CCViewData';
 import globalConfigStore, { GlobalConfigStore } from '../../../data/system/GlobalConfigStore';
-import privateUcChargeStore, { PrivateUcFee } from '../../../data/trade/PrivateUcChargeStore';
+import diamondModel, { DiamondModel } from '../../../data/trade/DiamondModel';
+import privateUcChargeStore, { PrivateUcChargeStore, PrivateUcFee } from '../../../data/trade/PrivateUcChargeStore';
 import userStore from '../../../data/user/UserStore';
+import { DiamondConfigType, resolvePrivateUcDiamondConfigType } from '../../../game/constant/DiamondConfigType';
 import { canWatchPlayerCards, canWatchPublicCards } from '../../../game/util/ViewPlayerCardsConfig';
 import { StringHelper } from '../../../helper/StringHelper';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
@@ -238,7 +240,12 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
 
     private _bindEventsAndRefresh() {
         if (!this._roomData) return;
-        autoBindEvents(this, { globalConfig: globalConfigStore, replay: this._roomData.replay });
+        autoBindEvents(this, {
+            diamondConfig: diamondModel,
+            globalConfig: globalConfigStore,
+            privateUcConfig: privateUcChargeStore,
+            replay: this._roomData.replay
+        });
     }
     // ====================================================
     // 数据订阅
@@ -266,6 +273,31 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
             this._refreshViewPubButton();
         }
         this._refreshDiamondElements();
+    }
+
+    @bindEvent(DiamondModel.CONFIG_CHANGED, { dataSource: 'diamondConfig', initIgnore: true })
+    private onDiamondConfigChanged(configType: number): void {
+        if (!globalConfigStore.isChannelDiamondFreeMode || !this._model) return;
+        if (
+            Number(configType) ===
+            resolvePrivateUcDiamondConfigType(DiamondConfigType.DiamondConfigTypePayWatchOtherCardWatchAll)
+        ) {
+            this._refreshPeekButton();
+        }
+        const publicCardsConfigType =
+            globalConfigStore.viewPublicCards.viewType === 2
+                ? DiamondConfigType.DiamondConfigTypeViewPublicCardsAll
+                : DiamondConfigType.DiamondConfigTypeViewPublicCards;
+        if (Number(configType) === resolvePrivateUcDiamondConfigType(publicCardsConfigType)) {
+            this._refreshViewPubButton();
+        }
+    }
+
+    @bindEvent(PrivateUcChargeStore.CONFIG_CHANGED, { dataSource: 'privateUcConfig', initIgnore: true })
+    private onPrivateUcChargeConfigChanged(): void {
+        if (!globalConfigStore.isChannelDiamondFreeMode || !this._model) return;
+        this._refreshCollectShow(this._isCollected);
+        this._refreshPeekButton();
     }
 
     private _refreshWatchCardVisibility(): void {

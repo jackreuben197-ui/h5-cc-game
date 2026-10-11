@@ -5,6 +5,7 @@ import TexasGameRoomData from '../../../../../data/room/texas/TexasGameRoomData'
 import TexasGameRoomDataChat from '../../../../../data/room/texas/TexasGameRoomDataChat';
 import TexasGameRoomDataPlayer from '../../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../../data/room/texas/TexasGameRoomDataPlayerMine';
+import globalConfigStore from '../../../../../data/system/GlobalConfigStore';
 import userStore from '../../../../../data/user/UserStore';
 import UserStoreUtils from '../../../../../data/user/UserStoreUtils';
 import { BringInMode } from '../../../../../game/constant/BringInMode';
@@ -27,7 +28,6 @@ import {
     WebRoomCenterGameWatchNum,
     WebRoomCenterHistoryViewPublicCards,
     WebRoomCenterHistoryViewPublicCardsFreeCount,
-    WebUserActionRemaind,
     WebUserDiamondsWallet,
     WebUserRoom,
     WebUserRoomBringin,
@@ -157,6 +157,13 @@ export default class TexasTableEvent {
                 this.tracelog.error(`Sitdown 坐下查询带入失败 ${response.code}`);
                 return;
             }
+            const entryClubID = Number(seatData.roomData.basicInfo.clubID || 0);
+            const channelClubID = globalConfigStore.isChannelDiamondFreeMode ? entryClubID : 0;
+            const lastBringOut = response.data.last_bring_out;
+            // 私域渠道包只能使用进桌渠道的俱乐部钱包。旧版可能留下其他俱乐部的回桌记录，
+            // 不能再用该记录覆盖 clubId，否则加时/看牌请求会继续在服务端绑定到错误的钱包。
+            const compatibleLastBringOut =
+                lastBringOut != null && (channelClubID <= 0 || Number(lastBringOut.club_id) === channelClubID) ? lastBringOut : null;
             // // 异步请求期间可能已被清理
             // if (!seatData.mine) {
             //     this.tracelog.warn('Sitdown mainPlayer is null, abort');
@@ -171,7 +178,7 @@ export default class TexasTableEvent {
                 bringIn: 0,
                 autoOnTable: 0,
                 autoUseWallet: false,
-                returnOrNew: response.data.return_table ? 1 : 0,
+                returnOrNew: response.data.return_table && (lastBringOut == null || compatibleLastBringOut != null) ? 1 : 0,
                 store: 0,
                 clubId: 0,
                 applyBringIn: false,
@@ -188,18 +195,25 @@ export default class TexasTableEvent {
             }
             // this.tracelog.debug(seatedData.autoOnTable, seatData.roomData.basicInfo.retainMinRate * seatData.roomData.basicInfo.sbante.sb * 2);
             userStore.fillWalletInfo(response.data.wallet);
-            if (response.data.wallet.length == 1) {
+            const entryClubWallet = response.data.wallet.find(wallet => wallet.club_id == entryClubID);
+            if (globalConfigStore.isChannelDiamondFreeMode && entryClubID > 0) {
+                // 私域包必须沿用进桌时的渠道俱乐部，不能在多钱包场景默认取接口返回的第一个钱包。
+                seatData.currentWalletClubID = entryClubID;
+                if (!entryClubWallet) {
+                    this.tracelog.error('Sitdown channel wallet not found', entryClubID);
+                }
+            } else if (response.data.wallet.length == 1) {
                 seatData.currentWalletClubID = response.data.wallet[0].club_id;
             }
             // 联盟币
             if (seatData.roomData.basicInfo.bringInType == BringInMode.CURRENCY) {
                 // 有带出
-                if (response.data.last_bring_out != null) {
-                    let returnAmount = response.data.last_bring_out.to_wallet + response.data.last_bring_out.fee;
+                if (compatibleLastBringOut != null) {
+                    let returnAmount = compatibleLastBringOut.to_wallet + compatibleLastBringOut.fee;
                     // 要带回桌子上金额
-                    let bringToTable = response.data.last_bring_out.to_wallet + response.data.last_bring_out.fee - seatData.roomData.basicInfo.deposit;
-                    const returnFromWallet = response.data.last_bring_out.to_wallet;
-                    const walletAmount = userStore.getWallet(response.data.last_bring_out.club_id)?.gold;
+                    let bringToTable = compatibleLastBringOut.to_wallet + compatibleLastBringOut.fee - seatData.roomData.basicInfo.deposit;
+                    const returnFromWallet = compatibleLastBringOut.to_wallet;
+                    const walletAmount = userStore.getWallet(compatibleLastBringOut.club_id)?.gold;
                     // 要反桌，但是钱包钱不够了
                     if (bringToTable > 0 && returnFromWallet > walletAmount) {
                         this.tracelog.warn('return table, not enough from wallet', 'need:', returnFromWallet, 'current:', walletAmount);
@@ -208,7 +222,7 @@ export default class TexasTableEvent {
                         return;
                     }
                     seatedData.bringIn = returnAmount;
-                    seatedData.clubId = response.data.last_bring_out.club_id;
+                    seatedData.clubId = compatibleLastBringOut.club_id;
                     // 钱包够,没输光(反桌)
                     if (bringToTable > 0) {
                         // 没有藏钱直接坐下 || 如果自动藏钱而且钱大于自动上桌数字
@@ -276,13 +290,13 @@ export default class TexasTableEvent {
             }
             // 记分牌(朋友卓)
             // 有带出
-            if (response.data.last_bring_out != null) {
-                let returnAmount = response.data.last_bring_out.to_wallet + response.data.last_bring_out.fee;
+            if (compatibleLastBringOut != null) {
+                let returnAmount = compatibleLastBringOut.to_wallet + compatibleLastBringOut.fee;
                 // 要带回桌子上金额
-                const bringToTable = response.data.last_bring_out.to_wallet + response.data.last_bring_out.fee - seatData.roomData.basicInfo.deposit;
-                const returnFromWallet = response.data.last_bring_out.to_wallet;
+                const bringToTable = compatibleLastBringOut.to_wallet + compatibleLastBringOut.fee - seatData.roomData.basicInfo.deposit;
+                const returnFromWallet = compatibleLastBringOut.to_wallet;
                 seatedData.bringIn = returnAmount;
-                seatedData.clubId = response.data.last_bring_out.club_id;
+                seatedData.clubId = compatibleLastBringOut.club_id;
                 // 钱包够,没输光(反桌)
                 if (bringToTable > 0) {
                     ProtocolAgency.Send({
@@ -902,17 +916,6 @@ export default class TexasTableEvent {
                 roomData.replay.setViewPubFreeCount(count);
                 return count;
             },
-            () => 0
-        );
-    }
-
-    /** 牌桌加时的当日剩余免费次数；上限来自全局配置，接口只返回当前剩余量。 */
-    public static ReqAddTimeFreeCount(): Promise<number> {
-        return WWW.Instance.CommonAPI({
-            web_class: WebUserActionRemaind,
-            body: WebUserActionRemaind.Request({})
-        }).then(
-            (res: any) => Math.max(0, Number(res?.data?.addtime_free_count) || 0),
             () => 0
         );
     }

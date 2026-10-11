@@ -181,6 +181,8 @@ async function calculateViewPublicCardsCost(
     const freeCount = globalConfigStore.isChannelDiamondFreeMode && globalConfigStore.viewPublicCards.freeCount > 0
         ? await TexasTableEvent.ReqReplayViewPubFreeCount(roomData)
         : 0;
+    roomData.mine.viewPublicCardsRound = Number(round) || 0;
+    roomData.mine.viewPublicCardsHasFreeCount = freeCount > 0;
     const cost = freeCount > 0 ? 0 : await roomData.basicInfo.getViewPublicCardsPrice(Number(round));
     if (!canShowViewPublicCardsButton(roomData, seatNo, handNum, publicCardCount)) return;
     roomData.mine.viewPublicCardsCost = cost;

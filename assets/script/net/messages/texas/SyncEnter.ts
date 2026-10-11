@@ -111,7 +111,7 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
         if (data.roomInfo.ignorePreflop && data.roomInfo.isAlwaysSecondPcs) {
             roomData.basicInfo.setBombpotStatusEnabled(true, AnimateDisplayTypePlayType.Staic);
         } else {
-            roomData.basicInfo.setBombpotStatusEnabled(true, AnimateDisplayTypePlayType.Staic);
+            roomData.basicInfo.setBombpotStatusEnabled(false, AnimateDisplayTypePlayType.Staic);
         }
     }
     const playerMap: Map<number, Player.AsObject> = new Map();

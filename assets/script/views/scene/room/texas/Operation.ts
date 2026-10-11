@@ -6,6 +6,7 @@ import { OperatorMine, OpertionType } from '../../../../data/room/texas/model/Op
 import texasGamePersonalSettings, { ShortCut, TexasGamePersonalSettings } from '../../../../data/room/texas/TexasGamePersonalSettings';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import globalConfigStore from '../../../../data/system/GlobalConfigStore';
+import diamondModel, { DiamondModel } from '../../../../data/trade/DiamondModel';
 import { AutoOperationTypeTexas } from '../../../../game/constant/AutoOpertaionType';
 import { DiamondConfigType } from '../../../../game/constant/DiamondConfigType';
 import { CPErrorCode } from '../../../../i18n/CPErrorCode';
@@ -181,6 +182,7 @@ export default class Operation extends cc.Component {
 
     public initData(mine: TexasGameRoomDataPlayerMine) {
         this._seatPlayer = mine;
+        this._delayTimes = mine.operator?.alreadyDelayTImes || 0;
         this.addTimeButton.node.active = this._canAddTime();
         this._autoOpPanel.initData(mine);
         this._bindEventsAndRefresh();
@@ -188,7 +190,9 @@ export default class Operation extends cc.Component {
 
     private _canAddTime(): boolean {
         const roomData = this._seatPlayer?.roomData;
-        return !!roomData && (!roomData.basicInfo.isMtt || roomData.mtt.delayTimeType !== 0);
+        if (!roomData || (roomData.basicInfo.isMtt && roomData.mtt.delayTimeType === 0)) return false;
+        const limit = globalConfigStore.resolveGameDelayTimes(roomData.basicInfo.limitDelayTimes);
+        return this._delayTimes < limit;
     }
 
     public adjustPostion(targeNode: cc.Node, pos: cc.Vec3, scale: number) {
@@ -208,18 +212,34 @@ export default class Operation extends cc.Component {
 
     private async _refreshAddTime(alreadlyDelayTimes: number): Promise<void> {
         this._delayTimes = alreadlyDelayTimes;
+        const canAddTime = this._canAddTime();
+        this.addTimeButton.node.active = canAddTime;
+        if (!canAddTime) {
+            this.addTimeCost.node.parent.active = false;
+            return;
+        }
         const isPrivateUcPackage = globalConfigStore.isChannelDiamondFreeMode;
-        const [cost, freeCount] = await Promise.all([
-            this._seatPlayer.roomData.basicInfo.getDiamondPrice(alreadlyDelayTimes + 1, DiamondConfigType.DiamondConfigTypeAddTime),
-            isPrivateUcPackage && globalConfigStore.privateFreeAddTimeDailyTimes > 0
-                ? TexasTableEvent.ReqAddTimeFreeCount()
-                : Promise.resolve(0)
-        ]);
-        if (!cc.isValid(this.node) || alreadlyDelayTimes !== this._delayTimes) return;
-        const shouldShowCharge = freeCount <= 0 && (!isPrivateUcPackage || cost > 0);
+        const cost = await this._seatPlayer.roomData.basicInfo.getDiamondPrice(
+            alreadlyDelayTimes + 1,
+            DiamondConfigType.DiamondConfigTypeAddTime
+        );
+        if (!cc.isValid(this.node) || alreadlyDelayTimes !== this._delayTimes || !this._canAddTime()) return;
+        const shouldShowCharge = !isPrivateUcPackage || cost > 0;
         this.addTimeCost.node.parent.active = shouldShowCharge;
         if (isPrivateUcPackage && shouldShowCharge) applyPrivateUcChargeIcon(this.addTimeCost, this.ucChargeIcon);
         this.addTimeCost.string = '' + cost;
+    }
+
+    @bindEvent(DiamondModel.CONFIG_CHANGED, { dataSource: 'diamondConfig', initIgnore: true })
+    private onDiamondConfigChanged(configType: number): void {
+        if (
+            Number(configType) === DiamondConfigType.DiamondConfigTypeAddTime &&
+            globalConfigStore.isChannelDiamondFreeMode &&
+            this._seatPlayer?.operator &&
+            this._canAddTime()
+        ) {
+            this._refreshAddTime(this._delayTimes);
+        }
     }
 
     private _refreshUI(roundBetEqual: number) {
@@ -372,6 +392,7 @@ export default class Operation extends cc.Component {
         // 先把自动操作面板隐藏
         this._seatPlayer.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
         this.rootNode.active = true;
+        this._delayTimes = oper.alreadyDelayTImes;
         this.addTimeButton.node.active = this._canAddTime();
         this.opTimer.startTimer({
             totalTime: oper.totalOpDuration,
@@ -390,7 +411,6 @@ export default class Operation extends cc.Component {
                 this.opTimer.stop();
             }
         });
-        this._delayTimes = oper.alreadyDelayTImes;
         this._refreshUI(oper.roundBetEqual);
         if (this._canAddTime()) {
             this._refreshAddTime(this._delayTimes);
@@ -410,6 +430,10 @@ export default class Operation extends cc.Component {
      */
     private _bindEventsAndRefresh() {
         if (this._seatPlayer == null) return;
-        autoBindEvents(this, { mine: this._seatPlayer, setting: this._seatPlayer.roomData.setting });
+        autoBindEvents(this, {
+            mine: this._seatPlayer,
+            setting: this._seatPlayer.roomData.setting,
+            diamondConfig: diamondModel
+        });
     }
 }
