@@ -163,6 +163,9 @@ export async function registerH5Listeners(): Promise<void> {
         // 这里断言为 EnterTableRoomInfo 后读字段；运行时数据由 H5 保证字段齐全。
         const { token, websocketPort, roomId } = payload;
         const roomData = payload.roomInfo as EnterTableRoomInfo;
+        const payloadClubID = Number(payload.clubId || 0);
+        const entryClubID =
+            Number.isFinite(payloadClubID) && payloadClubID > 0 ? payloadClubID : userStore.currentClubID;
         // === 1. H5 消息基本字段校验 ===
         const missing: string[] = [];
         if (!token) missing.push('token');
@@ -198,6 +201,9 @@ export async function registerH5Listeners(): Promise<void> {
         }
         // === 4. 设置 Token（WS 由 H5 层代理，CC 层不直接连接） ===
         userStore.token = token;
+        if (entryClubID > 0 && entryClubID != userStore.currentClubID) {
+            userStore.currentClubID = entryClubID;
+        }
         //LoginSession.Token = token;
         // === 5. 填充 GameCache（从缓存房间数据） ===
         // const gc = GameCache.Instance;
@@ -234,7 +240,7 @@ export async function registerH5Listeners(): Promise<void> {
             roomID: roomData.rid,
             matchID: 0,
             roomType: roomData.room_type,
-            clubID: userStore.currentClubID
+            clubID: entryClubID
         });
         _ploger.info('[H5Bridge] enterTable 已启动进桌流程, room_id:', roomData.rid, 'room:', roomData.name);
     });

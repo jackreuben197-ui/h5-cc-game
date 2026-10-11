@@ -5,6 +5,7 @@ import TexasGameRoomData from '../../../../../data/room/texas/TexasGameRoomData'
 import TexasGameRoomDataChat from '../../../../../data/room/texas/TexasGameRoomDataChat';
 import TexasGameRoomDataPlayer from '../../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../../data/room/texas/TexasGameRoomDataPlayerMine';
+import globalConfigStore from '../../../../../data/system/GlobalConfigStore';
 import userStore from '../../../../../data/user/UserStore';
 import UserStoreUtils from '../../../../../data/user/UserStoreUtils';
 import { BringInMode } from '../../../../../game/constant/BringInMode';
@@ -188,7 +189,15 @@ export default class TexasTableEvent {
             }
             // this.tracelog.debug(seatedData.autoOnTable, seatData.roomData.basicInfo.retainMinRate * seatData.roomData.basicInfo.sbante.sb * 2);
             userStore.fillWalletInfo(response.data.wallet);
-            if (response.data.wallet.length == 1) {
+            const entryClubID = Number(seatData.roomData.basicInfo.clubID || 0);
+            const entryClubWallet = response.data.wallet.find(wallet => wallet.club_id == entryClubID);
+            if (globalConfigStore.isChannelDiamondFreeMode && entryClubID > 0) {
+                // 私域包必须沿用进桌时的渠道俱乐部，不能在多钱包场景默认取接口返回的第一个钱包。
+                seatData.currentWalletClubID = entryClubID;
+                if (!entryClubWallet) {
+                    this.tracelog.error('Sitdown channel wallet not found', entryClubID);
+                }
+            } else if (response.data.wallet.length == 1) {
                 seatData.currentWalletClubID = response.data.wallet[0].club_id;
             }
             // 联盟币
