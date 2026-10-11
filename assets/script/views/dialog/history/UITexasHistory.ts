@@ -708,6 +708,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
 
     private async _reqAddCollect() {
         const base = this._collectParamsBase();
+        if (!base.room_id || !base.hand_num) return;
         this._setButtonEnabled(this.favoBtnNode, false);
         const result = await TexasTableEvent.ReqReplayAddCollect(this._roomData, {
             id: 0,
