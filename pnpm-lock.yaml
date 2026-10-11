@@ -9,14 +9,14 @@ importers:
   .:
     dependencies:
       '@silenthill/agreement-web':
-        specifier: github:jackreuben197-ui/agreement-web#dev_merge_0702
-        version: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/5e0a9435e3884b66ed8153179c643caa765181f2
+        specifier: github:jackreuben197-ui/agreement-web#dev_refactor_0921
+        version: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/6bb45f3c40796edb2477c8b7c8bef3d351cf4ab1
       '@silenthill/h5-cc-bridge':
-        specifier: github:jackreuben197-ui/h5-cc-bridge#dev_refactor_0721
-        version: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/e3566d5a11f9cf33abf848e60da9351f3df9c512
+        specifier: github:jackreuben197-ui/h5-cc-bridge#dev_merge_1002
+        version: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/11736ea1ad5ac724d42cbef78cd56004d91cde94
       '@silenthill/h5-cc-i18n':
-        specifier: github:jackreuben197-ui/h5-cc-i18n#dev_i18n
-        version: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/6aab3ea6601c2e12fec9376fefb86b8688d941a6
+        specifier: github:jackreuben197-ui/h5-cc-i18n#dev_merge_0915
+        version: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/b8fa384c2772cde70db01a99424c08eb936f9dc8
       '@types/gapi':
         specifier: ^0.0.43
         version: 0.0.43
@@ -66,16 +66,16 @@ packages:
   '@bufbuild/protobuf@2.10.1':
     resolution: {integrity: sha512-ckS3+vyJb5qGpEYv/s1OebUHDi/xSNtfgw1wqKZo7MR9F2z+qXr0q5XagafAG/9O0QPVIUfST0smluYSTpYFkg==}
 
-  '@silenthill/agreement-web@https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/5e0a9435e3884b66ed8153179c643caa765181f2':
-    resolution: {tarball: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/5e0a9435e3884b66ed8153179c643caa765181f2}
+  '@silenthill/agreement-web@https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/6bb45f3c40796edb2477c8b7c8bef3d351cf4ab1':
+    resolution: {gitHosted: true, tarball: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/6bb45f3c40796edb2477c8b7c8bef3d351cf4ab1}
     version: 1.0.0
 
-  '@silenthill/h5-cc-bridge@https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/e3566d5a11f9cf33abf848e60da9351f3df9c512':
-    resolution: {tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/e3566d5a11f9cf33abf848e60da9351f3df9c512}
+  '@silenthill/h5-cc-bridge@https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/11736ea1ad5ac724d42cbef78cd56004d91cde94':
+    resolution: {gitHosted: true, tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/11736ea1ad5ac724d42cbef78cd56004d91cde94}
     version: 0.1.0
 
-  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/6aab3ea6601c2e12fec9376fefb86b8688d941a6':
-    resolution: {tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/6aab3ea6601c2e12fec9376fefb86b8688d941a6}
+  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/b8fa384c2772cde70db01a99424c08eb936f9dc8':
+    resolution: {gitHosted: true, tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/b8fa384c2772cde70db01a99424c08eb936f9dc8}
     version: 1.0.0
 
   '@types/gapi@0.0.43':
@@ -624,13 +624,13 @@ snapshots:
 
   '@bufbuild/protobuf@2.10.1': {}
 
-  '@silenthill/agreement-web@https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/5e0a9435e3884b66ed8153179c643caa765181f2':
+  '@silenthill/agreement-web@https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/6bb45f3c40796edb2477c8b7c8bef3d351cf4ab1':
     dependencies:
       google-protobuf: 3.21.4
 
-  '@silenthill/h5-cc-bridge@https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/e3566d5a11f9cf33abf848e60da9351f3df9c512': {}
+  '@silenthill/h5-cc-bridge@https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/11736ea1ad5ac724d42cbef78cd56004d91cde94': {}
 
-  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/6aab3ea6601c2e12fec9376fefb86b8688d941a6': {}
+  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/b8fa384c2772cde70db01a99424c08eb936f9dc8': {}
 
   '@types/gapi@0.0.43': {}
 
