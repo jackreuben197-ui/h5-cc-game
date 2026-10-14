@@ -21,6 +21,7 @@ import TexasVideoMediaHelper from '../../../net/messages/texas/TexasVideoMediaHe
 import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import viewManager from '../../UIViewManager';
+import { applyPrivateUcChargeIcon } from '../../util/PrivateUcChargeView';
 import throwPropManager from '../../util/ThrowPropManager';
 import { UIComfirmDialogType } from '../confirm/UIConfirmDialog';
 
@@ -53,6 +54,8 @@ interface ThrowPropDefinition {
 export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoParam> {
     @property({ type: cc.SpriteFrame, displayName: '开关选中背景' })
     public toggleOnBg: cc.SpriteFrame = null;
+    @property({ type: cc.SpriteFrame, displayName: '私域UC收费图标' })
+    private ucChargeIcon: cc.SpriteFrame = null;
     @property({ type: cc.Node, displayName: '关闭触摸遮罩' })
     private panelClick: cc.Node = null;
     @property({ type: cc.Node, displayName: '弹窗主体' })
@@ -651,8 +654,14 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             }
             this._propListData.set(definition.type, data);
             const diamondCost = propNode.getChildByName('diamondCost');
-            diamondCost.active = !globalConfigStore.isChannelDiamondFreeMode && !userStore.isPropFree(data);
-            diamondCost.getChildByName('costNum').getComponent(cc.Label).string = `${data.payPrice}`;
+            const costLabel = diamondCost.getChildByName('costNum').getComponent(cc.Label);
+            const payPrice = Number(data.payPrice) || 0;
+            const showPrice = !userStore.isPropFree(data) && payPrice > 0;
+            diamondCost.active = showPrice;
+            costLabel.string = showPrice ? `${payPrice}` : '';
+            if (globalConfigStore.isChannelDiamondFreeMode && showPrice) {
+                applyPrivateUcChargeIcon(costLabel, this.ucChargeIcon);
+            }
             this._loadPropIcon(propNode, propIconNode, definition.type);
         });
     }

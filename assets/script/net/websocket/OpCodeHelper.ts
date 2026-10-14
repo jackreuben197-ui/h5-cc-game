@@ -20,6 +20,12 @@ export default class OpCodeHelper {
         Code.MSG_S_WINNER,
         Code.MSG_S_START_INFO,
         Code.MSG_D_ADD_TIME,
+        // 偷偷看失败时需要保留请求、次数查询和成功推送，便于确认服务端状态码。
+        Code.MSG_D_VIEW_PLAYER_CARDS,
+        Code.MSG_D_VIEW_PLAYER_CARDS_NUM,
+        Code.MSG_S_SHOW_VIEW_CARDS,
+        // 私域收费由坐下时绑定的钱包俱乐部决定，保留该协议日志用于核对 clubId。
+        Code.MSG_D_SEATED,
         Code.MSG_D_SYNC_ENTER,
         Code.MSG_S_UP_BLIND,
         Code.MSG_S_ACTION_ALL,
