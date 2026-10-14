@@ -332,8 +332,10 @@ export default class TexasTableEvent {
         // 要坐下
         if (seatedData)
             return (amount, store, autoOnTable, clubID) => {
+                const entryClubID = Number(mine.roomData.basicInfo.clubID || 0);
+                const resolvedClubID = globalConfigStore.isChannelDiamondFreeMode && entryClubID > 0 ? entryClubID : clubID;
                 seatedData.bringIn = amount;
-                seatedData.clubId = clubID;
+                seatedData.clubId = resolvedClubID;
                 // 如果用钱包自动充值
                 if (autoOnTable > 0) {
                     seatedData.autoOnTableNoStore = true;
@@ -344,7 +346,7 @@ export default class TexasTableEvent {
                     seatedData.store = store;
                     // 如果是自动藏钱，已经在初始化的时候用房间配置设定
                 }
-                mine.currentWalletClubID = clubID;
+                mine.currentWalletClubID = resolvedClubID;
                 ProtocolAgency.Send({
                     code: Code.MSG_D_SEATED,
                     roomID: roomID,
@@ -681,17 +683,15 @@ export default class TexasTableEvent {
         let consume: Def.ConsumeTypeMap[keyof Def.ConsumeTypeMap] = Def.ConsumeType.CT_NONE;
         switch (alreadyDelayTimes) {
             case 0:
-            case 1:
-            case 2:
                 consume = Def.ConsumeType.CT_DELAY_2;
                 break;
-            case 3:
+            case 1:
                 consume = Def.ConsumeType.CT_DELAY_3;
                 break;
-            case 4:
+            case 2:
                 consume = Def.ConsumeType.CT_DELAY_4;
                 break;
-            case 5:
+            case 3:
                 consume = Def.ConsumeType.CT_DELAY_5;
                 break;
             default:
