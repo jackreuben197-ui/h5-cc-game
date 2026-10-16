@@ -64,7 +64,7 @@ export default class ReportDataItem extends cc.Component {
             storeChipsNode.active = !!player.storeChips;
             this._setNodeText(storeChipsNode, StringHelper.GetLongString(player.storeChips || 0));
         }
-        this._setSignedText(target.getChildByName('Text_Count'), TexasReportPresentation.getPlayerScore(player));
+        this._setSignedText(target.getChildByName('Text_Count'), TexasReportPresentation.getPlayerScore(player), '', true);
         this._setNodeText(target.getChildByName('Text_Pool'), `(${((player.poolRate || 0) / 10).toFixed(1)}%)`);
         this._setOwn(target, this._isOwnUser(player.userRid, options.currentUserID));
         if (options.mode !== 'none') {
@@ -212,15 +212,16 @@ export default class ReportDataItem extends cc.Component {
         });
     }
 
-    private _setSignedText(node: cc.Node, value: number | null, emptyText: string = ''): void {
+    private _setSignedText(node: cc.Node, value: number | null, emptyText: string = '', roundToInteger: boolean = false): void {
         if (!node) return;
         if (value == null) {
             this._setNodeText(node, emptyText);
             return;
         }
-        const text = StringHelper.GetSignedLongString(value);
+        const text = StringHelper.GetSignedLongString(value, roundToInteger);
+        const displayVal = roundToInteger ? Math.round(Number(value || 0) / 100) : Number(value || 0);
         // 正负数颜色沿用旧版视觉规则。
-        const color = value > 0 ? '#B0FFAE' : value < 0 ? '#FF7C7C' : '#FFFFFF';
+        const color = displayVal > 0 ? '#B0FFAE' : displayVal < 0 ? '#FF7C7C' : '#FFFFFF';
         const richText = node.getComponent(cc.RichText);
         if (richText) {
             richText.string = `<color=${color}>${text}</color>`;

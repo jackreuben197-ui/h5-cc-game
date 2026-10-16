@@ -59,9 +59,17 @@ export class StringHelper {
         }
     }
 
-    static GetSignedLongString(num: number): string {
-        if (num == 0) {
+    static GetSignedLongString(num: number | string, roundToInteger = false): string {
+        num = +num || 0;
+        if (num === 0) {
             return '0';
+        }
+        if (roundToInteger) {
+            const val = Math.round(num / 100);
+            if (val === 0) {
+                return '0';
+            }
+            return val > 0 ? `+${val}` : `${val}`;
         }
         if (num > 0) {
             return `+${num / 100}`;
