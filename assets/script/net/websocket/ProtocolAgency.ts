@@ -372,6 +372,7 @@ export default class ProtocolAgency extends cc.Component {
             code != Code.MSG_R_ROOMS &&
             code != Code.MSG_R_MTT_DETAIL &&
             code != Code.MSG_S_ROOM_USER_SEND_DIAMOND &&
+            code != Code.MSG_S_USER_ORDER_AUDIT &&
             code != Code.MSG_S_UTIL_ANTI_CHEAT_ROOM_VIDEO &&
             code != Code.MSG_S_NOTIFICATION_ROOM_READY &&
             code != Code.MSG_S_MTT_BREAK

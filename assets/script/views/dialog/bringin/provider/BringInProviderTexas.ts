@@ -3,6 +3,7 @@ import { autoBindEvents, bindData, bindEvent, unBindEventsAll } from '../../../.
 import { traceClass, traceMethod } from '../../../../core/decorator/LogTrace';
 import TexasGameRoomDataBasic, { tableBetInfo } from '../../../../data/room/texas/TexasGameRoomDataBasic';
 import TexasGameRoomDataPlayerMine from '../../../../data/room/texas/TexasGameRoomDataPlayerMine';
+import globalConfigStore from '../../../../data/system/GlobalConfigStore';
 import userStore, { ClubWallet, UserStore } from '../../../../data/user/UserStore';
 import { BringInMode } from '../../../../game/constant/BringInMode';
 import { StringHelper } from '../../../../helper/StringHelper';
@@ -88,16 +89,29 @@ export class BringInProviderTexas extends BringInProvider {
     private onWalletsChange(w: ClubWallet[]) {
         if (w.length == 0) return;
         let wallets = userStore.getWallets();
-        if (this._data.currentWalletClubID > 0) {
-            wallets = wallets.filter(v => v._clubID == this._data.currentWalletClubID);
+        const channelClubID = globalConfigStore.isChannelDiamondFreeMode ? this.resolveChannelClubID() : 0;
+        const walletClubID = channelClubID > 0 ? channelClubID : this._data.currentWalletClubID;
+        if (globalConfigStore.isChannelDiamondFreeMode && channelClubID <= 0) {
+            wallets = [];
+        } else if (walletClubID > 0) {
+            wallets = wallets.filter(v => v._clubID == walletClubID);
         }
         if (wallets.length == 0) {
-            this.tracelog.error('no wallet for current club', this._data.currentWalletClubID);
+            this.tracelog.error('no wallet for current club', walletClubID);
             this._ui._setupWalletList([], this._data.tmpCurrentWalletClubID);
             return;
         }
+        if (channelClubID > 0) this._data.currentWalletClubID = channelClubID;
         this.clubSelected(wallets[0]._clubID);
         this._ui._setupWalletList(wallets, this._data.tmpCurrentWalletClubID);
+    }
+
+    private resolveChannelClubID(): number {
+        const roomClubID = Number(this._data.roomData.basicInfo.clubID || 0);
+        if (Number.isFinite(roomClubID) && roomClubID > 0) return Math.floor(roomClubID);
+
+        const currentClubID = Number(userStore.currentClubID || 0);
+        return Number.isFinite(currentClubID) && currentClubID > 0 ? Math.floor(currentClubID) : 0;
     }
 
     public cleanup(): void {
