@@ -11,7 +11,7 @@
   "dependencies": {
     "@silenthill/agreement-web": "github:jackreuben197-ui/agreement-web#dev_refactor_0921",
     "@silenthill/h5-cc-bridge": "github:jackreuben197-ui/h5-cc-bridge#dev_merge_1002",
-    "@silenthill/h5-cc-i18n": "github:jackreuben197-ui/h5-cc-i18n#dev_merge_1011",
+    "@silenthill/h5-cc-i18n": "github:jackreuben197-ui/h5-cc-i18n#dev_merge_1017",
     "@types/gapi": "^0.0.43",
     "http-server": "^14.1.1",
     "httpserver": "^0.3.0",
