@@ -16182,6 +16182,9 @@
     "toggleOnBg": {
       "__uuid__": "f118f944-1a53-4d04-a425-0a475f0208e7"
     },
+    "ucChargeIcon": {
+      "__uuid__": "06ac1e78-3233-4bd8-b277-3c8d49052d6a"
+    },
     "dialogNode": {
       "__id__": 2
     },

@@ -16,10 +16,18 @@ export default class OpCodeHelper {
      */
     private static _IgnoreShowLog_Codes: Array<(typeof Code)[keyof typeof Code]> = [Code.MSG_D_HEARTBEAT];
     private static _NeedLogCodes: Array<(typeof Code)[keyof typeof Code]> = [
+        // WS 建连后服务端会先返回 REGISTER；保留 status 便于判断重连是否由鉴权失败触发。
+        Code.MSG_D_REGISTER,
         Code.MSG_D_ENTER_ROOM,
         Code.MSG_S_WINNER,
         Code.MSG_S_START_INFO,
         Code.MSG_D_ADD_TIME,
+        // 偷偷看失败时需要保留请求、次数查询和成功推送，便于确认服务端状态码。
+        Code.MSG_D_VIEW_PLAYER_CARDS,
+        Code.MSG_D_VIEW_PLAYER_CARDS_NUM,
+        Code.MSG_S_SHOW_VIEW_CARDS,
+        // 私域收费由坐下时绑定的钱包俱乐部决定，保留该协议日志用于核对 clubId。
+        Code.MSG_D_SEATED,
         Code.MSG_D_SYNC_ENTER,
         Code.MSG_S_UP_BLIND,
         Code.MSG_S_ACTION_ALL,
@@ -35,7 +43,12 @@ export default class OpCodeHelper {
         Code.MSG_S_PUBLIC_CARDS,
         Code.MSG_D_ROOMERS,
         Code.MSG_S_UTIL_ANTI_CHEAT_ROOM_VIDEO,
-        Code.MSG_R_ROOMS
+        Code.MSG_R_ROOMS,
+        // 充值/提现订单状态推送。打印解码后的订单号、状态、类型和拒绝原因，
+        // 方便把审核、交易商以及 USDT 三条充值链路串起来排查。
+        Code.MSG_S_USER_ORDER_AUDIT,
+        Code.MSG_S_USER_TRADER_ORDER_NOTIFY,
+        Code.MSG_S_USER_USDT_ORDER_NOTIFY
     ];
 
     static NeedLog(code: (typeof Code)[keyof typeof Code]): boolean {

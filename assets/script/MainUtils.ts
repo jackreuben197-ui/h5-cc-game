@@ -164,8 +164,12 @@ export async function registerH5Listeners(): Promise<void> {
         const { token, websocketPort, roomId } = payload;
         const roomData = payload.roomInfo as EnterTableRoomInfo;
         const payloadClubID = Number(payload.clubId || 0);
-        const entryClubID =
-            Number.isFinite(payloadClubID) && payloadClubID > 0 ? payloadClubID : userStore.currentClubID;
+        const roomClubID = Number(roomData?.club_id || 0);
+        const entryClubID = Number.isFinite(payloadClubID) && payloadClubID > 0
+            ? payloadClubID
+            : Number.isFinite(roomClubID) && roomClubID > 0
+              ? roomClubID
+              : userStore.currentClubID;
         // === 1. H5 消息基本字段校验 ===
         const missing: string[] = [];
         if (!token) missing.push('token');
