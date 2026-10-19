@@ -1999,6 +1999,9 @@
     "itemPrefab": {
       "__uuid__": "4d51c39c-a151-4890-96ee-8c8afd7bc15f"
     },
+    "ucChargeIcon": {
+      "__uuid__": "06ac1e78-3233-4bd8-b277-3c8d49052d6a"
+    },
     "categoryDivider": {
       "__id__": 38
     },

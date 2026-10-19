@@ -1,12 +1,15 @@
 import UIComponentBase from '../../base/UIComponentBase';
+import { formatPrivateUcChargePrice } from '../../util/PrivateUcChargeView';
 
 const { ccclass, menu, property } = cc._decorator;
 
 export interface UIEmojiItemParam {
     skeletonLoading: Promise<sp.SkeletonData>;
     animation: string;
-    showDiamond: boolean;
-    diamond?: number;
+    showCharge: boolean;
+    isPrivateUc: boolean;
+    chargeAmount?: number;
+    ucChargeIcon?: cc.SpriteFrame;
     onClick: () => void;
 }
 
@@ -15,12 +18,13 @@ export interface UIEmojiItemParam {
 export default class UIEmojiItem extends UIComponentBase<UIEmojiItemParam> {
     private static readonly ANIMATION_SAMPLE_COUNT = 12;
     private static readonly PREVIEW_MAX_SIZE = 130;
+    private static readonly PRIVATE_UC_ICON_SIZE = 32;
     @property({ type: sp.Skeleton, displayName: '表情动画' })
     private emojiSkeleton: sp.Skeleton = null;
-    @property({ type: cc.Node, displayName: '钻石图标' })
-    private diamondNode: cc.Node = null;
-    @property({ type: cc.Node, displayName: '钻石数量节点' })
-    private numDiamondNode: cc.Node = null;
+    @property({ type: cc.Sprite, displayName: '收费图标' })
+    private chargeIcon: cc.Sprite = null;
+    @property({ type: cc.Label, displayName: '收费金额' })
+    private chargeAmount: cc.Label = null;
     @property({ type: cc.Node, displayName: '选中标记' })
     private selectSignNode: cc.Node = null;
     @property({ type: cc.Node, displayName: '动画加载状态节点' })
@@ -42,11 +46,16 @@ export default class UIEmojiItem extends UIComponentBase<UIEmojiItemParam> {
         cc.Tween.stopAllByTarget(this.loadingNode);
         cc.tween(this.loadingNode).by(0.8, { angle: -360 }).repeatForever().start();
         this._button.interactable = false;
-        this.diamondNode.active = param.showDiamond;
-        this.numDiamondNode.active = param.showDiamond;
+        this.chargeIcon.node.active = param.showCharge;
+        this.chargeAmount.node.active = param.showCharge;
         this.selectSignNode.active = false;
-        const diamondLabel = this.numDiamondNode.getComponent(cc.Label);
-        if (diamondLabel && param.diamond != null) diamondLabel.string = `${param.diamond}`;
+        if (param.showCharge && param.isPrivateUc && param.ucChargeIcon) {
+            this.chargeIcon.spriteFrame = param.ucChargeIcon;
+            this.chargeIcon.node.setContentSize(UIEmojiItem.PRIVATE_UC_ICON_SIZE, UIEmojiItem.PRIVATE_UC_ICON_SIZE);
+        }
+        if (param.chargeAmount != null) {
+            this.chargeAmount.string = param.isPrivateUc ? formatPrivateUcChargePrice(param.chargeAmount) : `${param.chargeAmount}`;
+        }
         param.skeletonLoading
             .then(skeletonData => this._showAnimation(skeletonData))
             .catch(() => {

@@ -56,6 +56,8 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
     private scrollView: cc.ScrollView = null;
     @property({ type: cc.Prefab, displayName: '表情条目预制体' })
     private itemPrefab: cc.Prefab = null;
+    @property({ type: cc.SpriteFrame, displayName: '私域UC收费图标' })
+    private ucChargeIcon: cc.SpriteFrame = null;
     @property({ type: cc.Node, displayName: '分类分割线定位节点' })
     private categoryDivider: cc.Node = null;
     @property({ type: cc.Node, displayName: '分类模板节点' })
@@ -247,11 +249,15 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
             itemNode.parent = this.scrollContent;
             const item = itemNode.getComponent(UIEmojiItem);
             const isFree = userStore.isPropFree(itemData.data);
+            const payPrice = Number(itemData.data.payPrice) || 0;
+            const isPrivateUcPackage = globalConfigStore.isChannelDiamondFreeMode;
             item.initialize({
                 skeletonLoading: skeletonLoading.get(itemData.config.spine),
                 animation: itemData.config.animation,
-                showDiamond: !globalConfigStore.isChannelDiamondFreeMode && !isFree,
-                diamond: itemData.data.payPrice,
+                showCharge: !isFree && payPrice > 0,
+                isPrivateUc: isPrivateUcPackage,
+                chargeAmount: payPrice,
+                ucChargeIcon: this.ucChargeIcon,
                 onClick: () => this.onEmojiClicked(itemData.data, itemData.config)
             });
         });

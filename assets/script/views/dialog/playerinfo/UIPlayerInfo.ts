@@ -21,7 +21,7 @@ import TexasVideoMediaHelper from '../../../net/messages/texas/TexasVideoMediaHe
 import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import viewManager from '../../UIViewManager';
-import { applyPrivateUcChargeIcon } from '../../util/PrivateUcChargeView';
+import { applyInlinePrivateUcChargeIcon, formatPrivateUcChargePrice } from '../../util/PrivateUcChargeView';
 import throwPropManager from '../../util/ThrowPropManager';
 import { UIComfirmDialogType } from '../confirm/UIConfirmDialog';
 
@@ -658,9 +658,10 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             const payPrice = Number(data.payPrice) || 0;
             const showPrice = !userStore.isPropFree(data) && payPrice > 0;
             diamondCost.active = showPrice;
-            costLabel.string = showPrice ? `${payPrice}` : '';
-            if (globalConfigStore.isChannelDiamondFreeMode && showPrice) {
-                applyPrivateUcChargeIcon(costLabel, this.ucChargeIcon);
+            const isPrivateUcPackage = globalConfigStore.isChannelDiamondFreeMode;
+            costLabel.string = showPrice ? (isPrivateUcPackage ? formatPrivateUcChargePrice(payPrice) : `${payPrice}`) : '';
+            if (isPrivateUcPackage && showPrice) {
+                applyInlinePrivateUcChargeIcon(costLabel, this.ucChargeIcon);
             }
             this._loadPropIcon(propNode, propIconNode, definition.type);
         });
