@@ -38,6 +38,8 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
     private scrollView: cc.ScrollView = null;
     @property({ type: cc.Prefab, displayName: '表情条目预制体' })
     private itemPrefab: cc.Prefab = null;
+    @property({ type: cc.SpriteFrame, displayName: '私域UC收费图标' })
+    private ucChargeIcon: cc.SpriteFrame = null;
 
     // ===== 分类配置：标签顺序 Mushroom → Shinchan → Teddy → Frog → Dog =====
     private static readonly CATEGORIES: { name: string; icon: string; indices: number[] }[] = [
@@ -211,10 +213,13 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
             itemNode.setSiblingIndex(siblingIdx);
             const item = itemNode.getComponent(UIEmojiItem);
             if (item) {
+                const isPrivateUcPackage = globalConfigStore.isChannelDiamondFreeMode;
                 item.initializeStatic({
                     spriteFrame,
-                    showDiamond: !globalConfigStore.isChannelDiamondFreeMode,
-                    diamond: UIEmojiDlg.EMOJI_COST,
+                    showCharge: !isPrivateUcPackage,
+                    isPrivateUc: isPrivateUcPackage,
+                    chargeAmount: UIEmojiDlg.EMOJI_COST,
+                    ucChargeIcon: this.ucChargeIcon,
                     onClick: () => this._onEmojiClicked(index)
                 });
             }

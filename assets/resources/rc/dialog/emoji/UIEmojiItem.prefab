@@ -538,11 +538,11 @@
     "emojiSkeleton": {
       "__id__": 3
     },
-    "diamondNode": {
-      "__id__": 5
+    "chargeIcon": {
+      "__id__": 6
     },
-    "numDiamondNode": {
-      "__id__": 8
+    "chargeAmount": {
+      "__id__": 9
     },
     "selectSignNode": {
       "__id__": 11

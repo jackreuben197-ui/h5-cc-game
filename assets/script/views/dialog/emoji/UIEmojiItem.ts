@@ -1,12 +1,23 @@
 import UIComponentBase from '../../base/UIComponentBase';
+import { formatPrivateUcChargePrice } from '../../util/PrivateUcChargeView';
 
 const { ccclass, menu, property } = cc._decorator;
 
-export interface UIEmojiItemParam {
+interface UIEmojiChargeParam {
+    showCharge: boolean;
+    isPrivateUc: boolean;
+    chargeAmount?: number;
+    ucChargeIcon?: cc.SpriteFrame;
+}
+
+export interface UIEmojiItemParam extends UIEmojiChargeParam {
     skeletonData: sp.SkeletonData;
     animation: string;
-    showDiamond: boolean;
-    diamond?: number;
+    onClick: () => void;
+}
+
+export interface UIEmojiItemStaticParam extends UIEmojiChargeParam {
+    spriteFrame: cc.SpriteFrame;
     onClick: () => void;
 }
 
@@ -15,19 +26,20 @@ export interface UIEmojiItemParam {
 export default class UIEmojiItem extends UIComponentBase<UIEmojiItemParam> {
     private static readonly ANIMATION_SAMPLE_COUNT = 12;
     private static readonly PREVIEW_MAX_SIZE = 130;
+    private static readonly PRIVATE_UC_ICON_SIZE = 32;
     @property({ type: sp.Skeleton, displayName: '表情动画' })
     private emojiSkeleton: sp.Skeleton = null;
-    @property({ type: cc.Node, displayName: '钻石图标' })
-    private diamondNode: cc.Node = null;
-    @property({ type: cc.Node, displayName: '钻石数量节点' })
-    private numDiamondNode: cc.Node = null;
+    @property({ type: cc.Sprite, displayName: '收费图标' })
+    private chargeIcon: cc.Sprite = null;
+    @property({ type: cc.Label, displayName: '收费金额' })
+    private chargeAmount: cc.Label = null;
     @property({ type: cc.Node, displayName: '选中标记' })
     private selectSignNode: cc.Node = null;
     private _animation = '';
     private _onClick: () => void = null;
 
     /** 静态图版本（图鉴表情 em16-65 的选择器用静态 png，动画在座位上播放） */
-    public initializeStatic(param: { spriteFrame: cc.SpriteFrame; showDiamond: boolean; diamond?: number; onClick: () => void }): void {
+    public initializeStatic(param: UIEmojiItemStaticParam): void {
         this._onClick = param.onClick;
         if (this.emojiSkeleton) {
             try { this.emojiSkeleton.clearTracks(); } catch (e) {}
@@ -47,23 +59,29 @@ export default class UIEmojiItem extends UIComponentBase<UIEmojiItemParam> {
             const scale = UIEmojiItem.PREVIEW_MAX_SIZE / Math.max(orig.width, orig.height);
             iconNode.setContentSize(orig.width * scale, orig.height * scale);
         }
-        this.diamondNode.active = param.showDiamond;
-        this.numDiamondNode.active = param.showDiamond;
         this.selectSignNode.active = false;
-        // 钻石图标改用 pokerqueen 蓝钻(emoji/diamond)。选择器走的是本静态版本，
-        // 之前只在 initialize() 里换钻石，导致面板仍显示旧紫钻。此处补上。
-        if (param.showDiamond) this._applyBlueDiamond();
-        const diamondLabel = this.numDiamondNode.getComponent(cc.Label);
-        if (diamondLabel && param.diamond != null) diamondLabel.string = `${param.diamond}`;
+        this._applyCharge(param);
     }
 
-    /** 把钻石图标换成 pokerqueen 蓝钻。图标可能挂在 diamondNode 的子节点上。 */
-    private _applyBlueDiamond(): void {
-        const diamondSprite = this.diamondNode.getComponent(cc.Sprite) || this.diamondNode.getComponentInChildren(cc.Sprite);
-        if (!diamondSprite) {
-            cc.warn('[UIEmojiItem] diamond sprite not found on diamondNode');
-            return;
+    private _applyCharge(param: UIEmojiChargeParam): void {
+        this.chargeIcon.node.active = param.showCharge;
+        this.chargeAmount.node.active = param.showCharge;
+        if (param.showCharge) {
+            if (param.isPrivateUc && param.ucChargeIcon) {
+                this.chargeIcon.spriteFrame = param.ucChargeIcon;
+                this.chargeIcon.node.setContentSize(UIEmojiItem.PRIVATE_UC_ICON_SIZE, UIEmojiItem.PRIVATE_UC_ICON_SIZE);
+            } else {
+                this._applyBlueDiamond();
+            }
         }
+        if (param.chargeAmount != null) {
+            this.chargeAmount.string = param.isPrivateUc ? formatPrivateUcChargePrice(param.chargeAmount) : `${param.chargeAmount}`;
+        }
+    }
+
+    /** 把钻石图标换成 pokerqueen 蓝钻。 */
+    private _applyBlueDiamond(): void {
+        const diamondSprite = this.chargeIcon;
         cc.resources.load('emoji/diamond', cc.SpriteFrame, (err, sf: cc.SpriteFrame) => {
             if (!err && sf && cc.isValid(diamondSprite.node)) {
                 diamondSprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
@@ -79,12 +97,8 @@ export default class UIEmojiItem extends UIComponentBase<UIEmojiItemParam> {
         this.emojiSkeleton.skeletonData = param.skeletonData;
         this._fitEmojiAnimation(param.skeletonData, this._animation, previewCenterY);
         this.emojiSkeleton.setAnimation(0, this._animation, true);
-        this.diamondNode.active = param.showDiamond;
-        this.numDiamondNode.active = param.showDiamond;
         this.selectSignNode.active = false;
-        if (param.showDiamond) this._applyBlueDiamond();
-        const diamondLabel = this.numDiamondNode.getComponent(cc.Label);
-        if (diamondLabel && param.diamond != null) diamondLabel.string = `${param.diamond}`;
+        this._applyCharge(param);
     }
 
     private _fitEmojiAnimation(skeletonData: sp.SkeletonData, animationName: string, previewCenterY: number): void {
