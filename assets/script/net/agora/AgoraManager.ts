@@ -64,8 +64,6 @@ class AgoraManager {
             return false;
         }
         try {
-            await navigator.mediaDevices.enumerateDevices();
-            await new Promise(resolve => setTimeout(resolve, 300));
             let config = { video: video, audio: audio };
             this.tracelog.debug('浏览器权限...', config);
             const stream = await navigator.mediaDevices.getUserMedia(config);
@@ -74,8 +72,15 @@ class AgoraManager {
             stream.getTracks().forEach(t => t.stop());
             return true;
         } catch (e) {
-            // 权限被拒绝
-            this.tracelog.error('摄像头权限被拒绝:', e);
+            this.tracelog.warn('检测音视频联合权限失败:', e);
+            if (video && audio) {
+                try {
+                    const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    audioStream.getTracks().forEach(t => t.stop());
+                    return true;
+                } catch (_) {}
+            }
+            this.tracelog.error('摄像头/麦克风权限被拒绝:', e);
         }
         return false;
     }
@@ -90,14 +95,14 @@ class AgoraManager {
     }
     /** 本地音频轨道是否存在（麦克风已创建） */
     public get localAudioTrack(): IMicrophoneAudioTrack {
-        if (this._client.localTracks.includes(this._localAudioTrack)) {
+        if (this._client?.localTracks?.includes(this._localAudioTrack)) {
             return this._localAudioTrack;
         }
         return null;
     }
     /** 本地视频轨道是否存在（摄像头已创建） */
     public get localVideoTrack(): ICameraVideoTrack {
-        if (this._client.localTracks.includes(this._localVideoTrack)) {
+        if (this._client?.localTracks?.includes(this._localVideoTrack)) {
             return this._localVideoTrack;
         }
         return null;

@@ -71,7 +71,7 @@ export default class AgoraVideoRender extends cc.Component {
 
     private async _startVideoRender(track: MediaStreamTrack, switchToken: number): Promise<boolean> {
         this._stopOverlayRender();
-        if (switchToken !== this._switchToken || track.readyState === 'ended') return false;
+        if (switchToken !== this._switchToken || !track || track.readyState === 'ended') return false;
         const stream = new MediaStream([track]);
         this.tracelog.debug('_startVideoRender 开始, stream tracks:', stream.getTracks().length);
         this._isCancelled = false;
@@ -105,7 +105,7 @@ export default class AgoraVideoRender extends cc.Component {
                 };
                 this._video.addEventListener('loadedmetadata', onMeta, { once: true });
                 setTimeout(() => {
-                    this._video.removeEventListener('loadedmetadata', onMeta);
+                    this._video?.removeEventListener('loadedmetadata', onMeta);
                     resolve();
                 }, 3000);
             }
@@ -126,12 +126,11 @@ export default class AgoraVideoRender extends cc.Component {
         const cw = nodeSize.width || vw;
         const ch = nodeSize.height || vh;
         this._texture = new cc.Texture2D();
-        this._texture.initWithElement(this._video as any);
-        this._texture.packable = false;
-        this._texture.handleLoadedTexture();
-        const cropSize = Math.min(vw, vh);
-        const cropX = (vw - cropSize) / 2;
-        const cropY = (vh - cropSize) / 2;
+        try {
+            this._texture.initWithElement(this._video as any);
+            this._texture.packable = false;
+            this._texture.handleLoadedTexture();
+        } catch (_) {}
         this._spriteFrame = new cc.SpriteFrame();
         this._spriteFrame.setTexture(this._texture);
         this.videoSprite.spriteFrame = this._spriteFrame;
@@ -167,7 +166,7 @@ export default class AgoraVideoRender extends cc.Component {
             this._spriteFrame = null;
         }
         this._frameAccum = 0;
-        if (this.videoSprite.node) {
+        if (this.videoSprite?.node) {
             this.videoSprite.node.active = false;
             this.videoSprite.node.scaleX = 1;
         }
@@ -177,6 +176,7 @@ export default class AgoraVideoRender extends cc.Component {
         if (this._video) return;
         this._video = document.createElement('video');
         this._video.setAttribute('playsinline', '');
+        this._video.setAttribute('webkit-playsinline', '');
         this._video.setAttribute('autoplay', '');
         this._video.muted = true;
         this._video.style.position = 'fixed';
@@ -184,7 +184,7 @@ export default class AgoraVideoRender extends cc.Component {
         this._video.style.right = '0';
         this._video.style.width = '1px';
         this._video.style.height = '1px';
-        this._video.style.zIndex = '-9999';
+        this._video.style.zIndex = '-1';
         this._video.style.pointerEvents = 'none';
         document.body.appendChild(this._video);
     }
@@ -225,7 +225,7 @@ export default class AgoraVideoRender extends cc.Component {
         if (this._video.paused && this._video.srcObject) {
             this._video.play().catch(() => {});
         }
-        if (this._video.readyState < 2) return;
+        if (this._video.readyState < 2 || !this._video.videoWidth || !this._video.videoHeight) return;
         this._frameAccum += dt;
         if (this._frameAccum < this._frameInterval) return;
         this._frameAccum = 0;
@@ -242,6 +242,7 @@ export default class AgoraVideoRender extends cc.Component {
     }
 
     private _renderFrame(): void {
+        if (!this._texture || !this._video) return;
         (this._texture as any).initWithElement(this._video as any);
         this._texture.handleLoadedTexture();
         if (this.videoSprite) {

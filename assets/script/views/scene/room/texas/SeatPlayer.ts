@@ -410,7 +410,11 @@ export default class SeatPlayer extends cc.Component {
             return;
         }
         try {
-            let rawTrack = agoraManager.getRemoteVideoTrack(this._seatPlayer.userID);
+            const rawTrack = agoraManager.getRemoteVideoTrack(this._seatPlayer.userID);
+            if (!rawTrack) {
+                this.avatarVideoRender.stopOverlay();
+                return;
+            }
             this.avatarVideoRender.mirror = false;
             this.avatarVideoRender.targetFps = 15;
             this.avatarVideoRender.switchToOverlay(rawTrack.getMediaStreamTrack());
@@ -442,24 +446,24 @@ export default class SeatPlayer extends cc.Component {
     }
 
     @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_STATE_CHANGE_DELAY, 'mine')
-    private onLocalCameraStateChanged(state: ButtonState) {
+    private onLocalCameraStateChanged(state: ButtonState | boolean) {
         if (!this._seatPlayer.mine) return;
-        if (state == ButtonState.DISABLE) {
-            this.avatarVideoRender.stopOverlay();
-            return;
-        }
-        if (state == ButtonState.OFF) {
+        if (state == ButtonState.DISABLE || state == ButtonState.OFF || !state) {
             this.avatarVideoRender.stopOverlay();
             return;
         }
         try {
-            //await GameplayUtil.waitForCondition( () => !!agoraManager.localVideoTrack, 500, 5000);
-            const rawTrack = agoraManager.localVideoTrack.getMediaStreamTrack();
+            const track = agoraManager.localVideoTrack;
+            if (!track) {
+                this.avatarVideoRender.stopOverlay();
+                return;
+            }
+            const rawTrack = track.getMediaStreamTrack();
             this.avatarVideoRender.mirror = true;
             this.avatarVideoRender.targetFps = 15;
             this.avatarVideoRender.switchToOverlay(rawTrack);
         } catch (e) {
-            this.tracelog.warn('agoraManager render video error', this._seatPlayer.userID, e);
+            this.tracelog.error('agoraManager not supported:', this._seatPlayer.userID);
             this.avatarVideoRender.stopOverlay();
         }
     }
