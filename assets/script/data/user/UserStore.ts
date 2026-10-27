@@ -111,7 +111,6 @@ export class UserStore extends cc.EventTarget {
                     logo: v.club_logo,
                     tribeID: v.tribe_random_id,
                     roomLogo: '',
-                    tribeRoomLogo: ''
                 });
             }
             if (walletMap.has(v.club_id)) {
@@ -204,7 +203,6 @@ export class ClubData {
     public logo: string;
     public tribeID: number;
     public roomLogo: string;
-    public tribeRoomLogo: string;
     public prologue?: string;
     public prologueSwitch?: number;
 }

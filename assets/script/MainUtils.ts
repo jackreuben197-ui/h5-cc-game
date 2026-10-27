@@ -36,7 +36,6 @@ interface SyncedClubInfo {
     club_logo?: string;
     tribe_random_id?: number;
     room_logo?: string;
-    tribe_room_logo?: string;
     prologue?: string;
     prologue_switch?: number;
 }
@@ -309,7 +308,6 @@ export async function registerH5Listeners(): Promise<void> {
                 logo: String(club.logo || club.club_logo || ''),
                 tribeID: Number(club.tribe_random_id || 0),
                 roomLogo: String(club.room_logo || '').trim(),
-                tribeRoomLogo: String(club.tribe_room_logo || '').trim(),
                 prologue: String(club.prologue || '').trim(),
                 prologueSwitch: Number(club.prologue_switch || 0)
             }))

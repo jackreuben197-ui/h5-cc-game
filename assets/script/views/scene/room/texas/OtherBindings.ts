@@ -142,7 +142,7 @@ export default class OtherBindings extends cc.Component {
     private onClubsInfoChanged(clubsData: ClubData[]): void {
         const clubID = Number(this._roomData.basicInfo.clubID || 0);
         const club = (clubsData || []).find(item => item._clubID === clubID);
-        const roomLogo = String(club?.roomLogo || '').trim() || String(club?.tribeRoomLogo || '').trim();
+        const roomLogo = String(club?.roomLogo || '').trim();
         this.certlogo.url = roomLogo;
         if (!roomLogo) this.certlogo.getComponent(cc.Sprite).spriteFrame = this._certLogoDefaultSpriteFrame;
     }
