@@ -10,13 +10,13 @@ importers:
     dependencies:
       '@silenthill/agreement-web':
         specifier: github:kingofake/agreement-web#master
-        version: git+ssh://git@github.com/kingofake/agreement-web.git#921be247732066cdae55477ce3a81c29fbbb6b6c
+        version: git+ssh://git@github.com/kingofake/agreement-web.git#72cacc6a4c2c584ba797ed11e41dd971c6cf6303
       '@silenthill/h5-cc-bridge':
         specifier: github:soolary/h5-cc-bridge#main
         version: git+ssh://git@github.com/soolary/h5-cc-bridge.git#36dae00701b74e936a76000e9591b9e115feca63
       '@silenthill/h5-cc-i18n':
         specifier: github:guysoup027/h5-cc-i18n#main
-        version: git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#ccd1dc7ec4511b147dbe6cd065d451f48dbefcfb
+        version: git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#46f6c805dd2144e0c7fb8b7bd9486f3ed8edc437
       '@types/gapi':
         specifier: ^0.0.43
         version: 0.0.43
@@ -66,16 +66,16 @@ packages:
   '@bufbuild/protobuf@2.10.1':
     resolution: {integrity: sha512-ckS3+vyJb5qGpEYv/s1OebUHDi/xSNtfgw1wqKZo7MR9F2z+qXr0q5XagafAG/9O0QPVIUfST0smluYSTpYFkg==}
 
-  '@silenthill/agreement-web@git+ssh://git@github.com/kingofake/agreement-web.git#921be247732066cdae55477ce3a81c29fbbb6b6c':
-    resolution: {commit: 921be247732066cdae55477ce3a81c29fbbb6b6c, repo: git@github.com:kingofake/agreement-web.git, type: git}
+  '@silenthill/agreement-web@git+ssh://git@github.com/kingofake/agreement-web.git#72cacc6a4c2c584ba797ed11e41dd971c6cf6303':
+    resolution: {commit: 72cacc6a4c2c584ba797ed11e41dd971c6cf6303, repo: git@github.com:kingofake/agreement-web.git, type: git}
     version: 1.0.0
 
   '@silenthill/h5-cc-bridge@git+ssh://git@github.com/soolary/h5-cc-bridge.git#36dae00701b74e936a76000e9591b9e115feca63':
     resolution: {commit: 36dae00701b74e936a76000e9591b9e115feca63, repo: git@github.com:soolary/h5-cc-bridge.git, type: git}
     version: 0.1.0
 
-  '@silenthill/h5-cc-i18n@git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#ccd1dc7ec4511b147dbe6cd065d451f48dbefcfb':
-    resolution: {commit: ccd1dc7ec4511b147dbe6cd065d451f48dbefcfb, repo: git@github.com:guysoup027/h5-cc-i18n.git, type: git}
+  '@silenthill/h5-cc-i18n@git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#46f6c805dd2144e0c7fb8b7bd9486f3ed8edc437':
+    resolution: {commit: 46f6c805dd2144e0c7fb8b7bd9486f3ed8edc437, repo: git@github.com:guysoup027/h5-cc-i18n.git, type: git}
     version: 1.0.0
 
   '@types/gapi@0.0.43':
@@ -624,13 +624,13 @@ snapshots:
 
   '@bufbuild/protobuf@2.10.1': {}
 
-  '@silenthill/agreement-web@git+ssh://git@github.com/kingofake/agreement-web.git#921be247732066cdae55477ce3a81c29fbbb6b6c':
+  '@silenthill/agreement-web@git+ssh://git@github.com/kingofake/agreement-web.git#72cacc6a4c2c584ba797ed11e41dd971c6cf6303':
     dependencies:
       google-protobuf: 3.21.4
 
   '@silenthill/h5-cc-bridge@git+ssh://git@github.com/soolary/h5-cc-bridge.git#36dae00701b74e936a76000e9591b9e115feca63': {}
 
-  '@silenthill/h5-cc-i18n@git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#ccd1dc7ec4511b147dbe6cd065d451f48dbefcfb': {}
+  '@silenthill/h5-cc-i18n@git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#46f6c805dd2144e0c7fb8b7bd9486f3ed8edc437': {}
 
   '@types/gapi@0.0.43': {}
 
