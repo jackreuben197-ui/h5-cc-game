@@ -6,6 +6,7 @@
     "sync:h5-game": "node scripts/sync-h5-game.js",
     "sync:h5-game:local": "node scripts/sync-h5-game.js --local",
     "release:web-mobile": "node scripts/release-web-mobile.js",
+    "release:web-mobile:all": "bash scripts/release-all-web-mobile.sh",
     "commit:format": "node scripts/fmt-imports.js && node scripts/fmt-blanklines.js",
     "commit:prepare": "tsc -p tsconfig.json --noEmit && node scripts/fmt-imports.js && node scripts/fmt-blanklines.js && tsc -p tsconfig.json --noEmit"
   },

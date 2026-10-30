@@ -23,6 +23,39 @@ npm run sync:proto
 # 升级版本：改 package.json 里的 #ref，跑 `npm install` 即可（详见 ARCHITECTURE.md §8.5）
 ```
 
+## 一键构建并发布 web-mobile
+
+在 `~/web/cocos` 执行：
+
+```shell
+./build-release-web-mobile2.sh
+# 只查看执行流程，不修改文件
+./build-release-web-mobile2.sh --dry-run
+# 同步并构建，但不提交和推送
+./build-release-web-mobile2.sh --build-only
+```
+
+也可以在本项目内运行 `npm run release:web-mobile:all`，选项通过 `--` 传递。
+脚本先执行现有的 `npm run sync:h5-game`（更新远程子模块，构建 H5 并清空旧 Cocos build），
+再启动新的 Cocos Creator 命令行进程构建，最后执行上级目录的 `release-web-mobile2.sh`，包含 Git 提交和推送。
+无需手动重新打开 Cocos 和点击构建；任一步失败都会停止后续流程。
+
+默认使用 `project.json` 指定版本的本机 Cocos Creator，合并 `settings/builder.json` 和 `local/builder.json`，
+覆盖为 `web-mobile` 正式构建、启用 MD5 缓存，输出到 `build/web-mobile`。
+日志保存在 `local/release-web-mobile/`；构建需要 macOS 桌面会话。
+如编辑器中有尚未保存的场景或资源，先保存再运行。
+自定义 Cocos 安装路径：
+
+```shell
+COCOS_CREATOR="/path/to/CocosCreator.app" npm run release:web-mobile:all
+```
+
+流程测试使用临时项目和模拟命令，不会同步、构建或发布真实项目：
+
+```shell
+node --test tests/release-all-web-mobile.test.js
+```
+
 ## 格式化代码
 
 ```shell
