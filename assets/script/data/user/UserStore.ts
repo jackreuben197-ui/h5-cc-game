@@ -110,7 +110,7 @@ export class UserStore extends cc.EventTarget {
                     name: v.club_name,
                     logo: v.club_logo,
                     tribeID: v.tribe_random_id,
-                    roomLogo: ''
+                    roomLogo: '',
                 });
             }
             if (walletMap.has(v.club_id)) {
