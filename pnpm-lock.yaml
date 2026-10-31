@@ -16,7 +16,7 @@ importers:
         version: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/11736ea1ad5ac724d42cbef78cd56004d91cde94
       '@silenthill/h5-cc-i18n':
         specifier: github:jackreuben197-ui/h5-cc-i18n#dev_merge_1031
-        version: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/0a93930373c98b844b01186af57a5cb80d8058bb
+        version: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/b74c1a2d43d439057d900207ad2705e83b09090e
       '@types/gapi':
         specifier: ^0.0.43
         version: 0.0.43
@@ -74,8 +74,8 @@ packages:
     resolution: {gitHosted: true, tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/11736ea1ad5ac724d42cbef78cd56004d91cde94}
     version: 0.1.0
 
-  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/0a93930373c98b844b01186af57a5cb80d8058bb':
-    resolution: {gitHosted: true, integrity: sha512-7GUldkZOjiLdDxeDwop9uIq9IJDwO7eHyqVvspoDr7a1Il3F1MvRNc7Z8/H+mIR2FCPv6jp1w7iVVwmyFQX9Ew==, tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/0a93930373c98b844b01186af57a5cb80d8058bb}
+  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/b74c1a2d43d439057d900207ad2705e83b09090e':
+    resolution: {gitHosted: true, integrity: sha512-BCS1fP7f+HNCFJDITqN+mLmUmGU1SnLvz8eOKhzjuPKOlOKjjuM7w/ltIlpg8hiA0mgmUixJFtzYDi22kV0emg==, tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/b74c1a2d43d439057d900207ad2705e83b09090e}
     version: 1.0.0
 
   '@types/gapi@0.0.43':
@@ -630,7 +630,7 @@ snapshots:
 
   '@silenthill/h5-cc-bridge@https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/11736ea1ad5ac724d42cbef78cd56004d91cde94': {}
 
-  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/0a93930373c98b844b01186af57a5cb80d8058bb': {}
+  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/b74c1a2d43d439057d900207ad2705e83b09090e': {}
 
   '@types/gapi@0.0.43': {}
 
