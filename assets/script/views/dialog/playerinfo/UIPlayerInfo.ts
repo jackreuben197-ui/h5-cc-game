@@ -908,6 +908,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _clickProp(definition: ThrowPropDefinition, clickNode: cc.Node): void {
+        if (this._roomData.seatsStateManager.hasPendingThrowProp || throwPropManager.isPropSenderBusy(userStore.userRID)) return;
         this._playClickScale(clickNode, false);
         const propData = this._propListData.get(definition.type);
         // pokerqueen 逻辑：未拥有的道具用默认 consumeType(CT_EMOJI_2) 也能发送
@@ -1003,10 +1004,11 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
 
     private _playClickScale(node: cc.Node, closeAfter: boolean): void {
         if (!node || !node.isValid) return;
-        const scale = node.scale;
+        cc.Tween.stopAllByTarget(node);
+        node.setScale(1);
         cc.tween(node)
-            .to(0.075, { scale: scale * 1.2 })
-            .to(0.075, { scale })
+            .to(0.075, { scale: 1.2 })
+            .to(0.075, { scale: 1 })
             .call(() => {
                 if (closeAfter) this.close();
             })

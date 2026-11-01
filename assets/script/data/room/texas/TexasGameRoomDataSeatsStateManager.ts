@@ -29,6 +29,7 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     public static readonly MUSHROOM_POOL_CHANGE = 'MUSHROOM_POOL_CHANGE';
     public static readonly SPEAKING_CHANGE = 'SPEAKING_CHANGE';
     public static readonly THROW_PROP = 'THROW_PROP';
+    private static readonly PENDING_THROW_PROP_TIMEOUT_MS = 5000;
     public static readonly DIAMOND_GIFT = 'DIAMOND_GIFT';
     public static readonly EMOJI = 'EMOJI';
     private _parentRoomData: TexasGameRoomData;
@@ -45,6 +46,7 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     }
     private _prevMushroomBtn: number = 0;
     private _pendingThrowPropData: ThrowPropBroadcastData = null;
+    private _pendingThrowPropDeadline: number = 0;
     private _pendingEmojiData: EmojiBroadcastData = null;
 
     public setMushroomPoolChange(btnSeatNo: number, pool: number, bat: AnimateDisplayTypeMushroomPool) {
@@ -78,8 +80,13 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     })
     public buttonChangeEvent(prev: number, cur: number, bat: AnimateDisplayTypeButton) {}
 
+    public get hasPendingThrowProp(): boolean {
+        return !!this._pendingThrowPropData && Date.now() < this._pendingThrowPropDeadline;
+    }
+
     public setPendingThrowProp(data: ThrowPropBroadcastData): void {
         this._pendingThrowPropData = data;
+        this._pendingThrowPropDeadline = Date.now() + TexasGameRoomDataSeatsStateManager.PENDING_THROW_PROP_TIMEOUT_MS;
     }
 
     public confirmPendingThrowProp(status: number): void {

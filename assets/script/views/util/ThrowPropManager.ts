@@ -159,6 +159,7 @@ class ThrowPropManager {
     private _seatPropSkeletonData: Map<cc.Node, sp.SkeletonData> = new Map();
     private _propQueue: ThrowPropTask[] = [];
     private _playingPropUsers: Set<number> = new Set();
+    private _playingPropSenders: Set<number> = new Set();
     private _playingFullscreenProp: boolean = false;
     private _emojiPlayTokens: Map<cc.Node, number> = new Map();
     /** 图鉴表情骨骼常驻缓存(index→SkeletonData)，已 addRef 保留，避免每次播放重新加载导致延迟 */
@@ -172,6 +173,7 @@ class ThrowPropManager {
             this._seatPropSkeletonData.clear();
             this._propQueue.length = 0;
             this._playingPropUsers.clear();
+            this._playingPropSenders.clear();
             this._playingFullscreenProp = false;
             this._emojiPlayTokens.clear();
         }
@@ -221,6 +223,7 @@ class ThrowPropManager {
         const config = ThrowPropManager.CONFIGS[data.type];
         if (!config || !this._root || !cc.isValid(this._root)) return;
         if (!senderData || !targetData) return;
+        if (this._propQueue.some(task => task.data.userID === data.userID && task.data.targetUserID === data.targetUserID)) return;
         const role = this._getRole(data.userID, data.targetUserID);
         const task: ThrowPropTask = {
             data,
@@ -234,6 +237,10 @@ class ThrowPropManager {
         };
         this._propQueue.push(task);
         this._tryPlayQueuedProps();
+    }
+
+    public isPropSenderBusy(userID: number): boolean {
+        return this._playingPropSenders.has(userID) || this._propQueue.some(task => task.data.userID === userID);
     }
 
     private _playPropNow(task: ThrowPropTask): void {
@@ -328,6 +335,7 @@ class ThrowPropManager {
     }
 
     private _markPropTaskPlaying(task: ThrowPropTask): void {
+        this._playingPropSenders.add(task.data.userID);
         if (task.fullscreen) {
             this._playingFullscreenProp = true;
             return;
@@ -340,6 +348,7 @@ class ThrowPropManager {
         cc.tween(this._root)
             .delay(task.duration)
             .call(() => {
+                this._playingPropSenders.delete(task.data.userID);
                 if (task.fullscreen) {
                     this._playingFullscreenProp = false;
                 } else {
