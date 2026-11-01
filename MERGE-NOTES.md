@@ -1,7 +1,7 @@
 # Merge notes — table fixes that must survive every upstream merge
 
-Fixes below were made on `dev_merge_0923` (commit `9bfb46a fix: merge 0923`, plus the texture change).
-Several of them had already been lost once by a "take our side" merge, so please run the checklist
+Fixes 1–7 were made on `dev_merge_0923` (commit `9bfb46a fix: merge 0923`, plus the texture change),
+fix 8 on `dev_merge_1031`. Several of them had already been lost once by a "take our side" merge, so please run the checklist
 after every `dev_refactor_*` → `dev_merge_*` merge.
 
 ## Post-merge checklist (30 seconds)
@@ -39,6 +39,18 @@ a.forEach(o=>{ if(o.__type__==="cc.Sprite"&&o._spriteFrame&&o._spriteFrame.__uui
 #   history UITexasHistory/layer/bg/ScrollView alignFlags = 37
 #   history bottom gradient enabled = false
 #   history UITexasHistory/layer/bg alignFlags = 37
+
+# 5. interactive props and player info dialog — must print 1 1 1 1 2 5 10, one number per line
+F=assets/script/views/dialog/playerinfo/UIPlayerInfo.ts
+T=assets/script/views/util/ThrowPropManager.ts
+S=assets/script/data/room/texas/TexasGameRoomDataSeatsStateManager.ts
+grep -c 'hasPendingThrowProp || throwPropManager.isPropSenderBusy' $F
+grep -c ': Def.ConsumeType.CT_NONE) as ClientMessageBroadcastMsg' $F
+grep -c 'globalConfigStore.isChannelDiamondFreeMode && !!data && !userStore.isPropFree(data) && payPrice > 0' $F
+grep -c 'cc.Tween.stopAllByTarget(node);' $F
+grep -c 'PENDING_THROW_PROP_TIMEOUT_MS' $S
+grep -c '_playingPropSenders' $T
+grep -E -c '^\s+duration: (2\.6|2\.7|1\.7|1\.6|2\.3|3\.6|3|1\.9),' $T
 ```
 
 ---
@@ -144,6 +156,94 @@ untouched, so no prefab or uuid changes. Used by `Tips/Image_WaitForStartTips`, 
 
 Other tip bars (`Image_RedistributionTips`, `Image_WaitForStartBathTips`, `Image_ReserveSeatTips`,
 `Image_SeeMorePublicTips`) use `Group 4871 (1).png` and were intentionally left as they are.
+
+## 8. Player info dialog and interactive props
+
+Commits on `dev_merge_1031`: `e638e6a`, `d3d3875`, `31a04d8`, `cc934f2`. All of it is TypeScript in the
+three files from checklist step 5. `UIPlayerInfo.prefab` was not changed: the layout is applied at runtime,
+so taking upstream's prefab is safe, while taking upstream's `UIPlayerInfo.ts` silently loses everything
+below. On a conflict in these files, keep our logic and port upstream's change on top.
+
+### 8.1 Unconfigured prop is sent with `consume = CT_NONE`
+
+**Symptom.** The gun did nothing on tap and showed no error. Other props worked.
+
+**Root cause.** The gun (`boxing_Button`, `PropsID.PROPSBOXING` = 608, `$propOp_3`) was missing from the CMS
+list. The old fallback sent `consume = CT_EMOJI_2` (6). The server treats `consume` as a price id, and
+price 6 is in a currency that does not match the table's `gold_type`, so it replied with
+`code 99, status 90001 "route throom service error"`. Backend log: `chat price 6 currency does not match
+access mode`.
+
+**Keep.** In `UIPlayerInfo._clickProp`: free prop → `CT_NONE`, prop from the list → `propData.priceID`, prop
+missing from the list → `CT_NONE`. Never `CT_EMOJI_2`. The old comment above that line still mentions
+`CT_EMOJI_2` and is stale, so do not restore the code from it. A live test on bepvazti returned
+`1019 status 0` and the animation played.
+
+### 8.2 No fake price
+
+Prices in the dialog come from `/api/misc/combine` (`api_list: [62]`, `get_chat_shop_prop_list_resp.list`,
+`prop_type = 4`). A prop missing from that list used to show the default `0.10`; that default is removed
+and `payPrice` falls back to `0`.
+
+### 8.3 Prop price is hidden on the ordinary link
+
+```ts
+const showPrice = globalConfigStore.isChannelDiamondFreeMode && !!data && !userStore.isPropFree(data) && payPrice > 0;
+```
+
+Decision: hide the diamond price under the props in this dialog only. Do **not** hardcode
+`isChannelDiamondFreeMode` to get this: the flag comes from H5 (`channel_package_diamond_free_mode`) or
+`data-channel-package` and drives about 20 files, including bring-in wallets.
+
+This is display only. Listed props still send their real `price_id`, so they can be charged on the
+ordinary link with no price on screen. No price was changed in the CMS or on the server.
+
+### 8.4 Rapid taps must not stack animations
+
+**Symptom.** Twenty quick taps queued twenty throws, the animation kept running for a long time, and the
+prop icon was bigger the next time the dialog opened.
+
+- `_clickProp` returns early while `seatsStateManager.hasPendingThrowProp` or
+  `throwPropManager.isPropSenderBusy(userStore.userRID)` is true.
+- `hasPendingThrowProp` expires after `PENDING_THROW_PROP_TIMEOUT_MS` (5000), so a lost server reply does
+  not block taps forever.
+- `ThrowPropManager.playProp` keeps at most one waiting task per sender/target pair, which also limits
+  throws from other players.
+- `_playClickScale` calls `cc.Tween.stopAllByTarget(node)` and `node.setScale(1)` before the tween and
+  animates to the absolute scale. The dialog is pooled, so concurrent relative tweens left the icon
+  enlarged across openings.
+
+### 8.5 Tap lock follows the real animation length
+
+The lock is released by `task.duration`, so a too long value in `ThrowPropManager.CONFIGS` shows up as
+"the animation finished, but the button is not clickable yet". Values are measured from the clips and
+`.skel` files, in seconds:
+
+| tomato | flower | kiss | good | cheers | touch | shark | chicken | boxing | baseball |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 2.6 | 2.7 | 1.7 | 2.7 | 1.6 | 2.3 | 3.6 | 3 | 1.9 | 2.6 |
+
+`fish` (6) and `money` (4) were left unchanged because they are hidden in the dialog. The shark node is
+destroyed after 3.5 s (`_destroyAfterDelay`). If a clip is replaced, measure it again and update the table.
+
+### 8.6 Dialog layout
+
+Constants at the top of `UIPlayerInfo`: `PROP_CELL_WIDTH 170`, `PROP_CELL_HEIGHT 230`, `PROP_ICON_SCALE 1.2`,
+`TAB_CONTENT_SCALE 0.75`, `CLOSE_HIT_SIZE 180`, `CLOSE_BTN_X 425`, `DIALOG_PADDING_TOP 60`.
+
+`_applyTabContentLayout` shrinks the Data / All in / Gift block and enlarges the prop grid.
+`_applyDiamondShowLayout` puts a horizontal `cc.Layout` on `$DiamondShow`, which fixes the overlapping
+"Diamond balance" text. The `closeHitArea` child enlarges the X tap area.
+
+### 8.7 Known gaps, not regressions
+
+- `code 99` on a throw: the pending state is not cleared, so taps are blocked for 5 s and no toast is shown.
+- A queued throw can still fly after a player leaves, and the queue is not reset on table change. At most
+  one stray throw per pair.
+- The gun has no sound: `_playBoxing` does not play a clip sound.
+- Open with the backend: add `boxing_Button` to the CMS, and configure prices per `gold_type`.
+- Not verified yet: the `cc934f2` durations on a deployed build, and the gun on the ordinary link and on
+  other channel domains.
 
 ---
 
