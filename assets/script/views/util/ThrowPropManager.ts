@@ -62,51 +62,51 @@ class ThrowPropManager {
     private static readonly PROP_Z_INDEX = 9999;
     private static readonly CONFIGS: Partial<Record<PropsID, PropAnimConfig>> = {
         [PropsID.PROPSTOMATO]: {
-            duration: 4.5,
+            duration: 2.6,
             clips: {
                 hit: { spine: 'dynamic/prop/anim/expressionTomato/skeleton', anim: 'dirt_splash', flyAnim: 'dirt_flying', soundName: 'sound/PropOp/sfx_tomato_mus' }
             }
         },
         [PropsID.PROPSFLOWER]: {
-            duration: 4.5,
+            duration: 2.7,
             clips: {
                 hit: { spine: 'dynamic/prop/anim/expressionFlower/skeleton', anim: 'hand_wave', soundName: 'sound/PropOp/sfx_rose_mus' }
             }
         },
         [PropsID.PROPSKISS]: {
-            duration: 4.5,
+            duration: 1.7,
             clips: {
                 hit: { spine: 'dynamic/prop/anim/expressionKiss/kiss', anim: 'lip_kissing', soundName: 'sound/PropOp/sfx_kiss_mus' }
             }
         },
         [PropsID.PROPSGOOD]: {
-            duration: 4.5,
+            duration: 2.7,
             clips: {
                 hit: { spine: 'dynamic/prop/anim/expressionGood/skeleton', anim: 'thumbs_up', flyAnim: 'fist_flying', soundName: 'sound/PropOp/sfx_like_mus' }
             }
         },
         // 干杯(604)→pokerqueen新beer：单骨骼 beer_cheers，在双方座位头顶各播一次(不再有全屏)
         [PropsID.PROPSCHEERS]: {
-            duration: 4.5,
+            duration: 1.6,
             clips: {
                 hit: { spine: 'dynamic/prop/anim/expressionBeer/cheers_2', anim: 'beer_cheers', soundName: 'sound/PropOp/sfx_cheers_mus' }
             }
         },
         [PropsID.PROPSTOUCH]: {
-            duration: 3.5,
+            duration: 2.3,
             clips: {
                 hit: { spine: 'dynamic/prop/anim/expressionTouch/touch', anim: 'hand_patting', atTarget: true, soundName: 'sound/PropOp/sfx_touch_mus' }
             }
         },
         [PropsID.PROPSSHARK]: {
-            duration: 4,
+            duration: 3.6,
             clips: {
                 hit: { spine: 'dynamic/prop/anim/expressionShark/shark', anim: 'babyshark' },
                 eaten: { spine: 'dynamic/prop/anim/expressionShark/shark', anim: 'shark_eaten' }
             }
         },
         [PropsID.PROPSCHICKEN]: {
-            duration: 4,
+            duration: 3,
             clips: {
                 hand: { spine: 'dynamic/prop/anim/expressionChicken/chicken_spine', anim: 'hand_flying', soundName: 'sound/PropOp/sfx_zhuaji_mus' },
                 receiver: { spine: 'dynamic/prop/anim/expressionChicken/chicken_spine', anim: 'hen_struggling' }
@@ -114,13 +114,13 @@ class ThrowPropManager {
         },
         // 拳击(608)→pokerqueen新gun：子弹/火球从发送者朝目标飞去(bullets-fireballs)
         [PropsID.PROPSBOXING]: {
-            duration: 4,
+            duration: 1.9,
             clips: {
                 hit: { spine: 'dynamic/prop/anim/expressionBox/box_local', anim: 'bullets-fireballs', soundName: 'sound/PropOp/sfx_boxing_sender1' }
             }
         },
         [PropsID.PROPSBASEBALL]: {
-            duration: 4,
+            duration: 2.6,
             clips: {
                 hit: { spine: 'dynamic/prop/anim/expressionBaseballSender/skeleton', anim: 'blast', flyAnim: 'bomb_flying', soundName: 'sound/PropOp/sfx_baseball' }
             }
@@ -321,7 +321,11 @@ class ThrowPropManager {
                 if (!this._canPlayPropTask(task)) continue;
                 this._propQueue.splice(i, 1);
                 this._markPropTaskPlaying(task);
-                this._playPropNow(task);
+                try {
+                    this._playPropNow(task);
+                } catch (error) {
+                    cc.warn('[ThrowPropManager] play prop failed', task.type, error);
+                }
                 this._schedulePropTaskFinish(task);
                 started = true;
                 break;
@@ -523,7 +527,7 @@ class ThrowPropManager {
         const node = this._spawnPropSpine(this._getSkeleton(clip.spine), clip.anim, false, targetPos);
         const skeleton = node.getComponent(sp.Skeleton);
         skeleton.addAnimation(0, eaten.anim, false, 0);
-        this._destroyAfterDelay(node, 4);
+        this._destroyAfterDelay(node, 3.5);
         // 鲨鱼按需静音，不播放音效(对齐 pokerqueen)
     }
 
