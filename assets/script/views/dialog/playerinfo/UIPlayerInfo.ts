@@ -109,6 +109,17 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     /** pokerqueen 道具网格显示顺序(按 $propOp_N 名称)；末尾 2/6=撒钱/鱼头始终隐藏 */
     private static readonly PROP_VISUAL_ORDER: number[] = [12, 3, 9, 5, 10, 7, 1, 11, 8, 4, 2, 6];
     private static readonly PROP_HIDDEN_INDEXES: number[] = [2, 6];
+    private static readonly PROP_CELL_WIDTH = 170;
+    private static readonly PROP_CELL_HEIGHT = 230;
+    private static readonly PROP_GRID_PADDING_X = 10;
+    private static readonly PROP_ICON_SCALE = 1.2;
+    private static readonly PROP_ICON_Y = 35;
+    private static readonly PROP_COST_Y = -85;
+    private static readonly TAB_CONTENT_SCALE = 0.75;
+    private static readonly CLOSE_HIT_SIZE = 180;
+    private static readonly CLOSE_BTN_X = 425;
+    private static readonly DIALOG_PADDING_TOP = 60;
+    private static readonly DIAMOND_SHOW_SPACING = 12;
     /** 各道具图标按 pokerqueen 等比适配到 128 盒内的尺寸 [w,h]，键=$propOp_N */
     private static readonly PROP_ICON_SIZE: Record<number, [number, number]> = {
         1: [128, 68],
@@ -195,6 +206,8 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this._initDataNodes();
         this._initAllInNodes();
         this._initDiamondNodes();
+        this._applyTabContentLayout();
+        this._applyDiamondShowLayout();
         this._initPropNodes();
         if (this._param) this.initialize(this._param);
     }
@@ -231,7 +244,10 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         if (this.panelClick) this._bindClick(this.panelClick, this.close);
         this.dialogNode.on(cc.Node.EventType.TOUCH_START, (event: cc.Event.EventTouch) => event.stopPropagation(), this);
         this.dialogNode.on(cc.Node.EventType.TOUCH_END, (event: cc.Event.EventTouch) => event.stopPropagation(), this);
-        this._bindClick(this.dialogNode.getChildByName('closeBtn'), this.close);
+        const closeHitNode = new cc.Node('closeHitArea');
+        closeHitNode.parent = this.dialogNode.getChildByName('closeBtn');
+        closeHitNode.setContentSize(UIPlayerInfo.CLOSE_HIT_SIZE, UIPlayerInfo.CLOSE_HIT_SIZE);
+        this._bindClick(closeHitNode, this.close);
         this._bindClick(this.noteBtn, this._clickEditNote);
         this._bindClick(this.playerNoteNode, this._clickEditNote);
         this.noteEditBox.node.on('editing-did-ended', this._onNoteEditEnded, this);
@@ -420,14 +436,42 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
 
     /** 按 pokerqueen 排布道具网格：调整显示顺序 + 各图标等比尺寸(对齐参考图) */
     private _applyPropGridLayout(): void {
+        const layout = this.propOpNode.getComponent(cc.Layout);
+        layout.spacingX = 0;
+        layout.paddingLeft = UIPlayerInfo.PROP_GRID_PADDING_X;
+        layout.paddingRight = UIPlayerInfo.PROP_GRID_PADDING_X;
         UIPlayerInfo.PROP_VISUAL_ORDER.forEach((propNo, siblingIdx) => {
             const node = this.propOpNode.getChildByName('$propOp_' + propNo);
             if (!node) return;
             node.setSiblingIndex(siblingIdx);
+            node.setContentSize(UIPlayerInfo.PROP_CELL_WIDTH, UIPlayerInfo.PROP_CELL_HEIGHT);
             const size = UIPlayerInfo.PROP_ICON_SIZE[propNo];
             const icon = node.getChildByName('propIcon');
-            if (icon && size) icon.setContentSize(size[0], size[1]);
+            if (icon && size) {
+                icon.setContentSize(size[0] * UIPlayerInfo.PROP_ICON_SCALE, size[1] * UIPlayerInfo.PROP_ICON_SCALE);
+                icon.y = UIPlayerInfo.PROP_ICON_Y;
+            }
+            const cost = node.getChildByName('diamondCost');
+            if (cost) cost.y = UIPlayerInfo.PROP_COST_Y;
         });
+    }
+
+    private _applyTabContentLayout(): void {
+        const scale = UIPlayerInfo.TAB_CONTENT_SCALE;
+        this._contentNodes.forEach(contentNode => {
+            contentNode.height *= scale;
+            contentNode.children.forEach(child => {
+                child.y *= scale;
+            });
+        });
+        this._contentNodes[1].children.forEach(child => child.setScale(scale));
+    }
+
+    private _applyDiamondShowLayout(): void {
+        const layout = this.diamondShowNode.addComponent(cc.Layout);
+        layout.type = cc.Layout.Type.HORIZONTAL;
+        layout.resizeMode = cc.Layout.ResizeMode.CONTAINER;
+        layout.spacingX = UIPlayerInfo.DIAMOND_SHOW_SPACING;
     }
 
     private _applyTargetLayout(): void {
@@ -447,16 +491,18 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
         this.dialogNode.setPosition(0, 0);
         this.dialogNode.setContentSize(1088, 2280);
         this.dialogNode.opacity = 255;
+        this.dialogNode.getComponent(cc.Layout).paddingTop = UIPlayerInfo.DIALOG_PADDING_TOP;
+        this.dialogNode.getChildByName('closeBtn').x = UIPlayerInfo.CLOSE_BTN_X;
         this.headImgNode.setPosition(0, 987.5);
         this.opButtonNode.setPosition(0, 577);
         this.opButtonNode.setContentSize(1000, 556);
         this.dataTabNode.setPosition(0, OTHER_DATA_TAB_Y);
-        this.dataTabNode.setContentSize(1000, 905);
+        this.dataTabNode.setContentSize(1000, 714);
         this.diamondShowNode.setPosition(0, -1070);
         this.diamondShowNode.active = this._canGiftDiamond();
         this.propOpNode.setPosition(0, -823);
         // 宽度 870 对齐 pokerqueen：128 宽按钮 + 30 间距时每行恰好 5 个(1000 会挤成 6 个)
-        this.propOpNode.setContentSize(870, 394);
+        this.propOpNode.setContentSize(870, 470);
     }
 
     private _refreshDialogLayout(): void {
@@ -691,13 +737,12 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             const diamondCost = propNode.getChildByName('diamondCost');
             if (diamondCost) {
                 const costLabel = diamondCost.getChildByName('costNum')?.getComponent(cc.Label);
-                const payPrice = data ? Number(data.payPrice) || 0 : 10;
-                const showPrice = (data ? !userStore.isPropFree(data) : true) && payPrice > 0;
+                const payPrice = Number(data?.payPrice) || 0;
+                const showPrice = globalConfigStore.isChannelDiamondFreeMode && !!data && !userStore.isPropFree(data) && payPrice > 0;
                 diamondCost.active = showPrice;
                 if (costLabel) {
-                    const isPrivateUcPackage = globalConfigStore.isChannelDiamondFreeMode;
-                    costLabel.string = showPrice ? (isPrivateUcPackage ? formatPrivateUcChargePrice(payPrice) : `${payPrice}`) : '';
-                    if (isPrivateUcPackage && showPrice) {
+                    costLabel.string = showPrice ? formatPrivateUcChargePrice(payPrice) : '';
+                    if (showPrice) {
                         applyInlinePrivateUcChargeIcon(costLabel, this.ucChargeIcon);
                     }
                 }
