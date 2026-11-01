@@ -961,7 +961,7 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
             ? userStore.isPropFree(propData)
                 ? Def.ConsumeType.CT_NONE
                 : propData.priceID
-            : Def.ConsumeType.CT_EMOJI_2) as ClientMessageBroadcastMsg.AsObject['consume'];
+            : Def.ConsumeType.CT_NONE) as ClientMessageBroadcastMsg.AsObject['consume'];
         const throwData = {
             type: definition.type,
             userID: userStore.userRID,
