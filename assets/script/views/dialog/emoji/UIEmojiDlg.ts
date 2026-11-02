@@ -1,17 +1,12 @@
-import type { ClientMessageBroadcastMsg } from '@silenthill/agreement-web';
-import { Code, Def } from '@silenthill/agreement-web';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
-import TexasGameRoomDataChat from '../../../data/room/texas/TexasGameRoomDataChat';
 import globalConfigStore from '../../../data/system/GlobalConfigStore';
 import userStore, { UserPropData, UserStore } from '../../../data/user/UserStore';
-import UserStoreUtils from '../../../data/user/UserStoreUtils';
-import { BroadcastCode } from '../../../game/constant/BroadcastCode';
 import { GameplayChatPropType } from '../../../game/constant/GameplayChatPropType';
 import MagicEmojiConfig, { MagicEmojiDefinition } from '../../../game/constant/MagicEmojiConfig';
-import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import AssetManager, { BUNDLE_RESOURCES } from '../../loader/AssetManager';
+import TexasTableEvent from '../../scene/room/texas/events/TexasTableEvent';
 import UIEmojiItem from './UIEmojiItem';
 
 const { ccclass, menu, property } = cc._decorator;
@@ -67,6 +62,7 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
     @property({ type: cc.Node, displayName: '分类模板选中标识' })
     private categorySelectSign: cc.Node = null;
     private _roomData: TexasGameRoomData = null;
+    private _roomID: number = 0;
     private _targetY = 0;
     private _startY = 0;
     private _selectedCategoryID: number = null;
@@ -74,6 +70,7 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
     private _categoryViews: EmojiCategoryView[] = [];
 
     public initialize(param: UIEmojiDlgParam): void {
+        this._roomID = param.roomID;
         this._roomData = roomDataManager.getRoomData<TexasGameRoomData>(param.roomID, param.matchID);
         this._applyLayout();
         userStore.targetOff(this);
@@ -290,53 +287,7 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
     };
 
     private _sendEmojiBroadcast(propData: UserPropData, config: MagicEmojiDefinition): void {
-        this._roomData.seatsStateManager.setPendingEmoji({
-            type: config.type,
-            userID: userStore.userRID
-        });
-        const timestamp = Date.now();
-        // 发送者不会收到自己的 1121 推送，先记录待确认表情，1019 成功后再写入聊天室。
-        this._roomData.chat.setPendingMessage({
-            userID: userStore.userRID,
-            name: userStore.name || '',
-            content: '',
-            headUrl: userStore.avatar || '',
-            sex: userStore.sex || 0,
-            timestamp,
-            time: TexasGameRoomDataChat.formatTimestamp(timestamp),
-            emojiType: config.type
-        });
-        const msgType = Def.BroadcastMsgType.BC_MSG_EMOJI;
-        const inner = JSON.stringify({
-            name: userStore.name,
-            type: config.type,
-            user_id: userStore.userRID,
-            target_user_id: 0,
-            message: '',
-            msgType,
-            time: timestamp,
-            sex: userStore.sex,
-            headUrl: userStore.avatar
-        });
-        const body: ClientMessageBroadcastMsg.AsObject = {
-            room: {
-                roomId: this._roomData.roomID,
-                matchId: this._roomData.matchID
-            },
-            consume: userStore.isPropFree(propData) ? Def.ConsumeType.CT_NONE : (propData.priceID as Def.ConsumeTypeMap[keyof Def.ConsumeTypeMap]),
-            message: '',
-            extra: this._stringToBytes(JSON.stringify({ code: BroadcastCode.BroadcastMsg, data: inner })),
-            msgType
-        };
-        ProtocolAgency.Send({
-            code: Code.MSG_D_BROADCAST_MSG,
-            roomID: this._roomData.roomID,
-            matchID: this._roomData.matchID,
-            body
-        });
-        if (propData.propAmount > 0) {
-            UserStoreUtils.consumeUserProp(propData.gamePropID).catch(error => cc.warn('[UIEmojiDlg] consume user prop failed', error));
-        }
+        TexasTableEvent.SendEmoji(this._roomData, this._roomID, propData, config);
     }
 
     private _bindTouchEnd(node: cc.Node, handler: () => void): void {
@@ -345,12 +296,5 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
 
     private _stopTouch(event: cc.Event.EventTouch): void {
         event.stopPropagation();
-    }
-
-    private _stringToBytes(str: string): Uint8Array {
-        const encoded = unescape(encodeURIComponent(str));
-        const bytes = new Uint8Array(encoded.length);
-        for (let i = 0; i < encoded.length; i++) bytes[i] = encoded.charCodeAt(i);
-        return bytes;
     }
 }

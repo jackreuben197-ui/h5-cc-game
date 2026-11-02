@@ -124,7 +124,10 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
         await agoraManager.disableMicrophone();
         this.muteEvents();
         this.localCameraBtnState = ButtonState.DISABLE;
+        this.localCameraEnabled = false;
+        this.localCameraEnabledDelayed = false;
         this.localMicrophoneBtnState = ButtonState.DISABLE;
+        this.localMicrophoneEnabled = false;
         this.remoteCameraEnabled = ButtonState.HIDDEN;
         this.remoteMicrophoneEnabled = ButtonState.HIDDEN;
         this.unmuteEvents();

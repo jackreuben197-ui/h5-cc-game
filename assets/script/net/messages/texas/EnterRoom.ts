@@ -26,8 +26,8 @@ import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import viewManager from '../../../views/UIViewManager';
 import throwPropManager from '../../../views/util/ThrowPropManager';
 import agoraManager from '../../agora/AgoraManager';
-import TexasVideoMediaHelper from './TexasVideoMediaHelper';
 import { auditHandSnapshot } from './TexasStateAudit';
+import TexasVideoMediaHelper from './TexasVideoMediaHelper';
 
 const _plog = createLogger('ServerMessageEnterRoom');
 
@@ -56,6 +56,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
     }
     auditHandSnapshot('EnterRoom', roomID, matchID, data.gameStatus, data.handInfo, data.playersList, data.operatorList, roomData);
     // EnterRoom 是权威全量快照；先清理上一桌/上一手残留，再按本次快照重建。
+    roomData.seatsStateManager.clearExpressions();
     roomData.clearHandPresentation();
     throwPropManager.preloadEffects();
     // 声音处理
@@ -94,11 +95,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             roomData.potInfo.potList = data.handInfo.potsList;
             roomData.potInfo.secPotList = data.handInfo.secondPotsList;
             roomData.seatsStateManager.setButtonPosition(data.handInfo.buSeatId, AnimateDisplayTypeButton.Static);
-            roomData.publicCards.replacePublicCards(
-                data.handInfo.publicCardsList,
-                data.handInfo.secondPublicCardsList,
-                AnimateDisplayTypePublicCards.Static
-            );
+            roomData.publicCards.replacePublicCards(data.handInfo.publicCardsList, data.handInfo.secondPublicCardsList, AnimateDisplayTypePublicCards.Static);
             roomData.basicInfo.currentConfigContinueRounds = data.handInfo.conRounds;
             //Critial
             roomData.basicInfo.setCriticalHitStatusEnabled(data.handInfo.criticalHitOpen, AnimateDisplayTypePlayType.Staic);
@@ -298,11 +295,12 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         const seatedConfig = roomData.basicInfo.antiCheatConfig.getSeatedSetting();
         const promise = [];
         try {
+            // 先完成旧频道清理，避免新建的采集轨道被 leave() 关闭。
+            await TexasVideoMediaHelper.joinAgoraVideoChannelIfNeed(roomID, matchID);
             if (seatedConfig.enableCamera) {
                 promise.push(agoraManager.enableCamera());
             }
             promise.push(agoraManager.enableMicrophone());
-            promise.push(TexasVideoMediaHelper.joinAgoraVideoChannelIfNeed(roomID, matchID));
             await Promise.all(promise);
             // 如果能操作摄像头,则根据状态变更
             if (seatedConfig.canOpCamera) {

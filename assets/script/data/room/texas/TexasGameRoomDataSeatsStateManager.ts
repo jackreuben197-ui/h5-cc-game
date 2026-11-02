@@ -31,6 +31,7 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     public static readonly THROW_PROP = 'THROW_PROP';
     public static readonly DIAMOND_GIFT = 'DIAMOND_GIFT';
     public static readonly EMOJI = 'EMOJI';
+    public static readonly CLEAR_EXPRESSIONS = 'CLEAR_EXPRESSIONS';
     private _parentRoomData: TexasGameRoomData;
 
     constructor(p: TexasGameRoomData) {
@@ -46,6 +47,18 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     private _prevMushroomBtn: number = 0;
     private _pendingThrowPropData: ThrowPropBroadcastData = null;
     private _pendingEmojiData: EmojiBroadcastData = null;
+
+    public clearPendingExpressions(userID: number = 0): void {
+        if (!userID || this._pendingThrowPropData?.userID === userID || this._pendingThrowPropData?.targetUserID === userID) {
+            this._pendingThrowPropData = null;
+        }
+        if (!userID || this._pendingEmojiData?.userID === userID) this._pendingEmojiData = null;
+    }
+
+    @pureEvent(TexasGameRoomDataSeatsStateManager.CLEAR_EXPRESSIONS)
+    public clearExpressions(): void {
+        this.clearPendingExpressions();
+    }
 
     public setMushroomPoolChange(btnSeatNo: number, pool: number, bat: AnimateDisplayTypeMushroomPool) {
         if (pool == 0) return;
@@ -85,7 +98,7 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     public confirmPendingThrowProp(status: number): void {
         const data = this._pendingThrowPropData;
         this._pendingThrowPropData = null;
-        if (status !== 0 || !data) return;
+        if (status !== 0 || !data || !this.getSeatPlayerByUserID(data.userID)?.seated || !this.getSeatPlayerByUserID(data.targetUserID)?.seated) return;
         this.throwPropEvent(data);
     }
 
@@ -99,7 +112,7 @@ export default class TexasGameRoomDataSeatsStateManager extends cc.EventTarget {
     public confirmPendingEmoji(status: number): void {
         const data = this._pendingEmojiData;
         this._pendingEmojiData = null;
-        if (status !== 0 || !data) return;
+        if (status !== 0 || !data || !this.getSeatPlayerByUserID(data.userID)?.seated) return;
         this.emojiEvent(data);
     }
 

@@ -287,6 +287,7 @@ class TexasGameRoomDataMtt extends cc.EventTarget {
     public setTableTransferWaiting(waiting: boolean): void {
         // 换桌期间由 RoomData 统一驱动等待提示和进桌流程。
         this.tableTransferWaiting = waiting;
+        if (waiting) this._roomData.seatsStateManager.clearExpressions();
         this._change();
     }
 

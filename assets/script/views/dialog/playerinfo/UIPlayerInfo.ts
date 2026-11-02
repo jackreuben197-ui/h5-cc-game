@@ -1,4 +1,3 @@
-import { ClientMessageBroadcastMsg, Code, Def } from '@silenthill/agreement-web';
 import playerStore, { PlayerBasicData, PlayerDiamondConfig, PlayerStore } from '../../../data/player/PlayerStore';
 import PlayerStoreUtils from '../../../data/player/PlayerStoreUtils';
 import roomDataManager from '../../../data/room/RoomDataManager';
@@ -6,9 +5,8 @@ import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayer from '../../../data/room/texas/TexasGameRoomDataPlayer';
 import globalConfigStore from '../../../data/system/GlobalConfigStore';
 import userStore, { UserPropData, UserStore } from '../../../data/user/UserStore';
-import UserStoreUtils from '../../../data/user/UserStoreUtils';
 import { AntiCheatType } from '../../../game/constant/AntiCheatType';
-import { BroadcastCode, PropsID } from '../../../game/constant/BroadcastCode';
+import { PropsID } from '../../../game/constant/BroadcastCode';
 import { GameplayChatPropType } from '../../../game/constant/GameplayChatPropType';
 import { RoomOriginType } from '../../../game/constant/RoomOriginType';
 import { StringHelper } from '../../../helper/StringHelper';
@@ -18,8 +16,8 @@ import agoraManager from '../../../net/agora/AgoraManager';
 import { WebResponseDataBase } from '../../../net/https/data/other/WebResponseDataBase';
 import { HttpStatsOtherUserStats } from '../../../net/https/data/stats/HttpStatsOtherUserStats';
 import TexasVideoMediaHelper from '../../../net/messages/texas/TexasVideoMediaHelper';
-import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
+import TexasTableEvent from '../../scene/room/texas/events/TexasTableEvent';
 import viewManager from '../../UIViewManager';
 import { applyInlinePrivateUcChargeIcon, formatPrivateUcChargePrice } from '../../util/PrivateUcChargeView';
 import throwPropManager from '../../util/ThrowPropManager';
@@ -869,44 +867,10 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _clickProp(definition: ThrowPropDefinition, clickNode: cc.Node): void {
-        this._playClickScale(clickNode, false);
         const propData = this._propListData.get(definition.type);
-        const consume = (userStore.isPropFree(propData) ? Def.ConsumeType.CT_NONE : propData.priceID) as ClientMessageBroadcastMsg.AsObject['consume'];
-        this._roomData.seatsStateManager.setPendingThrowProp({
-            type: definition.type,
-            userID: userStore.userRID,
-            targetUserID: this._requestRID
-        });
-        const inner = JSON.stringify({
-            name: userStore.name,
-            target_user_id: this._requestRID,
-            user_id: userStore.userRID,
-            type: definition.type
-        });
-        const extra = JSON.stringify({ code: BroadcastCode.BroadcastMsg, data: inner });
-        const body: ClientMessageBroadcastMsg.AsObject = {
-            room: {
-                roomId: this._roomData.roomID,
-                matchId: this._roomData.matchID
-            },
-            consume,
-            message: '',
-            extra: this._stringToBytes(extra),
-            msgType: this._getThrowPropMsgType()
-        };
-        ProtocolAgency.Send({
-            code: Code.MSG_D_BROADCAST_MSG,
-            roomID: this._roomData.roomID,
-            matchID: this._roomData.matchID,
-            body: body
-        });
-        if (propData.propAmount > 0) {
-            UserStoreUtils.consumeUserProp(propData.gamePropID).catch(error => cc.warn('[UIPlayerInfo] consume user prop failed', error));
+        if (TexasTableEvent.ThrowProp(this._roomData, this._param.roomID, this._requestRID, definition.type, propData)) {
+            this._playClickScale(clickNode, false);
         }
-    }
-
-    private _getThrowPropMsgType(): Def.BroadcastMsgTypeMap[keyof Def.BroadcastMsgTypeMap] {
-        return Def.BroadcastMsgType.BC_MSG_THROW;
     }
 
     private _clickReport(): void {
@@ -1002,12 +966,5 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
 
     private _isCurrentRequest(rid: number): boolean {
         return cc.isValid(this.node) && this.node.activeInHierarchy && this._requestRID === rid;
-    }
-
-    private _stringToBytes(str: string): Uint8Array {
-        const encoded = unescape(encodeURIComponent(str));
-        const bytes = new Uint8Array(encoded.length);
-        for (let i = 0; i < encoded.length; i++) bytes[i] = encoded.charCodeAt(i);
-        return bytes;
     }
 }

@@ -41,6 +41,7 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
     }
     auditHandSnapshot('SyncEnter', roomID, matchID, data.gameStatus, data.handInfo, data.playersList, data.operatorList, roomData);
     // SyncEnter 是权威全量快照：先清理可能丢失 HandClear 后残留的本地一手缓存，再用快照重建。
+    roomData.seatsStateManager.clearExpressions();
     roomData.clearHandPresentation();
     // 浏览器从后台恢复也会触发 SyncEnter；聊天不属于单手快照，保留当前房间已有历史记录。
     const myseat = data.myInfo?.seatId || 0;
@@ -96,11 +97,7 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
         roomData.potInfo.potList = data.handInfo.potsList;
         roomData.potInfo.secPotList = data.handInfo.secondPotsList;
         roomData.seatsStateManager.setButtonPosition(data.handInfo.buSeatId, AnimateDisplayTypeButton.Static);
-        roomData.publicCards.replacePublicCards(
-            data.handInfo.publicCardsList,
-            data.handInfo.secondPublicCardsList,
-            AnimateDisplayTypePublicCards.Static
-        );
+        roomData.publicCards.replacePublicCards(data.handInfo.publicCardsList, data.handInfo.secondPublicCardsList, AnimateDisplayTypePublicCards.Static);
         roomData.basicInfo.currentConfigContinueRounds = data.handInfo.conRounds;
         //Critial
         roomData.basicInfo.setCriticalHitStatusEnabled(data.handInfo.criticalHitOpen, AnimateDisplayTypePlayType.Staic);

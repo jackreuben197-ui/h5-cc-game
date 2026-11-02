@@ -176,6 +176,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     // 扑克核心桌面业务方法层实现
     // =========================================================================
     public clearData() {
+        if (this.userID > 0) this.roomData.seatsStateManager.clearPendingExpressions(this.userID);
         this.remoteVideoVisible = false;
         this.micIconState = MicrophoneIconState.HIDDEN;
         this.muteEvents();

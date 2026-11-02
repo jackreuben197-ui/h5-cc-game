@@ -137,11 +137,11 @@ export class VideoAntiCheatConfig {
             return {
                 enableCamera: false,
                 canOpCamera: false,
-                canOpMicrophone: false,
+                canOpMicrophone: true,
                 canSwitchPowerSaving: false,
                 canDisablePowerSaving: false,
                 openCamera: false,
-                openMicrophone: true,
+                openMicrophone: false,
                 openPowerSaving: false
             };
         }

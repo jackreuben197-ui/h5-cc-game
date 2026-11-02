@@ -75,11 +75,12 @@ export async function Seated(data: ServerMessageSeated.AsObject, roomID: number,
         const seatedConfig = roomData.basicInfo.antiCheatConfig.getSeatedSetting();
         const promise = [];
         try {
+            // 先完成旧频道清理，避免新建的采集轨道被 leave() 关闭。
+            await TexasVideoMediaHelper.joinAgoraVideoChannelIfNeed(roomID, matchID);
             if (seatedConfig.enableCamera) {
                 promise.push(agoraManager.enableCamera());
             }
             promise.push(agoraManager.enableMicrophone());
-            promise.push(TexasVideoMediaHelper.joinAgoraVideoChannelIfNeed(roomID, matchID));
             await Promise.all(promise);
             // 如果能操作摄像头,则根据状态变更
             if (seatedConfig.canOpCamera) {

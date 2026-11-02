@@ -1,4 +1,4 @@
-import { ClientMessageSeated, Code, Def, PotInsuranceBuy, RoomInfo, ServerMessageShowdown } from '@silenthill/agreement-web';
+import { ClientMessageBroadcastMsg, ClientMessageSeated, Code, Def, PotInsuranceBuy, RoomInfo, ServerMessageShowdown } from '@silenthill/agreement-web';
 import { traceClass } from '../../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../../data/room/texas/TexasGameRoomData';
@@ -6,10 +6,12 @@ import TexasGameRoomDataChat from '../../../../../data/room/texas/TexasGameRoomD
 import TexasGameRoomDataPlayer from '../../../../../data/room/texas/TexasGameRoomDataPlayer';
 import TexasGameRoomDataPlayerMine from '../../../../../data/room/texas/TexasGameRoomDataPlayerMine';
 import globalConfigStore from '../../../../../data/system/GlobalConfigStore';
-import userStore from '../../../../../data/user/UserStore';
+import userStore, { UserPropData } from '../../../../../data/user/UserStore';
 import UserStoreUtils from '../../../../../data/user/UserStoreUtils';
 import { BringInMode } from '../../../../../game/constant/BringInMode';
+import { BroadcastCode, PropsID } from '../../../../../game/constant/BroadcastCode';
 import { GameType } from '../../../../../game/constant/LogicTypeConf';
+import { MagicEmojiDefinition } from '../../../../../game/constant/MagicEmojiConfig';
 import guestSitdownFlow from '../../../../../game/GuestSitdownFlow';
 import ProcedureDefine from '../../../../../game/procedure/ProcedureDefine';
 import ProcedureManager from '../../../../../game/procedure/ProcedureManager';
@@ -162,8 +164,7 @@ export default class TexasTableEvent {
             const lastBringOut = response.data.last_bring_out;
             // 私域渠道包只能使用进桌渠道的俱乐部钱包。旧版可能留下其他俱乐部的回桌记录，
             // 不能再用该记录覆盖 clubId，否则加时/看牌请求会继续在服务端绑定到错误的钱包。
-            const compatibleLastBringOut =
-                lastBringOut != null && (channelClubID <= 0 || Number(lastBringOut.club_id) === channelClubID) ? lastBringOut : null;
+            const compatibleLastBringOut = lastBringOut != null && (channelClubID <= 0 || Number(lastBringOut.club_id) === channelClubID) ? lastBringOut : null;
             // // 异步请求期间可能已被清理
             // if (!seatData.mine) {
             //     this.tracelog.warn('Sitdown mainPlayer is null, abort');
@@ -928,6 +929,77 @@ export default class TexasTableEvent {
             (res: any): number | null => res?.data?.diamonds_wallet?.diamonds ?? null,
             (): number | null => null
         );
+    }
+
+    public static SendEmoji(roomData: TexasGameRoomData, roomID: number, propData: UserPropData, config: MagicEmojiDefinition): boolean {
+        if (!propData || !this._canSendExpression(roomData, roomID)) return false;
+        roomData.seatsStateManager.setPendingEmoji({ type: config.type, userID: userStore.userRID });
+        const timestamp = Date.now();
+        roomData.chat.setPendingMessage({
+            userID: userStore.userRID,
+            name: userStore.name || '',
+            content: '',
+            headUrl: userStore.avatar || '',
+            sex: userStore.sex || 0,
+            timestamp,
+            time: TexasGameRoomDataChat.formatTimestamp(timestamp),
+            emojiType: config.type
+        });
+        const msgType = Def.BroadcastMsgType.BC_MSG_EMOJI;
+        const inner = JSON.stringify({
+            name: userStore.name,
+            type: config.type,
+            user_id: userStore.userRID,
+            target_user_id: 0,
+            message: '',
+            msgType,
+            time: timestamp,
+            sex: userStore.sex,
+            headUrl: userStore.avatar
+        });
+        this._sendExpressionBroadcast(roomData, propData, inner, msgType);
+        return true;
+    }
+
+    public static ThrowProp(roomData: TexasGameRoomData, roomID: number, targetUserID: number, type: PropsID, propData: UserPropData): boolean {
+        if (!propData || !targetUserID || !this._canSendExpression(roomData, roomID, targetUserID)) return false;
+        roomData.seatsStateManager.setPendingThrowProp({ type, userID: userStore.userRID, targetUserID });
+        const inner = JSON.stringify({ name: userStore.name, target_user_id: targetUserID, user_id: userStore.userRID, type });
+        this._sendExpressionBroadcast(roomData, propData, inner, Def.BroadcastMsgType.BC_MSG_THROW);
+        return true;
+    }
+
+    private static _canSendExpression(roomData: TexasGameRoomData, roomID: number, targetUserID: number = 0): boolean {
+        return (
+            !!roomData &&
+            roomData.roomID === roomID &&
+            !roomData.mtt.tableTransferWaiting &&
+            roomDataManager.getRoomData(roomID, roomData.matchID) === roomData &&
+            !!roomData.seatsStateManager.getSeatPlayerByUserID(userStore.userRID)?.seated &&
+            (!targetUserID || !!roomData.seatsStateManager.getSeatPlayerByUserID(targetUserID)?.seated)
+        );
+    }
+
+    private static _sendExpressionBroadcast(
+        roomData: TexasGameRoomData,
+        propData: UserPropData,
+        inner: string,
+        msgType: Def.BroadcastMsgTypeMap[keyof Def.BroadcastMsgTypeMap]
+    ): void {
+        const encoded = unescape(encodeURIComponent(JSON.stringify({ code: BroadcastCode.BroadcastMsg, data: inner })));
+        const extra = new Uint8Array(encoded.length);
+        for (let i = 0; i < encoded.length; i++) extra[i] = encoded.charCodeAt(i);
+        const body: ClientMessageBroadcastMsg.AsObject = {
+            room: { roomId: roomData.roomID, matchId: roomData.matchID },
+            consume: userStore.isPropFree(propData) ? Def.ConsumeType.CT_NONE : (propData.priceID as Def.ConsumeTypeMap[keyof Def.ConsumeTypeMap]),
+            message: '',
+            extra,
+            msgType
+        };
+        ProtocolAgency.Send({ code: Code.MSG_D_BROADCAST_MSG, roomID: roomData.roomID, matchID: roomData.matchID, body });
+        if (propData.propAmount > 0) {
+            UserStoreUtils.consumeUserProp(propData.gamePropID).catch(error => cc.warn('[TexasTableEvent] consume user prop failed', error));
+        }
     }
 
     /**

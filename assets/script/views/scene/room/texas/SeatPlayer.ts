@@ -22,6 +22,7 @@ import { i18nLabel } from '../../../../i18n/i18nLabel';
 import { i18nMgr } from '../../../../i18n/i18nMgr';
 import agoraManager from '../../../../net/agora/AgoraManager';
 import AssetManager, { BUNDLE_RESOURCES } from '../../../loader/AssetManager';
+import throwPropManager from '../../../util/ThrowPropManager';
 import UIViewUtil from '../../../util/UIViewUtil';
 import AgoraVideoRender from '../../../widget/AgoraVideoRender';
 import CardView from '../../../widget/CardView';
@@ -199,6 +200,7 @@ export default class SeatPlayer extends cc.Component {
     }
 
     protected onDisable(): void {
+        throwPropManager.stopSeat(this._emojiNode);
         this.unschedule(this._restoreCardsFromData);
         this._stopRoundBetAnimation();
         this._stopWinnerPresentation();
@@ -337,6 +339,9 @@ export default class SeatPlayer extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayer.SEATED_CHANGE, { dataSource: 'player', initPriority: 10 })
     @traceMethod()
     private onUpdateSeated(b: boolean, mine: TexasGameRoomDataPlayerMine) {
+        if (!b) {
+            throwPropManager.stopSeat(this._emojiNode);
+        }
         // 座位槽在拆合桌和换人时会复用，赢家展示不能跟随节点留到新玩家。
         this._stopWinnerPresentation();
         this.userSeat.active = b;
