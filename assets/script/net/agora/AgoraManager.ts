@@ -390,14 +390,16 @@ class AgoraManager {
     }
 
     /**
-     * 开启麦克风并发布音频
+     * 创建本地麦克风轨道，并设置加入频道前的初始静音状态。
+     * @param initialMuted true 表示创建后默认关闭自己的麦克风
      */
-    public async enableMicrophone(): Promise<boolean> {
+    public async enableMicrophone(initialMuted: boolean = false): Promise<boolean> {
         try {
             if (!this._localAudioTrack) {
                 this._localAudioTrack = await window.AgoraRTC.createMicrophoneAudioTrack();
             }
-            this.tracelog.info('麦克风已开启');
+            await this._localAudioTrack.setMuted(initialMuted);
+            this.tracelog.info(initialMuted ? '麦克风已创建，初始状态为关闭' : '麦克风已开启');
             return true;
         } catch (e) {
             this.tracelog.error('开启麦克风失败:', e);

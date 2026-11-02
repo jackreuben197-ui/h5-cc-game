@@ -287,7 +287,7 @@ export default class SeatPlayer extends cc.Component {
         if (!this._seatPlayer) return;
         const isMineBottom = this._seatPlayer.position === SeatPosition.BottomMiddle && this._seatPlayer.seated && !!this._seatPlayer.mine;
         this.bigCardsContainer.setPosition(0, isMineBottom ? 235 : 0);
-        this.bigCardsContainer.setScale(isMineBottom ? 1 : 0.65);
+        this.bigCardsContainer.setScale(isMineBottom ? 1 : 0.78);
         this.bigCardsContainer.opacity = 255;
         const smallCardsX =
             this._seatPlayer.position === SeatPosition.BottomLeft ||
@@ -556,7 +556,7 @@ export default class SeatPlayer extends cc.Component {
                     this.roundBetNode.setPosition(0, 180);
                     // 大牌的显示位置调整,并隐藏
                     this.bigCardsContainer.setPosition(0, 0);
-                    this.bigCardsContainer.setScale(0.65, 0.65);
+                    this.bigCardsContainer.setScale(0.78, 0.78);
                     // 显示名字
                     this.nickName.node.active = true;
                     this.nickNameSplash.active = true;
@@ -580,7 +580,7 @@ export default class SeatPlayer extends cc.Component {
                 this.roundBetNode.setPosition(190, -70);
                 this.smallCardsContainer.setPosition(160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
-                this.bigCardsContainer.setScale(0.65, 0.65);
+                this.bigCardsContainer.setScale(0.78, 0.78);
                 this.mushroomNode.node.setPosition(75, 92);
                 this.mushroomNode.node.scaleX = 1;
                 this.mushroomNode.getOpNode(0).scaleX = 1;
@@ -597,7 +597,7 @@ export default class SeatPlayer extends cc.Component {
                 this.roundBetNode.setPosition(-65, -215);
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
-                this.bigCardsContainer.setScale(0.65, 0.65);
+                this.bigCardsContainer.setScale(0.78, 0.78);
                 this.mushroomNode.node.setPosition(75, 92);
                 this.mushroomNode.node.scaleX = 1;
                 this.mushroomNode.getOpNode(0).scaleX = 1;
@@ -615,7 +615,7 @@ export default class SeatPlayer extends cc.Component {
                 this.roundBetNode.setPosition(-85, -215);
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
-                this.bigCardsContainer.setScale(0.65, 0.65);
+                this.bigCardsContainer.setScale(0.78, 0.78);
                 this.mushroomNode.node.setPosition(-75, 92);
                 this.mushroomNode.node.scaleX = -1; // 先反转
                 this.mushroomNode.getOpNode(0).scaleX = -1; // 文本再转回去
@@ -634,7 +634,7 @@ export default class SeatPlayer extends cc.Component {
                 this.roundBetNode.setPosition(-180, -70);
                 this.smallCardsContainer.setPosition(-160, 5);
                 this.bigCardsContainer.setPosition(0, 0);
-                this.bigCardsContainer.setScale(0.65, 0.65);
+                this.bigCardsContainer.setScale(0.78, 0.78);
                 this.mushroomNode.node.setPosition(-75, 92);
                 this.mushroomNode.node.scaleX = -1; // 先反转
                 this.mushroomNode.getOpNode(0).scaleX = -1; // 文本再转回去
