@@ -20,6 +20,7 @@ import {
 } from '../../../game/constant/AnimateDisplayType';
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
 import { ButtonState } from '../../../game/constant/Constants';
+import { MicrophoneIconState } from '../../../game/constant/MicrophoneIconState';
 import ProcedureDefine from '../../../game/procedure/ProcedureDefine';
 import ProcedureManager from '../../../game/procedure/ProcedureManager';
 import roomReconnectManager from '../../../game/RoomReconnectManager';
@@ -302,9 +303,13 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             if (seatedConfig.enableCamera) {
                 promise.push(agoraManager.enableCamera());
             }
-            promise.push(agoraManager.enableMicrophone());
+            promise.push(agoraManager.enableMicrophone(!seatedConfig.openMicrophone));
             promise.push(TexasVideoMediaHelper.joinAgoraVideoChannelIfNeed(roomID, matchID));
             await Promise.all(promise);
+            // 入频道后的本地麦克风状态可能与默认值相同，直接同步头像图标，避免被 observable 跳过。
+            if (roomData.mine.player) {
+                roomData.mine.player.micIconState = seatedConfig.openMicrophone ? MicrophoneIconState.HIDDEN : MicrophoneIconState.MUTED;
+            }
             // 如果能操作摄像头,则根据状态变更
             if (seatedConfig.canOpCamera) {
                 //能操作交给按钮操作

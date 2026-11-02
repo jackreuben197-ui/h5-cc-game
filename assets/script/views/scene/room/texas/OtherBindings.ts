@@ -93,13 +93,28 @@ export default class OtherBindings extends cc.Component {
         }
     }
 
+    /**
+     * Unity 的 BaseGameplayRtcUI 按牌桌类型控制本地音视频按钮显示：
+     * 音频桌显示语音按钮，视频桌显示语音和视频按钮。
+     * Cocos 的 isInVideoRoom 同时覆盖音频桌和视频桌，因此视频按钮还要看 enableCamera。
+     */
+    private _isRtcRoom(): boolean {
+        return !!this._roomData?.basicInfo?.isInVideoRoom;
+    }
+
+    private _isVideoRtcRoom(): boolean {
+        const antiCheatConfig = this._roomData?.basicInfo?.antiCheatConfig;
+        return this._isRtcRoom() && !!antiCheatConfig && antiCheatConfig.getSeatedSetting().enableCamera;
+    }
+
     private _applyVideoRoomLayout(): void {
-        const isVideoRoom = this._roomData.basicInfo.isInVideoRoom;
+        const isRtcRoom = this._isRtcRoom();
+        const isVideoRoom = this._isVideoRtcRoom();
         this.btnEffect.node.active = isVideoRoom;
-        this.btnAudio.node.active = isVideoRoom;
+        this.btnAudio.node.active = isRtcRoom;
         this.btnCamera.node.active = isVideoRoom;
         this._refreshBottomBarLayout();
-        if (!isVideoRoom) return;
+        if (!isRtcRoom) return;
         const layout = this.btnCamera.node.parent.getComponent(cc.Layout);
         if (layout) {
             layout.paddingRight = 51;
@@ -122,9 +137,9 @@ export default class OtherBindings extends cc.Component {
         if (this.onVideoButtonsVisibilityChanged) this.onVideoButtonsVisibilityChanged();
     }
 
-    private _setVideoButtonVisible(button: cc.Button, visible: boolean): void {
+    private _setVideoButtonVisible(button: cc.Button, visible: boolean, videoOnly = true): void {
         if (!button || !this._roomData) return;
-        const show = visible && this._roomData.basicInfo.isInVideoRoom;
+        const show = visible && (videoOnly ? this._isVideoRtcRoom() : this._isRtcRoom());
         UIViewUtil.setNodeGray(button.node, false);
         if (button.node.active === show) return;
         button.node.active = show;
@@ -386,8 +401,9 @@ export default class OtherBindings extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_CAMERA_BTN_STATE_CHANGE, 'mine')
     private onLocalCameraStateChanged(val: ButtonState): Promise<void> {
         if (val == ButtonState.DISABLE) {
-            this._setVideoButtonVisible(this.btnCamera, false);
-            this.btnCameratIcon.changeSpriteFrame(1);
+            // 与 Unity 一致：按钮是否显示由牌桌类型决定，DISABLE 只表示当前不可操作。
+            this._setVideoButtonVisible(this.btnCamera, true);
+            this.btnCameratIcon.changeSpriteFrame(2);
             this.btnCamera.interactable = false;
             return;
         }
@@ -507,12 +523,13 @@ export default class OtherBindings extends cc.Component {
     @bindEvent(TexasGameRoomDataPlayerMine.LOCAL_MICROPHONE_BTN_STATE_CHANGE, 'mine')
     private onLocalMicrophoneEnabledChanged(val: ButtonState): Promise<void> {
         if (val == ButtonState.DISABLE) {
-            this._setVideoButtonVisible(this.btnAudio, false);
+            // 音频桌和视频桌都显示语音按钮；DISABLE 不再把按钮从界面移除。
+            this._setVideoButtonVisible(this.btnAudio, true, false);
             this.btnAudio.interactable = false;
-            this.btnAudioIcon.changeSpriteFrame(1);
+            this.btnAudioIcon.changeSpriteFrame(2);
             return;
         }
-        this._setVideoButtonVisible(this.btnAudio, true);
+        this._setVideoButtonVisible(this.btnAudio, true, false);
         this.btnAudio.interactable = true;
         let muted: boolean;
         if (val == ButtonState.ON) {

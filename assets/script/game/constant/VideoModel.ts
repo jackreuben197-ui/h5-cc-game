@@ -137,11 +137,13 @@ export class VideoAntiCheatConfig {
             return {
                 enableCamera: false,
                 canOpCamera: false,
-                canOpMicrophone: false,
+                // 实时语音桌允许用户关闭/启用自己的麦克风；摄像头仍不显示。
+                canOpMicrophone: true,
                 canSwitchPowerSaving: false,
                 canDisablePowerSaving: false,
                 openCamera: false,
-                openMicrophone: true,
+                // 加入语音频道后先静音，点击按钮后再启用自己的麦克风。
+                openMicrophone: false,
                 openPowerSaving: false
             };
         }

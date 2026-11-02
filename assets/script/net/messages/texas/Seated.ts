@@ -9,6 +9,7 @@ import { AnimateDisplayTypePosition } from '../../../game/constant/AnimateDispla
 import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
 import { BringInMode } from '../../../game/constant/BringInMode';
 import { ButtonState } from '../../../game/constant/Constants';
+import { MicrophoneIconState } from '../../../game/constant/MicrophoneIconState';
 import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import viewManager from '../../../views/UIViewManager';
 import agoraManager from '../../agora/AgoraManager';
@@ -79,9 +80,13 @@ export async function Seated(data: ServerMessageSeated.AsObject, roomID: number,
             if (seatedConfig.enableCamera) {
                 promise.push(agoraManager.enableCamera());
             }
-            promise.push(agoraManager.enableMicrophone());
+            promise.push(agoraManager.enableMicrophone(!seatedConfig.openMicrophone));
             promise.push(TexasVideoMediaHelper.joinAgoraVideoChannelIfNeed(roomID, matchID));
             await Promise.all(promise);
+            // 入频道后的本地麦克风状态可能与默认值相同，直接同步头像图标，避免被 observable 跳过。
+            if (mine.player) {
+                mine.player.micIconState = seatedConfig.openMicrophone ? MicrophoneIconState.HIDDEN : MicrophoneIconState.MUTED;
+            }
             // 如果能操作摄像头,则根据状态变更
             if (seatedConfig.canOpCamera) {
                 //能操作交给按钮操作
