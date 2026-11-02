@@ -13,6 +13,7 @@ import { BroadcastCode, PropsID } from '../../../../../game/constant/BroadcastCo
 import { GameType } from '../../../../../game/constant/LogicTypeConf';
 import { MagicEmojiDefinition } from '../../../../../game/constant/MagicEmojiConfig';
 import guestSitdownFlow from '../../../../../game/GuestSitdownFlow';
+import mttRoomLifecycle from '../../../../../game/MttRoomLifecycle';
 import ProcedureDefine from '../../../../../game/procedure/ProcedureDefine';
 import ProcedureManager from '../../../../../game/procedure/ProcedureManager';
 import h5MessageManager from '../../../../../H5MsgMgr';
@@ -109,6 +110,10 @@ export default class TexasTableEvent {
     /// </summary>
     /// <param name="clientSeatId"></param>
     public static async Sitdown(seatData: TexasGameRoomDataPlayerMine, seatNo: number): Promise<void> {
+        if (seatData.roomData.basicInfo.isMtt && seatData.roomData.mtt.observer) {
+            mttRoomLifecycle.openRegistration(seatData.roomData);
+            return;
+        }
         // 已经坐下,点击不处理
         if (seatData.roomData.mine.seatNo > 0) {
             this.tracelog.debug('Sitdown 不应该能点');

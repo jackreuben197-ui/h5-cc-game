@@ -33,6 +33,12 @@ const _plog = createLogger('ServerMessageEnterRoom');
 
 // EnterRoom 1002
 export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: number, matchID: number): Promise<void> {
+    const observerRoomData = roomDataManager.existRoomData(roomID, matchID) ? roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID) : null;
+    // 观战回包可能晚于主动退桌，不能再切回旧场景或让旧失败回包退出新牌桌。
+    if (!observerRoomData && !roomDataManager.existRoomData(0, matchID)) return;
+    // 淘汰后的观战请求由 MttRoomLifecycle 处理失败，保留结算供玩家阅读。
+    if (observerRoomData?.mtt.observer && observerRoomData.closed) return;
+    if (observerRoomData?.mtt.eliminatedObserver && (observerRoomData.closed || data.status != 0 || data.myInfo?.seatId > 0)) return;
     if (data.status != 0) {
         _plog.debug('enter room error, status:', data.status, CPErrorCode.ServerErrorDescription(data.status));
         viewManager.showToast(CPErrorCode.ServerErrorDescription(data.status), undefined, () => {
@@ -111,10 +117,8 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         }
         const playerMap: Map<number, Player.AsObject> = new Map();
         data.playersList.map(v => playerMap.set(v.seatId, v));
-        if (data.myInfo) {
-            roomData.mine.clearData();
-            roomData.seatsStateManager.setMySeat(data.myInfo.seatId, AnimateDisplayTypePosition.Static);
-        }
+        roomData.mine.clearData();
+        roomData.seatsStateManager.setMySeat(myseat, AnimateDisplayTypePosition.Static);
         const seatedPlayers: TexasGameRoomDataPlayer[] = [];
         for (let seat = 1; seat <= seatCount; seat++) {
             let seatData = roomData.seatsStateManager.getSeatPlayer(seat);

@@ -45,17 +45,19 @@ function fixture(type) {
     async unpublish(tracks) { this.localTracks = this.localTracks.filter(track => !tracks.includes(track)); }
   };
   let trackId = 0;
+  let microphoneTrack;
   function createTrack(kind) {
     return {
-      kind, id: ++trackId, closed: false, muted: false,
+      kind, id: ++trackId, closed: false, muted: false, enabled: true, volume: 0,
       close() { this.closed = true; },
       async setMuted(muted) { assert.equal(this.closed, false); this.muted = muted; },
+      getVolumeLevel() { return this.volume; },
       getMediaStreamTrack() { return { readyState: this.closed ? 'ended' : 'live', kind }; }
     };
   }
   const window = { isSecureContext: true, setInterval: () => 1, clearInterval() {}, AgoraRTC: {
     setLogLevel() {}, createClient: () => client,
-    async createMicrophoneAudioTrack() { return createTrack('audio'); },
+    async createMicrophoneAudioTrack() { microphoneTrack = createTrack('audio'); return microphoneTrack; },
     async createCameraVideoTrack() { return createTrack('video'); }
   } };
   const moduleDefault = value => ({ __esModule: true, default: value });
@@ -108,7 +110,7 @@ function fixture(type) {
   const Player = load('data/room/texas/TexasGameRoomDataPlayer.ts').default;
   function makeRoom(type) {
     const config = new VideoAntiCheatConfig(type, 0, 6, true, true, true, true, false, false, false, 2, 0);
-    const player = { keepSeat() {} };
+    let player;
     const renderedTracks = [];
     const remoteRenderedTracks = [];
     let remotePlayer;
@@ -120,7 +122,7 @@ function fixture(type) {
         forEachPlayer(callback) { [player, remotePlayer].filter(seat => seat.userID > 0).forEach(callback); },
         setMySeat() { room.mine.seatNo = 1; return player; } } };
     room.mine = new Mine(room);
-    player.mine = room.mine;
+    player = new Player(1, 0, room);
     remotePlayer = new Player(2, 0, room);
     const remoteView = new SeatPlayer();
     remoteView._seatPlayer = remotePlayer;
@@ -131,11 +133,15 @@ function fixture(type) {
     remotePlayer.on(Player.REMOTE_VIDEO_VISIBLE_CHANGE, remoteView.onRemoteVideoVisibleChanged, remoteView);
     const seatView = new SeatPlayer();
     seatView._seatPlayer = player;
+    seatView.micMutedIcon = { name: 'muted' };
+    seatView.speakingIcon = { name: 'speaking' };
+    seatView.micIconSprite = { spriteFrame: null, node: { active: false } };
     seatView.avatarVideoRender = {
       stopOverlay() {},
       switchToOverlay(track) { renderedTracks.push(track); }
     };
     room.mine.on(Mine.LOCAL_CAMERA_STATE_CHANGE_DELAY, seatView.onLocalCameraStateChanged, seatView);
+    player.on(Player.MICROPHONE_ICON_STATE_CHANGE, seatView.onMicrophoneIconStateChanged, seatView);
     const ui = new OtherBindings();
     ui._roomData = room;
     ui.btnAudio = { node: {}, interactable: false };
@@ -146,7 +152,7 @@ function fixture(type) {
     room.mine.on(Mine.LOCAL_MICROPHONE_STATE_CHANGE, ui.onEnableDisableMicrophone, ui);
     room.mine.on(Mine.LOCAL_CAMERA_BTN_STATE_CHANGE, ui.onLocalCameraStateChanged, ui);
     room.mine.on(Mine.LOCAL_CAMERA_STATE_CHANGE, ui.onEnableDisableCamaera, ui);
-    return { ui, player, renderedTracks, remotePlayer, remoteRenderedTracks };
+    return { ui, player, seatView, renderedTracks, remotePlayer, remoteRenderedTracks };
   }
   const settle = () => new Promise(resolve => setImmediate(resolve));
   const seatedMessage = { status: 0, recvSeatId: 1, videoMaskId: 0, chips: 100 };
@@ -156,6 +162,17 @@ function fixture(type) {
     async sit() { await Seated(seatedMessage, 1, 0); await settle(); },
     async stand() { await room.mine.clearVideoAndAudio(); room.mine.clearData(); },
     async clickMic() { view.ui.onClickLocalMicrophoneBtn(); await settle(); },
+    checkSpeaking(microphoneVolume, remoteVolume = 0) {
+      microphoneTrack.volume = microphoneVolume;
+      let remote = client.remoteUsers.find(user => user.uid === 456);
+      if (!remote) {
+        remote = { uid: 456 };
+        client.remoteUsers.push(remote);
+      }
+      remote.audioTrack = { getVolumeLevel: () => remoteVolume };
+      agora._checkVolumeLevels(0.6);
+      return agora.speakingUid;
+    },
     async publishRemoteVideo() {
       client.remoteUsers.push({ uid: 456, hasVideo: true });
       await agora.onUserPublish(456, 'video');
@@ -175,6 +192,9 @@ test('语音桌上桌默认关麦，支持连续开关，重新入座仍默认�
   assert.equal(f.room.mine.localMicrophoneBtnState, f.ButtonState.OFF);
   assert.equal(f.room.mine.localMicrophoneEnabled, false);
   assert.equal(f.agora.localAudioTrack, null, '默认关麦时不发布音频');
+  assert.equal(f.player.micIconState, f.MicrophoneIconState.MUTED, '默认关麦时同步本人座位图标');
+  assert.equal(f.seatView.micIconSprite.node.active, true);
+  assert.equal(f.seatView.micIconSprite.spriteFrame, f.seatView.micMutedIcon);
   for (let i = 0; i < 3; i++) {
     await f.clickMic();
     assert.equal(f.room.mine.localMicrophoneEnabled, true);
@@ -191,6 +211,24 @@ test('语音桌上桌默认关麦，支持连续开关，重新入座仍默认�
   assert.equal(f.room.mine.localMicrophoneBtnState, f.ButtonState.OFF);
   assert.equal(f.room.mine.localMicrophoneEnabled, false);
   assert.equal(f.agora.localAudioTrack, null);
+  assert.equal(f.player.micIconState, f.MicrophoneIconState.MUTED);
+  assert.equal(f.seatView.micIconSprite.node.active, true);
+  assert.equal(f.seatView.micIconSprite.spriteFrame, f.seatView.micMutedIcon);
+  assert.deepEqual(f.errors, []);
+});
+
+test('未发布或已静音的本地麦克风不参与说话检测，远端说话检测仍正常', async () => {
+  const f = fixture(2);
+  await f.sit();
+  assert.equal(f.checkSpeaking(1), 0, '默认闭麦，即使采集音量很大也不能显示本人说话');
+  assert.equal(f.checkSpeaking(1, 0.8), 456, '未发布的本地轨道不能抢占远端说话者');
+  await f.clickMic();
+  assert.equal(f.checkSpeaking(1), 123, '开麦后恢复本人说话检测');
+  await f.clickMic();
+  assert.equal(f.checkSpeaking(1), 0, '再次闭麦后停止本人说话检测');
+  assert.equal(f.checkSpeaking(1, 0.8), 456, '已静音的本地轨道不能抢占远端说话者');
+  assert.equal(f.seatView.micIconSprite.node.active, true);
+  assert.equal(f.seatView.micIconSprite.spriteFrame, f.seatView.micMutedIcon);
   assert.deepEqual(f.errors, []);
 });
 

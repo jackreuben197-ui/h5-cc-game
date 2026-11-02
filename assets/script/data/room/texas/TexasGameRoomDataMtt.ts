@@ -10,6 +10,8 @@ type MttBindings = {
     autoOpResult: [number];
     settlementRequested: [boolean];
     reenterRequested: [];
+    observationStopRequested: [];
+    observedRoomDissolved: [];
     notice: [string];
     roomReady: [number];
     breakReminder: [number, number];
@@ -31,6 +33,8 @@ class TexasGameRoomDataMtt extends cc.EventTarget {
     public static readonly AUTO_OP_RESULT = 'AUTO_OP_RESULT';
     public static readonly SETTLEMENT_REQUESTED = 'SETTLEMENT_REQUESTED';
     public static readonly REENTER_REQUESTED = 'REENTER_REQUESTED';
+    public static readonly OBSERVATION_STOP_REQUESTED = 'OBSERVATION_STOP_REQUESTED';
+    public static readonly OBSERVED_ROOM_DISSOLVED = 'OBSERVED_ROOM_DISSOLVED';
     public static readonly NOTICE = 'NOTICE';
     public static readonly ROOM_READY = 'ROOM_READY';
     public static readonly BREAK_REMINDER = 'BREAK_REMINDER';
@@ -41,6 +45,8 @@ class TexasGameRoomDataMtt extends cc.EventTarget {
     private _breakPresentationCleared: boolean = false;
     // 比赛入口、开赛和盲注进度。
     public observer: boolean = false;
+    // 淘汰后只观战当前桌，拆合桌时退出，不再跟随参赛玩家重新分桌。
+    public eliminatedObserver: boolean = false;
     public matchName: string = '';
     public startTime: string = '';
     public delayTimeType: number = 0;
@@ -384,6 +390,12 @@ class TexasGameRoomDataMtt extends cc.EventTarget {
 
     @pureEvent(TexasGameRoomDataMtt.REENTER_REQUESTED)
     public requestReenter(): void {}
+
+    @pureEvent(TexasGameRoomDataMtt.OBSERVATION_STOP_REQUESTED)
+    public requestObservationStop(): void {}
+
+    @pureEvent(TexasGameRoomDataMtt.OBSERVED_ROOM_DISSOLVED)
+    public observedRoomDissolved(): void {}
 
     @pureEvent(TexasGameRoomDataMtt.NOTICE)
     public notice(i18nKey: string): void {}

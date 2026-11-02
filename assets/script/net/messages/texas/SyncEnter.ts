@@ -27,16 +27,20 @@ const _plog = createLogger('ServerMessageSyncEnter');
 
 // SyncEnter 1025 —— 拉取房间最新快照
 export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number, matchID: number) {
+    const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
+    if (!roomData) return;
+    if (roomData.mtt.observer && roomData.closed) return;
+    // 淘汰前在途的同步不能恢复本人的座位；失效观战桌也不再接收快照。
+    if (roomData.mtt.eliminatedObserver && (roomData.closed || data.myInfo?.seatId > 0)) return;
     if (data.status != 0) {
+        if (roomData.mtt.eliminatedObserver) {
+            roomData.mtt.requestObservationStop();
+            return;
+        }
         _plog.debug('sync enter room error, status:', data.status, CPErrorCode.ServerErrorDescription(data.status));
         viewManager.showToast(CPErrorCode.ServerErrorDescription(data.status), undefined, () => {
             ProcedureManager.StartProcedure(ProcedureDefine.Return);
         });
-        return;
-    }
-    const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
-    if (!roomData) {
-        _plog.error('no store room data', roomID, matchID);
         return;
     }
     auditHandSnapshot('SyncEnter', roomID, matchID, data.gameStatus, data.handInfo, data.playersList, data.operatorList, roomData);

@@ -19,6 +19,10 @@ export function NotificationRoomReady(data: ServerMessageNotificationRoomReady.A
         _plog.error('换桌通知没有对应的 MTT RoomData', targetMatchID, newRoomID);
         return;
     }
+    if (roomData.mtt.observer) {
+        roomData.mtt.observedRoomDissolved();
+        return;
+    }
     if (!roomData.mtt.tableTransferWaiting) {
         _plog.error('收到换桌目标房间时牌桌未处于换桌状态', targetMatchID, newRoomID);
         return;

@@ -545,10 +545,11 @@ class AgoraManager {
                 }
             }
         }
-        // 检测自己（本地麦克风）
-        if (this._localAudioTrack) {
+        // 只检测已发布且开麦的本地轨道，采集就绪或闭麦时不显示本人说话。
+        const localAudioTrack = this.localAudioTrack;
+        if (localAudioTrack && localAudioTrack.enabled && !localAudioTrack.muted) {
             try {
-                const vol = this._localAudioTrack.getVolumeLevel();
+                const vol = localAudioTrack.getVolumeLevel();
                 if (vol > loudestVolume) {
                     loudestVolume = vol;
                     loudestUid = this._uid;

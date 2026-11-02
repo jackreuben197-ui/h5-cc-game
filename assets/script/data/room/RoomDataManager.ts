@@ -7,6 +7,8 @@ const _plog = createLogger('RoomDataManager');
 class RoomDataManager {
     private _roomCache: Map<string, RoomData> = new Map();
     private _roomLeaving: Map<string, boolean> = new Map();
+    // 主动退订已在本地完成；其回包标记跨房间清理保留，避免旧应答退出新牌桌。
+    private _pendingSilentLeaves: Map<string, number> = new Map();
 
     constructor() {}
 
@@ -28,6 +30,23 @@ class RoomDataManager {
     public clearInternalLeave(roomID: number, matchID: number) {
         const key = roomID + '-' + matchID;
         this._roomLeaving.delete(key);
+    }
+
+    public markSilentLeave(roomID: number, matchID: number): void {
+        const key = roomID + '-' + matchID;
+        this._pendingSilentLeaves.set(key, (this._pendingSilentLeaves.get(key) || 0) + 1);
+    }
+
+    public consumeSilentLeave(roomID: number, matchID: number): boolean {
+        const key = roomID + '-' + matchID;
+        const count = this._pendingSilentLeaves.get(key) || 0;
+        if (count == 0) return false;
+        if (count == 1) {
+            this._pendingSilentLeaves.delete(key);
+        } else {
+            this._pendingSilentLeaves.set(key, count - 1);
+        }
+        return true;
     }
 
     // 获取或创建对应房间的数据实例
