@@ -230,7 +230,8 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         suggestScale: number
     ): void {
         const bgWidget = this.bgNode.getComponent(cc.Widget);
-        bgWidget.top = ccviewData.saveAreaTop;
+        // 保留预制体中的基础顶部间距，并叠加设备安全区高度。
+        bgWidget.top = 100 + ccviewData.saveAreaTop;
         bgWidget.updateAlignment();
     }
 

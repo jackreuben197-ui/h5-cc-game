@@ -406,7 +406,9 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         suggestScale: number
     ) {
         const bgWidget = this.bgNode.getComponent(cc.Widget);
-        bgWidget.top = ccviewData.saveAreaTop;
+        // 保留预制体要求的基础顶部间距，并叠加设备安全区高度。
+        // 不能只使用 saveAreaTop，否则默认值为 0 时会覆盖预制体中的 Top=100。
+        bgWidget.top = 100 + ccviewData.saveAreaTop;
         bgWidget.updateAlignment();
     }
 

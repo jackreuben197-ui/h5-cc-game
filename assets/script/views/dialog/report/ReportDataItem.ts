@@ -119,10 +119,18 @@ export default class ReportDataItem extends cc.Component {
         const columns = this._activeRowNode.children
             .filter(node => node.active && node.name !== 'own')
             .filter(node => !!node.getComponent(cc.Label) || !!node.getComponent(cc.RichText) || !!node.getComponent(cc.Layout))
-            .sort((a, b) => a.x - b.x);
+            // 不同列的锚点并不一致：玩家列通常是左锚点，数值列可能是中/右锚点。
+            // 直接平均两个 node.x 会把锚点差异当成列间距，导致分隔线偏移。
+            .map(node => ({
+                node,
+                left: node.x - node.width * node.anchorX,
+                right: node.x + node.width * (1 - node.anchorX),
+            }))
+            .sort((a, b) => a.left - b.left);
         const dividers: number[] = [];
         for (let i = 1; i < columns.length; i++) {
-            dividers.push((columns[i - 1].x + columns[i].x) / 2);
+            // 分隔线取相邻两列实际边界的中点，而不是取锚点坐标的中点。
+            dividers.push((columns[i - 1].right + columns[i].left) / 2);
         }
         // 两边单独留一点呼吸空间，中间列还是继续跟着内容自适应。
         if (dividers.length > 0) dividers[0] += this.firstDividerOffsetX;

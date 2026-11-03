@@ -1,0 +1,38 @@
+{
+  "ver": "2.3.7",
+  "uuid": "b0a3da43-06b7-4d59-837e-c5986cb630a3",
+  "importer": "texture",
+  "type": "sprite",
+  "wrapMode": "clamp",
+  "filterMode": "bilinear",
+  "premultiplyAlpha": false,
+  "genMipmaps": false,
+  "packable": true,
+  "width": 1073,
+  "height": 2513,
+  "platformSettings": {},
+  "subMetas": {
+    "Texas_report_bg": {
+      "ver": "1.0.6",
+      "uuid": "64ac3baa-85be-43c9-9cf9-c994b062b065",
+      "importer": "sprite-frame",
+      "rawTextureUuid": "b0a3da43-06b7-4d59-837e-c5986cb630a3",
+      "trimType": "auto",
+      "trimThreshold": 1,
+      "rotated": false,
+      "offsetX": 0,
+      "offsetY": 0,
+      "trimX": 0,
+      "trimY": 0,
+      "width": 1073,
+      "height": 2513,
+      "rawWidth": 1073,
+      "rawHeight": 2513,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "subMetas": {}
+    }
+  }
+}
