@@ -337,7 +337,12 @@ export default class SeatPlayer extends cc.Component {
      * @param state HIDDEN=不显示, SPEAKING=正在说话, MUTED=麦克风被禁止/未开启
      */
     public setMicrophoneIconState(state: MicrophoneIconState, force: boolean = true): void {
-        if (!force && this.micIconSprite.spriteFrame === this.micMutedIcon && this.micIconSprite.node.active) {
+        if (
+            !force &&
+            state === MicrophoneIconState.MUTED &&
+            this.micIconSprite.spriteFrame === this.micMutedIcon &&
+            this.micIconSprite.node.active
+        ) {
             return;
         }
         switch (state) {

@@ -36,6 +36,10 @@ const CERT_BANNER_X_COMPACT = 0;
 
 const CERT_BANNER_X_WIDE = 366;
 
+// 当前产品只保留本地音视频按钮，隐藏“关闭其他玩家音视频”的远端控制入口。
+// 远端音视频的订阅、静音和视频显示逻辑仍然保留，后续可按需恢复入口。
+const SHOW_REMOTE_RTC_CONTROLS = false;
+
 @ccclass
 @menu('Scene/Room/Texas/OtherBindings')
 @traceClass()
@@ -549,7 +553,7 @@ export default class OtherBindings extends cc.Component {
             this.hideVideoNode.active = false;
             return;
         }
-        this.hideVideoNode.active = true;
+        this.hideVideoNode.active = SHOW_REMOTE_RTC_CONTROLS;
         const pubUsersMap = agoraManager.getRemoteUserMap();
         if (st == ButtonState.ON) {
             this._roomData.seatsStateManager.forEachPlayer(async player => {
@@ -597,7 +601,7 @@ export default class OtherBindings extends cc.Component {
             this.muteMicNode.active = false;
             return;
         }
-        this.muteMicNode.active = true;
+        this.muteMicNode.active = SHOW_REMOTE_RTC_CONTROLS;
         const pubUsersMap = agoraManager.getRemoteUserMap();
         if (st == ButtonState.ON) {
             this._roomData.seatsStateManager.forEachPlayer(async player => {
