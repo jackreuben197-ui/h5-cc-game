@@ -4,7 +4,6 @@
  */
 import { IAgoraRTCClient, IAgoraRTCRemoteUser, ICameraVideoTrack, IMicrophoneAudioTrack, IRemoteAudioTrack, IRemoteVideoTrack, UID } from 'agora-rtc-sdk-ng';
 import { ITraceLog, traceClass } from '../../core/decorator/LogTrace';
-import { WWW } from '../https/WebRequest';
 
 @traceClass()
 class AgoraManager {
@@ -167,8 +166,9 @@ class AgoraManager {
      * @param uid 用户 ID
      */
     private async fetchToken(channel: string, uid: number): Promise<string | null> {
-        const { WebMiscAgoraToken } = await import('../https/web_request/WebRequestMisc');
         try {
+            // HTTP 会引用牌桌 UI，获取 Token 时再加载，避免玩家数据初始化时形成循环依赖。
+            const { WWW, WebMiscAgoraToken } = await import('../https/WebRequest');
             const response: any = await WWW.Instance.CommonAPI({
                 web_class: WebMiscAgoraToken,
                 body: {
