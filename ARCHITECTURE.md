@@ -1011,6 +1011,43 @@ MSG_S_LEAVE_NOTIFICATION → LeaveNotification.ts
                   └─ sendToH5('h5Navigate', 1, routeData)  // 通知 H5 跳到结算页
 ```
 
+#### 9.2.1 MTT 淘汰后观战与拆合桌
+
+MTT 的 `observer` 表示牌桌内观战身份，与体验账号 / 游客登录身份无关。淘汰后的流程保留当前
+RoomData 和牌桌场景，不提前执行 `ProcedureReturn`：
+
+```text
+LeaveNotification(1114, LR_NOCHIP)
+    ├─ storeChips > 0 → mtt.requestReenter()，沿用存储筹码重新带入
+    └─ storeChips == 0 → mtt.requestSettlement(rebuy)
+          → MttTableStateView 的 @bindEvent
+          → MttRoomLifecycle 保存结算快照、清理本人座位与操作状态
+          → showPanel('mttSettlement', ensureVisible=false, showH5Bg=false)
+          → 直接发送 EnterRoom(1002, 原 roomID + matchID, observer=true, wantSeat=WST_NO)
+          → 回包成功后允许继续观战
+```
+
+淘汰通知已经表示服务端移除了原牌桌订阅，因此重新观战不先发送或等待主动离桌 `Leave(1010)`。
+观战 Enter 失败或超时时保留结算，禁用继续观战；旧的参赛快照不能恢复已淘汰玩家的座位。
+
+结算面板通过既有 `panelEvent` 回传 `continueWatching` / `rebuy` / `returnLobby`。继续观战只关闭
+面板；重购和观战时点击空座都通过 `ProcedureReturn` 打开本场比赛详情，复用原有报名 / 重购逻辑。
+这些是面板业务事件，不新增 Bridge action；`closeOnClickOverlay=false` 禁止遮罩关闭。
+
+观战桌的 `LR_GAME_END` / `LR_EXCHANGE` 或换桌目标通知通过
+`mtt.observedRoomDissolved()` 发出纯事件，由 `MttTableStateView` 转交生命周期：关闭仍在显示的结算，
+清理当前桌的重连上下文，提示“当前观战房间已解散”，提示结束后跳转 `mtt-list`。不跟随参赛玩家
+迁移到新桌。事件处理使用 `initIgnore=true`，避免组件首次绑定时回放退桌动作；重复通知、旧进房回包
+和提示结束回调都需要校验当前 RoomData，避免影响新的页面或牌桌。
+
+观战同步失败 / 重连耗尽通过 `mtt.requestObservationStop()` 通知视图，不由消息函数直接提示或导航。
+主动退出观战时，生命周期先调用 `RoomDataManager.markSilentLeave()` 再发 1010，随后完成本地退出。
+`Leave.ts` 通过 `consumeSilentLeave()` 消费回包；标记按请求次数保留到回包，不随房间缓存清理丢失，
+防止旧应答退出同一 ID 下新进入的牌桌。
+
+相关回归：`node --test tests/mtt-spectating.test.js`。测试执行实际消息处理、RoomData、DataBind 和
+视图订阅链路，网络、场景渲染与设备使用测试替身；真实服务端的观战推送仍需融合包联调验证。
+
 ### 9.3 断线重连链路
 
 重连的核心理念：**不重新进桌，只拉房间最新快照**。Cocos 自己不连 WS，H5 负责检测断线和重连 WS，CC 仅在 WS 恢复后请求一次房间同步。整条链路三个关键设计：

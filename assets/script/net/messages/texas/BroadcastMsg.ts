@@ -21,6 +21,7 @@ export function handleBroadcastExtra(extra: Uint8Array | string, roomID: number,
     // 本人动画由 1019 成功回包确认后触发；忽略 1121 的本人广播回显，避免同一次操作播放两遍。
     if (innerData.userID === userStore.userRID || innerData.userID === userStore.userID) return;
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
+    if (!roomData) return;
     if (THROW_PROP_IDS.indexOf(innerData.type) >= 0) {
         const propData: ThrowPropBroadcastData = {
             type: innerData.type,

@@ -28,13 +28,19 @@ import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import viewManager from '../../../views/UIViewManager';
 import throwPropManager from '../../../views/util/ThrowPropManager';
 import agoraManager from '../../agora/AgoraManager';
-import TexasVideoMediaHelper from './TexasVideoMediaHelper';
 import { auditHandSnapshot } from './TexasStateAudit';
+import TexasVideoMediaHelper from './TexasVideoMediaHelper';
 
 const _plog = createLogger('ServerMessageEnterRoom');
 
 // EnterRoom 1002
 export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: number, matchID: number): Promise<void> {
+    const observerRoomData = roomDataManager.existRoomData(roomID, matchID) ? roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID) : null;
+    // 观战回包可能晚于主动退桌，不能再切回旧场景或让旧失败回包退出新牌桌。
+    if (!observerRoomData && !roomDataManager.existRoomData(0, matchID)) return;
+    // 淘汰后的观战请求由 MttRoomLifecycle 处理失败，保留结算供玩家阅读。
+    if (observerRoomData?.mtt.observer && observerRoomData.closed) return;
+    if (observerRoomData?.mtt.eliminatedObserver && (observerRoomData.closed || data.status != 0 || data.myInfo?.seatId > 0)) return;
     if (data.status != 0) {
         _plog.debug('enter room error, status:', data.status, CPErrorCode.ServerErrorDescription(data.status));
         viewManager.showToast(CPErrorCode.ServerErrorDescription(data.status), undefined, () => {
@@ -58,6 +64,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
     }
     auditHandSnapshot('EnterRoom', roomID, matchID, data.gameStatus, data.handInfo, data.playersList, data.operatorList, roomData);
     // EnterRoom 是权威全量快照；先清理上一桌/上一手残留，再按本次快照重建。
+    roomData.seatsStateManager.clearExpressions();
     roomData.clearHandPresentation();
     throwPropManager.preloadEffects();
     // 声音处理
@@ -96,11 +103,7 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
             roomData.potInfo.potList = data.handInfo.potsList;
             roomData.potInfo.secPotList = data.handInfo.secondPotsList;
             roomData.seatsStateManager.setButtonPosition(data.handInfo.buSeatId, AnimateDisplayTypeButton.Static);
-            roomData.publicCards.replacePublicCards(
-                data.handInfo.publicCardsList,
-                data.handInfo.secondPublicCardsList,
-                AnimateDisplayTypePublicCards.Static
-            );
+            roomData.publicCards.replacePublicCards(data.handInfo.publicCardsList, data.handInfo.secondPublicCardsList, AnimateDisplayTypePublicCards.Static);
             roomData.basicInfo.currentConfigContinueRounds = data.handInfo.conRounds;
             //Critial
             roomData.basicInfo.setCriticalHitStatusEnabled(data.handInfo.criticalHitOpen, AnimateDisplayTypePlayType.Staic);
@@ -116,10 +119,8 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         }
         const playerMap: Map<number, Player.AsObject> = new Map();
         data.playersList.map(v => playerMap.set(v.seatId, v));
-        if (data.myInfo) {
-            roomData.mine.clearData();
-            roomData.seatsStateManager.setMySeat(data.myInfo.seatId, AnimateDisplayTypePosition.Static);
-        }
+        roomData.mine.clearData();
+        roomData.seatsStateManager.setMySeat(myseat, AnimateDisplayTypePosition.Static);
         const seatedPlayers: TexasGameRoomDataPlayer[] = [];
         for (let seat = 1; seat <= seatCount; seat++) {
             let seatData = roomData.seatsStateManager.getSeatPlayer(seat);
@@ -300,11 +301,12 @@ export async function EnterRoom(data: ServerMessageEnterRoom.AsObject, roomID: n
         const seatedConfig = roomData.basicInfo.antiCheatConfig.getSeatedSetting();
         const promise = [];
         try {
+            // 先完成旧频道清理，避免新建的采集轨道被 leave() 关闭。
+            await TexasVideoMediaHelper.joinAgoraVideoChannelIfNeed(roomID, matchID);
             if (seatedConfig.enableCamera) {
                 promise.push(agoraManager.enableCamera());
             }
             promise.push(agoraManager.enableMicrophone(!seatedConfig.openMicrophone));
-            promise.push(TexasVideoMediaHelper.joinAgoraVideoChannelIfNeed(roomID, matchID));
             await Promise.all(promise);
             // 入频道后的本地麦克风状态可能与默认值相同，直接同步头像图标，避免被 observable 跳过。
             if (roomData.mine.player) {

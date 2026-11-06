@@ -10,11 +10,13 @@ const _glog = createLogger('ServerMessageLeave');
 
 // Leave 1010
 export function Leave(data: ServerMessageLeave.AsObject, roomID: number, matchID: number) {
+    if (roomDataManager.consumeSilentLeave(roomID, matchID)) return;
+    const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
+    if (!roomData) return;
     if (data.status != 0) {
         _glog.error('active Leave error', data.status);
     }
     // 视频房间：离房前清理 Agora 频道
-    const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     TexasVideoMediaHelper.clearAllMediaStates(roomData);
     ProcedureManager.StartProcedure(ProcedureDefine.Return);
 }

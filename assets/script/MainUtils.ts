@@ -275,6 +275,9 @@ export async function registerH5Listeners(): Promise<void> {
         userStore.sex = Number(payload.sex || 0);
         userStore.name = String(payload.nickname || '');
         userStore.avatar = String(payload.avatar || '');
+        const profile = (payload.raw as { user?: { diamonds?: number; forbid?: number } } | undefined)?.user;
+        if (profile?.diamonds != null) userStore.diamonds = Number(profile.diamonds);
+        if (profile?.forbid != null) userStore.forbid = Number(profile.forbid) === 0;
         _ploger.info('[H5Bridge] syncUser 缓存完成, user_id:', payload.randomId, 'nickname:', payload.nickname, 'isGuestAccount:', userStore.isGuestAccount);
     });
     h5MessageManager.on('syncLanguage', payload => {

@@ -77,11 +77,12 @@ export async function Seated(data: ServerMessageSeated.AsObject, roomID: number,
         const seatedConfig = roomData.basicInfo.antiCheatConfig.getSeatedSetting();
         const promise = [];
         try {
+            // 先完成旧频道清理，避免新建的采集轨道被 leave() 关闭。
+            await TexasVideoMediaHelper.joinAgoraVideoChannelIfNeed(roomID, matchID);
             if (seatedConfig.enableCamera) {
                 promise.push(agoraManager.enableCamera());
             }
             promise.push(agoraManager.enableMicrophone(!seatedConfig.openMicrophone));
-            promise.push(TexasVideoMediaHelper.joinAgoraVideoChannelIfNeed(roomID, matchID));
             await Promise.all(promise);
             // 入频道后的本地麦克风状态可能与默认值相同，直接同步头像图标，避免被 observable 跳过。
             if (mine.player) {

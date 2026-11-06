@@ -124,6 +124,16 @@ export default class MttTableStateView extends cc.Component {
         mttRoomLifecycle.reenter(this._roomData);
     }
 
+    @bindEvent(TexasGameRoomDataMtt.OBSERVATION_STOP_REQUESTED, { dataSource: 'mtt', initIgnore: true })
+    private onMttObservationStopRequested(): void {
+        mttRoomLifecycle.stopWatching(this._roomData);
+    }
+
+    @bindEvent(TexasGameRoomDataMtt.OBSERVED_ROOM_DISSOLVED, { dataSource: 'mtt', initIgnore: true })
+    private onMttObservedRoomDissolved(): void {
+        mttRoomLifecycle.observedRoomDissolved(this._roomData);
+    }
+
     @bindEvent(TexasGameRoomDataMtt.NOTICE, { dataSource: 'mtt', initIgnore: true })
     private onMttNotice(i18nKey: string): void {
         viewManager.showToast(i18nMgr.Get(i18nKey));

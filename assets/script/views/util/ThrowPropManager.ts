@@ -45,6 +45,8 @@ export interface ThrowPropSeatNodes {
     avatarNode: cc.Node;
     propNode: cc.Node;
     emojiNode: cc.Node;
+    /** 座位仍属于同一玩家、同一牌桌且未在换桌等待；false 时道具/表情不再播放 */
+    isValid: () => boolean;
 }
 
 interface ThrowPropTask {
@@ -56,6 +58,11 @@ interface ThrowPropTask {
     role: PropRole;
     fullscreen: boolean;
     duration: number;
+    version: number;
+    senderToken: number;
+    targetToken: number;
+    nodes: Set<cc.Node>;
+    sounds: Set<number>;
 }
 
 class ThrowPropManager {
@@ -157,11 +164,16 @@ class ThrowPropManager {
     private _root: cc.Node = null;
     private _fullscreenRoot: cc.Node = null;
     private _seatPropSkeletonData: Map<cc.Node, sp.SkeletonData> = new Map();
+    private _propNodeOwners: Map<cc.Node, ThrowPropTask> = new Map();
     private _propQueue: ThrowPropTask[] = [];
+    private _activePropTasks: Set<ThrowPropTask> = new Set();
     private _playingPropUsers: Set<number> = new Set();
     private _playingPropSenders: Set<number> = new Set();
     private _playingFullscreenProp: boolean = false;
+    private _version: number = 0;
+    private _seatTokens: Map<cc.Node, number> = new Map();
     private _emojiPlayTokens: Map<cc.Node, number> = new Map();
+    private _emojiSounds: Map<cc.Node, number[]> = new Map();
     /** 图鉴表情骨骼常驻缓存(index→SkeletonData)，已 addRef 保留，避免每次播放重新加载导致延迟 */
     private _pickerSpineCache: Map<number, sp.SkeletonData> = new Map();
     /** 正在加载中的表情骨骼(index→Promise)，用于去重：预热与播放同时请求同一个只加载一次 */
@@ -170,18 +182,97 @@ class ThrowPropManager {
 
     public initialize(root: cc.Node, fullscreenRoot: cc.Node): void {
         if (this._root !== root) {
+            this.reset();
             this._seatPropSkeletonData.clear();
-            this._propQueue.length = 0;
-            this._playingPropUsers.clear();
-            this._playingPropSenders.clear();
-            this._playingFullscreenProp = false;
-            this._emojiPlayTokens.clear();
         }
         this._root = root;
         this._fullscreenRoot = fullscreenRoot;
         this._bringNodeToTop(this._fullscreenRoot);
         // 后台预加载全部图鉴表情骨骼，消除首次播放/收到时的加载延迟(表情骨骼是全局资源，跨房间复用，只需预热一次)
         this._preloadPickerEmojis();
+    }
+
+    /** 换桌/离桌/座位重建：停掉所有排队和播放中的道具与表情，旧桌的回调不再作用于新桌 */
+    public reset(): void {
+        this._version++;
+        this._propQueue.length = 0;
+        this._activePropTasks.forEach(task => this._finishPropTask(task));
+        this._playingPropUsers.clear();
+        this._playingPropSenders.clear();
+        this._playingFullscreenProp = false;
+        this._emojiPlayTokens.forEach((_token, node) => this._stopEmoji(node));
+        this._emojiPlayTokens.clear();
+        this._seatTokens.clear();
+    }
+
+    /** 某个座位换人/站起/隐藏：只清掉与该座位相关的表情和道具 */
+    public stopSeat(emojiNode: cc.Node): void {
+        if (!emojiNode) return;
+        this._seatTokens.set(emojiNode, this._getSeatToken(emojiNode) + 1);
+        this._stopEmoji(emojiNode);
+        const usesSeat = (task: ThrowPropTask) => task.senderData.emojiNode === emojiNode || task.targetData.emojiNode === emojiNode;
+        this._propQueue = this._propQueue.filter(task => !usesSeat(task));
+        this._activePropTasks.forEach(task => {
+            if (usesSeat(task)) this._finishPropTask(task);
+        });
+        this._tryPlayQueuedProps();
+    }
+
+    private _stopEmoji(node: cc.Node): void {
+        this._emojiPlayTokens.set(node, (this._emojiPlayTokens.get(node) || 0) + 1);
+        const sounds = this._emojiSounds.get(node);
+        if (sounds) sounds.forEach(sound => cc.audioEngine.stopEffect(sound));
+        this._emojiSounds.delete(node);
+        if (!cc.isValid(node)) return;
+        node.stopAllActions();
+        const skeleton = node.getComponent(sp.Skeleton);
+        if (skeleton) {
+            skeleton.setCompleteListener(() => {});
+            if (skeleton.skeletonData) this._resetSkeleton(skeleton);
+        }
+        node.active = false;
+        node.opacity = 255;
+    }
+
+    private _getSeatToken(node: cc.Node): number {
+        return this._seatTokens.get(node) || 0;
+    }
+
+    private _isSeatValid(seat: ThrowPropSeatNodes): boolean {
+        return !!seat && cc.isValid(seat.avatarNode) && cc.isValid(seat.propNode) && cc.isValid(seat.emojiNode) && seat.isValid();
+    }
+
+    private _isPropTaskValid(task: ThrowPropTask): boolean {
+        return (
+            task.version === this._version &&
+            this._isRootValid() &&
+            this._getSeatToken(task.senderData.emojiNode) === task.senderToken &&
+            this._getSeatToken(task.targetData.emojiNode) === task.targetToken &&
+            this._isSeatValid(task.senderData) &&
+            this._isSeatValid(task.targetData)
+        );
+    }
+
+    private _isPropTaskActive(task: ThrowPropTask): boolean {
+        return this._activePropTasks.has(task) && this._isPropTaskValid(task);
+    }
+
+    private _isPropNodeValid(task: ThrowPropTask, node: cc.Node): boolean {
+        return cc.isValid(node) && this._propNodeOwners.get(node) === task && this._isPropTaskActive(task);
+    }
+
+    private _finishPropTask(task: ThrowPropTask): void {
+        cc.Tween.stopAllByTarget(task);
+        task.nodes.forEach(node => this._releaseSpineNode(node));
+        task.sounds.forEach(sound => cc.audioEngine.stopEffect(sound));
+        this._activePropTasks.delete(task);
+        this._playingPropSenders.delete(task.data.userID);
+        if (task.fullscreen) {
+            this._playingFullscreenProp = false;
+        } else {
+            this._playingPropUsers.delete(task.data.userID);
+            this._playingPropUsers.delete(task.data.targetUserID);
+        }
     }
 
     /** 后台预加载 em16-65 全部图鉴表情骨骼并常驻缓存(fire-and-forget，只执行一次) */
@@ -222,7 +313,7 @@ class ThrowPropManager {
     public playProp(data: ThrowPropBroadcastData, senderData: ThrowPropSeatNodes, targetData: ThrowPropSeatNodes): void {
         const config = ThrowPropManager.CONFIGS[data.type];
         if (!config || !this._root || !cc.isValid(this._root)) return;
-        if (!senderData || !targetData) return;
+        if (!this._isSeatValid(senderData) || !this._isSeatValid(targetData)) return;
         if (this._propQueue.some(task => task.data.userID === data.userID && task.data.targetUserID === data.targetUserID)) return;
         const role = this._getRole(data.userID, data.targetUserID);
         const task: ThrowPropTask = {
@@ -233,7 +324,12 @@ class ThrowPropManager {
             config,
             role,
             fullscreen: this._getRoleValue(config.fullscreen, role, false),
-            duration: this._getRoleValue(config.duration, role, 4)
+            duration: this._getRoleValue(config.duration, role, 4),
+            version: this._version,
+            senderToken: this._getSeatToken(senderData.emojiNode),
+            targetToken: this._getSeatToken(targetData.emojiNode),
+            nodes: new Set(),
+            sounds: new Set()
         };
         this._propQueue.push(task);
         this._tryPlayQueuedProps();
@@ -318,8 +414,13 @@ class ThrowPropManager {
             started = false;
             for (let i = 0; i < this._propQueue.length; i++) {
                 const task = this._propQueue[i];
+                if (!this._isPropTaskValid(task)) {
+                    this._propQueue.splice(i--, 1);
+                    continue;
+                }
                 if (!this._canPlayPropTask(task)) continue;
                 this._propQueue.splice(i, 1);
+                this._activePropTasks.add(task);
                 this._markPropTaskPlaying(task);
                 try {
                     this._playPropNow(task);
@@ -349,16 +450,10 @@ class ThrowPropManager {
     }
 
     private _schedulePropTaskFinish(task: ThrowPropTask): void {
-        cc.tween(this._root)
+        cc.tween(task)
             .delay(task.duration)
             .call(() => {
-                this._playingPropSenders.delete(task.data.userID);
-                if (task.fullscreen) {
-                    this._playingFullscreenProp = false;
-                } else {
-                    this._playingPropUsers.delete(task.data.userID);
-                    this._playingPropUsers.delete(task.data.targetUserID);
-                }
+                this._finishPropTask(task);
                 this._tryPlayQueuedProps();
             })
             .start();
@@ -372,11 +467,12 @@ class ThrowPropManager {
             return;
         }
         const config = MagicEmojiConfig.getByType(data.type);
-        if (!config || !senderData || !this._root || !cc.isValid(this._root)) return;
+        if (!config || !this._isSeatValid(senderData) || !this._isRootValid()) return;
+        const version = this._version;
         const avatarNode = senderData.avatarNode;
         const emojiNode = senderData.emojiNode;
-        const token = (this._emojiPlayTokens.get(emojiNode) || 0) + 1;
-        this._emojiPlayTokens.set(emojiNode, token);
+        this._stopEmoji(emojiNode);
+        const token = this._emojiPlayTokens.get(emojiNode);
         let skeletonData: sp.SkeletonData = null;
         try {
             skeletonData = await AssetManager.getOrLoad(BUNDLE_RESOURCES, config.spine, sp.SkeletonData);
@@ -384,31 +480,32 @@ class ThrowPropManager {
             cc.warn('[ThrowPropManager] load emoji failed', config.propCode, error);
             return;
         }
-        if (!this._isRootValid() || !cc.isValid(avatarNode) || !cc.isValid(emojiNode) || this._emojiPlayTokens.get(emojiNode) !== token) return;
+        if (version !== this._version || !this._isRootValid() || !this._isSeatValid(senderData) || this._emojiPlayTokens.get(emojiNode) !== token) return;
         const skeleton = emojiNode.getComponent(sp.Skeleton);
         skeleton.setCompleteListener(() => {});
         skeleton.skeletonData = skeletonData;
         this._resetSkeleton(skeleton);
         skeleton.setCompleteListener(() => {
-            if (!cc.isValid(emojiNode) || this._emojiPlayTokens.get(emojiNode) !== token) return;
-            skeleton.setCompleteListener(() => {});
-            emojiNode.active = false;
+            if (version !== this._version || !cc.isValid(emojiNode) || this._emojiPlayTokens.get(emojiNode) !== token) return;
+            this._stopEmoji(emojiNode);
         });
         this._bringNodeToTop(emojiNode);
         emojiNode.active = true;
         const startPos = this._convertNodePosToNodeParent(emojiNode, avatarNode, cc.v3(0, avatarNode.height / 4, 0));
         emojiNode.setPosition(startPos);
         skeleton.setAnimation(0, config.animation, false);
-        this._playSound(config.sound);
+        const sound = this._playSound(config.sound);
+        if (sound !== undefined) this._emojiSounds.set(emojiNode, [sound]);
     }
 
     /** 播放图鉴表情(em16-65)：spine 动画放在发送者头像上，同时播放对应语音 */
     private async _playPickerEmoji(index: number, senderData: ThrowPropSeatNodes): Promise<void> {
-        if (!senderData || !this._root || !cc.isValid(this._root)) return;
+        if (!this._isSeatValid(senderData) || !this._isRootValid()) return;
+        const version = this._version;
         const avatarNode = senderData.avatarNode;
         const emojiNode = senderData.emojiNode;
-        const token = (this._emojiPlayTokens.get(emojiNode) || 0) + 1;
-        this._emojiPlayTokens.set(emojiNode, token);
+        this._stopEmoji(emojiNode);
+        const token = this._emojiPlayTokens.get(emojiNode);
         let skeletonData: sp.SkeletonData = null;
         try {
             skeletonData = await this._loadPickerSpine(index);
@@ -416,7 +513,7 @@ class ThrowPropManager {
             cc.warn('[ThrowPropManager] load picker emoji spine failed', index, error);
             return;
         }
-        if (!this._isRootValid() || !cc.isValid(avatarNode) || !cc.isValid(emojiNode) || this._emojiPlayTokens.get(emojiNode) !== token) return;
+        if (version !== this._version || !this._isRootValid() || !this._isSeatValid(senderData) || this._emojiPlayTokens.get(emojiNode) !== token) return;
         // 运行时取第一个动画名（各表情动画名不统一，如 animation / walk 等）
         let animName = 'animation';
         try {
@@ -459,8 +556,13 @@ class ThrowPropManager {
         }, 0);
 
         // 播放语音并获取音效时长，使动画播放时长与音效精确对齐
-        const audioDuration = await this._playEmojiVoice(index);
-        if (this._emojiPlayTokens.get(emojiNode) !== token) return;
+        const voice = await this._playEmojiVoice(index);
+        if (version !== this._version || this._emojiPlayTokens.get(emojiNode) !== token) {
+            voice.sounds.forEach(sound => cc.audioEngine.stopEffect(sound));
+            return;
+        }
+        if (voice.sounds.length) this._emojiSounds.set(emojiNode, voice.sounds);
+        const audioDuration = voice.duration;
 
         // 如果存在音效，则以音效时长为准；否则使用动画单帧/单次时长或默认时长
         const holdDuration = audioDuration > 0 ? audioDuration : (animDuration > 0 ? animDuration : 1.5);
@@ -469,20 +571,20 @@ class ThrowPropManager {
             .delay(holdDuration)
             .to(0.3, { opacity: 0 }, { easing: 'sineIn' })
             .call(() => {
-                if (this._emojiPlayTokens.get(emojiNode) !== token) return;
-                emojiNode.active = false;
-                emojiNode.opacity = 255;
+                if (version !== this._version || this._emojiPlayTokens.get(emojiNode) !== token) return;
+                this._stopEmoji(emojiNode);
             })
             .start();
     }
 
     /** 播放图鉴表情语音(emoji_audio/em{idx})：文件扩展名混合，按路径解析；无文件则静默。
      *  返回音效时长(秒)，以便动画与音效对齐 */
-    private async _playEmojiVoice(index: number): Promise<number> {
-        if (!soundManager.isOn) return 0;
+    private async _playEmojiVoice(index: number): Promise<{ duration: number; sounds: number[] }> {
+        const silent = { duration: 0, sounds: [] as number[] };
+        if (!soundManager.isOn) return silent;
         try {
             const clip = await AssetManager.getOrLoad(BUNDLE_RESOURCES, `emoji_audio/em${index}`, cc.AudioClip);
-            if (!clip || !soundManager.isOn) return 0;
+            if (!clip || !soundManager.isOn) return silent;
             const id1 = cc.audioEngine.playEffect(clip, false);
             try {
                 cc.audioEngine.setVolume(id1, 1.0);
@@ -491,9 +593,9 @@ class ThrowPropManager {
             try {
                 cc.audioEngine.setVolume(id2, PICKER_EMOJI_SOUND_BOOST);
             } catch (e) {}
-            return clip.duration || 0;
+            return { duration: clip.duration || 0, sounds: [id1, id2] };
         } catch (e) {
-            return 0;
+            return silent;
         }
     }
 
@@ -524,7 +626,7 @@ class ThrowPropManager {
         if (!this._isRootValid()) return;
         const clip = this._getClip(task.config, 'hit');
         const eaten = this._getClip(task.config, 'eaten');
-        const node = this._spawnPropSpine(this._getSkeleton(clip.spine), clip.anim, false, targetPos);
+        const node = this._spawnPropSpine(task, this._getSkeleton(clip.spine), clip.anim, false, targetPos);
         const skeleton = node.getComponent(sp.Skeleton);
         skeleton.addAnimation(0, eaten.anim, false, 0);
         this._destroyAfterDelay(node, 3.5);
@@ -538,34 +640,34 @@ class ThrowPropManager {
         if (!this._isRootValid()) return;
         const handClip = this._getClip(task.config, 'hand');
         const henClip = this._getClip(task.config, 'receiver');
-        const handNode = this._spawnPropSpine(this._getSkeleton(handClip.spine), '', false, senderPos);
+        const handNode = this._spawnPropSpine(task, this._getSkeleton(handClip.spine), '', false, senderPos);
         const handSkeleton = handNode.getComponent(sp.Skeleton);
         const flyEntry = handSkeleton.setAnimation(0, handClip.anim, false);
         let flyDur = Math.max(0.3, Math.min(this._getEntryDuration(flyEntry, 0.5), 2.0));
         cc.tween(handNode).to(flyDur, this._toTweenPosForNode(handNode, targetPos), { easing: 'quadInOut' }).start();
         let henPlayed = false;
         const playHen = () => {
-            if (henPlayed) return;
+            if (henPlayed || !this._isPropNodeValid(task, handNode)) return;
             henPlayed = true;
-            if (cc.isValid(handNode)) this._releaseSpineNode(handNode);
-            const henNode = this._spawnPropSpine(this._getSkeleton(henClip.spine), henClip.anim, false, targetPos);
+            this._releaseSpineNode(handNode);
+            const henNode = this._spawnPropSpine(task, this._getSkeleton(henClip.spine), henClip.anim, false, targetPos);
             this._destroyAfterComplete(henNode, 4);
-            this._playClipSound(handClip, task.role);
+            this._playClipSound(handClip, task);
         };
         handSkeleton.setCompleteListener(() => {
             handSkeleton.setCompleteListener(() => {});
             playHen();
         });
-        cc.tween(this._root).delay(flyDur + 0.1).call(() => playHen()).start();
+        cc.tween(task).delay(flyDur + 0.1).call(() => playHen()).start();
     }
 
     private _playMoney(task: ThrowPropTask): void {
         const targetPos = this._getLocalPos(task.targetData.avatarNode);
         if (!this._isRootValid()) return;
         const clip = this._getClip(task.config, 'receiver');
-        const node = this._createClipNode(clip, targetPos, task.targetData.propNode);
+        const node = this._createClipNode(task, clip, targetPos, task.targetData.propNode);
         this._destroyAfterComplete(node, 4);
-        this._playClipSound(clip, task.role);
+        this._playClipSound(clip, task);
     }
 
     // pokerqueen新beer=模式A：从发送者飞向目标，到达后播 beer_cheers
@@ -589,7 +691,7 @@ class ThrowPropManager {
         const aimX = dist > 0 ? dx / dist : 0;
         const aimY = dist > 0 ? dy / dist : 1;
         const spawn = (anim: string, pos: cc.Vec3, angle: number, scale: number, life: number) => {
-            const node = this._createSpineNode(data, anim, false, pos);
+            const node = this._createSpineNode(task, data, anim, false, pos);
             node.angle = angle;
             node.setScale(scale);
             this._destroyAfterComplete(node, life);
@@ -607,10 +709,10 @@ class ThrowPropManager {
         const fbPos = cc.v3(senderPos.x + aimX * fbOffset, senderPos.y + aimY * fbOffset, senderPos.z);
         spawn('bullets-fireballs', fbPos, aimAngle, fbScale, 4);
         // ③ 命中：子弹飞到后在目标头像处爆出枪火
-        cc.tween(this._root)
+        cc.tween(task)
             .delay(0.7)
             .call(() => {
-                if (!this._isRootValid()) return;
+                if (!this._isPropTaskActive(task)) return;
                 spawn('bullet_shots', targetPos, 0, 1, 4);
             })
             .start();
@@ -623,23 +725,23 @@ class ThrowPropManager {
         if (!this._isRootValid()) return;
         if (task.role === 'sender') {
             const screenClip = this._getClip(task.config, 'senderScreen');
-            this._playClipSound(screenClip, task.role);
-            this._destroyAfterComplete(this._createClipNode(screenClip, center), 6);
-            this._destroyAfterComplete(this._createClipNode(this._getClip(task.config, 'waveSender'), center), 6);
+            this._playClipSound(screenClip, task);
+            this._destroyAfterComplete(this._createClipNode(task, screenClip, center), 6);
+            this._destroyAfterComplete(this._createClipNode(task, this._getClip(task.config, 'waveSender'), center), 6);
             return;
         }
         if (task.role === 'receiver') {
             const screenClip = this._getClip(task.config, 'receiverScreen');
-            this._playClipSound(screenClip, task.role);
-            this._destroyAfterComplete(this._createClipNode(screenClip, center), 6);
-            this._destroyAfterComplete(this._createClipNode(this._getClip(task.config, 'waveReceiver'), center), 6);
+            this._playClipSound(screenClip, task);
+            this._destroyAfterComplete(this._createClipNode(task, screenClip, center), 6);
+            this._destroyAfterComplete(this._createClipNode(task, this._getClip(task.config, 'waveReceiver'), center), 6);
             return;
         }
         const swimClip = this._getClip(task.config, 'fishSwim');
         const exitClip = this._getClip(task.config, 'fishExit');
         const splashClip = this._getClip(task.config, 'splash');
-        this._playClipSound(swimClip, task.role);
-        const fishNode = this._createClipNode(swimClip, senderPos);
+        this._playClipSound(swimClip, task);
+        const fishNode = this._createClipNode(task, swimClip, senderPos);
         const skeleton = fishNode.getComponent(sp.Skeleton);
         const dir = cc.v2(targetPos.x - senderPos.x, targetPos.y - senderPos.y).normalize();
         const exitDir = cc.v2(dir.y, -dir.x).normalize();
@@ -649,11 +751,11 @@ class ThrowPropManager {
         cc.tween(fishNode)
             .to(2, this._toTweenPosForNode(fishNode, targetPos), { easing: 'sineInOut' })
             .call(() => {
-                if (!cc.isValid(fishNode)) return;
+                if (!this._isPropNodeValid(task, fishNode)) return;
                 this._setSkeletonClip(skeleton, exitClip);
                 fishNode.angle = (cc.v2(0, 1).signAngle(exitDir) * 180) / Math.PI;
                 fishNode.scaleX = exitDir.x > 0 ? -Math.abs(fishNode.scaleX || 1) : Math.abs(fishNode.scaleX || 1);
-                this._destroyAfterComplete(this._createClipNode(splashClip, targetPos), 4);
+                this._destroyAfterComplete(this._createClipNode(task, splashClip, targetPos), 4);
             })
             .delay(0.3)
             .to(1, this._toTweenPosForNode(fishNode, exitPos), { easing: 'sineInOut' })
@@ -661,7 +763,7 @@ class ThrowPropManager {
                 this._releaseSpineNode(fishNode);
             })
             .start();
-        this._destroyAfterComplete(this._createClipNode(this._getClip(task.config, 'waveOther'), center), 6);
+        this._destroyAfterComplete(this._createClipNode(task, this._getClip(task.config, 'waveOther'), center), 6);
     }
 
     // pokerqueen新bomb blast(611)：炸弹从发送者飞向目标(飞行由补间完成)，在目标处 blast 爆炸
@@ -681,17 +783,17 @@ class ThrowPropManager {
 
         // 命中动画自带运动：直接在目标处静止播放
         if (clip.atTarget) {
-            const node = this._spawnPropSpine(skeletonData, impactAnim, !!clip.loop, endPos);
+            const node = this._spawnPropSpine(task, skeletonData, impactAnim, !!clip.loop, endPos);
             this._destroyAfterComplete(node, 4);
-            this._playClipSound(clip, task.role);
+            this._playClipSound(clip, task);
             return;
         }
 
-        const node = this._spawnPropSpine(skeletonData, '', false, startPos);
+        const node = this._spawnPropSpine(task, skeletonData, '', false, startPos);
         const skeleton = node.getComponent(sp.Skeleton);
         let arrived = false;
         const onArrive = () => {
-            if (arrived || !cc.isValid(node)) return;
+            if (arrived || !this._isPropNodeValid(task, node)) return;
             arrived = true;
             this._setRootLocalPosition(node, endPos);
             if (impactAnim) {
@@ -700,7 +802,7 @@ class ThrowPropManager {
             } else {
                 this._destroyAfterDelay(node, 0.5);
             }
-            this._playClipSound(clip, task.role);
+            this._playClipSound(clip, task);
         };
 
         if (clip.flyAnim) {
@@ -712,7 +814,7 @@ class ThrowPropManager {
                 skeleton.setCompleteListener(() => {});
                 onArrive();
             });
-            cc.tween(this._root).delay(flyDur + 0.1).call(() => onArrive()).start();
+            cc.tween(task).delay(flyDur + 0.1).call(() => onArrive()).start();
         } else {
             cc.tween(node)
                 .to(0.5, this._toTweenPosForNode(node, endPos), { easing: 'quadInOut' })
@@ -722,8 +824,8 @@ class ThrowPropManager {
     }
 
     /** 创建一个带 pokerqueen 座位缩放(0.7)的独立 Spine 节点 */
-    private _spawnPropSpine(skeletonData: sp.SkeletonData, anim: string, loop: boolean, rootLocalPos: cc.Vec3): cc.Node {
-        const node = this._createSpineNode(skeletonData, anim, loop, rootLocalPos);
+    private _spawnPropSpine(task: ThrowPropTask, skeletonData: sp.SkeletonData, anim: string, loop: boolean, rootLocalPos: cc.Vec3): cc.Node {
+        const node = this._createSpineNode(task, skeletonData, anim, loop, rootLocalPos);
         node.setScale(PROP_ANIM_SCALE);
         return node;
     }
@@ -741,8 +843,8 @@ class ThrowPropManager {
         return config.clips[name];
     }
 
-    private _createClipNode(clip: PropClipConfig, localPos: cc.Vec3, propNode?: cc.Node): cc.Node {
-        return this._createSpineNode(this._getSkeleton(clip.spine), clip.anim, !!clip.loop, localPos, propNode);
+    private _createClipNode(task: ThrowPropTask, clip: PropClipConfig, localPos: cc.Vec3, propNode?: cc.Node): cc.Node {
+        return this._createSpineNode(task, this._getSkeleton(clip.spine), clip.anim, !!clip.loop, localPos, propNode);
     }
 
     private _setSkeletonClip(skeleton: sp.Skeleton, clip: PropClipConfig): void {
@@ -804,10 +906,21 @@ class ThrowPropManager {
         ]);
     }
 
-    private _createSpineNode(skeletonData: sp.SkeletonData, animName: string, loop: boolean, localPos: cc.Vec3, propNode?: cc.Node): cc.Node {
+    private _createSpineNode(
+        task: ThrowPropTask,
+        skeletonData: sp.SkeletonData,
+        animName: string,
+        loop: boolean,
+        localPos: cc.Vec3,
+        propNode?: cc.Node
+    ): cc.Node {
         const node = propNode || new cc.Node('PropSpine');
+        this._propNodeOwners.get(node)?.nodes.delete(node);
+        this._propNodeOwners.set(node, task);
+        task.nodes.add(node);
         const skeleton = node.getComponent(sp.Skeleton) || node.addComponent(sp.Skeleton);
         this._preparePropNode(node);
+        cc.Tween.stopAllByTarget(node);
         node.stopAllActions();
         node.active = true;
         node.opacity = 255;
@@ -826,10 +939,10 @@ class ThrowPropManager {
         return node;
     }
 
-    private _chainSpine(node: cc.Node, next: () => void): void {
+    private _chainSpine(task: ThrowPropTask, node: cc.Node, next: () => void): void {
         const skeleton = node.getComponent(sp.Skeleton);
         skeleton.setCompleteListener(() => {
-            if (!cc.isValid(node)) return;
+            if (!this._isPropNodeValid(task, node)) return;
             this._releaseSpineNode(node);
             next();
         });
@@ -838,9 +951,11 @@ class ThrowPropManager {
 
     private _destroyAfterComplete(node: cc.Node, fallbackDelay: number): void {
         if (!node) return;
+        const owner = this._propNodeOwners.get(node);
         const skeleton = node.getComponent(sp.Skeleton);
         if (skeleton) {
             skeleton.setCompleteListener(() => {
+                if (owner && this._propNodeOwners.get(node) !== owner) return;
                 this._releaseSpineNode(node);
             });
         }
@@ -849,20 +964,26 @@ class ThrowPropManager {
 
     private _destroyAfterDelay(node: cc.Node, delay: number): void {
         if (!node) return;
+        const owner = this._propNodeOwners.get(node);
         cc.tween(node)
             .delay(delay)
             .call(() => {
+                if (owner && this._propNodeOwners.get(node) !== owner) return;
                 this._releaseSpineNode(node);
             })
             .start();
     }
 
     private _releaseSpineNode(node: cc.Node): void {
+        this._propNodeOwners.get(node)?.nodes.delete(node);
+        this._propNodeOwners.delete(node);
         if (!node || !cc.isValid(node)) return;
+        cc.Tween.stopAllByTarget(node);
         node.stopAllActions();
         const skeleton = node.getComponent(sp.Skeleton);
         if (skeleton) {
             skeleton.setCompleteListener(() => {});
+            if (skeleton.skeletonData) this._resetSkeleton(skeleton);
         }
         if (!this._seatPropSkeletonData.has(node)) {
             node.destroy();
@@ -915,29 +1036,32 @@ class ThrowPropManager {
             .start();
     }
 
-    private _playClipSoundDelay(clip: PropClipConfig, role: PropRole, delay: number): void {
-        const soundName = this._getRoleValue(clip.soundName, role, null);
+    private _playClipSoundDelay(clip: PropClipConfig, task: ThrowPropTask, delay: number): void {
+        const soundName = this._getRoleValue(clip.soundName, task.role, null);
         if (!soundName || !this._isRootValid()) return;
-        cc.tween(this._root)
+        cc.tween(task)
             .delay(delay)
-            .call(() => this._playSoundName(soundName))
+            .call(() => {
+                if (this._isPropTaskActive(task)) this._playSoundName(soundName, task);
+            })
             .start();
     }
 
-    private _playClipSound(clip: PropClipConfig, role: PropRole): void {
-        this._playSoundName(this._getRoleValue(clip.soundName, role, null));
+    private _playClipSound(clip: PropClipConfig, task: ThrowPropTask): void {
+        this._playSoundName(this._getRoleValue(clip.soundName, task.role, null), task);
     }
 
-    private _playSoundName(soundName: string | string[] | null): void {
+    private _playSoundName(soundName: string | string[] | null, task: ThrowPropTask): void {
         if (!soundName) return;
         if (Array.isArray(soundName)) {
-            soundName.forEach(name => this._playSound(name));
+            soundName.forEach(name => this._playSoundName(name, task));
             return;
         }
-        this._playSound(soundName);
+        const sound = this._playSound(soundName);
+        if (sound !== undefined) task.sounds.add(sound);
     }
 
-    private _playSound(name: string): void {
+    private _playSound(name: string): number | undefined {
         if (!name || !soundManager.isOn) return;
         const clip = cc.resources.get<cc.AudioClip>(name, cc.AudioClip);
         if (!clip) {
@@ -945,7 +1069,7 @@ class ThrowPropManager {
             void soundManager.preload();
             return;
         }
-        cc.audioEngine.playEffect(clip, false);
+        return cc.audioEngine.playEffect(clip, false);
     }
 
     private _getRoleValue<T>(value: RoleValue<T> | undefined, role: PropRole, defaultValue: T): T {

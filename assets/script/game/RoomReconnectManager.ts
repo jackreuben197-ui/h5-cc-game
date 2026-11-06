@@ -186,6 +186,11 @@ class RoomReconnectManager {
             this._removeContext(roomID, matchID);
             if (wasVisible) {
                 viewManager.hidePrompting();
+                if (roomData?.mtt.eliminatedObserver) {
+                    // 淘汰后的观众只留在原桌，不能通过比赛入口重新分配到其他桌。
+                    roomData.mtt.requestObservationStop();
+                    return;
+                }
                 if (roomData?.basicInfo.isMtt) {
                     // MTT 房间失效后按比赛维度重新向服务端申请当前牌桌。
                     roomDataManager.deleteRoomData(roomID, matchID);

@@ -27,7 +27,6 @@
 import { traceClass } from './core/decorator/LogTrace';
 import ccviewData from './data/system/CCViewData';
 import userStore from './data/user/UserStore';
-import UserStoreUtils from './data/user/UserStoreUtils';
 
 /** 握手超时时间（毫秒） */
 const HANDSHAKE_TIMEOUT = 10000;
@@ -261,8 +260,8 @@ class H5MsgMgr {
                 ccviewData.setSaveareaTop(payload.safeArea.top);
             }
             if (payload.token) {
+                // 用户资料由 H5 校验后通过 syncUser 同步。
                 userStore.token = payload.token;
-                UserStoreUtils.updateUserInfoBasic();
             }
             this.sendToH5('ccAck', 1);
             this._completeHandshake();

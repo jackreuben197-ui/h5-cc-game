@@ -6,7 +6,6 @@ import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataPlayer from '../../../data/room/texas/TexasGameRoomDataPlayer';
 import globalConfigStore from '../../../data/system/GlobalConfigStore';
 import userStore, { UserPropData, UserStore } from '../../../data/user/UserStore';
-import UserStoreUtils from '../../../data/user/UserStoreUtils';
 import { AntiCheatType } from '../../../game/constant/AntiCheatType';
 import { BroadcastCode, PropsID } from '../../../game/constant/BroadcastCode';
 import { GameplayChatPropType } from '../../../game/constant/GameplayChatPropType';
@@ -20,6 +19,7 @@ import { HttpStatsOtherUserStats } from '../../../net/https/data/stats/HttpStats
 import TexasVideoMediaHelper from '../../../net/messages/texas/TexasVideoMediaHelper';
 import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
+import TexasTableEvent from '../../scene/room/texas/events/TexasTableEvent';
 import viewManager from '../../UIViewManager';
 import { applyInlinePrivateUcChargeIcon, formatPrivateUcChargePrice } from '../../util/PrivateUcChargeView';
 import throwPropManager from '../../util/ThrowPropManager';
@@ -954,6 +954,8 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
 
     private _clickProp(definition: ThrowPropDefinition, clickNode: cc.Node): void {
         if (this._roomData.seatsStateManager.hasPendingThrowProp || throwPropManager.isPropSenderBusy(userStore.userRID)) return;
+        // 换桌等待、已离座或目标已离座时不再发送，避免旧桌的道具在新桌播放。
+        if (!TexasTableEvent.canSendExpression(this._roomData, this._param.roomID, this._requestRID)) return;
         this._playClickScale(clickNode, false);
         const propData = this._propListData.get(definition.type);
         // pokerqueen 逻辑：未拥有的道具用默认 consumeType(CT_EMOJI_2) 也能发送
@@ -995,6 +997,13 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
 
     private _getThrowPropMsgType(): Def.BroadcastMsgTypeMap[keyof Def.BroadcastMsgTypeMap] {
         return Def.BroadcastMsgType.BC_MSG_THROW;
+    }
+
+    private _stringToBytes(str: string): Uint8Array {
+        const encoded = unescape(encodeURIComponent(str));
+        const bytes = new Uint8Array(encoded.length);
+        for (let i = 0; i < encoded.length; i++) bytes[i] = encoded.charCodeAt(i);
+        return bytes;
     }
 
     private _clickReport(): void {
@@ -1104,12 +1113,5 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
 
     private _isCurrentRequest(rid: number): boolean {
         return cc.isValid(this.node) && this.node.activeInHierarchy && this._requestRID === rid;
-    }
-
-    private _stringToBytes(str: string): Uint8Array {
-        const encoded = unescape(encodeURIComponent(str));
-        const bytes = new Uint8Array(encoded.length);
-        for (let i = 0; i < encoded.length; i++) bytes[i] = encoded.charCodeAt(i);
-        return bytes;
     }
 }

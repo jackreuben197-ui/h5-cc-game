@@ -4,6 +4,7 @@ import roomDataManager from '../data/room/RoomDataManager';
 import TexasGameRoomData from '../data/room/texas/TexasGameRoomData';
 import h5MessageManager, { PanelEventPayload } from '../H5MsgMgr';
 import { CPErrorCode } from '../i18n/CPErrorCode';
+import { i18nMgr } from '../i18n/i18nMgr';
 import ProtocolAgency from '../net/websocket/ProtocolAgency';
 import viewManager from '../views/UIViewManager';
 import { MTT_MATCH_ENTRY_ROOM_ID } from './constant/Constants';
@@ -15,19 +16,28 @@ const _plog = createLogger('MttRoomLifecycle');
 
 const MTT_SETTLEMENT_PANEL = 'mttSettlement';
 
-// 淘汰弹窗只负责把玩家送回 H5；真正的重购由赛事详情页完成。
-const PANEL_RETURN_EVENTS = ['rebuy', 'confirm', 'done', 'close'];
+const PANEL_RETURN_EVENTS = ['returnLobby', 'confirm', 'done', 'close'];
 
 const FULL_MTT_BRING_IN = 0;
+
+const OBSERVED_ROOM_DISSOLVED_TIP_SECONDS = 2;
 
 class MttRoomLifecycle {
     private _panelRequestId: string = '';
     private _settlementRoomData: TexasGameRoomData = null;
+    private _observerRoomData: TexasGameRoomData = null;
+    private _observerEnterSent: boolean = false;
+    private _settlementProps: Record<string, unknown> = null;
+    private _canContinueWatching: boolean = false;
+    private _watchingPending: boolean = false;
     private _listening: boolean = false;
 
     public async showSettlement(roomData: TexasGameRoomData, rebuy: boolean): Promise<void> {
-        // 先保存面板需要的快照；Return 会清理 RoomData 和当前牌桌场景。
-        const panelProps = {
+        if (this._settlementRoomData === roomData || roomData.mtt.eliminatedObserver) return;
+        this._ensureListening();
+        this._settlementRoomData = roomData;
+        // 观战快照可能不带本人重购信息，结算继续使用淘汰时的快照。
+        this._settlementProps = {
             matchId: roomData.matchID,
             matchName: roomData.mtt.matchName || roomData.basicInfo.roomName,
             startTime: roomData.mtt.startTime,
@@ -35,24 +45,158 @@ class MttRoomLifecycle {
             currentBlindLevel: roomData.mtt.blindLevel,
             maxRebuyBlindLevel: roomData.mtt.maxRebuyBlindLevel,
             remainRebuyTimes: roomData.mtt.remainRebuyTimes,
-            clubId: roomData.basicInfo.clubID
+            clubId: roomData.basicInfo.clubID,
+            inTable: true
         };
-        this._ensureListening();
-        this._settlementRoomData = roomData;
-        // 不能只依赖 H5 DOM 覆盖牌桌：先完成 Cocos 场景退出，再展示结算面板。
-        try {
-            await ProcedureManager.StartProcedure(ProcedureDefine.Return);
-        } catch (error) {
-            // 即使场景清理出现异常，也必须让玩家看到结算面板，不能继续卡在牌桌。
-            _plog.error('MTT 结算前退出牌桌失败', panelProps.matchId, error);
+        this._canContinueWatching = false;
+        this._watchingPending = !roomData.closed;
+        roomReconnectManager.clearContext(roomData.roomID, roomData.matchID);
+        const player = roomData.mine.player;
+        if (player) {
+            player.setSeated(false, roomData.mine);
+            player.clearData();
         }
+        roomData.mine.clearData();
+        roomData.mine.clearVideoAndAudio().catch(error => _plog.error('淘汰后清理音视频失败', error));
+        if (!roomData.closed) {
+            roomData.mtt.observer = true;
+            roomData.mtt.eliminatedObserver = true;
+            this._observerRoomData = roomData;
+            this._observerEnterSent = false;
+        }
+        roomData.mtt.refresh();
+        this._showSettlementPanel();
+        if (roomData.closed) return;
+        // LR_NOCHIP 离桌通知表示服务端已移除原订阅，直接向原桌重新申请观战。
+        try {
+            // 保留当前场景，用原桌 roomID 重新订阅观战，不走 roomID=0 的参赛分桌入口。
+            const responsePromise = ProtocolAgency.waitForMessage<ServerMessageEnterRoom.AsObject>(
+                Code.MSG_D_ENTER_ROOM,
+                (data, roomID, matchID) => roomID == roomData.roomID && matchID == roomData.matchID && (data.status != 0 || !data.myInfo?.seatId)
+            );
+            this._observerEnterSent = true;
+            ProtocolAgency.Send({
+                code: Code.MSG_D_ENTER_ROOM,
+                roomID: roomData.roomID,
+                matchID: roomData.matchID,
+                body: {
+                    room: { roomId: roomData.roomID, matchId: roomData.matchID },
+                    gps: { longitude: '', latitude: '' },
+                    mttPartialBringIn: FULL_MTT_BRING_IN,
+                    observer: true,
+                    wantSeat: Def.WantSeatType.WST_NO
+                }
+            });
+            const response = await responsePromise;
+            if (!this._isActiveObserver(roomData)) return;
+            if (response.body.status != 0) {
+                viewManager.showToast(CPErrorCode.ServerErrorDescription(response.body.status));
+                this.stopWatching(roomData);
+                return;
+            }
+            this._watchingPending = false;
+            this._canContinueWatching = true;
+            this._showSettlementPanel();
+        } catch (error) {
+            if (!this._isActiveObserver(roomData)) return;
+            _plog.error('MTT 淘汰后进入原桌观战失败', roomData.roomID, roomData.matchID, error);
+            viewManager.showToast(i18nMgr.Get('error999'));
+            this.stopWatching(roomData);
+        }
+    }
+
+    private _showSettlementPanel(): void {
+        if (!this._settlementRoomData) return;
         this._panelRequestId = h5MessageManager.sendToH5('showPanel', 1, {
             panelType: MTT_SETTLEMENT_PANEL,
-            props: panelProps,
+            props: {
+                ...this._settlementProps,
+                canContinueWatching: this._canContinueWatching,
+                watchingPending: this._watchingPending
+            },
             closeOnClickOverlay: false,
-            ensureVisible: true,
-            showH5Bg: true
+            ensureVisible: false,
+            showH5Bg: false
         });
+    }
+
+    public stopWatching(roomData: TexasGameRoomData): void {
+        roomData.closed = true;
+        roomReconnectManager.clearContext(roomData.roomID, roomData.matchID);
+        if (this._settlementRoomData === roomData) {
+            // 尚未读完结算时保留弹窗，但不再允许进入已经失效的观战桌。
+            this._canContinueWatching = false;
+            this._watchingPending = false;
+            this._showSettlementPanel();
+            return;
+        }
+        this.returnToLobby();
+    }
+
+    public observedRoomDissolved(roomData: TexasGameRoomData): void {
+        if (roomData.closed || !this._isCurrentRoom(roomData)) return;
+        roomData.closed = true;
+        roomReconnectManager.clearContext(roomData.roomID, roomData.matchID);
+        if (this._observerRoomData === roomData) {
+            // 服务端已经移除观战订阅，离开这个已解散的房间无需再发主动 Leave。
+            this._observerEnterSent = false;
+        }
+        if (this._settlementRoomData === roomData) {
+            // 结算仍打开时先关闭 H5 遮罩，让牌桌上的提示可见。
+            h5MessageManager.sendToH5('closePanel', 1, { requestId: this._panelRequestId, panelType: MTT_SETTLEMENT_PANEL });
+            this._clearPanelState();
+        }
+        viewManager.showToast(i18nMgr.Get('UIMTT_ObservedRoomDissolved'), { stayDuration: OBSERVED_ROOM_DISSOLVED_TIP_SECONDS }, () => {
+            // 提示期间可能已主动离开或进入其他牌桌，不能覆盖新的导航。
+            if (!this._isCurrentRoom(roomData)) return;
+            ProcedureManager.StartProcedure(ProcedureDefine.Return, {
+                routeData: { name: 'mtt-list', replace: true, ensureVisible: true }
+            });
+        });
+    }
+
+    public returnToLobby(): void {
+        ProcedureManager.StartProcedure(ProcedureDefine.Return, {
+            routeData: { name: 'lobby', replace: true, ensureVisible: true }
+        });
+    }
+
+    public openRegistration(roomData: TexasGameRoomData): void {
+        ProcedureManager.StartProcedure(ProcedureDefine.Return, {
+            routeData: { name: 'mtt-detail', query: { id: String(roomData.matchID) }, replace: true, ensureVisible: true }
+        });
+    }
+
+    public reset(): void {
+        const roomData = this._observerRoomData;
+        // 玩家主动离开观战时，清理已经发起的观战订阅。
+        if (roomData && this._observerEnterSent) {
+            this._sendObserverLeave(roomData);
+        }
+        if (this._panelRequestId) {
+            h5MessageManager.sendToH5('closePanel', 1, { requestId: this._panelRequestId, panelType: MTT_SETTLEMENT_PANEL });
+        }
+        this._observerRoomData = null;
+        this._observerEnterSent = false;
+        this._clearPanelState();
+    }
+
+    private _sendObserverLeave(roomData: TexasGameRoomData): void {
+        roomDataManager.markSilentLeave(roomData.roomID, roomData.matchID);
+        ProtocolAgency.Send({
+            code: Code.MSG_D_LEAVE,
+            roomID: roomData.roomID,
+            matchID: roomData.matchID,
+            body: { room: { roomId: roomData.roomID, matchId: roomData.matchID } }
+        });
+    }
+
+    private _isActiveObserver(roomData: TexasGameRoomData): boolean {
+        return this._observerRoomData === roomData && !roomData.closed && this._isCurrentRoom(roomData);
+    }
+
+    private _isCurrentRoom(roomData: TexasGameRoomData): boolean {
+        return roomDataManager.existRoomData(roomData.roomID, roomData.matchID) && roomDataManager.getRoomData(roomData.roomID, roomData.matchID) === roomData;
     }
 
     public reenter(roomData: TexasGameRoomData): void {
@@ -70,6 +214,10 @@ class MttRoomLifecycle {
     }
 
     public exchangeRoom(roomData: TexasGameRoomData, newRoomID: number): void {
+        if (roomData.mtt.observer) {
+            this.observedRoomDissolved(roomData);
+            return;
+        }
         if (newRoomID <= 0) {
             _plog.error('换桌通知缺少有效 roomID', roomData.matchID, newRoomID);
             return;
@@ -131,16 +279,27 @@ class MttRoomLifecycle {
 
     private _onPanelEvent(payload: PanelEventPayload): void {
         if (!payload || payload.panelRequestId != this._panelRequestId || !this._settlementRoomData) return;
-        if (PANEL_RETURN_EVENTS.indexOf(payload.event) >= 0) {
-            // showSettlement 正常路径已经进入 Return；再次调用作为旧版本/异常时序的兜底。
+        if (payload.event == 'continueWatching') {
+            if (!this._canContinueWatching || !this._isActiveObserver(this._settlementRoomData)) return;
             this._clearPanelState();
-            ProcedureManager.StartProcedure(ProcedureDefine.Return);
+            h5MessageManager.sendToH5('h5Hide', 1);
+            return;
+        }
+        if (payload.event == 'rebuy') {
+            this.openRegistration(this._settlementRoomData);
+            return;
+        }
+        if (PANEL_RETURN_EVENTS.indexOf(payload.event) >= 0) {
+            this.returnToLobby();
         }
     }
 
     private _clearPanelState(): void {
         this._panelRequestId = '';
         this._settlementRoomData = null;
+        this._settlementProps = null;
+        this._canContinueWatching = false;
+        this._watchingPending = false;
     }
 }
 

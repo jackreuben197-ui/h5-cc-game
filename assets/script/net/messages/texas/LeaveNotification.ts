@@ -16,6 +16,7 @@ const _glog = createLogger('LeaveNotification', 'debug');
 export function LeaveNotification(data: ServerMessageLeaveNotification.AsObject, roomID: number, matchID: number) {
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     roomDataManager.clearInternalLeave(roomID, matchID);
+    if (roomData?.mtt.eliminatedObserver && data.reason == Def.LeaveReason.LR_NOCHIP) return;
     if (roomData) {
         TexasVideoMediaHelper.clearAllMediaStates(roomData);
     } else {
@@ -55,6 +56,11 @@ export function LeaveNotification(data: ServerMessageLeaveNotification.AsObject,
                     break;
                 }
                 // MTT 正常结束交给 H5 结算面板展示最终结果。
+                if (roomData.mtt.observer) {
+                    roomData.mtt.observedRoomDissolved();
+                    break;
+                }
+                roomData.closed = true;
                 roomData.mtt.requestSettlement(false);
             }
             break;
@@ -68,6 +74,10 @@ export function LeaveNotification(data: ServerMessageLeaveNotification.AsObject,
             roomData.mtt.requestSettlement(roomData.mtt.canRebuy(data.accountChips));
             break;
         case Def.LeaveReason.LR_EXCHANGE:
+            if (roomData.mtt.observer) {
+                roomData.mtt.observedRoomDissolved();
+                break;
+            }
             // 服务端随后通过 101 通知真实目标 roomID。
             roomData.mtt.setTableTransferWaiting(true);
             break;

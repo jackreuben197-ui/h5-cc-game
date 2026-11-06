@@ -28,7 +28,7 @@ export default class TexasVideoMediaHelper {
         const uid = userStore.userRID;
         if (agoraManager.isJoined) {
             await agoraManager.disableCamera();
-            agoraManager.disableMicrophone();
+            await agoraManager.disableMicrophone();
             agoraManager.clearCallbacks();
             agoraManager.stopVolumeMonitor();
             await agoraManager.leave();

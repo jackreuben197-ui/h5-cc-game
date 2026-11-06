@@ -1,5 +1,3 @@
-import { WebGetDiamondConfig, WWW } from '../../net/https/WebRequest';
-
 // 存储格式：config_type → { type_ext → item }，与 H5 侧 DiamondConfigMap 规范对齐。
 type DiamondTypeMap = Record<number, DiamondConfig>;
 
@@ -74,24 +72,17 @@ export class DiamondModel extends cc.EventTarget {
     }
 
     // 按需拉取指定 config_type 的配置；已有缓存时直接 resolve，不发网络请求。
-    public reqDiamondConfig(type: number): Promise<void> {
-        return new Promise((resolve, reject) => {
-            if (this._diamondMap.has(type)) {
-                return resolve();
-            }
-            WWW.Instance.CommonAPI({
-                web_class: WebGetDiamondConfig,
-                body: { config_type: type }
-            }).then(
-                (res: any) => {
-                    this._storeItems(type, res?.data?.data);
-                    resolve();
-                },
-                (res: any) => {
-                    reject(res);
-                }
-            );
+    public async reqDiamondConfig(type: number): Promise<void> {
+        if (this._diamondMap.has(type)) return;
+        // HTTP 会经 UIViewManager 引用牌桌数据，按需加载以避开启动时的循环依赖。
+        const { WebGetDiamondConfig, WWW } = await import('../../net/https/WebRequest');
+        // 加载依赖期间 H5 可能已经同步配置。
+        if (this._diamondMap.has(type)) return;
+        const res: any = await WWW.Instance.CommonAPI({
+            web_class: WebGetDiamondConfig,
+            body: { config_type: type }
         });
+        this._storeItems(type, res?.data?.data);
     }
 
     // 查找指定 config_type + type_ext 的配置项。

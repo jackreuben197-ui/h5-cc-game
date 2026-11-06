@@ -39,6 +39,8 @@ export default class SeatManager extends cc.Component {
     private _seatNodesMap: Map<number, SeatPlayer> = new Map();
 
     public initData(roomID: number, matchID: number) {
+        throwPropManager.reset();
+        throwPropManager.initialize(this.node, this._throwPropRootNode);
         const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
         this._seatManager = roomData.seatsStateManager;
         this._opPannel.initData(roomData.mine);
@@ -81,12 +83,19 @@ export default class SeatManager extends cc.Component {
     }
 
     public onEnable(): void {
+        throwPropManager.initialize(this.node, this._throwPropRootNode);
         if (!this._seatManager) return;
         this._bindEventsAndRefresh();
     }
 
     public onDisable(): void {
+        throwPropManager.reset();
         unBindEventsAll(this);
+    }
+
+    @bindEvent(TexasGameRoomDataSeatsStateManager.CLEAR_EXPRESSIONS, { dataSource: 'seats', initIgnore: true })
+    private onClearExpressions(): void {
+        throwPropManager.reset();
     }
 
     private _bindEventsAndRefresh() {
@@ -234,11 +243,23 @@ export default class SeatManager extends cc.Component {
         this._seatNodesMap.forEach((seatPlayer, seatNo) => {
             if (result) return;
             const seatData = this._seatManager.getSeatPlayer(seatNo);
-            if (seatData && seatData.userID === userID) {
+            if (seatData?.seated && seatData.userID === userID) {
+                const manager = this._seatManager;
+                const roomData = seatData.roomData;
+                const roomID = roomData.roomID;
                 result = {
                     avatarNode: seatPlayer.avatarNode,
                     propNode: seatPlayer.throwPropNode,
-                    emojiNode: seatPlayer.emojiNode
+                    emojiNode: seatPlayer.emojiNode,
+                    isValid: () =>
+                        this.node.activeInHierarchy &&
+                        seatPlayer.node.activeInHierarchy &&
+                        this._seatManager === manager &&
+                        manager.getSeatPlayer(seatNo) === seatData &&
+                        roomData.roomID === roomID &&
+                        !roomData.mtt.tableTransferWaiting &&
+                        seatData.seated &&
+                        seatData.userID === userID
                 };
             }
         });

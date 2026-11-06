@@ -8,6 +8,7 @@ import userStore from '../../../data/user/UserStore';
 import { BroadcastCode, pickerEmojiTypeFromIndex } from '../../../game/constant/BroadcastCode';
 import ProtocolAgency from '../../../net/websocket/ProtocolAgency';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
+import TexasTableEvent from '../../scene/room/texas/events/TexasTableEvent';
 import UIEmojiItem from './UIEmojiItem';
 
 const { ccclass, menu, property } = cc._decorator;
@@ -55,6 +56,7 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
     private static readonly GRID_PADDING_BOTTOM = 20;
 
     private _roomData: TexasGameRoomData = null;
+    private _roomID: number = 0;
     private _targetY = 0;
     private _startY = 0;
     private _viewportVerticalInset = 0;
@@ -66,6 +68,7 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
     private static _lastCategory = 0;
 
     public initialize(param: UIEmojiDlgParam): void {
+        this._roomID = param.roomID;
         this._roomData = roomDataManager.getRoomData<TexasGameRoomData>(param.roomID, param.matchID);
         this._applyLayout();
         const layout = this.scrollContent.getComponent(cc.Layout);
@@ -276,6 +279,8 @@ export default class UIEmojiDlg extends UIComponentBaseDialog<UIEmojiDlgParam> {
     }
 
     private _sendEmojiBroadcast(type: number): void {
+        // 换桌等待或已离座时不再发送，避免旧桌的表情在新桌播放。
+        if (!TexasTableEvent.canSendExpression(this._roomData, this._roomID)) return;
         this._roomData.seatsStateManager.setPendingEmoji({ type, userID: userStore.userRID });
         const timestamp = Date.now();
         // 发送者不会收到自己的 1121 推送，先记录待确认表情，1019 成功后再写入聊天室。
