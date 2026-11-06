@@ -167,9 +167,6 @@ class ThrowPropManager {
     private _propNodeOwners: Map<cc.Node, ThrowPropTask> = new Map();
     private _propQueue: ThrowPropTask[] = [];
     private _activePropTasks: Set<ThrowPropTask> = new Set();
-    private _playingPropUsers: Set<number> = new Set();
-    private _playingPropSenders: Set<number> = new Set();
-    private _playingFullscreenProp: boolean = false;
     private _version: number = 0;
     private _seatTokens: Map<cc.Node, number> = new Map();
     private _emojiPlayTokens: Map<cc.Node, number> = new Map();
@@ -197,9 +194,6 @@ class ThrowPropManager {
         this._version++;
         this._propQueue.length = 0;
         this._activePropTasks.forEach(task => this._finishPropTask(task));
-        this._playingPropUsers.clear();
-        this._playingPropSenders.clear();
-        this._playingFullscreenProp = false;
         this._emojiPlayTokens.forEach((_token, node) => this._stopEmoji(node));
         this._emojiPlayTokens.clear();
         this._seatTokens.clear();
@@ -261,20 +255,6 @@ class ThrowPropManager {
         return cc.isValid(node) && this._propNodeOwners.get(node) === task && this._isPropTaskActive(task);
     }
 
-    private _finishPropTask(task: ThrowPropTask): void {
-        cc.Tween.stopAllByTarget(task);
-        task.nodes.forEach(node => this._releaseSpineNode(node));
-        task.sounds.forEach(sound => cc.audioEngine.stopEffect(sound));
-        this._activePropTasks.delete(task);
-        this._playingPropSenders.delete(task.data.userID);
-        if (task.fullscreen) {
-            this._playingFullscreenProp = false;
-        } else {
-            this._playingPropUsers.delete(task.data.userID);
-            this._playingPropUsers.delete(task.data.targetUserID);
-        }
-    }
-
     /** 后台预加载 em16-65 全部图鉴表情骨骼并常驻缓存(fire-and-forget，只执行一次) */
     private _preloadPickerEmojis(): void {
         if (this._pickerPreloadStarted) return;
@@ -314,7 +294,6 @@ class ThrowPropManager {
         const config = ThrowPropManager.CONFIGS[data.type];
         if (!config || !this._root || !cc.isValid(this._root)) return;
         if (!this._isSeatValid(senderData) || !this._isSeatValid(targetData)) return;
-        if (this._propQueue.some(task => task.data.userID === data.userID && task.data.targetUserID === data.targetUserID)) return;
         const role = this._getRole(data.userID, data.targetUserID);
         const task: ThrowPropTask = {
             data,
@@ -336,7 +315,11 @@ class ThrowPropManager {
     }
 
     public isPropSenderBusy(userID: number): boolean {
-        return this._playingPropSenders.has(userID) || this._propQueue.some(task => task.data.userID === userID);
+        let busy = this._propQueue.some(task => task.data.userID === userID);
+        this._activePropTasks.forEach(task => {
+            if (task.data.userID === userID) busy = true;
+        });
+        return busy;
     }
 
     private _playPropNow(task: ThrowPropTask): void {
@@ -421,12 +404,7 @@ class ThrowPropManager {
                 if (!this._canPlayPropTask(task)) continue;
                 this._propQueue.splice(i, 1);
                 this._activePropTasks.add(task);
-                this._markPropTaskPlaying(task);
-                try {
-                    this._playPropNow(task);
-                } catch (error) {
-                    cc.warn('[ThrowPropManager] play prop failed', task.type, error);
-                }
+                this._playPropNow(task);
                 this._schedulePropTaskFinish(task);
                 started = true;
                 break;
@@ -435,18 +413,20 @@ class ThrowPropManager {
     }
 
     private _canPlayPropTask(task: ThrowPropTask): boolean {
-        if (task.fullscreen) return !this._playingFullscreenProp;
-        return !this._playingPropUsers.has(task.data.userID) && !this._playingPropUsers.has(task.data.targetUserID);
-    }
-
-    private _markPropTaskPlaying(task: ThrowPropTask): void {
-        this._playingPropSenders.add(task.data.userID);
-        if (task.fullscreen) {
-            this._playingFullscreenProp = true;
-            return;
-        }
-        this._playingPropUsers.add(task.data.userID);
-        this._playingPropUsers.add(task.data.targetUserID);
+        let canPlay = true;
+        this._activePropTasks.forEach(active => {
+            if (task.fullscreen) {
+                if (active.fullscreen) canPlay = false;
+            } else if (
+                !active.fullscreen &&
+                (active.data.userID === task.data.userID ||
+                    active.data.userID === task.data.targetUserID ||
+                    active.data.targetUserID === task.data.userID ||
+                    active.data.targetUserID === task.data.targetUserID)
+            )
+                canPlay = false;
+        });
+        return canPlay;
     }
 
     private _schedulePropTaskFinish(task: ThrowPropTask): void {
@@ -457,6 +437,13 @@ class ThrowPropManager {
                 this._tryPlayQueuedProps();
             })
             .start();
+    }
+
+    private _finishPropTask(task: ThrowPropTask): void {
+        cc.Tween.stopAllByTarget(task);
+        task.nodes.forEach(node => this._releaseSpineNode(node));
+        task.sounds.forEach(sound => cc.audioEngine.stopEffect(sound));
+        this._activePropTasks.delete(task);
     }
 
     public async playEmoji(data: EmojiBroadcastData, senderData: ThrowPropSeatNodes): Promise<void> {

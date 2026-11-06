@@ -953,10 +953,10 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     }
 
     private _clickProp(definition: ThrowPropDefinition, clickNode: cc.Node): void {
-        if (this._roomData.seatsStateManager.hasPendingThrowProp || throwPropManager.isPropSenderBusy(userStore.userRID)) return;
         // 换桌等待、已离座或目标已离座时不再发送，避免旧桌的道具在新桌播放。
         if (!TexasTableEvent.canSendExpression(this._roomData, this._param.roomID, this._requestRID)) return;
         this._playClickScale(clickNode, false);
+        if (this._roomData.seatsStateManager.hasPendingThrowProp || throwPropManager.isPropSenderBusy(userStore.userRID)) return;
         const propData = this._propListData.get(definition.type);
         // pokerqueen 逻辑：未拥有的道具用默认 consumeType(CT_EMOJI_2) 也能发送
         const consume = (propData

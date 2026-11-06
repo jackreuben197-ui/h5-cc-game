@@ -40,17 +40,18 @@ a.forEach(o=>{ if(o.__type__==="cc.Sprite"&&o._spriteFrame&&o._spriteFrame.__uui
 #   history bottom gradient enabled = false
 #   history UITexasHistory/layer/bg alignFlags = 37
 
-# 5. interactive props and player info dialog — must print 1 1 1 1 2 5 10, one number per line
+# 5. interactive props and player info dialog — must print 1 1 1 1 1 1 10 0, one number per line
 F=assets/script/views/dialog/playerinfo/UIPlayerInfo.ts
 T=assets/script/views/util/ThrowPropManager.ts
 S=assets/script/data/room/texas/TexasGameRoomDataSeatsStateManager.ts
-grep -c 'hasPendingThrowProp || throwPropManager.isPropSenderBusy' $F
 grep -c ': Def.ConsumeType.CT_NONE) as ClientMessageBroadcastMsg' $F
 grep -c 'globalConfigStore.isChannelDiamondFreeMode && !!data && !userStore.isPropFree(data) && payPrice > 0' $F
 grep -c 'cc.Tween.stopAllByTarget(node);' $F
-grep -c 'PENDING_THROW_PROP_TIMEOUT_MS' $S
-grep -c '_playingPropSenders' $T
+grep -c 'hasPendingThrowProp || throwPropManager.isPropSenderBusy(userStore.userRID)) return;' $F
+grep -c 'public isPropSenderBusy' $T
+grep -c 'public get hasPendingThrowProp' $S
 grep -E -c '^\s+duration: (2\.6|2\.7|1\.7|1\.6|2\.3|3\.6|3|1\.9),' $T
+grep -c '_playingPropSenders\|PENDING_THROW_PROP_TIMEOUT_MS' $T $S | awk -F: '{s+=$2} END {print s}'
 ```
 
 ---
@@ -159,8 +160,8 @@ Other tip bars (`Image_RedistributionTips`, `Image_WaitForStartBathTips`, `Image
 
 ## 8. Player info dialog and interactive props
 
-Commits on `dev_merge_1031`: `e638e6a`, `d3d3875`, `31a04d8`, `cc934f2`. All of it is TypeScript in the
-three files from checklist step 5. `UIPlayerInfo.prefab` was not changed: the layout is applied at runtime,
+Commits on `dev_merge_1031`: `e638e6a`, `d3d3875`, `31a04d8`, `cc934f2`; on `dev_merge_1105` the
+queue was switched to upstream's code and the tap lock reduced to additions on top of it (8.4). All of it is TypeScript in the files from checklist step 5. `UIPlayerInfo.prefab` was not changed: the layout is applied at runtime,
 so taking upstream's prefab is safe, while taking upstream's `UIPlayerInfo.ts` silently loses everything
 below. On a conflict in these files, keep our logic and port upstream's change on top.
 
@@ -198,26 +199,34 @@ Decision: hide the diamond price under the props in this dialog only. Do **not**
 This is display only. Listed props still send their real `price_id`, so they can be charged on the
 ordinary link with no price on screen. No price was changed in the CMS or on the server.
 
-### 8.4 Rapid taps must not stack animations
+### 8.4 Taps during an animation bounce but are not sent
 
-**Symptom.** Twenty quick taps queued twenty throws, the animation kept running for a long time, and the
-prop icon was bigger the next time the dialog opened.
+Decision of 2026-11-06. The queue is upstream's, to avoid merge conflicts: in `ThrowPropManager` the code of
+`playProp` queueing, `_tryPlayQueuedProps`, `_canPlayPropTask`, `_schedulePropTaskFinish` and `_finishPropTask`
+matches upstream. Do not add our own state or limits there again.
 
-- `_clickProp` returns early while `seatsStateManager.hasPendingThrowProp` or
-  `throwPropManager.isPropSenderBusy(userStore.userRID)` is true.
-- `hasPendingThrowProp` expires after `PENDING_THROW_PROP_TIMEOUT_MS` (5000), so a lost server reply does
-  not block taps forever.
-- `ThrowPropManager.playProp` keeps at most one waiting task per sender/target pair, which also limits
-  throws from other players.
-- `_playClickScale` calls `cc.Tween.stopAllByTarget(node)` and `node.setScale(1)` before the tween and
-  animates to the absolute scale. The dialog is pooled, so concurrent relative tweens left the icon
-  enlarged across openings.
+Upstream sends every tap, so twenty taps give twenty paid throws that keep flying after the dialog is closed.
+We keep one small lock on top, made of additions only:
 
-### 8.5 Tap lock follows the real animation length
+- `UIPlayerInfo._clickProp`: `_playClickScale` runs first, so the icon always bounces. Then the method returns
+  while `seatsStateManager.hasPendingThrowProp` or `throwPropManager.isPropSenderBusy(userStore.userRID)` is
+  true. Nothing is sent, charged or queued.
+- `TexasGameRoomDataSeatsStateManager.hasPendingThrowProp`: getter over upstream's pending slot. The slot is
+  cleared by the 1019 reply with any status and by `clearPendingExpressions`.
+- `ThrowPropManager.isPropSenderBusy`: the player has a throw in `_propQueue` or `_activePropTasks`.
 
-The lock is released by `task.duration`, so a too long value in `ThrowPropManager.CONFIGS` shows up as
-"the animation finished, but the button is not clickable yet". Values are measured from the clips and
-`.skel` files, in seconds:
+The reply emits `THROW_PROP` and `SeatManager.onThrowProp` queues the throw synchronously, so there is no gap
+between "pending" and "busy". The first tap after the animation ends works.
+
+Keep our `_playClickScale`: it calls `cc.Tween.stopAllByTarget(node)` and `node.setScale(1)` and animates to
+an absolute scale. Upstream's version scales relative to the current scale, so rapid taps make the icon grow,
+and it stays big across openings because the dialog is pooled.
+
+### 8.5 Animation lengths
+
+`task.duration` is how long the queue waits before the next prop on the same players starts, and how long
+the tap lock from 8.4 lasts. A too long value shows up as "the animation finished, but the tap does nothing".
+Values are measured from the clips and `.skel` files, in seconds:
 
 | tomato | flower | kiss | good | cheers | touch | shark | chicken | boxing | baseball |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -237,9 +246,9 @@ Constants at the top of `UIPlayerInfo`: `PROP_CELL_WIDTH 170`, `PROP_CELL_HEIGHT
 
 ### 8.7 Known gaps, not regressions
 
-- `code 99` on a throw: the pending state is not cleared, so taps are blocked for 5 s and no toast is shown.
-- A queued throw can still fly after a player leaves, and the queue is not reset on table change. At most
-  one stray throw per pair.
+- `code 99` on a throw: no toast is shown, the tap just does nothing.
+- Throws from other players are queued without a limit (upstream behavior). Players leaving and table
+  changes are handled by upstream's `stopSeat` / `reset`.
 - The gun has no sound: `_playBoxing` does not play a clip sound.
 - Open with the backend: add `boxing_Button` to the CMS, and configure prices per `gold_type`.
 - Not verified yet: the `cc934f2` durations on a deployed build, and the gun on the ordinary link and on
