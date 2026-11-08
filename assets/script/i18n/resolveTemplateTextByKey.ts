@@ -3,8 +3,6 @@ import { i18nMgr } from './i18nMgr';
 
 const PUBLIC_CACHE_DB_NAME = 'public_cache';
 
-const PUBLIC_CACHE_DB_VERSION = 3;
-
 const MULTI_LANGUAGE_TEMPLATE_STORE = 'multi_language_template';
 
 interface MultiLanguageTemplateRecord {
@@ -93,7 +91,8 @@ function openPublicCache(): Promise<IDBDatabase> {
             reject(new Error('当前运行环境不支持 IndexedDB'));
             return;
         }
-        const request = window.indexedDB.open(PUBLIC_CACHE_DB_NAME, PUBLIC_CACHE_DB_VERSION);
+        // 只读 H5 已创建的当前版本，避免公共缓存升级后以旧版本打开触发 VersionError。
+        const request = window.indexedDB.open(PUBLIC_CACHE_DB_NAME);
         request.onupgradeneeded = () => {
             // Cocos 只读公共缓存；库尚未由 H5 创建时中止建库，避免生成缺少 store 的空库。
             request.transaction?.abort();
