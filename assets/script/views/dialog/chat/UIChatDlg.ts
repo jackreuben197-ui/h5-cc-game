@@ -9,6 +9,7 @@ import HttpRequest from '../../../net/https/HttpRequest';
 import { WebChatRoomMessageSync, WebConfigGlobalConfig } from '../../../net/https/WebRequest';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import TexasTableEvent from '../../scene/room/texas/events/TexasTableEvent';
+import UIViewUtil from '../../util/UIViewUtil';
 import ChatMsgItem from './ChatMsgItem';
 
 const { ccclass, property, menu } = cc._decorator;
@@ -172,6 +173,17 @@ export default class UIChatDlg extends UIComponentBaseDialog<UIChatDlgParam> {
             this.chatTemplateNode.active = false;
         }
         this.unschedule(this._finishMessageListLayout);
+    }
+
+    protected override onFrameResize(
+        visibleSizeWidth: number,
+        visibleSizeHeight: number,
+        frameSizeWidth: number,
+        frameSizeHeight: number,
+        suggestScale: number,
+        saveAreaTop: number
+    ): void {
+        UIViewUtil.alignTableDialog(this.dlgNode, visibleSizeHeight, saveAreaTop, 200);
     }
 
     private _bindEventsAndRefresh(): void {

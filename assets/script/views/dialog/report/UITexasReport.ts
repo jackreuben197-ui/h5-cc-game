@@ -13,7 +13,6 @@ import TexasGameRoomDataReport, {
     TexasReportSquidRoundSnapshot,
     TexasReportSummary
 } from '../../../data/room/texas/TexasGameRoomDataReport';
-import { CCViewData } from '../../../data/system/CCViewData';
 import userStore from '../../../data/user/UserStore';
 import { StringHelper } from '../../../helper/StringHelper';
 import TimeHelper from '../../../helper/TimeHelper';
@@ -22,6 +21,7 @@ import { i18nMgr } from '../../../i18n/i18nMgr';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import TexasReportEvent from '../../scene/room/texas/events/TexasReportEvent';
 import viewManager from '../../UIViewManager';
+import UIViewUtil from '../../util/UIViewUtil';
 import StepSlider from '../../widget/StepSlider';
 import ReportDataItem from './ReportDataItem';
 import ReportObserverItem from './ReportObserverItem';
@@ -256,18 +256,15 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
         super.close();
     }
 
-    @bindEvent(CCViewData.FRAME_SIZE_UPDATE, { dataSource: 'ccviewData', initPriority: 20 })
-    protected onFrameResize(
+    protected override onFrameResize(
         visibleSizeWidth: number,
         visibleSizeHeight: number,
         frameSizeWidth: number,
         frameSizeHeight: number,
         suggestScale: number,
         saveAreaTop: number
-    ) {
-        const bgWidget = this.bgNode.getComponent(cc.Widget);
-        bgWidget.top = saveAreaTop;
-        bgWidget.updateAlignment();
+    ): void {
+        UIViewUtil.alignTableDialog(this.bgNode, visibleSizeHeight, saveAreaTop, 185);
     }
 
     protected onEnable(): void {

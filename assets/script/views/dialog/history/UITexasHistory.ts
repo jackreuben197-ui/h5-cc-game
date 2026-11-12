@@ -3,7 +3,6 @@ import { traceClass } from '../../../core/decorator/LogTrace';
 import roomDataManager from '../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import TexasGameRoomDataReplay, { ReplayHandData } from '../../../data/room/texas/TexasGameRoomDataReplay';
-import { CCViewData } from '../../../data/system/CCViewData';
 import globalConfigStore, { GlobalConfigStore } from '../../../data/system/GlobalConfigStore';
 import diamondModel, { DiamondModel } from '../../../data/trade/DiamondModel';
 import privateUcChargeStore, { PrivateUcChargeStore, PrivateUcFee } from '../../../data/trade/PrivateUcChargeStore';
@@ -15,9 +14,10 @@ import { CPErrorCode } from '../../../i18n/CPErrorCode';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import UIComponentBaseDialog from '../../base/UIComponentDialogBase';
 import AssetManager, { BUNDLE_RESOURCES } from '../../loader/AssetManager';
-import { applyPrivateUcChargeIcon } from '../../util/PrivateUcChargeView';
 import TexasTableEvent from '../../scene/room/texas/events/TexasTableEvent';
 import viewManager from '../../UIViewManager';
+import { applyPrivateUcChargeIcon } from '../../util/PrivateUcChargeView';
+import UIViewUtil from '../../util/UIViewUtil';
 import StepSlider from '../../widget/StepSlider';
 import HistoryPlayerCardItem from './HistoryPlayerCardItem';
 import HistoryPricing from './HistoryPricing';
@@ -221,8 +221,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         this._bindEventsAndRefresh();
     }
 
-    @bindEvent(CCViewData.FRAME_SIZE_UPDATE, { dataSource: 'ccviewData', initPriority: 20 })
-    protected onFrameResize(
+    protected override onFrameResize(
         visibleSizeWidth: number,
         visibleSizeHeight: number,
         frameSizeWidth: number,
@@ -230,9 +229,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         suggestScale: number,
         saveAreaTop: number
     ): void {
-        const bgWidget = this.bgNode.getComponent(cc.Widget);
-        bgWidget.top = saveAreaTop;
-        bgWidget.updateAlignment();
+        UIViewUtil.alignTableDialog(this.bgNode, visibleSizeHeight, saveAreaTop, 220);
     }
 
     protected onDisable(): void {
