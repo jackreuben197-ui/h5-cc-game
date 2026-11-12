@@ -914,7 +914,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     }
 
     private _isInsuranceEnabled(): boolean {
-        return !!this._roomData.basicInfo.hasInsurance;
+        return false;
     }
 
     private _currentDataContent(): cc.Node {
