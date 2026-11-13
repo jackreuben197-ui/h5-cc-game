@@ -2,6 +2,7 @@ import {
     Def,
     PlayerJackpotSummary,
     PlayerSummary,
+    ServerMessageRoomInsurance,
     Roomer,
     ServerMessagePlayerJackpotSummary,
     ServerMessageRoomers,
@@ -158,6 +159,15 @@ export default class TexasGameRoomDataReport extends cc.EventTarget {
             totalHand: Number(data.totalHand || 0),
             insurance: Number(data.insurance || 0),
             startTime: Number(data.startTime || 0)
+        };
+    }
+
+    /** 用 RoomInsurance 推送更新公共保险池，不改保险历史列表。 */
+    public applyRoomInsurance(data: ServerMessageRoomInsurance.AsObject): void {
+        if (!data || Number(data.status || 0) !== 0) return;
+        this.summary = {
+            ...this.summary,
+            insurance: Number(data.insurance || 0)
         };
     }
 
