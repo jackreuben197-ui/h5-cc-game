@@ -103,6 +103,8 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
         seatData.squidEscaped = player.squidEscaped;
         seatData.handStart();
     }
+    // StartInfo 可能携带已发出的公共牌和完整手牌，统一在座位数据落地后计算一次。
+    roomData.mine.caculateHandValueTypeAndHighlight();
     // 如果我坐着,则处理下我的加入按钮
     if (roomData.mine.seatNo > 0) {
         if (roomData.basicInfo.squidStatusEnabled && !roomData.mine.player.isKeepSeat) {

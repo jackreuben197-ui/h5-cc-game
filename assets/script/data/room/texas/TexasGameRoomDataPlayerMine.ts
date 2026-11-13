@@ -271,23 +271,29 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
 
     /** 计算手牌牌型并高亮 */
     public caculateHandValueTypeAndHighlight() {
-        if (this.seatNo == 0) return;
         const mineSeatPlayer = this.player;
-        if (
+        const canCalculate =
+            this.seatNo != 0 &&
+            !!mineSeatPlayer &&
             mineSeatPlayer.action != Def.Action.FOLD &&
             mineSeatPlayer.cards.length > 0 &&
             mineSeatPlayer.cards.filter(v => v == 0).length == 0 &&
-            this.roomData.publicCards.publicCards.length > 0
-        ) {
-            const hv = getMaxHandValueByPokeType(this.roomData.publicCards.publicCards, mineSeatPlayer.cards, this.roomData.basicInfo.pokerType);
-            //牌型显示
-            this.handValueType = handValueTypeToString(hv.handValueType);
-            const sets = new Set(hv.rawCards());
-            //牌型高亮
-            this.highlightCards(mineSeatPlayer.cards.filter(v => sets.has(v)));
-            //公共牌高亮
-            this.roomData.publicCards.higlightPublicards(this.roomData.publicCards.publicCards.filter(v => sets.has(v)));
+            this.roomData.publicCards.publicCards.length > 0;
+        if (!canCalculate) {
+            // 手牌或公共牌尚未完整同步时，不能沿用上一阶段的牌型和高亮。
+            this.handValueType = '';
+            this.highlightCards([]);
+            this.roomData.publicCards.higlightPublicards([]);
+            return;
         }
+        const hv = getMaxHandValueByPokeType(this.roomData.publicCards.publicCards, mineSeatPlayer.cards, this.roomData.basicInfo.pokerType);
+        //牌型显示
+        this.handValueType = handValueTypeToString(hv.handValueType);
+        const sets = new Set(hv.rawCards());
+        //牌型高亮
+        this.highlightCards(mineSeatPlayer.cards.filter(v => sets.has(v)));
+        //公共牌高亮
+        this.roomData.publicCards.higlightPublicards(this.roomData.publicCards.publicCards.filter(v => sets.has(v)));
     }
 
     /** 根据自动操作类型做自动修正 */

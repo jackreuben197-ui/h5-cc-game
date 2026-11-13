@@ -10,6 +10,10 @@ export function Showcards(data: ServerMessageShowcards.AsObject, roomID: number,
         const seat = roomData.seatsStateManager.getSeatPlayer(v.seatId);
         if (seat.mine && !data.isAll) return;
         seat.setCards(v.cardsList, AnimateDisplayTypeCards.ShowCards);
+        if (seat.mine) {
+            // 全量亮牌可能晚于公共牌消息到达；手牌更新后重新计算牌型。
+            roomData.mine.caculateHandValueTypeAndHighlight();
+        }
     });
     data.allinUsersList.forEach(v => {
         const seat = roomData.seatsStateManager.getSeatPlayer(v.seatId);

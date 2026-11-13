@@ -43,6 +43,10 @@ export function Winner(data: ServerMessageWinner.AsObject, roomID: number, match
         seatData.chip = result.chip;
         seatData.deposit = result.deposit;
         seatData.setCards(result.myCardsList, AnimateDisplayTypeCards.ShowCards);
+        if (seatData.mine) {
+            // 结算消息可能才补齐自己的真实手牌；补牌后必须同步刷新头像旁的牌型。
+            roomData.mine.caculateHandValueTypeAndHighlight();
+        }
         // SQUID
         seatData.squidCount = result.squidCount;
         seatData.squidEscaped = result.squidEscaped;
