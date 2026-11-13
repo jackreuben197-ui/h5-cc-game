@@ -520,11 +520,16 @@ export async function registerH5Listeners(): Promise<void> {
         _ploger.error('[H5Bridge] wsReconnectFailed:', payload);
         roomReconnectManager.failReconnect(String(payload?.reason || 'unknown'));
         if (payload?.reason === 'auth-invalid') return;
-        h5MessageManager.sendToH5('h5Navigate', 1, {
+        const routeData = {
             name: 'guest-home',
             replace: true,
             ensureVisible: true,
             openLoginModal: true
-        });
+        };
+        if (ProcedureManager.currProcedure?.id === ProcedureDefine.EnterRoom) {
+            void ProcedureManager.StartProcedure(ProcedureDefine.Return, { routeData });
+            return;
+        }
+        h5MessageManager.sendToH5('h5Navigate', 1, routeData);
     });
 }

@@ -51,8 +51,14 @@ export default class ProcedureManager {
             return;
         }
         const param = args[0];
-        ProcedureManager.currProcedure = procedure;
         let prevProcedure = ProcedureManager.prevProcedure;
+        if (prevProcedure && prevProcedure.id == procedure.id) {
+            if (procedure.id !== ProcedureDefine.EnterRoom || this._isSwitching) return;
+            this.tracelog.warn('EnterRoom 已在运行，先返回大厅再按新参数进桌', param);
+            await ProcedureManager.StartProcedure(ProcedureDefine.Return);
+            prevProcedure = ProcedureManager.prevProcedure;
+        }
+        ProcedureManager.currProcedure = procedure;
         // this.tracelog.debug(DEBUG_LOG: 被调用了", new Error().stack);
         if (prevProcedure) {
             if (prevProcedure.id == procedure.id) return;
