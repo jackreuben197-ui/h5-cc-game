@@ -523,23 +523,40 @@ export default class SeatPlayer extends cc.Component {
     // =============== 鱿鱼（BEGIN）===========================
 
     @bindEvent(TexasGameRoomDataPlayer.SQUID_COUNT, 'player')
-    private onSquidCount(b: number) {
-        if (b > 0) {
-            this.squidNode.node.active = true;
-            this.squidNode.setText(b + '');
-            return;
-        }
-        this.squidNode.node.active = false;
-    }
-
-    @bindEvent(TexasGameRoomDataPlayer.SQUID_COUNT, 'player')
     @bindEvent(TexasGameRoomDataPlayer.SQUID_IN, 'player')
     @bindEvent(TexasGameRoomDataBasic.SQUID_ENABLED, 'basic')
-    private onRefreshSquidMask(): void {
+    private onRefreshSquidState(): void {
+        this._refreshSquidDisplay();
         // 与 pokerqueen 一致：每次鱿鱼数据刷新(含对局结束时 SQUID_COUNT 变化)都重新隐藏触手遮罩。
         // 之前只隐藏了 squidMaskNode(SquidMask)，但真正贴在头像上的紫色触手是 Head_Squid_Mask，
         // 必须一并隐藏，否则对局结束后触手会重新出现。
         this._hideSquidTentacles();
+    }
+
+    /**
+     * 鱿鱼小人显示规则：加入鱿鱼后即显示小人，数量只负责控制数量文本。
+     * 数量为 0 时保留小人、隐藏数量区域，对齐 Unity 的 squidObjGray 状态；
+     * 获得鱿鱼后继续复用同一个 Cocos 节点显示数量，避免新增资源和预制体节点。
+     */
+    private _refreshSquidDisplay(): void {
+        if (!this.squidNode?.node || !this._seatPlayer) return;
+
+        const squidEnabled = !!this._seatPlayer.roomData?.basicInfo?.squidStatusEnabled;
+        const squidJoined = !!this._seatPlayer.squidIn;
+        const squidCount = Math.max(0, Number(this._seatPlayer.squidCount) || 0);
+        const shouldShowSquid = squidEnabled && squidJoined;
+
+        this.squidNode.node.active = shouldShowSquid;
+        if (!shouldShowSquid) {
+            this.squidNode.setText('');
+            const countNode = this.squidNode.getOpNode(0);
+            if (countNode?.parent) countNode.parent.active = false;
+            return;
+        }
+
+        const countNode = this.squidNode.getOpNode(0);
+        if (countNode?.parent) countNode.parent.active = squidCount > 0;
+        this.squidNode.setText(squidCount > 0 ? squidCount + '' : '');
     }
     // =================== 鱿鱼 （END） ====================
 
