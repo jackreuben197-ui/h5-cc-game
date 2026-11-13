@@ -14,6 +14,9 @@ import UIBringIn, { BringInTabType } from '../UIBringIn';
 import type { BringInCommitFn, BringInWalletBalance } from './BringInProvider';
 import { BringInProvider } from './BringInProvider';
 
+/** Texas 补充筹码滑杆每次移动的步进，按 Unity 规则为 50BB。 */
+const TEXAS_BRING_IN_STEP_BB = 50;
+
 @bindData()
 @traceClass()
 export class BringInProviderTexas extends BringInProvider {
@@ -82,7 +85,15 @@ export class BringInProviderTexas extends BringInProvider {
             this._ui.scheduleOnce(this._ui.close);
             return;
         }
-        this._ui._setupBringInSider(minAmount, maxAmount, step, needDeposit, this._needAutoBringIn, minAmount);
+        const sliderStep = step * TEXAS_BRING_IN_STEP_BB;
+        this._ui._setupBringInSider(
+            minAmount,
+            maxAmount,
+            sliderStep,
+            needDeposit,
+            this._needAutoBringIn,
+            minAmount
+        );
     }
 
     @bindEvent(UserStore.CLUBS_WALLET_CHANGE, 'user')
