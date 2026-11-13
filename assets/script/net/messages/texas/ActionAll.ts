@@ -13,6 +13,11 @@ export function ActionAll(data: ServerMessageActionAll.AsObject, roomID: number,
     _plog.debug('ActionAll data: ', data);
     const roomData = roomDataManager.getRoomData<TexasGameRoomData>(roomID, matchID);
     const seatPlayer = roomData.seatsStateManager.getSeatPlayer(data.operatorSeatId);
+    // Unity 在玩家恢复操作并离开 SeatKeep 状态时会隐藏鱿鱼桌的“暂离”标记。
+    // Cocos 没有对应的座位状态机，因此在收到有效操作时清理同一座位的暂离状态。
+    if (seatPlayer.keepSeatReason === Def.KeepSeatReason.KSR_DELAY_LEAVE) {
+        seatPlayer.clearKeepSeat();
+    }
     seatPlayer.setAction(data.action, AnimateDisplayTypeAction.Done);
     seatPlayer.roundActioned = true;
     if (data.leftChips != null && data.leftChips > 0) {

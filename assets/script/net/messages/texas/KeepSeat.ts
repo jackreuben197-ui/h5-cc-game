@@ -13,6 +13,6 @@ export function KeepSeat(data: ServerMessageKeepSeat.AsObject, roomID: number, m
     if (data.keep) {
         seatPlayer.keepSeat(true, deadline, data.keepSeatReason);
     } else {
-        seatPlayer.keepSeat(false, 0, 0);
+        seatPlayer.clearKeepSeat();
     }
 }

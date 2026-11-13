@@ -88,6 +88,9 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     //留坐
     private _keepSeatDeadline: number = 0;
     private _keepSeatReason: Def.KeepSeatReasonMap[keyof Def.KeepSeatReasonMap] = Def.KeepSeatReason.KSR_NONE;
+    public get keepSeatReason() {
+        return this._keepSeatReason;
+    }
     public get isKeepSeat() {
         return this._keepSeatDeadline > 0 || this._keepSeatReason != Def.KeepSeatReason.KSR_NONE;
     }
@@ -100,6 +103,10 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     public keepSeat(b: boolean, deadline: number, reason: Def.KeepSeatReasonMap[keyof Def.KeepSeatReasonMap]) {
         this._keepSeatDeadline = deadline;
         this._keepSeatReason = reason;
+    }
+
+    public clearKeepSeat() {
+        this.keepSeat(false, 0, Def.KeepSeatReason.KSR_NONE);
     }
 
     //MTT
@@ -177,6 +184,7 @@ class TexasGameRoomDataPlayer extends cc.EventTarget {
     // =========================================================================
     public clearData() {
         if (this.userID > 0) this.roomData.seatsStateManager.clearPendingExpressions(this.userID);
+        if (this.isKeepSeat) this.clearKeepSeat();
         this.remoteVideoVisible = false;
         this.micIconState = MicrophoneIconState.HIDDEN;
         this.muteEvents();

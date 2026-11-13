@@ -57,6 +57,9 @@ export function SeatedOthers(data: ServerMessageSeatedOthers.AsObject, roomID: n
     const keepSeatDeadline = data.keepSeatDeadline;
     if (keepSeatDeadline > 0) {
         seatData.keepSeat(true, keepSeatDeadline, Def.KeepSeatReason.KSR_TAKE_SEAT);
+    } else {
+        // 座位可能被复用；没有留座时间时必须清掉上一位玩家的暂离/留座状态。
+        seatData.clearKeepSeat();
     }
     // 标记入座
     seatData.setSeated(true, null);
