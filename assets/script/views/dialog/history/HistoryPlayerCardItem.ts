@@ -2,7 +2,7 @@ import { StringHelper } from '../../../helper/StringHelper';
 import { i18nMgr } from '../../../i18n/i18nMgr';
 import RemoteSprite from '../../widget/RemoteSprite';
 import { setCardSprite } from './HistoryCardHelper';
-import { formatRaiseTimes, getActionNumByName, getCardTypeName, HistoryActionType } from './HistoryReplayModel';
+import { formatRaiseTimes, getActionNumByName, getCardTypeName, HistoryActionType, HistoryPlayerStreetActions } from './HistoryReplayModel';
 
 /**
  * 操作动作 i18n key 映射,下标对应 HistoryActionType(对齐 Unity UITexasReplay 系列的取词)
@@ -47,6 +47,8 @@ export interface HistoryPlayerCardData {
     actName: string;
     actChip: number;
     raiseTimes: number;
+    /** 按 Unity 牌谱逻辑汇总的四条街动作。 */
+    streetActions?: HistoryPlayerStreetActions;
     winAnte: number;
     winAnte2?: number;
     isMine: boolean;
@@ -74,10 +76,22 @@ export default class HistoryPlayerCardItem extends cc.Component {
     private publicCardNodesB: cc.Node[] = [];
     @property({ type: cc.Label, displayName: '牌型名称(cardType/ctLabel)' })
     private ctLabel: cc.Label = null;
-    @property({ type: cc.Label, displayName: '最后操作动作(opAction)' })
+    @property({ type: cc.Label, displayName: 'Preflop操作动作(opAction)' })
     private opAction: cc.Label = null;
-    @property({ type: cc.Label, displayName: '最后操作筹码(opNum)' })
+    @property({ type: cc.Label, displayName: 'Preflop操作筹码(opNum)' })
     private opNum: cc.Label = null;
+    @property({ type: cc.Label, displayName: 'Flop操作动作(opActionflop)' })
+    private opActionflop: cc.Label = null;
+    @property({ type: cc.Label, displayName: 'Flop操作筹码(opNumflop)' })
+    private opNumflop: cc.Label = null;
+    @property({ type: cc.Label, displayName: 'Turn操作动作(opActionturn)' })
+    private opActionturn: cc.Label = null;
+    @property({ type: cc.Label, displayName: 'Turn操作筹码(opNumturn)' })
+    private opNumturn: cc.Label = null;
+    @property({ type: cc.Label, displayName: 'River操作动作(opActionriver)' })
+    private opActionriver: cc.Label = null;
+    @property({ type: cc.Label, displayName: 'River操作筹码(opNumriver)' })
+    private opNumriver: cc.Label = null;
     @property({ type: cc.Label, displayName: '第一套盈亏(profit)' })
     private profit: cc.Label = null;
     @property({ type: cc.Label, displayName: '第二套盈亏(profit_b)' })
@@ -120,7 +134,12 @@ export default class HistoryPlayerCardItem extends cc.Component {
         this._setHandCards(data.handCards);
         this._setPublicCards(data.publicCards, data.publicCards2);
         this._setCardType(data.cardType);
-        this._setAction(data.actName, data.actChip, data.raiseTimes);
+        if (data.streetActions) {
+            this._setStreetActions(data.streetActions);
+        } else {
+            this._setAction(data.actName, data.actChip, data.raiseTimes);
+            this._setStreetActions();
+        }
         this._setProfit(data.winAnte, data.isMine, data.publicCards2, data.winAnte2);
     }
 
@@ -194,6 +213,27 @@ export default class HistoryPlayerCardItem extends cc.Component {
             name = i18nMgr.Get('UITexas_fold');
         }
         this.ctLabel.string = name;
+    }
+
+    /** 四条街分别显示；筹码数已在 HistoryReplayModel 中按街汇总。 */
+    private _setStreetActions(actions?: HistoryPlayerStreetActions) {
+        this._setStreetAction(this.opAction, this.opNum, actions?.preflop);
+        this._setStreetAction(this.opActionflop, this.opNumflop, actions?.flop);
+        this._setStreetAction(this.opActionturn, this.opNumturn, actions?.turn);
+        this._setStreetAction(this.opActionriver, this.opNumriver, actions?.river);
+    }
+
+    private _setStreetAction(actionLabel: cc.Label, numLabel: cc.Label, summary?: { action: HistoryActionType; amount: number }) {
+        if (!actionLabel || !numLabel) return;
+        const actionNum = summary?.action ?? HistoryActionType.None;
+        const amount = summary?.amount ?? 0;
+        const isFold = actionNum === HistoryActionType.Fold;
+        // Unity 逻辑：弃牌显示动作文字；其他动作只有筹码总和大于 0 时显示。
+        const visible = !!summary && (isFold || amount > 0);
+        actionLabel.node.active = visible;
+        numLabel.node.active = visible && !isFold && amount > 0;
+        actionLabel.string = visible ? this._getActionI18N(actionNum) : '';
+        numLabel.string = visible && !isFold && amount > 0 ? StringHelper.GetLongString(amount) : '';
     }
 
     private _setAction(actName: string, actChip: number, raiseTimes: number) {

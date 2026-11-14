@@ -430,6 +430,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
             }
             const player = model.players[index];
             const lastAct = model.lastActions.get(player.seatID) ?? { actName: '', actChip: 0, raiseTimes: 0 };
+            const streetActions = model.streetActions.get(player.playerId);
             item.node.active = true;
             item.setData({
                 userName: player.userName,
@@ -441,6 +442,7 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
                 actName: lastAct.actName,
                 actChip: lastAct.actChip,
                 raiseTimes: lastAct.raiseTimes,
+                streetActions,
                 winAnte: player.winAnte,
                 winAnte2: model.haveSecondCard && player.winAnte2?.length > 1 ? player.winAnte2[1] : undefined,
                 isMine: player.isMine

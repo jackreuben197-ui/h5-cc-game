@@ -52,7 +52,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 1242,
+      "width": 1440,
       "height": 456
     },
     "_anchorPoint": {
@@ -64,7 +64,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        621,
+        720,
         0,
         0,
         0,
@@ -129,7 +129,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 1242,
+      "width": 1440,
       "height": 142
     },
     "_anchorPoint": {
@@ -224,7 +224,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -371,
+        -470,
         0,
         0,
         0,
@@ -900,8 +900,8 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        309.5,
-        0.221,
+        361.519,
+        40.965,
         0,
         0,
         0,
@@ -1109,7 +1109,7 @@
     "_target": null,
     "_alignFlags": 32,
     "_left": 0,
-    "_right": 280,
+    "_right": 326.981,
     "_top": 0,
     "_bottom": 0,
     "_verticalCenter": 0,
@@ -1184,8 +1184,8 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        581,
-        -0.216,
+        465.791,
+        -32.383,
         0,
         0,
         0,
@@ -1438,7 +1438,7 @@
     "_target": null,
     "_alignFlags": 32,
     "_left": 0,
-    "_right": 40,
+    "_right": 254.209,
     "_top": 0,
     "_bottom": 0,
     "_verticalCenter": 0,
@@ -1538,7 +1538,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -601,
+        -700,
         0.226,
         0,
         0,
@@ -1717,7 +1717,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 1242,
+      "width": 1440,
       "height": 314
     },
     "_anchorPoint": {
@@ -1859,7 +1859,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 1242,
+      "width": 1440,
       "height": 180
     },
     "_anchorPoint": {
@@ -1939,7 +1939,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 1242,
+      "width": 1440,
       "height": 180
     },
     "_anchorPoint": {
@@ -2022,7 +2022,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -531,
+        -630,
         5.745,
         0,
         0,
@@ -2269,7 +2269,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -531,
+        -630,
         -49.109,
         0,
         0,
@@ -2409,7 +2409,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        601,
+        700,
         15,
         0,
         0,
@@ -2549,7 +2549,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        601,
+        700,
         -55,
         0,
         0,
@@ -4593,7 +4593,7 @@
     "_enabled": true,
     "_layoutSize": {
       "__type__": "cc.Size",
-      "width": 1242,
+      "width": 1440,
       "height": 180
     },
     "_resize": 1,
@@ -4690,7 +4690,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 1242,
+      "width": 1440,
       "height": 90
     },
     "_anchorPoint": {
@@ -4769,7 +4769,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -562,
+        -661,
         -12.623,
         0,
         0,
@@ -4906,7 +4906,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -521,
+        -620,
         -12.186,
         0,
         0,
@@ -5046,7 +5046,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        601,
+        700,
         -12.186,
         0,
         0,
@@ -5290,7 +5290,7 @@
     "_enabled": true,
     "_layoutSize": {
       "__type__": "cc.Size",
-      "width": 1242,
+      "width": 1440,
       "height": 314
     },
     "_resize": 1,
@@ -5333,7 +5333,7 @@
     "_enabled": true,
     "_layoutSize": {
       "__type__": "cc.Size",
-      "width": 1242,
+      "width": 1440,
       "height": 456
     },
     "_resize": 1,

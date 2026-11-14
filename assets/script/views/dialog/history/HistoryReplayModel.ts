@@ -71,6 +71,22 @@ export interface HistoryLastAction {
     raiseTimes: number;
 }
 
+/** 单个玩家在某一街的操作摘要(对齐 Unity TurnOprationNumber)。 */
+export interface HistoryStreetActionSummary {
+    /** 该街最终显示的动作；弃牌/全下具有优先级。 */
+    action: HistoryActionType;
+    /** 该街所有非保险动作筹码总和。 */
+    amount: number;
+}
+
+/** 玩家四条街的操作摘要。没有动作的街道保持 undefined。 */
+export interface HistoryPlayerStreetActions {
+    preflop?: HistoryStreetActionSummary;
+    flop?: HistoryStreetActionSummary;
+    turn?: HistoryStreetActionSummary;
+    river?: HistoryStreetActionSummary;
+}
+
 export interface HistoryHandModel {
     handNum: number;
     playerCount: number;
@@ -89,6 +105,8 @@ export interface HistoryHandModel {
     insurancePool: number;
     /** seatID → 最后动作(解析时一趟预计算,替代逐玩家全量遍历) */
     lastActions: Map<number, HistoryLastAction>;
+    /** playerId → 按街汇总的操作与筹码。 */
+    streetActions: Map<number, HistoryPlayerStreetActions>;
 }
 
 /**
@@ -264,6 +282,51 @@ function parseStreet(pls: ProcedurePl[], playerBySeat: Map<number, HistoryPlayer
 }
 
 /**
+ * 按 Unity TurnOprationNumber 的规则汇总单街动作：
+ * 保险不计入显示筹码；弃牌覆盖此前动作；全下在未弃牌时覆盖此前动作。
+ */
+function summarizeStreetActions(street: HistoryStreetModel): Map<number, HistoryStreetActionSummary> {
+    const states = new Map<number, HistoryStreetActionSummary & { folded: boolean; allIn: boolean }>();
+    for (const row of street.rows) {
+        const state = states.get(row.playerId) ?? { action: HistoryActionType.None, amount: 0, folded: false, allIn: false };
+        if (row.action !== HistoryActionType.Insure) {
+            state.amount += row.actionChip;
+        }
+        if (row.action === HistoryActionType.Fold) {
+            state.action = HistoryActionType.Fold;
+            state.folded = true;
+        } else if (row.action === HistoryActionType.AllIn && !state.folded) {
+            state.action = HistoryActionType.AllIn;
+            state.allIn = true;
+        } else if (!state.folded && !state.allIn && row.action !== HistoryActionType.Insure) {
+            state.action = row.action;
+        }
+        states.set(row.playerId, state);
+    }
+    const result = new Map<number, HistoryStreetActionSummary>();
+    states.forEach((state, playerId) => {
+        result.set(playerId, { action: state.action, amount: state.amount });
+    });
+    return result;
+}
+
+function buildStreetActions(preflop: HistoryStreetModel, flop: HistoryStreetModel, turn: HistoryStreetModel, river: HistoryStreetModel): Map<number, HistoryPlayerStreetActions> {
+    const result = new Map<number, HistoryPlayerStreetActions>();
+    const append = (key: keyof HistoryPlayerStreetActions, street: HistoryStreetModel) => {
+        summarizeStreetActions(street).forEach((summary, playerId) => {
+            const actions = result.get(playerId) ?? {};
+            actions[key] = summary;
+            result.set(playerId, actions);
+        });
+    };
+    append('preflop', preflop);
+    append('flop', flop);
+    append('turn', turn);
+    append('river', river);
+    return result;
+}
+
+/**
  * 把服务端回放 JSON 解析为视图模型(纯函数,不碰 UI)
  * @param data 服务端回放数据(WS 1018 base64 解出 / HTTP replay 接口)
  * @param myRID 自己的随机 ID(userStore.userRID)
@@ -373,6 +436,7 @@ export function parseHistoryHand(data: ReplayHandData, myRID: number): HistoryHa
     const flop = parseStreet(procedure.flop?.pl, playerBySeat, myRID, potRef);
     const turn = parseStreet(procedure.turn?.pl, playerBySeat, myRID, potRef);
     const river = parseStreet(procedure.river?.pl, playerBySeat, myRID, potRef);
+    const streetActions = buildStreetActions(preflop, flop, turn, river);
     // ---------- Showdown / 双套结算 ----------
     const winners: HistoryPlayerInfo[] = [];
     for (const result of s.result) {
@@ -419,6 +483,7 @@ export function parseHistoryHand(data: ReplayHandData, myRID: number): HistoryHa
         river,
         showdownPot: potRef.pot,
         insurancePool,
-        lastActions: parseLastActions(procedure)
+        lastActions: parseLastActions(procedure),
+        streetActions
     };
 }
