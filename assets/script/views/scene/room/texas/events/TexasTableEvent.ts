@@ -492,6 +492,36 @@ export default class TexasTableEvent {
         TexasTableEvent._sendLeave(player);
     }
 
+    /**
+     * 按房间 ID 发送主动离桌消息。
+     *
+     * 该方法专供“刷新后恢复牌局”这类没有完整 RoomData 的流程使用，
+     * 不修改 LeaveRoom / _sendLeave 的既有行为。
+     */
+    public static SendLeaveRoomById(roomID: number, matchID: number): boolean {
+        if (!Number.isFinite(roomID) || roomID <= 0 || !Number.isFinite(matchID) || matchID < 0) {
+            TexasTableEvent.tracelog.warn('按房间 ID 离桌参数无效', roomID, matchID);
+            return false;
+        }
+        if (!h5MessageManager.handshakeDone) {
+            TexasTableEvent.tracelog.warn('按房间 ID 离桌时 Bridge 尚未握手完成', roomID, matchID);
+            return false;
+        }
+        ProtocolAgency.Send({
+            code: Code.MSG_D_LEAVE,
+            roomID,
+            matchID,
+            body: {
+                room: {
+                    roomId: roomID,
+                    matchId: matchID
+                }
+            }
+        });
+        TexasTableEvent.tracelog.info('按房间 ID 发送主动离桌', roomID, matchID);
+        return true;
+    }
+
     private static _sendLeave(player: TexasGameRoomDataPlayerMine) {
         if (h5MessageManager.handshakeDone) {
             //GameCache.Instance.isActiveLeaving = true;
