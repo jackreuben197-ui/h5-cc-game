@@ -691,24 +691,28 @@ export default class SeatPlayer extends cc.Component {
     private onRoundBetChange(amount: number, aat: AnimateDisplayTypeRoundBet) {
         this._stopRoundBetAnimation();
         if (amount > 0) {
-            this.roundBetNode.active = true;
             if (aat == AnimateDisplayTypeRoundBet.PutNear) {
                 soundManager.playEffect(SoundEffectKey.MoveChip);
                 this.animatingChips.active = true;
                 this.animatingChips.setPosition(0, 0);
                 const endPos = UIViewUtil.caculatePostion(this.animatingChips, this.roundBetNode);
+                const showRoundBetAfterAnimation = !this.roundBetNode.active;
+                // 筹码动画未到位前隐藏旧的下注文本，避免先闪现旧金额。
+                if (showRoundBetAfterAnimation) this.roundBetNode.active = false;
                 const tween = cc
                     .tween(this.animatingChips)
-                    .to(0.5, { x: endPos.x, y: endPos.y }, { easing: 'cubicOut' })
+                    .to(0.33, { x: endPos.x, y: endPos.y }, { easing: 'cubicOut' })
                     .call(() => {
                         if (this._roundBetTween !== tween) return;
                         this.roundBetLabel.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(this._seatPlayer.roundBet);
+                        if (showRoundBetAfterAnimation) this.roundBetNode.active = true;
                         this.animatingChips.active = false;
                         this._roundBetTween = null;
                     });
                 this._roundBetTween = tween.start();
                 return;
             }
+            this.roundBetNode.active = true;
             this.roundBetLabel.string = this._seatPlayer.roomData.basicInfo.showNumberWithShowBB(amount);
             return;
         }
