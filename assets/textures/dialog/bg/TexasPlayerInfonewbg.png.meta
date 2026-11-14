@@ -1,0 +1,38 @@
+{
+  "ver": "2.3.7",
+  "uuid": "200071d3-7b1f-4326-9c5a-368f87aa4702",
+  "importer": "texture",
+  "type": "sprite",
+  "wrapMode": "clamp",
+  "filterMode": "bilinear",
+  "premultiplyAlpha": false,
+  "genMipmaps": false,
+  "packable": true,
+  "width": 1006,
+  "height": 1720,
+  "platformSettings": {},
+  "subMetas": {
+    "TexasPlayerInfonewbg": {
+      "ver": "1.0.6",
+      "uuid": "3379dc1a-ff6b-483f-94aa-a962c13af44d",
+      "importer": "sprite-frame",
+      "rawTextureUuid": "200071d3-7b1f-4326-9c5a-368f87aa4702",
+      "trimType": "auto",
+      "trimThreshold": 1,
+      "rotated": false,
+      "offsetX": 0,
+      "offsetY": 0,
+      "trimX": 0,
+      "trimY": 0,
+      "width": 1006,
+      "height": 1720,
+      "rawWidth": 1006,
+      "rawHeight": 1720,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "subMetas": {}
+    }
+  }
+}
