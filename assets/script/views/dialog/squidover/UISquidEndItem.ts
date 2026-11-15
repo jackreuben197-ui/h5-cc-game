@@ -39,7 +39,7 @@ export default class UISquidEndItem extends cc.Component {
             this.memberNameTxt.string = StringHelper.LengthNick(data.nick || '-');
         }
         if (this.memberIDTxt) {
-            this.memberIDTxt.string = `ID:${data.userID || 0}`;
+            this.memberIDTxt.string = `${data.userID || 0}`;
         }
         if (this.memberScoreTxt) {
             const scoreColor = data.money > 0 ? '#B0FFAE' : data.money < 0 ? '#FF7C7C' : '#EEF5FF';
