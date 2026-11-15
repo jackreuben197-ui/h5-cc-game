@@ -321,19 +321,30 @@ class TexasGameRoomDataBasic extends cc.EventTarget {
         const base = this.sbante.sb * 2;
         const ratio = texasGamePersonalSettings.showBB ? base : 100;
         const ex: string = texasGamePersonalSettings.showBB ? 'BB' : '';
-        return `${StringHelper.GetDecimalNWithKM(value / ratio)}${ex}`;
+        return `${this.formatTableAmount(value / ratio)}${ex}`;
     }
 
-    /** MTT 牌桌余额：不足 1 时保留小数，达到 1 后沿用赛事筹码的取整展示。 */
+    /** 牌桌金额展示：不使用 K/M 缩写，达到 1 后只显示整数部分。 */
+    private formatTableAmount(displayValue: number): string {
+        if (displayValue > 0 && displayValue < 1) {
+            return StringHelper.GetDecimalN(displayValue, 2);
+        }
+        if (displayValue >= 1) {
+            return Math.floor(displayValue).toString();
+        }
+        return displayValue.toString();
+    }
+
+    /**
+     * 牌桌头像下方余额展示：不使用 K/M 缩写，达到 1 后只展示整数部分。
+     * 小于 1 的金额保留最多两位小数，避免 0.5 之类的金额被显示成 0。
+     * 这里只格式化展示文本，不修改玩家实际筹码值。
+     */
     public showPlayerBalanceWithShowBB(value: number): string {
         const base = this.sbante.sb * 2;
         const ratio = texasGamePersonalSettings.showBB ? base : 100;
         const displayValue = value / ratio;
-        const normalizedValue = this.isMtt && displayValue >= 1 ? Math.floor(displayValue) : displayValue;
-        const formattedValue =
-            this.isMtt && displayValue > 0 && displayValue < 1
-                ? StringHelper.GetDecimalN(displayValue, 2)
-                : StringHelper.GetDecimalNWithKM(normalizedValue);
+        const formattedValue = this.formatTableAmount(displayValue);
         const ex: string = texasGamePersonalSettings.showBB ? 'BB' : '';
         return `${formattedValue}${ex}`;
     }
