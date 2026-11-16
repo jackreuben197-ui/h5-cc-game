@@ -341,7 +341,9 @@ export async function registerH5Listeners(): Promise<void> {
         }
         for (const configType of DIAMOND_PRELOAD_TYPES) {
             const typeMap = map[configType];
-            diamondModel.setFromH5Sync(configType, typeMap && typeof typeMap === 'object' ? (typeMap as Record<number, any>) : {});
+            if (typeMap && typeof typeMap === 'object' && Object.keys(typeMap).length > 0) {
+                diamondModel.setFromH5Sync(configType, typeMap as Record<number, any>);
+            }
         }
     });
     h5MessageManager.on('syncPrivateUcChargeConfig', payload => {

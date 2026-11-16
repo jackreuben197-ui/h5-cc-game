@@ -71,13 +71,15 @@ export class DiamondModel extends cc.EventTarget {
         this.emit(DiamondModel.CONFIG_CHANGED, configType);
     }
 
-    // 按需拉取指定 config_type 的配置；已有缓存时直接 resolve，不发网络请求。
+    // 按需拉取指定 config_type 的配置；已有有效配置时直接 resolve，不发网络请求。
     public async reqDiamondConfig(type: number): Promise<void> {
-        if (this._diamondMap.has(type)) return;
+        const cached = this._diamondMap.get(type);
+        if (cached && Object.keys(cached).length > 0) return;
         // HTTP 会经 UIViewManager 引用牌桌数据，按需加载以避开启动时的循环依赖。
         const { WebGetDiamondConfig, WWW } = await import('../../net/https/WebRequest');
         // 加载依赖期间 H5 可能已经同步配置。
-        if (this._diamondMap.has(type)) return;
+        const recheck = this._diamondMap.get(type);
+        if (recheck && Object.keys(recheck).length > 0) return;
         const res: any = await WWW.Instance.CommonAPI({
             web_class: WebGetDiamondConfig,
             body: { config_type: type }

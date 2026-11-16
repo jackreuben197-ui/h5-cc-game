@@ -14,9 +14,28 @@ export class GlobalConfigStore extends cc.EventTarget {
     public get isChannelDiamondFreeMode(): boolean {
         const value = this.get<boolean>('channel_package_diamond_free_mode');
         if (typeof value === 'boolean') return value;
-        if (typeof document === 'undefined') return false;
-        const root = document.documentElement;
-        return root.getAttribute('data-channel-package') === '1' || root.hasAttribute('data-channel-package');
+        if (typeof document !== 'undefined') {
+            const root = document.documentElement;
+            if (root.getAttribute('data-channel-package') === '1' || root.hasAttribute('data-channel-package')) {
+                return true;
+            }
+        }
+        if (typeof window !== 'undefined' && window.location) {
+            const search = window.location.search || '';
+            const hash = window.location.hash || '';
+            const path = window.location.pathname || '';
+            if (
+                search.includes('invite_code=') ||
+                hash.includes('invite_code=') ||
+                search.includes('channel=1') ||
+                hash.includes('channel=1') ||
+                hash.includes('/club/') ||
+                path.includes('/club/')
+            ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** 私域牌桌创建时可选的最大加时次数。 */

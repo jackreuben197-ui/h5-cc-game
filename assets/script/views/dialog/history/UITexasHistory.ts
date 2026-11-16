@@ -590,7 +590,6 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
         }
         const hasHidden = hasHiddenCards(this._currentData, this._model, userStore.userRID);
         this._setButtonEnabled(this.peekBtnNode, hasHidden);
-        if (!hasHidden) return;
         this._reqPeekPrice();
     }
 
@@ -628,14 +627,13 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
 
     private _refreshViewPubButton() {
         const model = this._model;
-        const canWatch = model.hasMe && canWatchPublicCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0);
+        const canWatch = model?.hasMe && canWatchPublicCards(this._roomData.basicInfo, this._roomData.mine.seatNo > 0);
         if (!canWatch) {
             this.viewPubBtnNode.active = false;
             return;
         }
         const hasHidden = hasHiddenPublicCards(model.publicCards);
         this._setButtonEnabled(this.viewPubBtnNode, hasHidden);
-        if (!hasHidden) return;
         this._reqViewPubPrice();
     }
 
@@ -785,8 +783,10 @@ export default class UITexasHistory extends UIComponentBaseDialog<UITexasHistory
             this.viewPubCostLabel.node.parent.active = true;
             return;
         }
-        this.peekCostLabel.node.parent.active = false;
-        this.viewPubCostLabel.node.parent.active = false;
+        const peekPrice = Number(this.peekCostLabel.string);
+        this._applyPrivateUcPrice(this.peekCostLabel, peekPrice);
+        const viewPubPrice = Number(this.viewPubCostLabel.string);
+        this._applyPrivateUcPrice(this.viewPubCostLabel, viewPubPrice);
     }
 
     private _applyPrivateUcPrice(label: cc.Label, price: number): void {
