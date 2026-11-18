@@ -193,7 +193,7 @@ export function SyncEnter(data: ServerMessageSyncEnter.AsObject, roomID: number,
     if (data.myInfo) {
         const player = roomData.seatsStateManager.getSeatPlayer(data.myInfo.seatId);
         if (player) {
-            player.mine.autoOperationType = AutoOperationTypeTexas.NO;
+            player.mine.clearAutoOperation();
             //有牌
             if (player.canOpearate) {
                 player.mine.caculateValidAutoOperationType(data.handInfo.roundBet);

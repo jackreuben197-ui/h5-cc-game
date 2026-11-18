@@ -153,33 +153,35 @@ export default class AutoOperation extends cc.Component {
 
     private onValueChangeAutoFold(b: boolean) {
         if (b) {
-            this._mineData.autoOperationType = AutoOperationTypeTexas.AUTO_FOLD;
+            this._mineData.setAutoOperationType(AutoOperationTypeTexas.AUTO_FOLD);
         } else {
-            this._mineData.autoOperationType = AutoOperationTypeTexas.NO;
+            this._mineData.setAutoOperationType(AutoOperationTypeTexas.NO);
         }
     }
 
     private onValueChangeAutoCall(b: boolean) {
         if (b) {
-            this._mineData.autoOperationType = AutoOperationTypeTexas.AUTO_CALL;
+            const callAmount = this.toggleAutoCall.getCheckRelatedInfo<number>() || this._mineData.rightPannelNumber;
+            this._mineData.setAutoOperationType(AutoOperationTypeTexas.AUTO_CALL, callAmount);
         } else {
-            this._mineData.autoOperationType = AutoOperationTypeTexas.NO;
+            this._mineData.setAutoOperationType(AutoOperationTypeTexas.NO);
         }
     }
 
     private onValueChangeAutoAllin(b: boolean) {
         if (b) {
-            this._mineData.autoOperationType = AutoOperationTypeTexas.AUTO_ALLIN;
+            const allinAmount = this.toggleAutoAllin.getCheckRelatedInfo<number>() || this._mineData.rightPannelNumber;
+            this._mineData.setAutoOperationType(AutoOperationTypeTexas.AUTO_ALLIN, allinAmount);
         } else {
-            this._mineData.autoOperationType = AutoOperationTypeTexas.NO;
+            this._mineData.setAutoOperationType(AutoOperationTypeTexas.NO);
         }
     }
 
     private onValueChangeAutoCheck(b: boolean) {
         if (b) {
-            this._mineData.autoOperationType = AutoOperationTypeTexas.AUTO_CHECK;
+            this._mineData.setAutoOperationType(AutoOperationTypeTexas.AUTO_CHECK);
         } else {
-            this._mineData.autoOperationType = AutoOperationTypeTexas.NO;
+            this._mineData.setAutoOperationType(AutoOperationTypeTexas.NO);
         }
     }
 }

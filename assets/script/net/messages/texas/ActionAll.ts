@@ -29,6 +29,11 @@ export function ActionAll(data: ServerMessageActionAll.AsObject, roomID: number,
     }
     seatPlayer.setRoundBet(seatPlayer.roundBet + data.amount, AnimateDisplayTypeRoundBet.PutNear);
     seatPlayer.operator = null;
+    if (seatPlayer.mine) {
+        // Unity 在收到自己的动作回执后清除 Auto Call/Check/All-in。
+        // 这里只清除选择状态，保留后续面板重新计算的机会。
+        roomData.mine.setAutoOperationType(AutoOperationTypeTexas.NO);
+    }
     if (roomData.mine.seatNo > 0) {
         // 计算自动操作面板的变动
         const minePlayer = roomData.mine.player;

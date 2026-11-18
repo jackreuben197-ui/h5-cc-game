@@ -349,37 +349,66 @@ export default class Operation extends cc.Component {
         let actionLimit;
         // 选了自动 则自动操作(不做声音提示)
         if (this._seatPlayer.autoOperationType != AutoOperationTypeTexas.NO) {
+            // PREPARE_OPERATION_MINE 只能处理当前玩家当前这一轮的操作。
+            // 如果操作对象已经被清空或替换，不能沿用旧的自动状态发送动作。
+            if (!this._seatPlayer.operator || this._seatPlayer.operator !== oper) {
+                this._seatPlayer.clearAutoOperation();
+                return;
+            }
+            let autoActionSent = false;
             switch (this._seatPlayer.autoOperationType) {
                 case AutoOperationTypeTexas.AUTO_FOLD:
                     // 有check优先Check
                     if (this._actionMap.has(Def.Action.CHECK)) {
                         TexasTableEvent.DoAction(this._seatPlayer, Def.Action.CHECK, 0);
+                        autoActionSent = true;
                         break;
                     }
-                    TexasTableEvent.DoAction(this._seatPlayer, Def.Action.FOLD, 0);
+                    if (this._actionMap.has(Def.Action.FOLD)) {
+                        TexasTableEvent.DoAction(this._seatPlayer, Def.Action.FOLD, 0);
+                        autoActionSent = true;
+                    }
                     break;
                 case AutoOperationTypeTexas.AUTO_CHECK:
-                    TexasTableEvent.DoAction(this._seatPlayer, Def.Action.CHECK, 0);
+                    if (this._actionMap.has(Def.Action.CHECK)) {
+                        TexasTableEvent.DoAction(this._seatPlayer, Def.Action.CHECK, 0);
+                        autoActionSent = true;
+                    }
                     break;
                 case AutoOperationTypeTexas.AUTO_CALL:
                     actionLimit = this._actionMap.get(Def.Action.CALL);
                     if (!actionLimit) {
-                        this.tracelog.error('no auto allin option');
+                        this.tracelog.warn('auto call is no longer available');
+                        break;
+                    }
+                    if (
+                        this._seatPlayer.autoOperationCallAmount > 0 &&
+                        actionLimit.min > this._seatPlayer.autoOperationCallAmount
+                    ) {
+                        this.tracelog.debug('auto call cancelled because call amount increased', {
+                            selected: this._seatPlayer.autoOperationCallAmount,
+                            current: actionLimit.min
+                        });
                         break;
                     }
                     TexasTableEvent.DoAction(this._seatPlayer, Def.Action.CALL, actionLimit.min);
+                    autoActionSent = true;
                     break;
                 case AutoOperationTypeTexas.AUTO_ALLIN:
                     actionLimit = this._actionMap.get(Def.Action.ALLIN);
                     if (!actionLimit) {
-                        this.tracelog.error('no auto allin option');
+                        this.tracelog.warn('auto allin is no longer available');
                         break;
                     }
                     TexasTableEvent.DoAction(this._seatPlayer, Def.Action.ALLIN, actionLimit.min);
+                    autoActionSent = true;
                     break;
             }
             //自动操作过以后立刻重置
-            this._seatPlayer.autoOperationType = AutoOperationTypeTexas.NO;
+            this._seatPlayer.clearAutoOperation();
+            if (!autoActionSent) {
+                this.tracelog.debug('auto operation cancelled because the action is no longer valid');
+            }
             return;
         }
         // 手动操作(声音提示)

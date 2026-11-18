@@ -6,7 +6,6 @@ import TexasGameRoomData from '../../../data/room/texas/TexasGameRoomData';
 import userStore from '../../../data/user/UserStore';
 import UserStoreUtils from '../../../data/user/UserStoreUtils';
 import { AnimateDisplayTypePosition } from '../../../game/constant/AnimateDisplayType';
-import { AutoOperationTypeTexas } from '../../../game/constant/AutoOpertaionType';
 import { BringInMode } from '../../../game/constant/BringInMode';
 import { ButtonState } from '../../../game/constant/Constants';
 import { MicrophoneIconState } from '../../../game/constant/MicrophoneIconState';
@@ -67,8 +66,7 @@ export async function Seated(data: ServerMessageSeated.AsObject, roomID: number,
     // report 里的玩家统一以随机ID(userRID)为 key,与 Roomers/SeatedOthers 的 userRid 同口径
     roomData.report.applySitDown(userStore.userRID, data.totalBringin || data.chips, data.deposit, userStore.name, userStore.avatar, data.recvSeatId);
     // 操作面板(不显示)
-    mine.autoOperationType = AutoOperationTypeTexas.NO;
-    mine.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
+    mine.clearAutoOperation();
     PlayerStoreUtils.syncSeatPlayer(seatData, roomData);
     // 自己坐下 → 播放 Jackpot 开场动画（对应 pokerqueen Protocol_Holdem_Seated_Handler）
     roomData.basicInfo.jackpotStartAnimEmit();

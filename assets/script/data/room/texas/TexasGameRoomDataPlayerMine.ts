@@ -180,6 +180,11 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     @observable(TexasGameRoomDataPlayerMine.HAND_VALUE_TYPE_CHANGE)
     public handValueType: string = '';
     private _autoOperationType: AutoOperationTypeTexas = AutoOperationTypeTexas.NO;
+    /**
+     * 用户开启 Auto Call 时记录的跟注额。
+     * Unity 会在后续跟注额变大时自动取消 Auto Call，不能只保存操作类型。
+     */
+    private _autoOperationCallAmount = 0;
     public get autoOperationType() {
         return this._autoOperationType;
     }
@@ -192,6 +197,25 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
 
     @pureEvent(TexasGameRoomDataPlayerMine.AUTO_OPERATION_TYPE_CHANGE)
     private autoOperationTypeChange(oldType: AutoOperationTypeTexas, newType: AutoOperationTypeTexas) {}
+
+    public get autoOperationCallAmount(): number {
+        return this._autoOperationCallAmount;
+    }
+
+    public get rightPannelNumber(): number {
+        return this._rightPaneelNumber;
+    }
+
+    public setAutoOperationType(type: AutoOperationTypeTexas, callAmount = 0): void {
+        this._autoOperationCallAmount = type == AutoOperationTypeTexas.AUTO_CALL ? Math.max(0, callAmount || 0) : 0;
+        this.autoOperationType = type;
+    }
+
+    public clearAutoOperation(): void {
+        this._autoOperationCallAmount = 0;
+        this.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
+        this.autoOperationType = AutoOperationTypeTexas.NO;
+    }
 
     private _rightPannel: AutoOperationTypeTexas = AutoOperationTypeTexas.NO;
     private _rightPaneelNumber: number = 0;
@@ -300,26 +324,42 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
     public caculateValidAutoOperationType(roundBet: number) {
         if (this.seatNo == 0) return;
         const mineSeatPlayer = this.player;
-        // 前人全部check || 我是最后一个BB选手
-        if (roundBet == 0 || (!mineSeatPlayer.roundActioned && roundBet == mineSeatPlayer.roundBet)) {
+        // Unity 按“当前最大下注额 - 本人本轮已下注额”决定自动操作类型。
+        // 自己刚加注或后续玩家跟注时，差额仍为 0，应继续显示 AutoCheck，
+        // 不能因为 roundActioned=true 就错误切换到 AutoCall。
+        const callAmount = Math.max(0, roundBet - mineSeatPlayer.roundBet);
+        if (callAmount == 0) {
             this.setRightAutoOpPannel(AutoOperationTypeTexas.AUTO_CHECK, 0);
+            // 当前已经不能CALL/ALLIN时，不能沿用上一种自动操作。
+            if (this.autoOperationType != AutoOperationTypeTexas.AUTO_CHECK && this.autoOperationType != AutoOperationTypeTexas.AUTO_FOLD) {
+                this.setAutoOperationType(AutoOperationTypeTexas.NO);
+            }
             return;
         }
         // 筹码足够CALL
-        if (roundBet > 0 && mineSeatPlayer.chip > roundBet - mineSeatPlayer.roundBet) {
-            this.setRightAutoOpPannel(AutoOperationTypeTexas.AUTO_CALL, roundBet - mineSeatPlayer.roundBet);
+        if (mineSeatPlayer.chip > callAmount) {
+            this.setRightAutoOpPannel(AutoOperationTypeTexas.AUTO_CALL, callAmount);
+            // Unity 逻辑：对手加注导致跟注额变大时，取消之前选择的 Auto Call。
+            if (
+                this.autoOperationType == AutoOperationTypeTexas.AUTO_CALL &&
+                this.autoOperationCallAmount > 0 &&
+                callAmount > this.autoOperationCallAmount
+            ) {
+                this.setAutoOperationType(AutoOperationTypeTexas.NO);
+                return;
+            }
             // 没选中,则重置
             if (this.autoOperationType != AutoOperationTypeTexas.AUTO_CALL && this.autoOperationType != AutoOperationTypeTexas.AUTO_FOLD) {
-                this.autoOperationType = AutoOperationTypeTexas.NO;
+                this.setAutoOperationType(AutoOperationTypeTexas.NO);
             }
             return;
         }
         // 筹码不够CALL只能ALLIN
-        if (roundBet > 0 && mineSeatPlayer.chip <= roundBet - mineSeatPlayer.roundBet) {
+        if (mineSeatPlayer.chip <= callAmount) {
             this.setRightAutoOpPannel(AutoOperationTypeTexas.AUTO_ALLIN, mineSeatPlayer.chip);
             // 没选中,则重置
             if (this.autoOperationType != AutoOperationTypeTexas.AUTO_ALLIN && this.autoOperationType != AutoOperationTypeTexas.AUTO_FOLD) {
-                this.autoOperationType = AutoOperationTypeTexas.NO;
+                this.setAutoOperationType(AutoOperationTypeTexas.NO);
             }
             return;
         }
@@ -327,7 +367,7 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
 
     public roundReset() {
         if (this.seatNo == 0) return;
-        this.autoOperationType = AutoOperationTypeTexas.NO;
+        this.clearAutoOperation();
         const mineSeatPlayer = this.player;
         if (mineSeatPlayer.canOpearate) {
             this.setRightAutoOpPannel(AutoOperationTypeTexas.AUTO_CHECK, 0);
@@ -344,8 +384,7 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
 
     public handEnd() {
         if (this.seatNo == 0) return;
-        this.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
-        this.autoOperationType = AutoOperationTypeTexas.NO;
+        this.clearAutoOperation();
         this.isPlaying = false;
     }
 
@@ -368,8 +407,7 @@ class TexasGameRoomDataPlayerMine extends cc.EventTarget {
         this.showViewPlayerCardsButton = false;
         this.showViewPublicCardsButton = false;
         this.clearDialogData();
-        this.setRightAutoOpPannel(AutoOperationTypeTexas.NO, 0);
-        this.autoOperationType = AutoOperationTypeTexas.NO;
+        this.clearAutoOperation();
         this.callTimeCount = 0;
         this.callTimeStay = false;
     }

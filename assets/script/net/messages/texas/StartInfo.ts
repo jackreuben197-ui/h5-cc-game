@@ -26,6 +26,8 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
     // 新一手开始时立即隐藏可能等待展示的休息浮层。
     roomData.mtt.handleHandStart();
     roomData.basicInfo.gameStatus = Def.GameStatus.HAND_PREFLOP;
+    // 新一手必须清除上一手残留的自动操作，不能依赖旧 action 的 canOpearate 判断。
+    roomData.mine.clearAutoOperation();
     // 战绩面板：第一次 StartInfo 时补写开桌时间（对应 Unity TexasSituationController.OnStartInfo）
     roomData.report.applyStartInfo();
     const defaultHandCards = new Array(roomData.basicInfo.handCardNum).fill(0);
@@ -90,7 +92,7 @@ export function StartInfo(data: ServerMessageStartInfo.AsObject, roomID: number,
             // _plog.debug('can operation', seatData.canOpearate, roomData.basicInfo.gameStatus >= Def.GameStatus.HAND_STARTED , roomData.basicInfo.gameStatus < Def.GameStatus.HAND_END);
             if (seatData.canOpearate) {
                 // 操作面板(不显示)
-                seatData.mine.autoOperationType = AutoOperationTypeTexas.NO;
+                seatData.mine.setAutoOperationType(AutoOperationTypeTexas.NO);
                 if (!myOp) {
                     seatData.mine.caculateValidAutoOperationType(data.handInfo.roundBet);
                 }
