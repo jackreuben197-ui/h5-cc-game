@@ -56,5 +56,7 @@
     "jsEngine": "JSVM"
   },
   "appBundle": false,
-  "agreements": {}
+  "agreements": {},
+  "sourceMaps": false,
+  "includeAnySDK": false
 }
