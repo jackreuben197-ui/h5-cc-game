@@ -10,8 +10,8 @@
   "_techniqueData": {
     "0": {
       "defines": {
-        "ROUNDED_RECT": true,
-        "SUPERSAMPLE_TEXTURE": true,
+        "ROUNDED_RECT": false,
+        "SUPERSAMPLE_TEXTURE": false,
         "SAFE_EDGE_COLOR": false
       },
       "props": {

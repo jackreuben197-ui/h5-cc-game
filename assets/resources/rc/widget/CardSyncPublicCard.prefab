@@ -643,9 +643,7 @@
     "grayLayer": {
       "__id__": 10
     },
-    "cardBackMaterial": {
-      "__uuid__": "c4d566ac-0e16-4be5-b982-4eecea1cfe3e"
-    },
+    "cardBackMaterial": null,
     "_id": ""
   },
   {

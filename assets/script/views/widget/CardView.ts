@@ -138,8 +138,8 @@ export default class CardView extends cc.Component {
 
     private refreshMaterial(): void {
         if (!this.cardSprite) return;
-        const material =
-            this._cardNum == 0 && this.cardBackMaterial ? this.cardBackMaterial : this._defaultMaterial || cc.Material.getBuiltinMaterial('2d-sprite');
+        // 牌背与普通牌面统一采用标准 2d-sprite 材质渲染，避免自定义 shader 在合图/动态合图 UV 坐标下计算导致切角或圆角缺失
+        const material = this._defaultMaterial || cc.Material.getBuiltinMaterial('2d-sprite');
         this.cardSprite.setMaterial(0, material);
     }
 
