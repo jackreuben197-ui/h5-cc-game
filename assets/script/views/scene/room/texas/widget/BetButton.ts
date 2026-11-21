@@ -13,17 +13,17 @@ export default class BetButton extends cc.Component {
     amountLabel: cc.Label = null;
     @property({ type: cc.Button, displayName: '按钮实体' })
     realButton: cc.Button = null!;
-    private onClickCallback: (amount: number, ratioStr: string) => void = null;
-    private _ratioStr: string = '';
+    private onClickCallback: () => void = null;
+    private pressedCallback: () => void = null;
     private _amountNum: number = 0;
     private _basicInfo: TexasGameRoomDataBasic;
 
     onLoad() {
+        this.realButton.node.on(cc.Node.EventType.TOUCH_START, this.onPressStarted, this);
         this.realButton.node.on('click', this.onButtonClicked, this);
     }
 
-    public initData(ratioStr: string, amountNum: number, basicInfo: TexasGameRoomDataBasic, callback: (amount: number, ratio: string) => void) {
-        this._ratioStr = ratioStr;
+    public initData(ratioStr: string, amountNum: number, basicInfo: TexasGameRoomDataBasic, callback: () => void) {
         this._amountNum = amountNum;
         this._basicInfo = basicInfo;
         this.onClickCallback = callback;
@@ -42,6 +42,7 @@ export default class BetButton extends cc.Component {
     }
 
     protected onDisable(): void {
+        this.pressedCallback = null;
         unBindEventsAll(this);
     }
 
@@ -50,15 +51,19 @@ export default class BetButton extends cc.Component {
         this.amountLabel.string = this._basicInfo.showNumberWithShowBB(this._amountNum);
     }
 
+    private onPressStarted() {
+        this.pressedCallback = this.onClickCallback;
+    }
+
     private onButtonClicked() {
+        const submit = this.pressedCallback;
+        this.pressedCallback = null;
+        // A pooled button can be rebound between press and release.
+        if (!submit || submit !== this.onClickCallback) return;
+        submit();
         cc.tween(this.node)
             .to(0.05, { scale: 0.9 })
             .to(0.05, { scale: 1.0 })
-            .call(() => {
-                if (this.onClickCallback) {
-                    this.onClickCallback(this._amountNum, this._ratioStr);
-                }
-            })
             .start();
     }
 }

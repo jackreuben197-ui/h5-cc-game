@@ -71,6 +71,8 @@ export function updateOperatorAfterAddTime<T extends Operator>(oper: T, payload:
 }
 
 export class OperatorMine extends Operator {
+    // Add-time updates clone this turn. A new turn starts with a fresh flag.
+    public actionSubmitted = false;
     // 正常
     public actionLimitList?: ActionLimit.AsObject[];
     // 保险

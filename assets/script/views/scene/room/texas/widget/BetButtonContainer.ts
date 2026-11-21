@@ -9,13 +9,16 @@ import BetButton from './BetButton'; // 引入按钮脚本
 export interface IBetBtnData {
     label: string; // 对应 showLabel 的比例，如 '1/2'
     amount: number; // 对应 amountLabel 的底层纯数字金额，如 111100
-    cb: (amount: number, ratio: string) => void; // 点击回调
+    cb: () => void; // 点击回调
 }
 
 // maxRaise > 0 时表示有限不能allin
 export function caculatePotsBet(scs: ShortCut[], roundBet: number, minRaise: number, maxRaise: number, player: TexasGameRoomDataPlayer): IBetBtnData[] {
-    if (!player || !player.mine) return [];
-    const actionLimitList = player.mine.operator.actionLimitList || [];
+    const mine = player?.mine;
+    const turn = mine?.operator;
+    if (!turn) return [];
+    const hand = player.roomData.basicInfo.handNum;
+    const actionLimitList = turn.actionLimitList || [];
     const raiseAction = actionLimitList.find(v => v.action == Def.Action.BET || v.action == Def.Action.RAISE)?.action;
     const hasAllIn = actionLimitList.some(v => v.action == Def.Action.ALLIN);
     const onlyAllInRaise =
@@ -33,12 +36,13 @@ export function caculatePotsBet(scs: ShortCut[], roundBet: number, minRaise: num
         return {
             label: v.name,
             amount,
-            cb: function (amount: number, ratio: string): void {
+            cb: () => {
+                if (player.mine !== mine || mine.operator !== turn || player.roomData.basicInfo.handNum !== hand) return;
                 if (hasAllIn && amount == myChip) {
-                    TexasTableEvent.DoAction(player.mine, Def.Action.ALLIN, player.chip);
+                    TexasTableEvent.DoAction(mine, Def.Action.ALLIN, amount);
                     return;
                 }
-                TexasTableEvent.DoAction(player.mine, raiseAction!, amount);
+                TexasTableEvent.DoAction(mine, raiseAction!, amount);
             }
         };
     });

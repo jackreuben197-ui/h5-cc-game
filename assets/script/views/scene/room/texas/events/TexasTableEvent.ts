@@ -570,13 +570,15 @@ export default class TexasTableEvent {
      * 操作
      */
     public static DoAction(player: TexasGameRoomDataPlayerMine, action: Def.ActionMap[keyof Def.ActionMap], amount: number) {
+        const turn = player?.operator;
+        if (!turn || turn.actionSubmitted) return;
         if (action == Def.Action.FOLD) {
             //不显示牌型了，也不高亮了
             player.handValueType = '';
             player.highlightCards([]);
             player.roomData.publicCards.higlightPublicards([]);
         }
-        ProtocolAgency.Send({
+        turn.actionSubmitted = ProtocolAgency.Send({
             code: Code.MSG_D_ACTION,
             roomID: player.roomData.roomID,
             matchID: player.roomData.matchID,

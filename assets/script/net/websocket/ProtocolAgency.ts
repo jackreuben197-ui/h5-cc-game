@@ -201,7 +201,7 @@ export default class ProtocolAgency extends cc.Component {
         matchID: number;
         body: CodeMessageTexasClientGC[K][1];
         classDic?: Record<string, { new (): any }>;
-    }): void;
+    }): boolean;
 
     /** 发送Fantasy12数据 */
     static Send<K extends keyof CodeMessageFantasyClientGC>(param: {
@@ -258,13 +258,13 @@ export default class ProtocolAgency extends cc.Component {
     }): void;
 
     /** 发送数据 */
-    static Send(param: { code: number; roomID: number; matchID: number; body: any; classDic?: Record<string, { new (): any }> }): void {
+    static Send(param: { code: number; roomID: number; matchID: number; body: any; classDic?: Record<string, { new (): any }> }): boolean {
         // H5 桥接模式：所有协议通过 H5 层转发
         if (h5MessageManager.handshakeDone && userStore.token) {
             const protocol_name = ProtocolAgency.getCodeName(param.code);
             if (!protocol_name) {
                 this.tracelog.debug('code not in ProtocolCode', protocol_name, JSON.stringify(param));
-                return;
+                return false;
             }
             // let client = ProtocolMap[param.Code]?.Client;
             // if (!client) {
@@ -275,7 +275,7 @@ export default class ProtocolAgency extends cc.Component {
                 this.tracelog.debug(`>>>>> send: ${protocol_name}`, `roomID:${param.roomID},matchID:${param.matchID},body:`, param.body);
             }
             const bodyBA = this._serializeBody(param.code, param.body, param.classDic);
-            if (!bodyBA) return;
+            if (!bodyBA) return false;
             const bodyLength: number = bodyBA.byteLength;
             let dataLength: number = packetHead.FixHeadLength + bodyLength;
             let bufferLength: number = packetHead.Length + bodyLength;
@@ -291,8 +291,9 @@ export default class ProtocolAgency extends cc.Component {
             this._writeUint8Array(dataView, packetHead.Length, bodyBA);
             // 通过 H5 桥接转发二进制包
             h5MessageManager.sendToH5('wsSend', 0, new Uint8Array(arrayBuffer));
-            return;
+            return true;
         }
+        return false;
     }
 
     private static _writeUint8(dataView: DataView, offset: number, num: number) {
