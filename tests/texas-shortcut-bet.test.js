@@ -8,6 +8,7 @@ const ts = require('typescript');
 function table() {
     const base = path.join(__dirname, '../assets/script');
     const requests = [];
+    const notices = [];
     const bridge = { ready: true, Send(packet) {
         if (!this.ready) return false;
         requests.push(packet);
@@ -29,9 +30,8 @@ function table() {
         DataBind: { bindEvent: decorator, autoBindEvents: noop, unBindEventsAll: noop },
         TexasGamePersonalSettings: { TexasGamePersonalSettings: { SHOW_BB: 'showBB' } },
         ProtocolAgency: { default: bridge },
-        CPErrorCode: { CPErrorCode: { ServerErrorDescription: noop } },
-        UIViewManager: { default: { showToast: noop } },
-        RoomDataManager: { default: { getRoomData: () => roomData } }
+        CPErrorCode: { CPErrorCode: { ServerErrorDescription: code => 'error ' + code } },
+        UIViewManager: { default: { showToast: message => notices.push(message) } }
     };
     function load(file) {
         const source = fs.readFileSync(path.join(base, file + '.ts'), 'utf8');
@@ -63,7 +63,7 @@ function table() {
     roomData.mine = mine;
     startTurn();
     const reject = () => load('net/messages/texas/Action').Action({ status: 1 }, 1, 0);
-    return { requests, bridge, mine, roomData, bind, startTurn, reject, updateOperatorAfterAddTime,
+    return { requests, notices, bridge, mine, roomData, bind, startTurn, reject, updateOperatorAfterAddTime,
         press: listeners.touchstart, release: listeners.click, disable: () => button.onDisable() };
 }
 
@@ -103,7 +103,7 @@ test('one turn submits once across refresh and added time, independent of animat
     assert.equal(t.requests.length, 1);
 });
 
-test('failed local dispatch permits a click; rejection requests only the authoritative snapshot', () => {
+test('failed local dispatch permits another click; server rejection only shows the error', () => {
     const t = table();
     t.bind();
     t.bridge.ready = false;
@@ -113,12 +113,14 @@ test('failed local dispatch permits a click; rejection requests only the authori
     t.press();
     t.release();
     t.reject();
+    assert.deepEqual(t.notices, ['error 1']);
+    assert.deepEqual(t.requests.map(packet => packet.code), [1006]);
     t.press();
     t.release();
-    assert.deepEqual(t.requests.map(packet => packet.code), [1006, 1025]);
-    t.startTurn(); // fresh operator supplied by the snapshot
+    assert.equal(t.requests.length, 1);
+    t.startTurn();
     t.bind();
     t.press();
     t.release();
-    assert.deepEqual(t.requests.map(packet => packet.code), [1006, 1025, 1006]);
+    assert.deepEqual(t.requests.map(packet => packet.code), [1006, 1006]);
 });
