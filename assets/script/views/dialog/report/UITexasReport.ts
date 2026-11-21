@@ -788,7 +788,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     // ============================================================
     private _requestRoomers(): void {
         if (!this._roomData) return;
-        TexasReportEvent.PrefetchRoomers(this._roomData);
+        TexasReportEvent.PrefetchRoomers(this._roomData, this._subType === 'squid');
     }
 
     private _requestJackpotSummary(): void {
