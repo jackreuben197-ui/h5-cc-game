@@ -56,6 +56,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     private static readonly HEADER_FONT_SIZE = 45;
     private static readonly HEADER_GUTTER = 12;
     private static readonly PUBLIC_AREA_GUTTER = 20;
+    private static readonly SHOW_COLUMN_DIVIDERS = false;
     // ============================================================
     // @property —— prefab 模板（从 Assets 拖入）
     // ============================================================
@@ -934,6 +935,7 @@ export default class UITexasReport extends UIComponentBaseDialog<UITexasReportPa
     }
 
     private _paintColumnDividers(content: cc.Node): void {
+        if (!UITexasReport.SHOW_COLUMN_DIVIDERS) return;
         const graphics = content.getComponent(cc.Graphics) || content.addComponent(cc.Graphics);
         graphics.clear();
         graphics.lineWidth = 2;
