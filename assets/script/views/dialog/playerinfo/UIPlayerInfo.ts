@@ -566,13 +566,14 @@ export default class UIPlayerInfo extends UIComponentBaseDialog<UIPlayerInfoPara
     private _refreshRegularData(data: HttpStatsOtherUserStats.Data): void {
         const roomStats = data.room_data;
         if (!roomStats) return;
+        const tablePoolRate = data.room_total_hand > 0 ? Math.trunc(((data.room_in_pool_cnt ?? 0) / data.room_total_hand) * 100) : 0;
         const items = [
             `${roomStats.total_game_cnt || 0}`,
             `${roomStats.vpip || 0}%`,
             `${roomStats.prf || 0}%`,
             `${roomStats.total_hand || 0}`,
             `${roomStats.wins || 0}%`,
-            `${((data.pool_rate / 1000) * 100).toFixed(0)}%`
+            `${tablePoolRate}%`
         ];
         for (let i = 0; i < this._dataLabels.length; i++) {
             const item = this._dataLabels[i];
