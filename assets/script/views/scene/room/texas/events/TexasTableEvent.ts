@@ -1,4 +1,4 @@
-import { ClientMessageBroadcastMsg, ClientMessageSeated, Code, Def, PotInsuranceBuy, RoomInfo, ServerMessageShowdown } from '@silenthill/agreement-web';
+import { ClientMessageBroadcastMsg, ClientMessageSeated, Code, Def, PotInsuranceBuy, RoomInfo, ServerMessageKeepSeatActive, ServerMessageShowdown } from '@silenthill/agreement-web';
 import { traceClass } from '../../../../../core/decorator/LogTrace';
 import roomDataManager from '../../../../../data/room/RoomDataManager';
 import TexasGameRoomData from '../../../../../data/room/texas/TexasGameRoomData';
@@ -50,6 +50,7 @@ const MTT_NO_PROP_TYPE = 0;
 export default class TexasTableEvent {
     private static readonly SHOWDOWN_RESPONSE_TIMEOUT = 5000;
     private static readonly _showdownPendingPlayers: WeakSet<TexasGameRoomDataPlayer> = new WeakSet();
+    private static readonly _keepSeatPending = new WeakSet<TexasGameRoomDataPlayerMine>();
 
     public static MttAddOn(roomData: TexasGameRoomData): void {
         const mode = roomData.mtt.currentAddOnMode;
@@ -671,35 +672,45 @@ export default class TexasTableEvent {
     }
 
     public static CancelKeepSeat(player: TexasGameRoomDataPlayerMine) {
-        ProtocolAgency.Send({
-            code: Code.MSG_D_KEEP_SEAT_ACTIVE,
-            roomID: player.roomData.roomID,
-            matchID: player.roomData.matchID,
-            body: {
-                room: {
-                    roomId: player.roomData.roomID,
-                    matchId: player.roomData.matchID
-                },
-                keep: false,
-                duration: 0
-            }
-        });
+        return this.sendKeepSeat(player, false, 0);
     }
 
     public static KeepSeat(player: TexasGameRoomDataPlayerMine, duration: number) {
-        ProtocolAgency.Send({
-            code: Code.MSG_D_KEEP_SEAT_ACTIVE,
-            roomID: player.roomData.roomID,
-            matchID: player.roomData.matchID,
-            body: {
-                room: {
-                    roomId: player.roomData.roomID,
-                    matchId: player.roomData.matchID
-                },
-                keep: true,
-                duration: duration
+        if (duration > 0) return this.sendKeepSeat(player, true, duration);
+    }
+
+    private static async sendKeepSeat(player: TexasGameRoomDataPlayerMine, keep: boolean, duration: number): Promise<void> {
+        const seat = player.player;
+        if (!seat || this._keepSeatPending.has(player)) return;
+        const room = player.roomData;
+        const { roomID, matchID } = room;
+        const reason = seat.keepSeatReason;
+        const isCurrentSeat = () => roomDataManager.getRoomData(roomID, matchID) === room && !room.closed && player.player === seat;
+        this._keepSeatPending.add(player);
+        try {
+            const sent = ProtocolAgency.Send({
+                code: Code.MSG_D_KEEP_SEAT_ACTIVE,
+                roomID, matchID,
+                body: { room: { roomId: roomID, matchId: matchID }, keep, duration }
+            });
+            if (!sent) {
+                viewManager.showToast(i18nMgr.Get('adaptation10050'));
+                return;
             }
-        });
+            const { body } = await ProtocolAgency.waitForMessage<ServerMessageKeepSeatActive.AsObject>(
+                Code.MSG_D_KEEP_SEAT_ACTIVE, (_, rid, mid) => rid === roomID && mid === matchID
+            );
+            if (!isCurrentSeat()) return;
+            if (body.status !== 0) {
+                viewManager.showToast(CPErrorCode.ServerErrorDescription(body.status));
+            } else if (!keep && seat.isKeepSeat && seat.keepSeatReason === reason) {
+                seat.clearKeepSeat();
+            }
+        } catch {
+            if (isCurrentSeat()) viewManager.showToast(i18nMgr.Get('UICommon_TimeOut'));
+        } finally {
+            this._keepSeatPending.delete(player);
+        }
     }
 
     public static JoinSquid(player: TexasGameRoomDataPlayerMine) {

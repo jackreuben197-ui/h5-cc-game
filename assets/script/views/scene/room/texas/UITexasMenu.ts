@@ -484,9 +484,25 @@ export default class UITexasMenu extends cc.Component {
 
     //留座离桌
     click_leave_table() {
-        // this.post(EventName.updateFriendChessView)
-        // this._roomData.basicInfo.uirc.HideMenu();
-        // this._roomData.basicInfo.SendReserveSeatAction(true);
+        const { mine, basicInfo } = this._roomData;
+        if (!mine.player || !this.btnHalfLeave.interactable) return;
+        this.click_black();
+        if (mine.player.isKeepSeat) {
+            TexasTableEvent.CancelKeepSeat(mine);
+        } else {
+            TexasTableEvent.KeepSeat(mine, basicInfo.keepSeatDuration);
+        }
+    }
+
+    @bindEvent(TexasGameRoomDataPlayer.KEEPSEAT_CHANGE, 'player')
+    private onMineKeepSeatChanged(): void {
+        const { basicInfo, mine } = this._roomData;
+        if (basicInfo.isMtt) return;
+        const keeping = !!mine.player?.isKeepSeat;
+        this._halfLeaveI18nLabel.i18NString = keeping ? 'UITexas_BackDest' : 'UITexas_LeaveTheTable';
+        const enabled = keeping || basicInfo.keepSeatDuration > 0;
+        this.btnHalfLeave.interactable = enabled;
+        this._halfLeaveTextLabel.node.color = enabled ? cc.Color.WHITE : cc.Color.GRAY;
     }
 
     click_leave() {

@@ -385,6 +385,7 @@ export default class TexasGameplayEntrance extends AGameplayEntrance {
         roomData.basicInfo.curMaxRate = this._roomInfo.maxRate;
         roomData.basicInfo.curMinRate = this._roomInfo.minRate;
         roomData.basicInfo.retainType = this._roomInfo.retainType;
+        roomData.basicInfo.keepSeatDuration = this._roomInfo.keepSeatDuration;
         roomData.basicInfo.retainMaxRate = this._roomInfo.retainMaxRate;
         roomData.basicInfo.retainMinRate = this._roomInfo.retainMinRate;
         roomData.basicInfo.onlyIOS = this._roomInfo.onlyIos == 1;
