@@ -8,13 +8,19 @@ import viewManager from '../../../views/UIViewManager';
 
 const _glog = createLogger('ServerMessageInsuranceTrigged');
 
-function showInvalidInsuranceTip(invalidPot: InsurancePotInvalid.AsObject): void {
+function showInvalidInsuranceTip(invalidPot: InsurancePotInvalid.AsObject, roomData: TexasGameRoomData): void {
     const prefix = `${i18nMgr.Get('adaptation20005')}${invalidPot.potId + 1}:`;
     switch (invalidPot.reason) {
         case Def.IIReason.IIR_ZERO_OUTS:
-        case Def.IIReason.IIR_NO_ODDS_FOUND:
-            viewManager.showToast(`${prefix}${i18nMgr.Get('adaptation20017')}`);
+        case Def.IIReason.IIR_NO_ODDS_FOUND: {
+            const oddsTable = roomData.basicInfo.insuranceOdds?.find(table => table.potUserCount === invalidPot.potUserCount);
+            const outsLimit = oddsTable?.oddsList?.length;
+            const tip = outsLimit
+                ? i18nMgr.Get('UIInsuranceReasonTips1').replace('{0}', String(outsLimit))
+                : i18nMgr.Get('Purchase_insurance');
+            viewManager.showToast(prefix + tip);
             break;
+        }
         case Def.IIReason.IIR_NO_ODDS_TABLE_FOUND:
         case Def.IIReason.IIR_LEADER_LIMIT:
             viewManager.showToast(`${prefix}${i18nMgr.Get('UIInsuranceReasonTips2')}`);
@@ -42,7 +48,7 @@ export function InsuranceTrigged(data: ServerMessageInsuranceTrigged.AsObject, r
     if (!data.operatorList || data.operatorList.length === 0) {
         if (!shouldShowEmptyOperatorTip(roomData)) return;
         if (data.invalidPotsList && data.invalidPotsList.length > 0) {
-            data.invalidPotsList.forEach(showInvalidInsuranceTip);
+            data.invalidPotsList.forEach(pot => showInvalidInsuranceTip(pot, roomData));
         } else {
             viewManager.showToast(i18nMgr.Get('Purchase_insurance'));
         }
